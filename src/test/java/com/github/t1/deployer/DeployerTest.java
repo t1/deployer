@@ -41,4 +41,35 @@ public class DeployerTest {
     // throw new RuntimeException(e);
     // }
     // }
+
+    // curl -v "https://artifactory.1and1.org/artifactory/api/search/versions?g=groupid&a=artifactid"
+    // {
+    // "results" : [
+    // {
+    // "version" : "1.3.2",
+    // "integration" : false
+    // },
+    // {
+    // "version" : "1.3.1",
+    // "integration" : false
+    // },
+    // {
+    // "version" : "1.3.0",
+    // "integration" : false
+    // },
+    // {
+    // "integration" : true,
+    // "version" : "1.2.8-SNAPSHOT"
+    // },
+    // {
+    // "version" : "1.2.7",
+    // "integration" : false
+    // },
+    // {
+    // "version" : "1.2.6",
+    // "integration" : false
+    // }
+    // ]
+    // }
+
 }
