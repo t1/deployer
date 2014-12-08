@@ -1,27 +1,21 @@
 package com.github.t1.deployer;
 
 import java.io.IOException;
-import java.net.*;
 
 import javax.enterprise.inject.*;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.jboss.as.controller.client.ModelControllerClient;
 
-@Slf4j
+import com.github.t1.log.Logged;
+
+@Logged
 public class ModelControllerClientProducer {
     @Produces
-    ModelControllerClient produce() throws UnknownHostException {
-        log.debug("produce model controller client");
-        ModelControllerClient client = ModelControllerClient.Factory.create(InetAddress.getByName("localhost"), 9990);
-        log.debug("produced model controller client: {}", client);
-        return client;
+    ModelControllerClient produceModelControllerClient() throws IOException {
+        return ModelControllerClient.Factory.create("127.0.0.1", 9990);
     }
 
-    void close(@Disposes ModelControllerClient client) throws IOException {
-        log.debug("close model controller client: {}", client);
+    void closeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {
         client.close();
-        log.debug("closed model controller client: {}", client);
     }
 }
