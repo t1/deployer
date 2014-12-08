@@ -47,12 +47,12 @@ public class DeploymentsInfo {
     ModelControllerClient client;
 
     public Deployment getDeploymentByContextRoot(String contextRoot) {
-        Optional<Deployment> optional = getDeployments().stream() //
-                .filter((d) -> d.getContextRoot().equals("/" + contextRoot)) //
-                .findAny();
-        return optional.orElseThrow(() -> {
-            return new NotFoundException("deployment with context root [" + contextRoot + "]");
-        });
+        for (Deployment deployment : getDeployments()) {
+            if (deployment.getContextRoot().equals("/" + contextRoot)) {
+                return deployment;
+            }
+        }
+        throw new NotFoundException("deployment with context root [" + contextRoot + "]");
     }
 
     public List<Deployment> getDeployments() {

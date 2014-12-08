@@ -1,7 +1,6 @@
 package com.github.t1.deployer;
 
 import static com.github.t1.deployer.TestData.*;
-import static java.util.stream.Collectors.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -39,7 +38,10 @@ public class DeploymentsTest {
         String contextRoot;
 
         public void availableVersions(String... versions) {
-            List<Version> list = Arrays.asList(versions).stream().map(s -> new Version(s)).collect(toList());
+            List<Version> list = new ArrayList<>();
+            for (String version : versions) {
+                list.add(new Version(version));
+            }
             String stripped = contextRoot.substring(1);
             when(versionsGateway.searchVersions(stripped + "-group", stripped + "-artifact")).thenReturn(list);
         }
