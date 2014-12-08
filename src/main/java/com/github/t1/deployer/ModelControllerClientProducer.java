@@ -12,7 +12,7 @@ import com.github.t1.log.Logged;
 public class ModelControllerClientProducer {
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
-        return ModelControllerClient.Factory.create("127.0.0.1", 9990);
+        return ModelControllerClient.Factory.create("127.0.0.1", 9999);
     }
 
     void closeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {

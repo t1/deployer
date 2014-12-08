@@ -11,7 +11,7 @@ import org.jboss.dmr.ModelNode;
 public class JBossCliTestClient {
     public static void main(String[] args) throws Exception {
         InetAddress host = InetAddress.getByName("127.0.0.1");
-        int port = 9990;
+        int port = 9999;
         log.info("connect to JBoss AS on {}:{}", host, port);
         try (ModelControllerClient client = ModelControllerClient.Factory.create(host, port)) {
             ModelNode op = new ModelNode();

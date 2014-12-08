@@ -56,11 +56,6 @@ public class DeploymentsInfo {
     }
 
     public List<Deployment> getDeployments() {
-        if (versionsGateway != null)
-            return Arrays.asList( //
-                    new Deployment("/foo", new Version("1.3.1")), //
-                    new Deployment("/bar", new Version("0.3")) //
-                    );
         ModelNode cliDeployments = getCliDeployments();
         String outcome = cliDeployments.get("outcome").asString();
         if (!"success".equals(outcome))

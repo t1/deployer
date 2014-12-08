@@ -6,22 +6,23 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.List;
 
-import javax.ws.rs.client.*;
 import javax.ws.rs.core.Response;
 
 import lombok.*;
 
+import org.jboss.resteasy.client.jaxrs.*;
+
 public class VersionsGateway {
     private static final URI ARTIFACTORY = URI.create("http://localhost:8081");
 
-    private final WebTarget api;
+    private final ResteasyWebTarget api;
 
     public VersionsGateway() {
         this(ARTIFACTORY);
     }
 
     public VersionsGateway(URI baseUri) {
-        this.api = ClientBuilder.newClient().target(baseUri).path("/artifactory/api");
+        this.api = new ResteasyClientBuilder().build().target(baseUri).path("/artifactory/api");
     }
 
     @Data
