@@ -19,11 +19,6 @@ public class Deployment {
     }
 
     @GET
-    public Deployment getSelf() {
-        return this;
-    }
-
-    @GET
     @Path("/context-root")
     public String getContextRoot() {
         return contextRoot;

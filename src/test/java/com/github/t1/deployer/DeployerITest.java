@@ -3,7 +3,6 @@ package com.github.t1.deployer;
 import static com.github.t1.deployer.DeploymentsInfo.*;
 import static com.github.t1.deployer.TestData.*;
 import static javax.ws.rs.core.MediaType.*;
-import static javax.ws.rs.core.Response.Status.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -23,7 +22,7 @@ import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
 
-public class DeployerIT {
+public class DeployerITest {
     private static ModelControllerClient cli = mock(ModelControllerClient.class);
     private static VersionsGateway versionsGateway = mock(VersionsGateway.class);
 
@@ -111,7 +110,7 @@ public class DeployerIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
-        assertEquals(OK, response.getStatusInfo());
+        assertEquals(200, response.getStatus());
         List<Deployment> deployments = response.readEntity(new GenericType<List<Deployment>>() {});
         assertEquals(2, deployments.size());
 
@@ -134,7 +133,7 @@ public class DeployerIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
-        assertEquals(OK, response.getStatusInfo());
+        assertEquals(200, response.getStatus());
         Deployment deployment = response.readEntity(Deployment.class);
         assertEquals("/foo", deployment.getContextRoot());
         assertEquals("1.3.1", deployment.getVersion().toString());
@@ -151,7 +150,7 @@ public class DeployerIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
-        assertEquals(OK, response.getStatusInfo());
+        assertEquals(200, response.getStatus());
         Version version = response.readEntity(Version.class);
         assertEquals("1.3.1", version.getVersion());
         assertEquals(false, version.isIntegration());
@@ -168,7 +167,7 @@ public class DeployerIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
-        assertEquals(OK, response.getStatusInfo());
+        assertEquals(200, response.getStatus());
         String contextRoot = response.readEntity(String.class);
         assertEquals("foo", contextRoot);
     }
@@ -184,7 +183,7 @@ public class DeployerIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
-        assertEquals(OK, response.getStatusInfo());
+        assertEquals(200, response.getStatus());
         List<Version> versions = response.readEntity(new GenericType<List<Version>>() {});
         assertEquals(FOO_VERSIONS.toString(), versions.toString());
     }

@@ -15,14 +15,12 @@ public class JBossCliTestClient {
         log.info("connect to JBoss AS on {}:{}", host, port);
         try (ModelControllerClient client = ModelControllerClient.Factory.create(host, port)) {
             ModelNode op = new ModelNode();
-            op.get("operation").set("read-resource-description");
 
             ModelNode address = op.get("address");
-            address.add("subsystem", "web");
-            address.add("connector", "http");
+            address.add("deployment", "*");
 
+            op.get("operation").set("read-resource");
             op.get("recursive").set(true);
-            op.get("operations").set(true);
 
             ModelNode returnVal = client.execute(op);
             log.info("{}", returnVal.get("result").toString());

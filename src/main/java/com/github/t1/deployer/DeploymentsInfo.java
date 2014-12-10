@@ -1,12 +1,13 @@
 package com.github.t1.deployer;
 
+import static javax.ws.rs.core.Response.Status.*;
 import static javax.xml.bind.DatatypeConverter.*;
 
 import java.io.IOException;
 import java.util.*;
 
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,12 +17,12 @@ import org.jboss.dmr.ModelNode;
 
 @Slf4j
 public class DeploymentsInfo {
-    static final ModelNode READ_DEPLOYMENTS = ModelNode.fromJSONString("{" //
-            + "\"operation\" : \"read-resource\"," //
-            + "\"address\" : [{" //
-            + "\"/deployment\" : \"*\"" //
-            + "}]," //
-            + "\"recursive\" : true" //
+    static final ModelNode READ_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
+            + "    \"address\" : [{\n" //
+            + "        \"deployment\" : \"*\"\n" //
+            + "    }],\n" //
+            + "    \"operation\" : \"read-resource\",\n" //
+            + "    \"recursive\" : true\n" //
             + "}");
 
     private static final OperationMessageHandler LOGGING = new OperationMessageHandler() {
@@ -47,12 +48,18 @@ public class DeploymentsInfo {
     ModelControllerClient client;
 
     public Deployment getDeploymentByContextRoot(String contextRoot) {
-        for (Deployment deployment : getDeployments()) {
+        List<Deployment> deployments = getDeployments();
+        for (Deployment deployment : deployments) {
             if (deployment.getContextRoot().equals("/" + contextRoot)) {
                 return deployment;
             }
         }
-        throw new NotFoundException("deployment with context root [" + contextRoot + "]");
+        log.debug("found {} deployments", deployments.size());
+        for (Deployment deployment : deployments) {
+            log.debug("found deployment {}", deployment);
+        }
+        log.debug("no deployment found with context root [{}]", contextRoot);
+        throw new WebApplicationException(NOT_FOUND);
     }
 
     public List<Deployment> getDeployments() {
@@ -68,14 +75,21 @@ public class DeploymentsInfo {
 
         for (ModelNode cliDeploymentMatch : cliDeploymentsResult.asList()) {
             ModelNode cliDeployment = cliDeploymentMatch.get("result");
-            String contextRoot = cliDeployment.get("subsystem").get("undertow").get("context-root").asString();
+            String contextRoot = getContextRoot(cliDeployment);
             String hash = printHexBinary(cliDeployment.get("content").get(0).get("hash").asBytes());
             Version version = versionsGateway.searchByChecksum(hash);
-            log.info("{} -> {} -> {}", contextRoot, hash, version);
+            log.debug("{} -> {} -> {}", contextRoot, hash, version);
             list.add(new Deployment(contextRoot, version));
         }
 
         return list;
+    }
+
+    private String getContextRoot(ModelNode cliDeployment) {
+        ModelNode subsystems = cliDeployment.get("subsystem");
+        // JBoss 8 uses 'undertow' while JBoss 7 uses 'web'
+        ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
+        return web.get("context-root").asString();
     }
 
     @SneakyThrows(IOException.class)
