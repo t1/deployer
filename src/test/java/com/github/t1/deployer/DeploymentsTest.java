@@ -21,7 +21,7 @@ public class DeploymentsTest {
     @Mock
     VersionsGateway versionsGateway;
     @Mock
-    DeploymentsInfo deploymentsInfo;
+    DeploymentContainer deploymentsInfo;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -30,7 +30,7 @@ public class DeploymentsTest {
 
     @Before
     public void setup() {
-        when(deploymentsInfo.getDeployments()).thenReturn(installedDeployments);
+        when(deploymentsInfo.getAllDeployments()).thenReturn(installedDeployments);
     }
 
     @AllArgsConstructor
@@ -49,7 +49,7 @@ public class DeploymentsTest {
 
     private OngoingDeploymentStub givenDeployment(String contextRoot, String checksum, Version version) {
         assertTrue(contextRoot.startsWith("/"));
-        Deployment deployment = new Deployment(contextRoot, version);
+        Deployment deployment = new Deployment(versionsGateway, contextRoot, checksum);
         installedDeployments.add(deployment);
         when(versionsGateway.searchByChecksum(checksum)).thenReturn(version);
         when(deploymentsInfo.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
@@ -60,7 +60,7 @@ public class DeploymentsTest {
     public void shouldGetDeploymentByContextRoot() {
         givenDeployment("/foo", FOO_CHECKSUM, CURRENT_FOO_VERSION);
 
-        Deployment deployment = (Deployment) deployments.getDeploymentsWithContextRoot("/foo").getEntity();
+        Deployment deployment = (Deployment) deployments.getDeploymentsByContextRoot("/foo").getEntity();
 
         assertEquals("1.3.1", deployment.getVersion().toString());
     }
@@ -70,7 +70,7 @@ public class DeploymentsTest {
         givenDeployment("/foo", FOO_CHECKSUM, CURRENT_FOO_VERSION).availableVersions("1.3.2", "1.3.1", "1.3.0",
                 "1.2.8-SNAPSHOT", "1.2.7", "1.2.6");
 
-        Deployment deployment = (Deployment) deployments.getDeploymentsWithContextRoot("/foo").getEntity();
+        Deployment deployment = (Deployment) deployments.getDeploymentsByContextRoot("/foo").getEntity();
 
         assertEquals("1.3.1", deployment.getVersion().toString());
         // assertEquals("[1.3.2, 1.3.1, 1.3.0, 1.2.8-SNAPSHOT, 1.2.7, 1.2.6]", response.toString());

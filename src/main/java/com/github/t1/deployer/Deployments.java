@@ -11,27 +11,38 @@ import lombok.extern.slf4j.Slf4j;
 import com.github.t1.log.Logged;
 
 @Slf4j
-@Logged(level = INFO)
 @Path("/deployments")
+@Logged(level = INFO)
 public class Deployments {
     @Inject
     VersionsGateway versionsGateway;
     @Inject
-    DeploymentsInfo deploymentsInfo;
+    DeploymentContainer deploymentsInfo;
 
-    @Path("")
-    public Response getDeploymentsWithContextRootSubResource(@MatrixParam("context-root") String contextRoot) {
-        log.debug("getDeploymentsWithContextRootSubResource {}", contextRoot);
-        return getDeploymentsWithContextRoot(contextRoot);
+    @GET
+    public Response getAllDeployments() {
+        log.debug("getAllDeployments");
+        return Response.ok(deploymentsInfo.getAllDeployments()).build();
     }
 
     @GET
-    public Response getDeploymentsWithContextRoot(@MatrixParam("context-root") String contextRoot) {
-        log.debug("getDeploymentsWithContextRoot {}", contextRoot);
-        if (contextRoot == null)
-            return Response.ok(deploymentsInfo.getDeployments()).build();
+    @Path("/context-root={context-root}")
+    public Response getDeploymentsByContextRoot(@PathParam("context-root") String contextRoot) {
+        log.debug("getDeploymentsByContextRoot {}", contextRoot);
         Deployment deployment = deploymentsInfo.getDeploymentByContextRoot(contextRoot);
         log.debug("found {}", deployment);
         return Response.ok(deployment).build();
+    }
+
+    @GET
+    @Path("/context-root={context-root}/version")
+    public Response getDeploymentVersion(@PathParam("context-root") String contextRoot) {
+        return Response.ok(deploymentsInfo.getDeploymentByContextRoot(contextRoot).getVersion()).build();
+    }
+
+    @GET
+    @Path("/context-root={context-root}/available-versions")
+    public Response getDeploymentAvailableVersions(@PathParam("context-root") String contextRoot) {
+        return Response.ok(deploymentsInfo.getDeploymentByContextRoot(contextRoot).getAvailableVersions()).build();
     }
 }

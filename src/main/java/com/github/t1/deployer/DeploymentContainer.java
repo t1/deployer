@@ -16,7 +16,7 @@ import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 @Slf4j
-public class DeploymentsInfo {
+public class DeploymentContainer {
     static final ModelNode READ_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
             + "    \"address\" : [{\n" //
             + "        \"deployment\" : \"*\"\n" //
@@ -42,13 +42,13 @@ public class DeploymentsInfo {
     };
 
     @Inject
-    VersionsGateway versionsGateway;
-
-    @Inject
     ModelControllerClient client;
 
+    @Inject
+    VersionsGateway versionsGateway;
+
     public Deployment getDeploymentByContextRoot(String contextRoot) {
-        List<Deployment> deployments = getDeployments();
+        List<Deployment> deployments = getAllDeployments();
         for (Deployment deployment : deployments) {
             if (deployment.getContextRoot().equals("/" + contextRoot)) {
                 return deployment;
@@ -62,7 +62,7 @@ public class DeploymentsInfo {
         throw new WebApplicationException(NOT_FOUND);
     }
 
-    public List<Deployment> getDeployments() {
+    public List<Deployment> getAllDeployments() {
         ModelNode cliDeployments = getCliDeployments();
         String outcome = cliDeployments.get("outcome").asString();
         if (!"success".equals(outcome))
@@ -77,9 +77,8 @@ public class DeploymentsInfo {
             ModelNode cliDeployment = cliDeploymentMatch.get("result");
             String contextRoot = getContextRoot(cliDeployment);
             String hash = printHexBinary(cliDeployment.get("content").get(0).get("hash").asBytes());
-            Version version = versionsGateway.searchByChecksum(hash);
-            log.debug("{} -> {} -> {}", contextRoot, hash, version);
-            list.add(new Deployment(contextRoot, version));
+            log.debug("{} -> {}", contextRoot, hash);
+            list.add(new Deployment(versionsGateway, contextRoot, hash));
         }
 
         return list;

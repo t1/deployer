@@ -1,6 +1,6 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentsInfo.*;
+import static com.github.t1.deployer.DeploymentContainer.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
@@ -15,9 +15,9 @@ import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DeploymentsInfoTest {
+public class DeploymentsContainerTest {
     @InjectMocks
-    DeploymentsInfo deployments;
+    DeploymentContainer deployments;
     @Mock
     ModelControllerClient client;
 

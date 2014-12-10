@@ -1,6 +1,6 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentsInfo.*;
+import static com.github.t1.deployer.DeploymentContainer.*;
 import static com.github.t1.deployer.TestData.*;
 import static javax.ws.rs.core.MediaType.*;
 import static org.junit.Assert.*;
@@ -33,7 +33,7 @@ public class DeployerITest {
                 protected void configure() {
                     bind(cli).to(ModelControllerClient.class);
                     bind(versionsGateway).to(VersionsGateway.class);
-                    bind(DeploymentsInfo.class).to(DeploymentsInfo.class);
+                    bind(DeploymentContainer.class).to(DeploymentContainer.class);
                 }
             });
 
@@ -128,8 +128,7 @@ public class DeployerITest {
         givenCliDeployments();
 
         Response response = deployer() //
-                .path("/deployments") //
-                .matrixParam("context-root", "foo") //
+                .path("/deployments/context-root=foo") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
@@ -144,8 +143,7 @@ public class DeployerITest {
         givenCliDeployments();
 
         Response response = deployer() //
-                .path("/deployments/x") //
-                .matrixParam("context-root", "foo") //
+                .path("/deployments/context-root=foo") //
                 .path("/version") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
@@ -157,28 +155,11 @@ public class DeployerITest {
     }
 
     @Test
-    public void shouldGetDeploymentContextRootByContextRoot() {
-        givenCliDeployments();
-
-        Response response = deployer() //
-                .path("/deployments") //
-                .matrixParam("context-root", "foo") //
-                .path("/context-root") //
-                .request(APPLICATION_JSON_TYPE) //
-                .get();
-
-        assertEquals(200, response.getStatus());
-        String contextRoot = response.readEntity(String.class);
-        assertEquals("foo", contextRoot);
-    }
-
-    @Test
     public void shouldGetDeploymentAvailableVersionByContextRoot() {
         givenCliDeployments();
 
         Response response = deployer() //
-                .path("/deployments/x") //
-                .matrixParam("context-root", "foo") //
+                .path("/deployments/context-root=foo") //
                 .path("/available-versions") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();

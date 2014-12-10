@@ -1,33 +1,42 @@
 package com.github.t1.deployer;
 
-import javax.ws.rs.*;
+import java.util.List;
 
 import lombok.*;
 
-@Path("")
 @ToString
 @RequiredArgsConstructor
 public class Deployment {
+    private final VersionsGateway versionsGateway;
+
     private final String contextRoot;
-    private final Version version;
+    private final String hash;
+
+    private Version version;
+    private List<Version> availableVersions;
 
     /** required by JAXB, etc. */
     @Deprecated
     public Deployment() {
+        this.versionsGateway = null;
         this.contextRoot = null;
-        this.version = null;
+        this.hash = null;
     }
 
-    @GET
-    @Path("/context-root")
     public String getContextRoot() {
         return contextRoot;
     }
 
-    @GET
-    @Path("/version")
     public Version getVersion() {
+        if (version == null)
+            version = versionsGateway.searchByChecksum(hash);
         return version;
+    }
+
+    public List<Version> getAvailableVersions() {
+        if (availableVersions == null)
+            availableVersions = versionsGateway.searchVersions(groupId(), artifactId());
+        return availableVersions;
     }
 
     // FIXME real group ids
