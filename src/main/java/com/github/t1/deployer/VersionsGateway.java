@@ -29,7 +29,7 @@ public class VersionsGateway {
 
     public List<Version> searchVersions(String groupId, String artifactId) {
         switch (groupId + ":" + artifactId) {
-            case "foo-group:foo-artifact":
+            case "deployer-group:deployer-artifact":
                 return asList(new Version("1.2.3"), new Version("1.2.4"), new Version("1.2.5"));
         }
         return asList();
@@ -56,8 +56,8 @@ public class VersionsGateway {
         URI uri;
     }
 
-    public Version searchByChecksum(String md5sum) {
-        return new Version("1.2.3");
+    public String searchByChecksum(String md5sum) {
+        return "1.2.3";
         // Response response = api //
         // .path("/search/checksum") //
         // .queryParam("md5", md5sum) //

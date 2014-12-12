@@ -70,15 +70,21 @@ public class DeploymentContainer {
         return deploymentsIn(cliDeployments.get("result"));
     }
 
+    @SneakyThrows(IOException.class)
+    private ModelNode getCliDeployments() {
+        return client.execute(READ_DEPLOYMENTS, LOGGING);
+    }
+
     private List<Deployment> deploymentsIn(ModelNode cliDeploymentsResult) {
         List<Deployment> list = new ArrayList<>();
 
         for (ModelNode cliDeploymentMatch : cliDeploymentsResult.asList()) {
             ModelNode cliDeployment = cliDeploymentMatch.get("result");
+            String name = cliDeployment.get("name").asString();
             String contextRoot = getContextRoot(cliDeployment);
             String hash = printHexBinary(cliDeployment.get("content").get(0).get("hash").asBytes());
-            log.debug("{} -> {}", contextRoot, hash);
-            list.add(new Deployment(versionsGateway, contextRoot, hash));
+            log.debug("{} -> {} -> {}", name, contextRoot, hash);
+            list.add(new Deployment(versionsGateway, name, contextRoot, hash));
         }
 
         return list;
@@ -89,10 +95,5 @@ public class DeploymentContainer {
         // JBoss 8 uses 'undertow' while JBoss 7 uses 'web'
         ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
         return web.get("context-root").asString();
-    }
-
-    @SneakyThrows(IOException.class)
-    private ModelNode getCliDeployments() {
-        return client.execute(READ_DEPLOYMENTS, LOGGING);
     }
 }

@@ -101,12 +101,18 @@ public class DeployerITest {
         when(versionsGateway.searchVersions("foo-group", "foo-artifact")).thenReturn(FOO_VERSIONS);
     }
 
+    private void assertDeployment(Deployment deployment) {
+        assertEquals("foo.war", deployment.getName());
+        assertEquals("/foo", deployment.getContextRoot());
+        assertEquals("1.3.1", deployment.getVersion().toString());
+    }
+
     @Test
-    public void shouldGetDeployments() {
+    public void shouldGetAllDeployments() {
         givenCliDeployments();
 
         Response response = deployer() //
-                .path("/deployments") //
+                .path("/deployments/*") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
@@ -128,34 +134,49 @@ public class DeployerITest {
         givenCliDeployments();
 
         Response response = deployer() //
-                .path("/deployments/context-root=foo") //
+                .path("/deployments") //
+                .matrixParam("context-root", "foo") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
         assertEquals(200, response.getStatus());
         Deployment deployment = response.readEntity(Deployment.class);
-        assertEquals("/foo", deployment.getContextRoot());
-        assertEquals("1.3.1", deployment.getVersion().toString());
+        assertDeployment(deployment);
     }
 
     @Test
-    public void shouldGetDeploymentVersionByContextRoot() {
+    public void shouldGetDeploymentVersionByPath() {
         givenCliDeployments();
 
         Response response = deployer() //
-                .path("/deployments/context-root=foo") //
+                .path("deployments") //
+                .path("foo") //
+                .request(APPLICATION_JSON_TYPE) //
+                .get();
+
+        assertEquals(200, response.getStatus());
+        Deployment deployment = response.readEntity(Deployment.class);
+        assertDeployment(deployment);
+    }
+
+    @Test
+    public void shouldGetDeploymentVersionByContextRootPath() {
+        givenCliDeployments();
+
+        Response response = deployer() //
+                .path("deployments") //
+                .path("foo") //
                 .path("/version") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
         assertEquals(200, response.getStatus());
-        Version version = response.readEntity(Version.class);
-        assertEquals("1.3.1", version.getVersion());
-        assertEquals(false, version.isIntegration());
+        assertEquals("1.3.1", response.readEntity(String.class));
     }
 
     @Test
-    public void shouldGetDeploymentAvailableVersionByContextRoot() {
+    @Ignore("sub resources after matrix params don't seem to work in Dropwizard")
+    public void shouldGetDeploymentAvailableVersionByContextRootMatrix() {
         givenCliDeployments();
 
         Response response = deployer() //

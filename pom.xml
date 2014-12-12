@@ -93,8 +93,14 @@
             <version>1.7.7</version>
             <scope>provided</scope>
         </dependency>
-        
-        <!-- normal scope -->
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>1.9.9</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- compile scope -->
         <dependency>
             <groupId>org.jboss.as</groupId>
             <artifactId>jboss-as-controller-client</artifactId>

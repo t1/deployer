@@ -2,17 +2,16 @@ package com.github.t1.deployer;
 
 import static com.github.t1.log.LogLevel.*;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
-import lombok.extern.slf4j.Slf4j;
-
 import com.github.t1.log.Logged;
 
-@Slf4j
-@Path("/deployments")
 @Logged(level = INFO)
+@Path("/deployments")
 public class Deployments {
     @Inject
     VersionsGateway versionsGateway;
@@ -20,29 +19,19 @@ public class Deployments {
     DeploymentContainer deploymentsInfo;
 
     @GET
+    @Path("*")
     public Response getAllDeployments() {
-        log.debug("getAllDeployments");
-        return Response.ok(deploymentsInfo.getAllDeployments()).build();
+        List<Deployment> deployments = deploymentsInfo.getAllDeployments();
+        return Response.ok(deployments).build();
     }
 
-    @GET
-    @Path("/context-root={context-root}")
-    public Response getDeploymentsByContextRoot(@PathParam("context-root") String contextRoot) {
-        log.debug("getDeploymentsByContextRoot {}", contextRoot);
-        Deployment deployment = deploymentsInfo.getDeploymentByContextRoot(contextRoot);
-        log.debug("found {}", deployment);
-        return Response.ok(deployment).build();
+    @Path("{context-root}")
+    public Deployment getDeploymentsByContextRootPath(@PathParam("context-root") String contextRoot) {
+        return deploymentsInfo.getDeploymentByContextRoot(contextRoot);
     }
 
-    @GET
-    @Path("/context-root={context-root}/version")
-    public Response getDeploymentVersion(@PathParam("context-root") String contextRoot) {
-        return Response.ok(deploymentsInfo.getDeploymentByContextRoot(contextRoot).getVersion()).build();
-    }
-
-    @GET
-    @Path("/context-root={context-root}/available-versions")
-    public Response getDeploymentAvailableVersions(@PathParam("context-root") String contextRoot) {
-        return Response.ok(deploymentsInfo.getDeploymentByContextRoot(contextRoot).getAvailableVersions()).build();
+    @Path("")
+    public Deployment getDeploymentsByContextRootMatrix(@MatrixParam("context-root") String contextRoot) {
+        return deploymentsInfo.getDeploymentByContextRoot(contextRoot);
     }
 }
