@@ -23,7 +23,7 @@ public class DeploymentsTest {
     @Mock
     VersionsGateway versionsGateway;
     @Mock
-    DeploymentContainer deploymentsInfo;
+    DeploymentsContainer deploymentsInfo;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -77,18 +77,18 @@ public class DeploymentsTest {
     public void shouldGetDeploymentByContextRootMatrix() {
         givenDeployment("foo.war", "foo", FOO_CHECKSUM, CURRENT_FOO_VERSION).availableVersions("1.3.1");
 
-        Deployment deployment = deployments.getDeploymentsByContextRootMatrix("foo");
+        Deployment deployment = deployments.getDeploymentsByContextRoot("foo");
 
         assertEquals("1.3.1", deployment.getVersion().toString());
         assertEquals("[1.3.1]", deployment.getAvailableVersions().toString());
     }
 
     @Test
-    public void shouldGetDeploymentByContextRootPath() {
+    public void shouldGetDeploymentVersions() {
         givenDeployment("foo.war", "foo", FOO_CHECKSUM, CURRENT_FOO_VERSION).availableVersions("1.3.2", "1.3.1",
                 "1.3.0", "1.2.8-SNAPSHOT", "1.2.7", "1.2.6");
 
-        Deployment deployment = deployments.getDeploymentsByContextRootPath("foo");
+        Deployment deployment = deployments.getDeploymentsByContextRoot("foo");
 
         assertEquals("1.3.1", deployment.getVersion().toString());
         assertEquals("[1.3.2, 1.3.1, 1.3.0, 1.2.8-SNAPSHOT, 1.2.7, 1.2.6]", deployment.getAvailableVersions()

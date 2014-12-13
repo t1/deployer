@@ -1,6 +1,6 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentContainer.*;
+import static com.github.t1.deployer.DeploymentsContainer.*;
 import static com.github.t1.deployer.TestData.*;
 import static javax.ws.rs.core.MediaType.*;
 import static org.junit.Assert.*;
@@ -33,7 +33,7 @@ public class DeployerITest {
                 protected void configure() {
                     bind(cli).to(ModelControllerClient.class);
                     bind(versionsGateway).to(VersionsGateway.class);
-                    bind(DeploymentContainer.class).to(DeploymentContainer.class);
+                    bind(DeploymentsContainer.class).to(DeploymentsContainer.class);
                 }
             });
 
@@ -145,42 +145,13 @@ public class DeployerITest {
     }
 
     @Test
-    public void shouldGetDeploymentVersionByPath() {
-        givenCliDeployments();
-
-        Response response = deployer() //
-                .path("deployments") //
-                .path("foo") //
-                .request(APPLICATION_JSON_TYPE) //
-                .get();
-
-        assertEquals(200, response.getStatus());
-        Deployment deployment = response.readEntity(Deployment.class);
-        assertDeployment(deployment);
-    }
-
-    @Test
-    public void shouldGetDeploymentVersionByContextRootPath() {
-        givenCliDeployments();
-
-        Response response = deployer() //
-                .path("deployments") //
-                .path("foo") //
-                .path("/version") //
-                .request(APPLICATION_JSON_TYPE) //
-                .get();
-
-        assertEquals(200, response.getStatus());
-        assertEquals("1.3.1", response.readEntity(String.class));
-    }
-
-    @Test
     @Ignore("sub resources after matrix params don't seem to work in Dropwizard")
     public void shouldGetDeploymentAvailableVersionByContextRootMatrix() {
         givenCliDeployments();
 
         Response response = deployer() //
-                .path("/deployments/context-root=foo") //
+                .path("/deployments") //
+                .matrixParam("context-root", "deployer") //
                 .path("/available-versions") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();

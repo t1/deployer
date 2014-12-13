@@ -14,6 +14,9 @@ import lombok.*;
 @XmlRootElement
 @XmlAccessorType(FIELD)
 public class Deployment {
+    @org.codehaus.jackson.annotate.JsonIgnore
+    // @com.fasterxml.jackson.annotation.JsonIgnore
+    @XmlTransient
     private final VersionsGateway versionsGateway;
 
     private final String name;

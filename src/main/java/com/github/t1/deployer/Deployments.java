@@ -16,7 +16,7 @@ public class Deployments {
     @Inject
     VersionsGateway versionsGateway;
     @Inject
-    DeploymentContainer deploymentsInfo;
+    DeploymentsContainer deploymentsInfo;
 
     @GET
     @Path("*")
@@ -25,13 +25,8 @@ public class Deployments {
         return Response.ok(deployments).build();
     }
 
-    @Path("{context-root}")
-    public Deployment getDeploymentsByContextRootPath(@PathParam("context-root") String contextRoot) {
-        return deploymentsInfo.getDeploymentByContextRoot(contextRoot);
-    }
-
     @Path("")
-    public Deployment getDeploymentsByContextRootMatrix(@MatrixParam("context-root") String contextRoot) {
+    public Deployment getDeploymentsByContextRoot(@MatrixParam("context-root") String contextRoot) {
         return deploymentsInfo.getDeploymentByContextRoot(contextRoot);
     }
 }

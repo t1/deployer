@@ -15,8 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
+import com.github.t1.log.Logged;
+
 @Slf4j
-public class DeploymentContainer {
+@Logged
+public class DeploymentsContainer {
     static final ModelNode READ_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
             + "    \"address\" : [{\n" //
             + "        \"deployment\" : \"*\"\n" //
