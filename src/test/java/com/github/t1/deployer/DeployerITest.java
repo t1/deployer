@@ -45,56 +45,7 @@ public class DeployerITest {
 
     @SneakyThrows(IOException.class)
     private void givenCliDeployments() {
-        ModelNode fooAndBar =
-                ModelNode.fromString( //
-                        "{\n" + "    \"outcome\" => \"success\",\n" + "    \"result\" => [\n" + "        {\n"
-                                + "            \"address\" => [(\"deployment\" => \"foo.war\")],\n"
-                                + "            \"outcome\" => \"success\",\n" + "            \"result\" => {\n"
-                                + "                \"content\" => [{\"hash\" => bytes {\n"
-                                + byteArray(FOO_CHECKSUM) //
-                                + "                }}],\n"
-                                + "                \"enabled\" => true,\n"
-                                + "                \"name\" => \"foo.war\",\n"
-                                + "                \"persistent\" => true,\n"
-                                + "                \"runtime-name\" => \"foo.war\",\n"
-                                + "                \"subdeployment\" => undefined,\n"
-                                + "                \"subsystem\" => {\"undertow\" => {\n"
-                                + "                    \"context-root\" => \"/foo\",\n"
-                                + "                    \"server\" => \"default-server\",\n"
-                                + "                    \"virtual-host\" => \"default-host\",\n"
-                                + "                    \"servlet\" => {\"javax.ws.rs.core.Application\" => {\n"
-                                + "                        \"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n"
-                                + "                        \"servlet-name\" => \"javax.ws.rs.core.Application\"\n"
-                                + "                    }}\n"
-                                + "                }}\n"
-                                + "            }\n"
-                                + "        },\n"
-                                + "        {\n"
-                                + "            \"address\" => [(\"deployment\" => \"bar.war\")],\n"
-                                + "            \"outcome\" => \"success\",\n"
-                                + "            \"result\" => {\n"
-                                + "                \"content\" => [{\"hash\" => bytes {\n"
-                                + byteArray(BAR_CHECKSUM) //
-                                + "                }}],\n"
-                                + "                \"enabled\" => true,\n"
-                                + "                \"name\" => \"bar.war\",\n"
-                                + "                \"persistent\" => true,\n"
-                                + "                \"runtime-name\" => \"bar.war\",\n"
-                                + "                \"subdeployment\" => undefined,\n"
-                                + "                \"subsystem\" => {\"undertow\" => {\n"
-                                + "                    \"context-root\" => \"/bar\",\n"
-                                + "                    \"server\" => \"default-server\",\n"
-                                + "                    \"virtual-host\" => \"default-host\",\n"
-                                + "                    \"servlet\" => {\"javax.ws.rs.core.Application\" => {\n"
-                                + "                        \"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n"
-                                + "                        \"servlet-name\" => \"javax.ws.rs.core.Application\"\n"
-                                + "                    }}\n" //
-                                + "                }}\n" //
-                                + "            }\n" //
-                                + "        }\n" //
-                                + "    ]\n" //
-                                + "}\n" //
-                        );
+        ModelNode fooAndBar = ModelNode.fromString(success(deployment(FOO), deployment(BAR)));
         when(cli.execute(eq(READ_DEPLOYMENTS), any(OperationMessageHandler.class))).thenReturn(fooAndBar);
         when(versionsGateway.searchByChecksum(FOO_CHECKSUM)).thenReturn(CURRENT_FOO_VERSION);
         when(versionsGateway.searchByChecksum(BAR_CHECKSUM)).thenReturn(CURRENT_BAR_VERSION);
