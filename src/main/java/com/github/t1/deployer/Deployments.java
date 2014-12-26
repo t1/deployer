@@ -16,17 +16,17 @@ public class Deployments {
     @Inject
     VersionsGateway versionsGateway;
     @Inject
-    DeploymentsContainer deploymentsInfo;
+    DeploymentsContainer container;
 
     @GET
     @Path("*")
     public Response getAllDeployments() {
-        List<Deployment> deployments = deploymentsInfo.getAllDeployments();
+        List<Deployment> deployments = container.getAllDeployments();
         return Response.ok(deployments).build();
     }
 
     @Path("")
     public Deployment getDeploymentsByContextRoot(@MatrixParam("context-root") String contextRoot) {
-        return deploymentsInfo.getDeploymentByContextRoot(contextRoot);
+        return container.getDeploymentByContextRoot(contextRoot);
     }
 }

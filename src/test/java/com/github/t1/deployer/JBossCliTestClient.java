@@ -1,7 +1,5 @@
 package com.github.t1.deployer;
 
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.*;
@@ -91,8 +89,8 @@ public class JBossCliTestClient {
         log.info("-> {}", returnVal);
     }
 
-    private static void configureDeploymentOperation(ModelNode op, String operationName, String uniqueName) {
-        op.get(OP).set(operationName);
-        op.get(OP_ADDR).add(DEPLOYMENT, uniqueName);
-    }
+    // private static void configureDeploymentOperation(ModelNode op, String operationName, String uniqueName) {
+    // op.get(OP).set(operationName);
+    // op.get(OP_ADDR).add(DEPLOYMENT, uniqueName);
+    // }
 }

@@ -23,7 +23,7 @@ public class DeploymentsTest {
     @Mock
     VersionsGateway versionsGateway;
     @Mock
-    DeploymentsContainer deploymentsInfo;
+    DeploymentsContainer container;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -32,7 +32,7 @@ public class DeploymentsTest {
 
     @Before
     public void setup() {
-        when(deploymentsInfo.getAllDeployments()).thenReturn(installedDeployments);
+        when(container.getAllDeployments()).thenReturn(installedDeployments);
     }
 
     @AllArgsConstructor
@@ -49,10 +49,10 @@ public class DeploymentsTest {
     }
 
     private OngoingDeploymentStub givenDeployment(String name, String contextRoot, String checksum, String version) {
-        Deployment deployment = new Deployment(versionsGateway, name, contextRoot, checksum);
+        Deployment deployment = new Deployment(container, versionsGateway, name, contextRoot, checksum);
         installedDeployments.add(deployment);
         when(versionsGateway.searchByChecksum(checksum)).thenReturn(version);
-        when(deploymentsInfo.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
+        when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
         return new OngoingDeploymentStub(contextRoot);
     }
 

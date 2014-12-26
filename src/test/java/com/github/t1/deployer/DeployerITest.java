@@ -6,10 +6,10 @@ import static javax.ws.rs.core.MediaType.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
-import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.*;
 import java.util.List;
 
 import javax.ws.rs.client.*;
@@ -17,7 +17,6 @@ import javax.ws.rs.core.*;
 
 import lombok.SneakyThrows;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
@@ -26,20 +25,20 @@ public class DeployerITest {
     private static ModelControllerClient cli = mock(ModelControllerClient.class);
     private static VersionsGateway versionsGateway = mock(VersionsGateway.class);
 
-    @ClassRule
-    public static DropwizardClientRule deployer = new DropwizardClientRule(new Deployments(), //
-            new AbstractBinder() {
-                @Override
-                protected void configure() {
-                    bind(cli).to(ModelControllerClient.class);
-                    bind(versionsGateway).to(VersionsGateway.class);
-                    bind(DeploymentsContainer.class).to(DeploymentsContainer.class);
-                }
-            });
+    // @ClassRule
+    // public static DropwizardClientRule deployer = new DropwizardClientRule(new Deployments(), //
+    // new AbstractBinder() {
+    // @Override
+    // protected void configure() {
+    // bind(cli).to(ModelControllerClient.class);
+    // bind(versionsGateway).to(VersionsGateway.class);
+    // bind(DeploymentsContainer.class).to(DeploymentsContainer.class);
+    // }
+    // });
 
     private WebTarget deployer() {
-        URI baseUri = deployer.baseUri();
-        // URI baseUri = URI.create("http://localhost:8080/deployer/");
+        // URI baseUri = deployer.baseUri();
+        URI baseUri = URI.create("http://localhost:8080/deployer/");
         return ClientBuilder.newClient().target(baseUri);
     }
 
@@ -110,5 +109,52 @@ public class DeployerITest {
         assertEquals(200, response.getStatus());
         List<Version> versions = response.readEntity(new GenericType<List<Version>>() {});
         assertEquals(FOO_VERSIONS.toString(), versions.toString());
+    }
+
+    @Test
+    public void shouldDeploy() throws Exception {
+        givenCliDeployments();
+
+        byte[] bytes = Files.readAllBytes(Paths.get("foo.war"));
+        Entity<?> deployment = Entity.entity(bytes, APPLICATION_ATOM_XML_TYPE);
+        Response response = deployer() //
+                .path("/deployments") //
+                .matrixParam("context-root", "foo") //
+                .request(APPLICATION_JSON_TYPE) //
+                .put(deployment);
+
+        assertEquals(201, response.getStatus());
+        System.out.println("--> " + response.readEntity(String.class));
+        System.out.println("++> " + response.getLocation());
+    }
+
+    @Test
+    public void shouldRedeploy() throws Exception {
+        givenCliDeployments();
+
+        byte[] bytes = Files.readAllBytes(Paths.get("foo.war"));
+        Entity<?> deployment = Entity.entity(bytes, APPLICATION_ATOM_XML_TYPE);
+        Response response = deployer() //
+                .path("/deployments") //
+                .matrixParam("context-root", "foo") //
+                .request(APPLICATION_JSON_TYPE) //
+                .put(deployment);
+
+        assertEquals(201, response.getStatus());
+        System.out.println("--> " + response.readEntity(String.class));
+        System.out.println("++> " + response.getLocation());
+    }
+
+    @Test
+    public void shouldUndeploy() {
+        givenCliDeployments();
+
+        Response response = deployer() //
+                .path("/deployments") //
+                .matrixParam("context-root", "foo") //
+                .request(APPLICATION_JSON_TYPE) //
+                .delete();
+
+        assertEquals(204, response.getStatus());
     }
 }
