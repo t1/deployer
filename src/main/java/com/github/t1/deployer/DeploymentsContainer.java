@@ -1,18 +1,22 @@
 package com.github.t1.deployer;
 
+
+import static java.util.concurrent.TimeUnit.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static javax.xml.bind.DatatypeConverter.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import org.jboss.as.controller.client.*;
+import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
 import com.github.t1.log.Logged;
@@ -20,70 +24,103 @@ import com.github.t1.log.Logged;
 @Slf4j
 @Logged
 public class DeploymentsContainer {
-    static final ModelNode READ_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
+    private abstract class AbstractPlan {
+        public void execute() {
+            try (ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(client)) {
+                DeploymentPlan plan = buildPlan(deploymentManager.newDeploymentPlan()).build();
+
+                log.debug("start executing {}", getClass().getSimpleName());
+                Future<ServerDeploymentPlanResult> future = deploymentManager.execute(plan);
+                log.debug("wait for {}", getClass().getSimpleName());
+                ServerDeploymentPlanResult result = future.get(30, SECONDS);
+                log.debug("done executing {}", getClass().getSimpleName());
+
+                checkOutcome(plan, result);
+            } catch (IOException | ExecutionException | TimeoutException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        protected abstract DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan);
+
+        private void checkOutcome(DeploymentPlan plan, ServerDeploymentPlanResult result) {
+            boolean failed = false;
+            Throwable firstThrowable = null;
+            for (DeploymentAction action : plan.getDeploymentActions()) {
+                ServerDeploymentActionResult actionResult = result.getDeploymentActionResult(action.getId());
+                Throwable deploymentException = actionResult.getDeploymentException();
+                if (deploymentException != null)
+                    firstThrowable = deploymentException;
+                switch (actionResult.getResult()) {
+                    case CONFIGURATION_MODIFIED_REQUIRES_RESTART:
+                        log.warn("requries restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                        break;
+                    case EXECUTED:
+                        log.debug("executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                        break;
+                    case FAILED:
+                        failed = true;
+                        log.error("failed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                        break;
+                    case NOT_EXECUTED:
+                        log.debug("not executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                        break;
+                    case ROLLED_BACK:
+                        log.debug("rolled back: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                        break;
+                }
+            }
+            if (firstThrowable != null || failed) {
+                throw new RuntimeException("failed to execute " + getClass().getSimpleName(), firstThrowable);
+            }
+        }
+    }
+
+    @AllArgsConstructor
+    private class DeployPlan extends AbstractPlan {
+        private final String contextRoot;
+        private final InputStream inputStream;
+
+        @Override
+        protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
+            return plan //
+                    .add(contextRoot, inputStream) //
+                    .deploy(contextRoot) //
+            ;
+        }
+    }
+
+    @AllArgsConstructor
+    private class ReplacePlan extends AbstractPlan {
+        private final String contextRoot;
+        private final InputStream inputStream;
+
+        @Override
+        protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
+            return plan.replace(contextRoot, inputStream);
+        }
+    }
+
+    @AllArgsConstructor
+    private class UndeployPlan extends AbstractPlan {
+        private final String deploymentName;
+
+        @Override
+        protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
+            return plan //
+                    .undeploy(deploymentName) //
+                    .remove(deploymentName) //
+            ;
+        }
+    }
+
+    static final ModelNode READ_ALL_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
             + "    \"address\" : [{\n" //
             + "        \"deployment\" : \"*\"\n" //
             + "    }],\n" //
             + "    \"operation\" : \"read-resource\",\n" //
             + "    \"recursive\" : true\n" //
             + "}");
-    static final ModelNode ADD = ModelNode.fromJSONString("{\n" //
-            + "    \"operation\" : \"composite\",\n" //
-            + "    \"address\" : [],\n" //
-            + "    \"steps\" : [\n" //
-            + "        {\n" //
-            + "            \"operation\" : \"add\",\n" //
-            + "            \"address\" : [{\n" //
-            + "                \"deployment\" : \"foo.war\"\n" //
-            + "            }],\n" //
-            + "            \"runtime-name\" : \"foo.war\",\n" //
-            + "            \"content\" : [{\"input-stream-index\" : 0}]\n" //
-            + "        },\n" //
-            + "        {\n" //
-            + "            \"operation\" : \"deploy\",\n" //
-            + "            \"address\" : [{\n" //
-            + "                \"deployment\" : \"foo.war\"\n" //
-            + "            }]\n" //
-            + "        }\n" //
-            + "    ],\n" //
-            + "    \"operation-headers\" : {\"rollback-on-runtime-failure\" : true}\n" //
-            + "}\n" //
-    );
-    static final ModelNode FULL_REPLACE = ModelNode.fromJSONString("{\n" //
-            + "    \"operation\" : \"composite\",\n" //
-            + "    \"address\" : [],\n" //
-            + "    \"steps\" : [\n" //
-            + "        {\n" //
-            + "            \"operation\" : \"full-replace-deployment\",\n" //
-            + "            \"address\" : [],\n" //
-            + "            \"name\" : \"foo.war\",\n" //
-            + "            \"runtime-name\" : \"foo.war\",\n" //
-            + "            \"content\" : [{\"input-stream-index\" : 0}]\n" //
-            + "        }\n" //
-            + "    ],\n" //
-            + "    \"operation-headers\" : {\"rollback-on-runtime-failure\" : true}\n" //
-            + "}\n" //
-    );
-    static final ModelNode UNDEPLOY = ModelNode.fromJSONString("{\n" //
-            + "    \"operation\" : \"composite\",\n" //
-            + "    \"address\" : [],\n" //
-            + "    \"steps\" : [\n" //
-            + "        {\n" //
-            + "            \"operation\" : \"undeploy\",\n" //
-            + "            \"address\" : [{\n" //
-            + "                \"deployment\" : \"foo.war\"\n" //
-            + "            }],\n" //
-            + "        },\n" //
-            + "        {\n" //
-            + "            \"operation\" : \"remove\",\n" //
-            + "            \"address\" : [{\n" //
-            + "                \"deployment\" : \"foo.war\"\n" //
-            + "            }]\n" //
-            + "        }\n" //
-            + "    ],\n" //
-            + "    \"operation-headers\" : {\"rollback-on-runtime-failure\" : true}\n" //
-            + "}\n" //
-    );
 
     private static final OperationMessageHandler LOGGING = new OperationMessageHandler() {
         @Override
@@ -115,14 +152,6 @@ public class DeploymentsContainer {
         return result;
     }
 
-    @SneakyThrows(IOException.class)
-    private ModelNode execute(Operation operation) {
-        log.debug("execute operation {}", operation.getOperation());
-        ModelNode result = client.execute(operation, LOGGING);
-        log.debug("-> {}", result);
-        return result;
-    }
-
     private void checkOutcome(ModelNode result) {
         String outcome = result.get("outcome").asString();
         if (!"success".equals(outcome))
@@ -132,7 +161,7 @@ public class DeploymentsContainer {
     public Deployment getDeploymentByContextRoot(String contextRoot) {
         List<Deployment> deployments = getAllDeployments();
         for (Deployment deployment : deployments) {
-            if (deployment.getContextRoot().equals("/" + contextRoot)) {
+            if (deployment.getContextRoot().equals(contextRoot)) {
                 return deployment;
             }
         }
@@ -145,7 +174,7 @@ public class DeploymentsContainer {
     }
 
     public List<Deployment> getAllDeployments() {
-        ModelNode result = execute(READ_DEPLOYMENTS);
+        ModelNode result = execute(READ_ALL_DEPLOYMENTS);
         checkOutcome(result);
         return deploymentsIn(result.get("result"));
     }
@@ -169,20 +198,14 @@ public class DeploymentsContainer {
         ModelNode subsystems = cliDeployment.get("subsystem");
         // JBoss 8 uses 'undertow' while JBoss 7 uses 'web'
         ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
-        return web.get("context-root").asString();
+        return web.get("context-root").asString().substring(1);
     }
 
     public void deploy(String contextRoot, InputStream deployment) {
-        OperationBuilder builder = new OperationBuilder(FULL_REPLACE);
-        builder.addInputStream(deployment);
-
-        ModelNode result = execute(builder.build());
-
-        checkOutcome(result);
+        new ReplacePlan(contextRoot, deployment).execute();
     }
 
-    public void undeploy(String contextRoot) {
-        ModelNode result = execute(UNDEPLOY);
-        checkOutcome(result);
+    public void undeploy(String deploymentName) {
+        new UndeployPlan(deploymentName).execute();
     }
 }

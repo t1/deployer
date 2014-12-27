@@ -1,6 +1,5 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentsContainer.*;
 import static com.github.t1.deployer.TestData.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
@@ -52,7 +51,7 @@ public class DeploymentsContainerTest {
 
     @Test
     public void shouldFailToGetDeploymentFromMissingContainer() throws IOException {
-        when(client.execute(eq(READ_DEPLOYMENTS), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(READ_ALL_DEPLOYMENTS), any(OperationMessageHandler.class))) //
                 .thenThrow(new IOException("dummy"));
 
         expectedException.expect(IOException.class);

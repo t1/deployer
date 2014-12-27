@@ -1,6 +1,5 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentsContainer.*;
 import static com.github.t1.deployer.TestData.*;
 import static javax.ws.rs.core.MediaType.*;
 import static org.junit.Assert.*;
@@ -45,7 +44,7 @@ public class DeployerITest {
     @SneakyThrows(IOException.class)
     private void givenCliDeployments() {
         ModelNode fooAndBar = ModelNode.fromString(success(deployment(FOO), deployment(BAR)));
-        when(cli.execute(eq(READ_DEPLOYMENTS), any(OperationMessageHandler.class))).thenReturn(fooAndBar);
+        when(cli.execute(eq(READ_ALL_DEPLOYMENTS), any(OperationMessageHandler.class))).thenReturn(fooAndBar);
         when(versionsGateway.searchByChecksum(FOO_CHECKSUM)).thenReturn(CURRENT_FOO_VERSION);
         when(versionsGateway.searchByChecksum(BAR_CHECKSUM)).thenReturn(CURRENT_BAR_VERSION);
         when(versionsGateway.searchVersions("foo-group", "foo-artifact")).thenReturn(FOO_VERSIONS);

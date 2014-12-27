@@ -1,6 +1,5 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentsContainer.*;
 import static java.util.Arrays.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
@@ -13,6 +12,14 @@ import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 public class TestData {
+    public static final ModelNode READ_ALL_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
+            + "    \"address\" : [{\n" //
+            + "        \"deployment\" : \"*\"\n" //
+            + "    }],\n" //
+            + "    \"operation\" : \"read-resource\",\n" //
+            + "    \"recursive\" : true\n" //
+            + "}");
+
     public static final String FOO = "foo";
     public static final String BAR = "bar";
 
@@ -65,7 +72,7 @@ public class TestData {
             );
 
     public static void givenReadDeploymentsReturns(ModelControllerClient client, String response) throws IOException {
-        when(client.execute(eq(READ_DEPLOYMENTS), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(READ_ALL_DEPLOYMENTS), any(OperationMessageHandler.class))) //
                 .thenReturn(ModelNode.fromString(response));
     }
 
