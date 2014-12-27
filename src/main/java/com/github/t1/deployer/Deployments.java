@@ -13,6 +13,8 @@ import com.github.t1.log.Logged;
 @Logged(level = INFO)
 @Path("/deployments")
 public class Deployments {
+    public static final String CONTEXT_ROOT = "context-root";
+
     @Inject
     VersionsGateway versionsGateway;
     @Inject
@@ -26,7 +28,7 @@ public class Deployments {
     }
 
     @Path("")
-    public Deployment getDeploymentsByContextRoot(@MatrixParam("context-root") String contextRoot) {
+    public Deployment getDeploymentsByContextRoot(@MatrixParam(CONTEXT_ROOT) String contextRoot) {
         return container.getDeploymentByContextRoot(contextRoot);
     }
 }

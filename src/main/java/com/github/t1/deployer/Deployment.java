@@ -1,5 +1,6 @@
 package com.github.t1.deployer;
 
+import static com.github.t1.deployer.Deployments.*;
 import static javax.xml.bind.annotation.XmlAccessType.*;
 
 import java.io.InputStream;
@@ -7,7 +8,7 @@ import java.net.URI;
 import java.util.List;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import javax.xml.bind.annotation.*;
 
 import lombok.*;
@@ -53,16 +54,16 @@ public class Deployment {
     }
 
     @PUT
-    public Response put(InputStream inputStream) {
-        container.deploy(contextRoot, inputStream);
+    public Response put(@Context UriInfo uriInfo, InputStream inputStream) {
+        container.deploy(name, inputStream);
 
-        URI uri = URI.create("http://asdf"); // TODO real URI
+        URI uri = uriInfo.getBaseUriBuilder().path(Deployments.class).matrixParam(CONTEXT_ROOT, contextRoot).build();
         return Response.created(uri).build();
     }
 
     @DELETE
     public void delete() {
-        container.undeploy(contextRoot);
+        container.undeploy(name);
     }
 
     @GET
