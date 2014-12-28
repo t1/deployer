@@ -1,5 +1,6 @@
 package com.github.t1.deployer;
 
+import static com.github.t1.deployer.DeploymentsContainer.*;
 import static com.github.t1.deployer.TestData.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.jboss.as.controller.client.*;
+import org.jboss.dmr.ModelNode;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -22,25 +24,16 @@ public class DeploymentsContainerTest {
     @Mock
     ModelControllerClient client;
     @Mock
-    VersionsGateway versionsGateway;
+    Repository repository;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private void givenDeployments(String... deployments) throws IOException {
-        givenReadDeploymentsInClientReturns(success(deployments(deployments)));
-        for (String deployment : deployments) {
-            when(versionsGateway.searchByChecksum(checksumFor(deployment))).thenReturn(versionFor(deployment));
-        }
-    }
-
-    private void givenReadDeploymentsInClientReturns(String response) throws IOException {
-        givenReadDeploymentsReturns(client, response);
-    }
-
     @Test
     public void shouldFailToGetDeploymentByUnknownContextRoot() throws IOException {
-        givenReadDeploymentsInClientReturns(failed("JBAS014807: Management resource '[(\\\"deployment\\\" => \\\"unknown\\\")]' not found\""));
+        String notFound = "JBAS014807: Management resource '[(\\\"deployment\\\" => \\\"unknown.war\\\")]' not found\"";
+        when(client.execute(eq(readDeploymentModel("unknown.war")), any(OperationMessageHandler.class))) //
+                .thenReturn(ModelNode.fromString(failed(notFound)));
 
         expectedException.expect(RuntimeException.class);
         expectedException.expectMessage("JBAS014807");
@@ -51,18 +44,18 @@ public class DeploymentsContainerTest {
 
     @Test
     public void shouldFailToGetDeploymentFromMissingContainer() throws IOException {
-        when(client.execute(eq(READ_ALL_DEPLOYMENTS), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(readDeploymentModel("*")), any(OperationMessageHandler.class))) //
                 .thenThrow(new IOException("dummy"));
 
         expectedException.expect(IOException.class);
         expectedException.expectMessage("dummy");
 
-        container.getDeploymentByContextRoot(FOO);
+        container.getAllDeployments();
     }
 
     @Test
-    public void shouldReadOneDeployment() throws IOException {
-        givenDeployments(FOO);
+    public void shouldGetOneDeployment() {
+        givenDeployments(client, repository, FOO);
 
         Deployment deployment = container.getDeploymentByContextRoot(FOO);
 
@@ -70,8 +63,8 @@ public class DeploymentsContainerTest {
     }
 
     @Test
-    public void shouldReadOneOfTwoDeployments() throws IOException {
-        givenDeployments(FOO, BAR);
+    public void shouldGetOneOfTwoDeployments() {
+        givenDeployments(client, repository, FOO, BAR);
 
         Deployment deployment = container.getDeploymentByContextRoot(FOO);
 
@@ -79,8 +72,8 @@ public class DeploymentsContainerTest {
     }
 
     @Test
-    public void shouldReadTheOtherOfTwoDeployments() throws IOException {
-        givenDeployments(FOO, BAR);
+    public void shouldGetTheOtherOfTwoDeployments() {
+        givenDeployments(client, repository, FOO, BAR);
 
         Deployment deployment = container.getDeploymentByContextRoot(BAR);
 
@@ -88,8 +81,8 @@ public class DeploymentsContainerTest {
     }
 
     @Test
-    public void shouldGetAllDeployments() throws IOException {
-        givenDeployments(FOO, BAR);
+    public void shouldGetAllDeployments() {
+        givenDeployments(client, repository, FOO, BAR);
 
         List<Deployment> deployments = container.getAllDeployments();
 

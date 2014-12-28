@@ -8,16 +8,16 @@ import java.util.List;
 
 import lombok.*;
 
-public class VersionsGateway {
+public class Repository {
     // private static final URI ARTIFACTORY = URI.create("http://localhost:8081");
     //
     // private final ResteasyWebTarget api;
     //
-    // public VersionsGateway() {
+    // public Repository() {
     // this(ARTIFACTORY);
     // }
     //
-    // public VersionsGateway(URI baseUri) {
+    // public Repository(URI baseUri) {
     // this.api = new ResteasyClientBuilder().build().target(baseUri).path("/artifactory/api");
     // }
 

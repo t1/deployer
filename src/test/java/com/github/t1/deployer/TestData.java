@@ -1,25 +1,20 @@
 package com.github.t1.deployer;
 
+import static com.github.t1.deployer.DeploymentsContainer.*;
 import static java.util.Arrays.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+
+import lombok.SneakyThrows;
 
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 public class TestData {
-    public static final ModelNode READ_ALL_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
-            + "    \"address\" : [{\n" //
-            + "        \"deployment\" : \"*\"\n" //
-            + "    }],\n" //
-            + "    \"operation\" : \"read-resource\",\n" //
-            + "    \"recursive\" : true\n" //
-            + "}");
-
     public static final String FOO = "foo";
     public static final String BAR = "bar";
 
@@ -28,6 +23,28 @@ public class TestData {
 
     public static final String FOO_CHECKSUM = "32D59F10CCEA21A7844D66C9DBED030FD67964D1";
     public static final String BAR_CHECKSUM = "FBD368E959DF458C562D0A4D1F70049D0FA3D620";
+
+    @SneakyThrows(IOException.class)
+    public static void givenDeployments(ModelControllerClient client, Repository repository, String... deploymentNames) {
+        StringBuilder all = new StringBuilder();
+        for (String name : deploymentNames) {
+            if (all.length() == 0)
+                all.append("[");
+            else
+                all.append(",");
+            all.append("{\n" //
+                    + "            \"address\" => [(\"deployment\" => \"" + name + ".war\")],\n" //
+                    + "\"outcome\" => \"success\",\n" //
+                    + "\"result\" => " + deployment(name) + "\n" //
+                    + "}\n");
+            when(client.execute(eq(readDeploymentModel(name + ".war")), any(OperationMessageHandler.class))) //
+                    .thenReturn(ModelNode.fromString(success(deployment(name))));
+            when(repository.searchByChecksum(checksumFor(name))).thenReturn(versionFor(name));
+        }
+        all.append("]");
+        when(client.execute(eq(readDeploymentModel("*")), any(OperationMessageHandler.class))) //
+                .thenReturn(ModelNode.fromString(success(all.toString())));
+    }
 
     public static String checksumFor(String name) {
         switch (name) {
@@ -71,21 +88,16 @@ public class TestData {
             new Version("1.2.0") //
             );
 
-    public static void givenReadDeploymentsReturns(ModelControllerClient client, String response) throws IOException {
-        when(client.execute(eq(READ_ALL_DEPLOYMENTS), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(response));
-    }
-
     public static String failed(String message) {
         return "{\"outcome\" => \"failed\",\n" //
                 + "\"failure-description\" => \"" + message + "\n" //
                 + "}\n";
     }
 
-    public static String success(String... resultList) {
+    public static String success(String result) {
         return "{\n" //
                 + "\"outcome\" => \"success\",\n" //
-                + "\"result\" => " + Arrays.toString(resultList) + "\n" //
+                + "\"result\" => " + result + "\n" //
                 + "}\n";
     }
 
@@ -99,32 +111,27 @@ public class TestData {
 
     public static String deployment(String deployment) {
         return "{\n" //
-                + ("\"address\" => [(\"deployment\" => \"" + deployment + ".war\")],\n") //
-                + "\"outcome\" => \"success\",\n" //
-                + "\"result\" => {\n" //
-                + "    \"content\" => [{\"hash\" => bytes {\n" //
+                + "\"content\" => [{\"hash\" => bytes {\n" //
                 + byteArray(checksumFor(deployment)) //
-                + "    }}],\n" //
-                + "    \"enabled\" => true,\n" //
-                + ("    \"name\" => \"" + deployment + ".war\",\n") //
-                + "    \"persistent\" => true,\n" //
-                + ("    \"runtime-name\" => \"" + deployment + ".war\",\n") //
-                + "    \"subdeployment\" => undefined,\n" //
-                + "    \"subsystem\" => {\"web\" => {\n" //
-                + ("        \"context-root\" => \"/" + deployment + "\",\n") //
-                + "        \"server\" => \"default-server\",\n" //
-                + "        \"virtual-host\" => \"default-host\",\n" //
-                + "        \"servlet\" => {\"javax.ws.rs.core.Application\" => {\n" //
-                + "            \"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n" //
-                + "            \"servlet-name\" => \"javax.ws.rs.core.Application\"\n" //
-                + "        }}\n" //
-                + "    }}\n" //
-                + "}\n" //
+                + "}}],\n" //
+                + "\"enabled\" => true,\n" //
+                + ("\"name\" => \"" + deployment + ".war\",\n") //
+                + "\"persistent\" => true,\n" //
+                + ("\"runtime-name\" => \"" + deployment + ".war\",\n") //
+                + "\"subdeployment\" => undefined,\n" //
+                + "\"subsystem\" => {\"web\" => {\n" //
+                + ("\"context-root\" => \"/" + deployment + "\",\n") //
+                + "\"virtual-host\" => \"default-host\",\n" //
+                + "\"servlet\" => {\"javax.ws.rs.core.Application\" => {\n" //
+                + "\"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n" //
+                + "\"servlet-name\" => \"javax.ws.rs.core.Application\"\n" //
+                + "}}\n" //
+                + "}}\n" //
                 + "}";
     }
 
     public static void assertDeployment(String name, Deployment deployment) {
-        assertEquals("/" + name, deployment.getContextRoot());
+        assertEquals(name, deployment.getContextRoot());
         assertEquals(name + ".war", deployment.getName());
         assertEquals(versionFor(name), deployment.getVersion());
     }

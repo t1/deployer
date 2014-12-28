@@ -1,10 +1,8 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.Deployments.*;
 import static javax.xml.bind.annotation.XmlAccessType.*;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.util.List;
 
 import javax.ws.rs.*;
@@ -25,7 +23,7 @@ public class Deployment {
     @org.codehaus.jackson.annotate.JsonIgnore
     // @com.fasterxml.jackson.annotation.JsonIgnore
     @XmlTransient
-    private final VersionsGateway versionsGateway;
+    private final Repository repository;
 
     private final String name;
     private final String contextRoot;
@@ -41,7 +39,7 @@ public class Deployment {
     /** required by JAXB, etc. */
     @Deprecated
     public Deployment() {
-        this.versionsGateway = null;
+        this.repository = null;
         this.container = null;
         this.name = null;
         this.contextRoot = null;
@@ -57,8 +55,7 @@ public class Deployment {
     public Response put(@Context UriInfo uriInfo, InputStream inputStream) {
         container.deploy(name, inputStream);
 
-        URI uri = uriInfo.getBaseUriBuilder().path(Deployments.class).matrixParam(CONTEXT_ROOT, contextRoot).build();
-        return Response.created(uri).build();
+        return Response.created(Deployments.path(uriInfo, this)).build();
     }
 
     @DELETE
@@ -82,7 +79,7 @@ public class Deployment {
     @Path("version")
     public String getVersion() {
         if (version == null)
-            version = versionsGateway.searchByChecksum(hash).toString();
+            version = repository.searchByChecksum(hash).toString();
         return version;
     }
 
@@ -90,21 +87,17 @@ public class Deployment {
     @Path("/available-versions")
     public List<Version> getAvailableVersions() {
         if (availableVersions == null)
-            availableVersions = versionsGateway.searchVersions(groupId(), artifactId());
+            availableVersions = repository.searchVersions(groupId(), artifactId());
         return availableVersions;
     }
 
     // FIXME real group ids
     public String groupId() {
-        return strippedContextRoot() + "-group";
+        return contextRoot + "-group";
     }
 
     // FIXME real artifact ids
     public String artifactId() {
-        return strippedContextRoot() + "-artifact";
-    }
-
-    private String strippedContextRoot() {
-        return contextRoot.startsWith("/") ? contextRoot.substring(1) : contextRoot;
+        return contextRoot + "-artifact";
     }
 }

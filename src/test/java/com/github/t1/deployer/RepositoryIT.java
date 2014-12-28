@@ -1,7 +1,7 @@
 package com.github.t1.deployer;
 
 
-public class VersionsGatewayIT {
+public class RepositoryIT {
     // @Path("/artifactory/api")
     // @AllArgsConstructor
     // public static class ArtifactoryResource {
@@ -48,20 +48,20 @@ public class VersionsGatewayIT {
     // @ClassRule
     // public static DropwizardClientRule artifactory = new DropwizardClientRule(new ArtifactoryResource());
     //
-    // private VersionsGateway gateway() {
-    // return new VersionsGateway(artifactory.baseUri());
+    // private Repository repository() {
+    // return new Repository(artifactory.baseUri());
     // }
     //
     // @Test
     // public void shouldSearchVersions() {
-    // List<Version> versions = gateway().searchVersions("foo-group", "foo-artifact");
+    // List<Version> versions = repository().searchVersions("foo-group", "foo-artifact");
     //
     // assertEquals(FOO_VERSIONS, versions);
     // }
     //
     // @Test
     // public void shouldSearchByChecksum() {
-    // Version version = gateway().searchByChecksum(FOO_CHECKSUM);
+    // Version version = repository().searchByChecksum(FOO_CHECKSUM);
     //
     // assertEquals(CURRENT_FOO_VERSION, version);
     // }

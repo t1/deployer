@@ -21,7 +21,7 @@ public class DeploymentsTest {
     @InjectMocks
     Deployments deployments;
     @Mock
-    VersionsGateway versionsGateway;
+    Repository repository;
     @Mock
     DeploymentsContainer container;
 
@@ -44,33 +44,41 @@ public class DeploymentsTest {
             for (String version : versions) {
                 list.add(new Version(version));
             }
-            when(versionsGateway.searchVersions(contextRoot + "-group", contextRoot + "-artifact")).thenReturn(list);
+            when(repository.searchVersions(contextRoot + "-group", contextRoot + "-artifact")).thenReturn(list);
         }
     }
 
     private OngoingDeploymentStub givenDeployment(String name, String contextRoot, String checksum, String version) {
-        Deployment deployment = new Deployment(container, versionsGateway, name, contextRoot, checksum);
+        Deployment deployment = new Deployment(container, repository, name, contextRoot, checksum);
         installedDeployments.add(deployment);
-        when(versionsGateway.searchByChecksum(checksum)).thenReturn(version);
+        when(repository.searchByChecksum(checksum)).thenReturn(version);
         when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
         return new OngoingDeploymentStub(contextRoot);
     }
 
     @Test
-    public void shouldAllDeployments() {
-        givenDeployment("foo.war", "foo", FOO_CHECKSUM, CURRENT_FOO_VERSION).availableVersions("1.3.1");
+    public void shouldGetAllDeployments() {
+        givenDeployment("foo.war", FOO, FOO_CHECKSUM, CURRENT_FOO_VERSION).availableVersions("1.3.1");
+        givenDeployment("bar.war", BAR, BAR_CHECKSUM, CURRENT_BAR_VERSION).availableVersions("1.2.3", "1.2.4");
 
         Response response = deployments.getAllDeployments();
 
         assertEquals(200, response.getStatus());
         @SuppressWarnings("unchecked")
         List<Deployment> list = (List<Deployment>) response.getEntity();
-        assertEquals(1, list.size());
-        Deployment deployment = list.get(0);
-        assertEquals("foo.war", deployment.getName());
-        assertEquals("foo", deployment.getContextRoot());
-        assertEquals(CURRENT_FOO_VERSION, deployment.getVersion());
-        assertEquals("[1.3.1]", deployment.getAvailableVersions().toString());
+        assertEquals(2, list.size());
+
+        Deployment deployment0 = list.get(0);
+        assertEquals("foo.war", deployment0.getName());
+        assertEquals("foo", deployment0.getContextRoot());
+        assertEquals(CURRENT_FOO_VERSION, deployment0.getVersion());
+        assertEquals("[1.3.1]", deployment0.getAvailableVersions().toString());
+
+        Deployment deployment1 = list.get(1);
+        assertEquals("bar.war", deployment1.getName());
+        assertEquals("bar", deployment1.getContextRoot());
+        assertEquals(CURRENT_BAR_VERSION, deployment1.getVersion());
+        assertEquals("[1.2.3, 1.2.4]", deployment1.getAvailableVersions().toString());
     }
 
     @Test

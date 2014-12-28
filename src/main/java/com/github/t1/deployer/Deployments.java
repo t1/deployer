@@ -2,21 +2,27 @@ package com.github.t1.deployer;
 
 import static com.github.t1.log.LogLevel.*;
 
+import java.net.URI;
 import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 
 import com.github.t1.log.Logged;
 
 @Logged(level = INFO)
 @Path("/deployments")
 public class Deployments {
-    public static final String CONTEXT_ROOT = "context-root";
+    private static final String CONTEXT_ROOT = "context-root";
 
-    @Inject
-    VersionsGateway versionsGateway;
+    public static URI path(UriInfo uriInfo, Deployment deployment) {
+        return uriInfo.getBaseUriBuilder() //
+                .path(Deployments.class) //
+                .matrixParam(CONTEXT_ROOT, deployment.getContextRoot()) //
+                .build();
+    }
+
     @Inject
     DeploymentsContainer container;
 

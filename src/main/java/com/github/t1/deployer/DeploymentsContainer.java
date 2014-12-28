@@ -1,6 +1,5 @@
 package com.github.t1.deployer;
 
-
 import static java.util.concurrent.TimeUnit.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static javax.xml.bind.DatatypeConverter.*;
@@ -114,14 +113,6 @@ public class DeploymentsContainer {
         }
     }
 
-    static final ModelNode READ_ALL_DEPLOYMENTS = ModelNode.fromJSONString("{\n" //
-            + "    \"address\" : [{\n" //
-            + "        \"deployment\" : \"*\"\n" //
-            + "    }],\n" //
-            + "    \"operation\" : \"read-resource\",\n" //
-            + "    \"recursive\" : true\n" //
-            + "}");
-
     private static final OperationMessageHandler LOGGING = new OperationMessageHandler() {
         @Override
         public void handleReport(MessageSeverity severity, String message) {
@@ -142,7 +133,7 @@ public class DeploymentsContainer {
     ModelControllerClient client;
 
     @Inject
-    VersionsGateway versionsGateway;
+    Repository repository;
 
     @SneakyThrows(IOException.class)
     private ModelNode execute(ModelNode command) {
@@ -154,44 +145,55 @@ public class DeploymentsContainer {
 
     private void checkOutcome(ModelNode result) {
         String outcome = result.get("outcome").asString();
-        if (!"success".equals(outcome))
+        if (!"success".equals(outcome)) {
             throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
+        }
     }
 
     public Deployment getDeploymentByContextRoot(String contextRoot) {
-        List<Deployment> deployments = getAllDeployments();
-        for (Deployment deployment : deployments) {
-            if (deployment.getContextRoot().equals(contextRoot)) {
-                return deployment;
-            }
+        ModelNode node = readDeployments(contextRoot + ".war");
+        Deployment deployment = toDeployment(node);
+        check(deployment, contextRoot);
+
+        log.debug("found deployment {}", deployment);
+        return deployment;
+    }
+
+    private void check(Deployment deployment, String contextRoot) {
+        if (!deployment.getContextRoot().equals(contextRoot)) {
+            log.debug("deployment context root {} doesn't match {}", deployment.getContextRoot(), contextRoot);
+            throw new WebApplicationException(NOT_FOUND);
         }
-        log.debug("found {} deployments", deployments.size());
-        for (Deployment deployment : deployments) {
-            log.debug("found deployment {}", deployment);
-        }
-        log.debug("no deployment found with context root [{}]", contextRoot);
-        throw new WebApplicationException(NOT_FOUND);
     }
 
     public List<Deployment> getAllDeployments() {
-        ModelNode result = execute(READ_ALL_DEPLOYMENTS);
-        checkOutcome(result);
-        return deploymentsIn(result.get("result"));
+        List<Deployment> list = new ArrayList<>();
+        for (ModelNode cliDeploymentMatch : readDeployments("*").asList())
+            list.add(toDeployment(cliDeploymentMatch.get("result")));
+        return list;
     }
 
-    private List<Deployment> deploymentsIn(ModelNode cliDeploymentsResult) {
-        List<Deployment> list = new ArrayList<>();
+    private ModelNode readDeployments(String name) {
+        ModelNode result = execute(readDeploymentModel(name));
+        checkOutcome(result);
+        return result.get("result");
+    }
 
-        for (ModelNode cliDeploymentMatch : cliDeploymentsResult.asList()) {
-            ModelNode cliDeployment = cliDeploymentMatch.get("result");
-            String name = cliDeployment.get("name").asString();
-            String contextRoot = getContextRoot(cliDeployment);
-            String hash = printHexBinary(cliDeployment.get("content").get(0).get("hash").asBytes());
-            log.debug("{} -> {} -> {}", name, contextRoot, hash);
-            list.add(new Deployment(this, versionsGateway, name, contextRoot, hash));
-        }
+    public static ModelNode readDeploymentModel(String deployment) {
+        ModelNode node = new ModelNode();
+        node.get("address").add("deployment", deployment);
+        node.get("operation").set("read-resource");
+        node.get("recursive").set(true);
+        return node;
+    }
 
-        return list;
+    private Deployment toDeployment(ModelNode cliDeployment) {
+        String name = cliDeployment.get("name").asString();
+        String contextRoot = getContextRoot(cliDeployment);
+        String hash = printHexBinary(cliDeployment.get("content").get(0).get("hash").asBytes());
+        log.debug("{} -> {} -> {}", name, contextRoot, hash);
+        Deployment deployment = new Deployment(this, repository, name, contextRoot, hash);
+        return deployment;
     }
 
     private String getContextRoot(ModelNode cliDeployment) {

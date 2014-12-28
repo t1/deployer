@@ -101,22 +101,19 @@
         </dependency>
 
         <!-- compile scope -->
-        <!-- <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-controller-client</artifactId>
-            <version>7.2.0.Final</version>
-        </dependency> -->
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
             <version>1.0.0.Alpha14</version>
         </dependency>
+<!--
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
             <version>3.2.3</version>
         </dependency>
-        <dependency>
+ -->
+         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>logging-interceptor</artifactId>
             <version>1.6.0</version>
