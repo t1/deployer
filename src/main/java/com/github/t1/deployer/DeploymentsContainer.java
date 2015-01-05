@@ -192,8 +192,7 @@ public class DeploymentsContainer {
         String contextRoot = getContextRoot(cliDeployment);
         String hash = printHexBinary(cliDeployment.get("content").get(0).get("hash").asBytes());
         log.debug("{} -> {} -> {}", name, contextRoot, hash);
-        Deployment deployment = new Deployment(this, repository, name, contextRoot, hash);
-        return deployment;
+        return new Deployment(name, contextRoot, hash);
     }
 
     private String getContextRoot(ModelNode cliDeployment) {

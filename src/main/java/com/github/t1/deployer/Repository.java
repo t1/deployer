@@ -2,6 +2,7 @@ package com.github.t1.deployer;
 
 import static java.util.Arrays.*;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.List;
@@ -27,9 +28,9 @@ public class Repository {
         List<Version> results;
     }
 
-    public List<Version> searchVersions(String groupId, String artifactId) {
-        switch (groupId + ":" + artifactId) {
-            case "deployer-group:deployer-artifact":
+    public List<Version> availableVersionsFor(Deployment deployment) {
+        switch (deployment.getContextRoot()) {
+            case "deployer":
                 return asList(new Version("1.2.3"), new Version("1.2.4"), new Version("1.2.5"));
         }
         return asList();
@@ -82,5 +83,10 @@ public class Repository {
         Path path = Paths.get(uri.getPath());
         int length = path.getNameCount();
         return new Version(path.getName(length - 2).toString());
+    }
+
+    public InputStream getArtifactInputStream(String string, String string2, String version) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

@@ -29,6 +29,16 @@ public class DeploymentsContainerTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    private void givenDeployments(String... deploymentNames) {
+        TestData.givenDeployments(repository, deploymentNames);
+        TestData.givenDeployments(client, deploymentNames);
+    }
+
+    private static void assertDeployment(String name, Deployment deployment) {
+        assertEquals(name, deployment.getContextRoot());
+        assertEquals(name + ".war", deployment.getName());
+    }
+
     @Test
     public void shouldFailToGetDeploymentByUnknownContextRoot() throws IOException {
         String notFound = "JBAS014807: Management resource '[(\\\"deployment\\\" => \\\"unknown.war\\\")]' not found\"";
@@ -55,7 +65,7 @@ public class DeploymentsContainerTest {
 
     @Test
     public void shouldGetOneDeployment() {
-        givenDeployments(client, repository, FOO);
+        givenDeployments(FOO);
 
         Deployment deployment = container.getDeploymentByContextRoot(FOO);
 
@@ -64,7 +74,7 @@ public class DeploymentsContainerTest {
 
     @Test
     public void shouldGetOneOfTwoDeployments() {
-        givenDeployments(client, repository, FOO, BAR);
+        givenDeployments(FOO, BAR);
 
         Deployment deployment = container.getDeploymentByContextRoot(FOO);
 
@@ -73,7 +83,7 @@ public class DeploymentsContainerTest {
 
     @Test
     public void shouldGetTheOtherOfTwoDeployments() {
-        givenDeployments(client, repository, FOO, BAR);
+        givenDeployments(FOO, BAR);
 
         Deployment deployment = container.getDeploymentByContextRoot(BAR);
 
@@ -82,7 +92,7 @@ public class DeploymentsContainerTest {
 
     @Test
     public void shouldGetAllDeployments() {
-        givenDeployments(client, repository, FOO, BAR);
+        givenDeployments(FOO, BAR);
 
         List<Deployment> deployments = container.getAllDeployments();
 

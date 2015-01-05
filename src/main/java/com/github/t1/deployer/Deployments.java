@@ -25,16 +25,31 @@ public class Deployments {
 
     @Inject
     DeploymentsContainer container;
+    @Inject
+    Repository repository;
 
     @GET
     @Path("*")
     public Response getAllDeployments() {
         List<Deployment> deployments = container.getAllDeployments();
+        for (Deployment deployment : deployments) {
+            loadVersion(deployment);
+        }
         return Response.ok(deployments).build();
     }
 
+    private void loadVersion(Deployment deployment) {
+        deployment.setVersion(repository.searchByChecksum(deployment.getHash()).toString());
+    }
+
     @Path("")
-    public Deployment getDeploymentsByContextRoot(@MatrixParam(CONTEXT_ROOT) String contextRoot) {
-        return container.getDeploymentByContextRoot(contextRoot);
+    public DeploymentResource getDeploymentsByContextRoot(@MatrixParam(CONTEXT_ROOT) String contextRoot) {
+        Deployment deployment = container.getDeploymentByContextRoot(contextRoot);
+        return toResource(deployment);
+    }
+
+    private DeploymentResource toResource(Deployment deployment) {
+        loadVersion(deployment);
+        return new DeploymentResource(container, repository, deployment);
     }
 }
