@@ -15,7 +15,7 @@ public class Deployment {
     private final String contextRoot;
     private final String hash;
 
-    private String version;
+    private Version version;
 
     /** required by JAXB, etc. */
     @SuppressWarnings("unused")

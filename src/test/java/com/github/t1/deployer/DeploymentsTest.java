@@ -37,7 +37,8 @@ public class DeploymentsTest {
 
     @AllArgsConstructor
     private class OngoingDeploymentStub {
-        String contextRoot, version;
+        String contextRoot;
+        Version version;
 
         public void availableVersions(String... versions) {
             List<Version> list = new ArrayList<>();
@@ -50,7 +51,7 @@ public class DeploymentsTest {
         }
     }
 
-    private OngoingDeploymentStub givenDeployment(String name, String contextRoot, String checksum, String version) {
+    private OngoingDeploymentStub givenDeployment(String name, String contextRoot, String checksum, Version version) {
         Deployment deployment = new Deployment(name, contextRoot, checksum);
         installedDeployments.add(deployment);
         when(repository.searchByChecksum(checksum)).thenReturn(version);

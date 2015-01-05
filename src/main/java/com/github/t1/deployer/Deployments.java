@@ -39,7 +39,7 @@ public class Deployments {
     }
 
     private void loadVersion(Deployment deployment) {
-        deployment.setVersion(repository.searchByChecksum(deployment.getHash()).toString());
+        deployment.setVersion(repository.searchByChecksum(deployment.getHash()));
     }
 
     @Path("")

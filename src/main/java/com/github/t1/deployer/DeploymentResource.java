@@ -52,7 +52,7 @@ public class DeploymentResource {
 
     @GET
     @Path("version")
-    public String getVersion() {
+    public Version getVersion() {
         return deployment.getVersion();
     }
 

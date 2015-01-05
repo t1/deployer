@@ -52,23 +52,23 @@ public class TestData {
     public static final String FOO = "foo";
     public static final String BAR = "bar";
 
-    public static final String NEWEST_FOO_VERSION = "1.3.10";
-    public static final String CURRENT_FOO_VERSION = "1.3.1";
+    public static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
+    public static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
 
     public static final List<Version> FOO_VERSIONS = asList(//
-            new Version(NEWEST_FOO_VERSION), //
+            NEWEST_FOO_VERSION, //
             new Version("1.3.2"), //
-            new Version(CURRENT_FOO_VERSION), //
+            CURRENT_FOO_VERSION, //
             new Version("1.3.0"), //
             new Version("1.2.1"), //
             new Version("1.2.1-SNAPSHOT"), //
             new Version("1.2.0") //
             );
 
-    public static final String CURRENT_BAR_VERSION = "0.3";
+    public static final Version CURRENT_BAR_VERSION = new Version("0.3");
 
     public static final List<Version> BAR_VERSIONS = asList(//
-            new Version(CURRENT_BAR_VERSION), //
+            CURRENT_BAR_VERSION, //
             new Version("0.2") //
             );
 
@@ -80,7 +80,7 @@ public class TestData {
             when(repository.searchByChecksum(checksumFor(name))).thenReturn(versionFor(name));
             for (Version version : availableVersionsFor(name)) {
                 when(repository.getArtifactInputStream(argThat(isDeploymentFor(name, version)))) //
-                        .thenReturn(inputStreamFor(name, version.getVersion()));
+                        .thenReturn(inputStreamFor(name, version));
             }
         }
     }
@@ -148,7 +148,7 @@ public class TestData {
         }
     }
 
-    public static String versionFor(String name) {
+    public static Version versionFor(String name) {
         switch (name) {
             case FOO:
                 return CURRENT_FOO_VERSION;
@@ -170,7 +170,7 @@ public class TestData {
         }
     }
 
-    public static InputStream inputStreamFor(String name, String version) {
+    public static InputStream inputStreamFor(String name, Version version) {
         return new StringInputStream(name + "-content@" + version);
     }
 
@@ -226,7 +226,7 @@ public class TestData {
                 + "}";
     }
 
-    public static Entity<String> entity(String contextRoot, String version) {
+    public static Entity<String> entity(String contextRoot, Version version) {
         return Entity.json("{\n" //
                 + "   \"name\" : \"" + contextRoot + ".war\",\n" //
                 + "   \"version\" : \"" + version + "\",\n" //
