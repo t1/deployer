@@ -57,8 +57,8 @@ public class Repository {
         URI uri;
     }
 
-    public String searchByChecksum(String md5sum) {
-        return "1.2.3";
+    public Version searchByChecksum(String md5sum) {
+        return new Version("1.2.3");
         // Response response = api //
         // .path("/search/checksum") //
         // .queryParam("md5", md5sum) //
