@@ -78,7 +78,7 @@ public class TestData {
         for (String name : deploymentNames) {
             when(repository.searchByChecksum(checksumFor(name))).thenReturn(versionFor(name));
             for (Version version : availableVersionsFor(name)) {
-                when(repository.getArtifactInputStream(checksumFor(name))) //
+                when(repository.getArtifactInputStream(checksumFor(name), version)) //
                         .thenReturn(inputStreamFor(name, version));
             }
         }
@@ -207,8 +207,9 @@ public class TestData {
     public static Entity<String> entity(String contextRoot, Version version) {
         return Entity.json("{\n" //
                 + "   \"name\" : \"" + contextRoot + ".war\",\n" //
-                + "   \"version\" : \"" + version + "\",\n" //
-                + "   \"contextRoot\" : \"" + contextRoot + "\"\n" //
+                + "   \"contextRoot\" : \"" + contextRoot + "\",\n" //
+                + "   \"hash\" : \"" + checksumFor(contextRoot) + "\",\n" //
+                + "   \"version\" : \"" + version + "\"\n" //
                 + "}");
     }
 

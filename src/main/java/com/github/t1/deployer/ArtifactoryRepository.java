@@ -122,7 +122,7 @@ public class ArtifactoryRepository implements Repository {
     }
 
     @Override
-    public InputStream getArtifactInputStream(String md5sum) {
+    public InputStream getArtifactInputStream(String md5sum, Version version) {
         // TODO Auto-generated method stub
         return null;
     }

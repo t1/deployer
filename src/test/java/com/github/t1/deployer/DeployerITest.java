@@ -48,7 +48,7 @@ public class DeployerITest {
 
     private void assertFoo(Deployment deployment) {
         assertEquals("foo.war", deployment.getName());
-        assertEquals("foo", deployment.getContextRoot());
+        assertEquals(FOO, deployment.getContextRoot());
         assertEquals("1.3.1", deployment.getVersion().toString());
     }
 
@@ -66,11 +66,11 @@ public class DeployerITest {
         assertEquals(2, deployments.size());
 
         Deployment foo = deployments.get(0);
-        assertEquals("foo", foo.getContextRoot());
+        assertEquals(FOO, foo.getContextRoot());
         assertEquals(CURRENT_FOO_VERSION, foo.getVersion());
 
         Deployment bar = deployments.get(1);
-        assertEquals("bar", bar.getContextRoot());
+        assertEquals(BAR, bar.getContextRoot());
         assertEquals(CURRENT_BAR_VERSION, bar.getVersion());
     }
 
@@ -80,7 +80,7 @@ public class DeployerITest {
 
         Response response = deployer() //
                 .path("/deployments") //
-                .matrixParam("context-root", "foo") //
+                .matrixParam("context-root", FOO) //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
@@ -96,7 +96,7 @@ public class DeployerITest {
 
         Response response = deployer() //
                 .path("/deployments") //
-                .matrixParam("context-root", "foo") //
+                .matrixParam("context-root", FOO) //
                 .path("available-versions") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
@@ -112,7 +112,7 @@ public class DeployerITest {
 
         WebTarget uri = deployer() //
                 .path("/deployments") //
-                .matrixParam("context-root", "foo");
+                .matrixParam("context-root", FOO);
         Response response = uri //
                 .request(APPLICATION_JSON_TYPE) //
                 .put(entity(FOO, CURRENT_FOO_VERSION));
@@ -128,7 +128,7 @@ public class DeployerITest {
 
         WebTarget uri = deployer() //
                 .path("/deployments") //
-                .matrixParam("context-root", "foo");
+                .matrixParam("context-root", FOO);
         Response response = uri //
                 .request(APPLICATION_JSON_TYPE) //
                 .put(entity(FOO, NEWEST_FOO_VERSION));
@@ -144,7 +144,7 @@ public class DeployerITest {
 
         Response response = deployer() //
                 .path("/deployments") //
-                .matrixParam("context-root", "foo") //
+                .matrixParam("context-root", FOO) //
                 .request(APPLICATION_JSON_TYPE) //
                 .delete();
 
