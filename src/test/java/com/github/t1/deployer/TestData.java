@@ -95,7 +95,7 @@ public class TestData {
                 return (name + ".war").equals(deployment.getName()) //
                         && name.equals(deployment.getContextRoot()) //
                         // ignore hash code, as this is, e.g., not sent by the client
-                        && version.getVersion().equals(deployment.getVersion()) //
+                        && version.equals(deployment.getVersion()) //
                 ;
             }
 
