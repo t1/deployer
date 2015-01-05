@@ -85,7 +85,7 @@ public class Repository {
         return new Version(path.getName(length - 2).toString());
     }
 
-    public InputStream getArtifactInputStream(String string, String string2, String version) {
+    public InputStream getArtifactInputStream(Deployment deployment) {
         // TODO Auto-generated method stub
         return null;
     }
