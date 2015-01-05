@@ -47,7 +47,7 @@ public class DeploymentsTest {
             }
             Deployment deployment = new Deployment(contextRoot + ".war", contextRoot, checksumFor(contextRoot));
             deployment.setVersion(version);
-            when(repository.availableVersionsFor(deployment)).thenReturn(list);
+            when(repository.availableVersionsFor(deployment.getHash())).thenReturn(list);
         }
     }
 

@@ -24,7 +24,7 @@ public class DeploymentResource {
 
     @PUT
     public Response put(@Context UriInfo uriInfo, Deployment entity) {
-        try (InputStream inputStream = repository.getArtifactInputStream(entity)) {
+        try (InputStream inputStream = repository.getArtifactInputStream(entity.getHash())) {
             container.deploy(deployment.getContextRoot(), inputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -60,7 +60,7 @@ public class DeploymentResource {
     @Path("/available-versions")
     public List<Version> getAvailableVersions() {
         if (availableVersions == null)
-            availableVersions = repository.availableVersionsFor(deployment);
+            availableVersions = repository.availableVersionsFor(deployment.getHash());
         return availableVersions;
     }
 }

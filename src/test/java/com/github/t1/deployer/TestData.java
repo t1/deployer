@@ -15,7 +15,6 @@ import javax.ws.rs.core.Response.Status;
 
 import lombok.SneakyThrows;
 
-import org.hamcrest.*;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
@@ -79,31 +78,10 @@ public class TestData {
         for (String name : deploymentNames) {
             when(repository.searchByChecksum(checksumFor(name))).thenReturn(versionFor(name));
             for (Version version : availableVersionsFor(name)) {
-                when(repository.getArtifactInputStream(argThat(isDeploymentFor(name, version)))) //
+                when(repository.getArtifactInputStream(checksumFor(name))) //
                         .thenReturn(inputStreamFor(name, version));
             }
         }
-    }
-
-    public static Matcher<Deployment> isDeploymentFor(final String name, final Version version) {
-        return new BaseMatcher<Deployment>() {
-            @Override
-            public boolean matches(Object item) {
-                if (!(item instanceof Deployment))
-                    return false;
-                Deployment deployment = (Deployment) item;
-                return (name + ".war").equals(deployment.getName()) //
-                        && name.equals(deployment.getContextRoot()) //
-                        // ignore hash code, as this is, e.g., not sent by the client
-                        && version.equals(deployment.getVersion()) //
-                ;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("a deployment for " + name + " at version " + version);
-            }
-        };
     }
 
     public static void givenDeployments(DeploymentsContainer container, String... contextRoots) {
