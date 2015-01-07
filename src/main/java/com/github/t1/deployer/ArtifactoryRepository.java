@@ -13,6 +13,9 @@ import javax.ws.rs.core.*;
 
 import lombok.*;
 
+import com.github.t1.log.Logged;
+
+@Logged
 public class ArtifactoryRepository implements Repository {
     private final Client webClient = ClientBuilder.newClient();
     private final WebTarget artifactory;
@@ -22,7 +25,7 @@ public class ArtifactoryRepository implements Repository {
     }
 
     @PreDestroy
-    void close() {
+    void closeWebClient() {
         webClient.close();
     }
 

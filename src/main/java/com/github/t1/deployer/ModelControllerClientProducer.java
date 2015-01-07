@@ -18,7 +18,7 @@ public class ModelControllerClientProducer {
     ModelControllerClient produceModelControllerClient() throws IOException {
         InetAddress host = InetAddress.getByName("localhost");
         int port = 9999;
-        log.info("connect to JBoss AS on {}:{}", host, port);
+        log.info("create client to JBoss AS on {}:{}", host, port);
         return ModelControllerClient.Factory.create(host, port);
     }
 
