@@ -2,7 +2,7 @@ package com.github.t1.deployer;
 
 import static javax.ws.rs.core.Response.Status.*;
 
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
@@ -15,10 +15,10 @@ import lombok.*;
 
 public class ArtifactoryRepository implements Repository {
     private final Client webClient = ClientBuilder.newClient();
-    private final WebTarget api;
+    private final WebTarget artifactory;
 
     public ArtifactoryRepository(URI baseUri) {
-        this.api = webClient.target(baseUri).path("/artifactory/api");
+        this.artifactory = webClient.target(baseUri).path("artifactory");
     }
 
     @PreDestroy
@@ -44,8 +44,8 @@ public class ArtifactoryRepository implements Repository {
     }
 
     @Override
-    public List<Version> availableVersionsFor(String checkSum) {
-        URI uri = getUriByChecksum(checkSum);
+    public List<Version> availableVersionsFor(String md5sum) {
+        URI uri = searchByChecksum(md5sum).getUri();
         UriBuilder uriBuilder = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri));
 
         Response response = webClient.target(uriBuilder) //
@@ -77,19 +77,24 @@ public class ArtifactoryRepository implements Repository {
 
     @Data
     @NoArgsConstructor
+    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
     private static class ChecksumSearchResult {
         List<ChecksumSearchResultItem> results;
     }
 
     @Data
     @NoArgsConstructor
+    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
     private static class ChecksumSearchResultItem {
         URI uri;
+        URI downloadUri;
     }
 
-    private URI getUriByChecksum(String md5sum) {
-        Response response = api //
-                .path("/search/checksum") //
+    private ChecksumSearchResultItem searchByChecksum(String md5sum) {
+        Response response = artifactory //
+                .path("/api/search/checksum") //
                 .queryParam("md5", md5sum) //
                 .request() //
                 .get();
@@ -101,8 +106,7 @@ public class ArtifactoryRepository implements Repository {
             throw new RuntimeException("checksum not found in artifactory: " + md5sum);
         if (results.size() > 1)
             throw new RuntimeException("checksum not unique in artifactory: " + md5sum);
-        ChecksumSearchResultItem result = results.get(0);
-        return result.getUri();
+        return results.get(0);
     }
 
     /**
@@ -110,8 +114,8 @@ public class ArtifactoryRepository implements Repository {
      * <code>X-Result-Detail</code> header doesn't provide it.
      */
     @Override
-    public Version searchByChecksum(String md5sum) {
-        URI result = getUriByChecksum(md5sum);
+    public Version getVersionByChecksum(String md5sum) {
+        URI result = searchByChecksum(md5sum).getUri();
         Path path = path(result);
         int length = path.getNameCount();
         return new Version(path.getName(length - 2).toString());
@@ -122,8 +126,9 @@ public class ArtifactoryRepository implements Repository {
     }
 
     @Override
-    public InputStream getArtifactInputStream(String md5sum, Version version) {
-        // TODO Auto-generated method stub
-        return null;
+    @SneakyThrows(IOException.class)
+    public InputStream getArtifactInputStream(String md5sum) {
+        URI uri = searchByChecksum(md5sum).getDownloadUri();
+        return uri.toURL().openStream();
     }
 }

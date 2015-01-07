@@ -24,7 +24,7 @@ public class DeploymentResource {
 
     @PUT
     public Response put(@Context UriInfo uriInfo, Deployment entity) {
-        try (InputStream inputStream = repository.getArtifactInputStream(entity.getHash(), entity.getVersion())) {
+        try (InputStream inputStream = repository.getArtifactInputStream(entity.getHash())) {
             container.deploy(deployment.getContextRoot(), inputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);

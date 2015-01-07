@@ -91,7 +91,7 @@ public class DeployerITest {
 
     @Test
     @Ignore("sub resources after matrix params don't seem to work in Dropwizard")
-    public void shouldGetDeploymentAvailableVersionByContextRootMatrix() {
+    public void shouldGetAvailableVersion() {
         given(FOO, BAR);
 
         Response response = deployer() //

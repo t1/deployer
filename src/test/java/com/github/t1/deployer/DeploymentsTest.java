@@ -54,15 +54,15 @@ public class DeploymentsTest {
     private OngoingDeploymentStub givenDeployment(String name, String contextRoot, String checksum, Version version) {
         Deployment deployment = new Deployment(name, contextRoot, checksum);
         installedDeployments.add(deployment);
-        when(repository.searchByChecksum(checksum)).thenReturn(version);
+        when(repository.getVersionByChecksum(checksum)).thenReturn(version);
         when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
         return new OngoingDeploymentStub(contextRoot, version);
     }
 
     @Test
     public void shouldGetAllDeployments() {
-        givenDeployment("foo.war", FOO, FOO_CHECKSUM, CURRENT_FOO_VERSION);
-        givenDeployment("bar.war", BAR, BAR_CHECKSUM, CURRENT_BAR_VERSION);
+        givenDeployment("foo.war", FOO, checksumFor(FOO), CURRENT_FOO_VERSION);
+        givenDeployment("bar.war", BAR, checksumFor(BAR), CURRENT_BAR_VERSION);
 
         Response response = deployments.getAllDeployments();
 
@@ -84,7 +84,7 @@ public class DeploymentsTest {
 
     @Test
     public void shouldGetDeploymentByContextRootMatrix() {
-        givenDeployment("foo.war", "foo", FOO_CHECKSUM, CURRENT_FOO_VERSION).availableVersions("1.3.1");
+        givenDeployment("foo.war", "foo", checksumFor(FOO), CURRENT_FOO_VERSION).availableVersions("1.3.1");
 
         DeploymentResource deployment = deployments.getDeploymentsByContextRoot("foo");
 
@@ -94,7 +94,7 @@ public class DeploymentsTest {
 
     @Test
     public void shouldGetDeploymentVersions() {
-        givenDeployment("foo.war", "foo", FOO_CHECKSUM, CURRENT_FOO_VERSION).availableVersions("1.3.2", "1.3.1",
+        givenDeployment("foo.war", "foo", checksumFor(FOO), CURRENT_FOO_VERSION).availableVersions("1.3.2", "1.3.1",
                 "1.3.0", "1.2.8-SNAPSHOT", "1.2.7", "1.2.6");
 
         DeploymentResource deployment = deployments.getDeploymentsByContextRoot("foo");

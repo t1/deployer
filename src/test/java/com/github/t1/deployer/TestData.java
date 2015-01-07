@@ -2,6 +2,7 @@ package com.github.t1.deployer;
 
 import static com.github.t1.deployer.DeploymentsContainer.*;
 import static java.util.Arrays.*;
+import static javax.xml.bind.DatatypeConverter.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -71,14 +72,11 @@ public class TestData {
             new Version("0.2") //
             );
 
-    public static final String FOO_CHECKSUM = "32D59F10CCEA21A7844D66C9DBED030FD67964D1";
-    public static final String BAR_CHECKSUM = "FBD368E959DF458C562D0A4D1F70049D0FA3D620";
-
     public static void givenDeployments(Repository repository, String... deploymentNames) {
         for (String name : deploymentNames) {
-            when(repository.searchByChecksum(checksumFor(name))).thenReturn(versionFor(name));
+            when(repository.getVersionByChecksum(checksumFor(name))).thenReturn(versionFor(name));
             for (Version version : availableVersionsFor(name)) {
-                when(repository.getArtifactInputStream(checksumFor(name), version)) //
+                when(repository.getArtifactInputStream(checksumFor(name, version))) //
                         .thenReturn(inputStreamFor(name, version));
             }
         }
@@ -116,14 +114,11 @@ public class TestData {
     }
 
     public static String checksumFor(String name) {
-        switch (name) {
-            case FOO:
-                return FOO_CHECKSUM;
-            case BAR:
-                return BAR_CHECKSUM;
-            default:
-                throw new IllegalArgumentException("no test data checksum defined for " + name);
-        }
+        return checksumFor(name, versionFor(name));
+    }
+
+    public static String checksumFor(String name, Version version) {
+        return printHexBinary(("md5(" + name + "@" + version + ")").getBytes());
     }
 
     public static Version versionFor(String name) {
@@ -133,7 +128,7 @@ public class TestData {
             case BAR:
                 return CURRENT_BAR_VERSION;
             default:
-                throw new IllegalArgumentException("no test data version defined for " + name);
+                throw new IllegalArgumentException("no test data 'version' defined for " + name);
         }
     }
 
@@ -144,7 +139,7 @@ public class TestData {
             case BAR:
                 return BAR_VERSIONS;
             default:
-                throw new IllegalArgumentException("no test data available versions defined for " + name);
+                throw new IllegalArgumentException("no test data 'available versions' defined for " + name);
         }
     }
 

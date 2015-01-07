@@ -4,10 +4,14 @@ import static com.github.t1.deployer.TestData.*;
 import static org.junit.Assert.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
+import java.io.*;
+import java.nio.file.Paths;
 import java.util.List;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+
+import lombok.SneakyThrows;
 
 import org.junit.*;
 import org.junit.rules.ExpectedException;
@@ -17,46 +21,46 @@ public class RepositoryIT {
     private static final String AMBIGUOUS_CHECKSUM = "2222222222222222222222222222222222222222";
     private static final String UNKNOWN_CHECKSUM = "3333333333333333333333333333333333333333";
 
-    @Path("/artifactory/api")
-    public static class ArtifactoryResource {
+    @Path("/artifactory")
+    public static class ArtifactoryMock {
         @Context
         UriInfo uriInfo;
 
         private UriBuilder base(String path) {
-            return uriInfo.getBaseUriBuilder().path(ArtifactoryResource.class).path(path);
+            return uriInfo.getBaseUriBuilder().path(ArtifactoryMock.class).path(path);
         }
 
         @GET
-        @Path("/search/checksum")
+        @Path("/api/search/checksum")
         @Produces("application/vnd.org.jfrog.artifactory.search.checksumsearchresult+json")
         public String searchChecksum(@QueryParam("md5") String md5) {
             return "{\"results\": [" + resultsFor(md5) + "]}";
         }
 
         private String resultsFor(String md5) {
-            switch (md5) {
-                case FOO_CHECKSUM:
-                    return uriJar(FOO, CURRENT_FOO_VERSION);
-                case BAR_CHECKSUM:
-                    return uriJar(BAR, CURRENT_BAR_VERSION);
-                case FAILING_CHECKSUM:
-                    throw new RuntimeException("error in repo");
-                case AMBIGUOUS_CHECKSUM:
-                    return uriJar("x", null) + "," + uriJar("y", null);
-                case UNKNOWN_CHECKSUM:
-                default:
-                    return "";
+            if (checksumFor(FOO).equals(md5)) {
+                return uriJar(FOO, CURRENT_FOO_VERSION);
+            } else if (checksumFor(BAR).equals(md5)) {
+                return uriJar(BAR, CURRENT_BAR_VERSION);
+            } else if (FAILING_CHECKSUM.equals(md5)) {
+                throw new RuntimeException("error in repo");
+            } else if (AMBIGUOUS_CHECKSUM.equals(md5)) {
+                return uriJar("x", null) + "," + uriJar("y", null);
+            } else { // UNKNOWN_CHECKSUM or anything else
+                return "";
             }
         }
 
         private String uriJar(String name, Version version) {
-            return "{\"uri\":\""
-                    + base("storage/libs-release-local/" + name + "/" + version + "/" + name + "-" + version + ".jar")
-                    + "\"}";
+            String path = "/libs-release-local/" + name + "/" + version + "/" + name + "-" + version + ".jar";
+            return "{" //
+                    + "\"uri\":\"" + base("api/storage" + path) + "\",\n" //
+                    + "\"downloadUri\" : \"" + base(path) + "\"\n" //
+                    + "}";
         }
 
         @GET
-        @Path("/storage/{repository}/{path:.*}")
+        @Path("/api/storage/{repository}/{path:.*}")
         @Produces("application/vnd.org.jfrog.artifactory.storage.folderinfo+json")
         public String listFiles(@PathParam("repository") String repository, @PathParam("path") String path) {
             return "{\n" //
@@ -94,10 +98,21 @@ public class RepositoryIT {
                     + "      },\n" //
             ;
         }
+
+        @GET
+        @Path("/{repository}/{path:.*}")
+        public InputStream getFiles(@SuppressWarnings("unused") @PathParam("repository") String repository,
+                @PathParam("path") String pathString) {
+            java.nio.file.Path path = Paths.get(pathString);
+            int n = path.getNameCount();
+            String name = path.getName(n - 1).toString();
+            Version version = new Version(path.getName(n - 2).toString());
+            return inputStreamFor(name, version);
+        }
     }
 
     @ClassRule
-    public static DropwizardClientRule artifactory = new DropwizardClientRule(new ArtifactoryResource());
+    public static DropwizardClientRule artifactory = new DropwizardClientRule(new ArtifactoryMock());
 
     private Repository repository() {
         return new ArtifactoryRepository(artifactory.baseUri());
@@ -117,27 +132,50 @@ public class RepositoryIT {
     public void shouldFailToSearchByChecksumWhenUnavailable() {
         expectedException.expectMessage("error from artifactory");
 
-        repository().searchByChecksum(FAILING_CHECKSUM);
+        repository().getVersionByChecksum(FAILING_CHECKSUM);
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
         expectedException.expectMessage("checksum not unique");
 
-        repository().searchByChecksum(AMBIGUOUS_CHECKSUM);
+        repository().getVersionByChecksum(AMBIGUOUS_CHECKSUM);
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnknown() {
         expectedException.expectMessage("checksum not found");
 
-        repository().searchByChecksum(UNKNOWN_CHECKSUM);
+        repository().getVersionByChecksum(UNKNOWN_CHECKSUM);
     }
 
     @Test
     public void shouldSearchByChecksum() {
-        Version version = repository().searchByChecksum(FOO_CHECKSUM);
+        Version version = repository().getVersionByChecksum(checksumFor(FOO));
 
         assertEquals(CURRENT_FOO_VERSION, version);
+    }
+
+    @Test
+    public void shouldGetArtifact() {
+        @SuppressWarnings("resource")
+        InputStream inputStream = repository().getArtifactInputStream(checksumFor(FOO));
+
+        String content = read(inputStream);
+
+        assertEquals("foo-1.3.1.jar-content@1.3.1", content);
+    }
+
+    @SneakyThrows(IOException.class)
+    private String read(InputStream inputStream) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder out = new StringBuilder();
+        while (true) {
+            String line = reader.readLine();
+            if (line == null)
+                break;
+            out.append(line).append('\n');
+        }
+        return out.toString().trim();
     }
 }
