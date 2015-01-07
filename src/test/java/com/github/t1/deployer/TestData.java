@@ -1,6 +1,5 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentsContainer.*;
 import static java.util.Arrays.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
@@ -102,23 +101,33 @@ public class TestData {
 
     @SneakyThrows(IOException.class)
     public static void givenDeployments(ModelControllerClient client, String... deploymentNames) {
-        StringBuilder all = new StringBuilder();
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
+                .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(deploymentNames))));
+    }
+
+    public static ModelNode readAllDeploymentsCli() {
+        ModelNode node = new ModelNode();
+        node.get("address").add("deployment", "*");
+        node.get("operation").set("read-resource");
+        node.get("recursive").set(true);
+        return node;
+    }
+
+    private static String readDeploymentsCliResult(String... deploymentNames) {
+        StringBuilder out = new StringBuilder();
         for (String contextRoot : deploymentNames) {
-            if (all.length() == 0)
-                all.append("[");
+            if (out.length() == 0)
+                out.append("[");
             else
-                all.append(",");
-            all.append("{\n" //
+                out.append(",");
+            out.append("{\n" //
                     + "\"address\" => [(\"deployment\" => \"" + nameFor(contextRoot) + "\")],\n" //
                     + "\"outcome\" => \"success\",\n" //
                     + "\"result\" => " + deploymentCli(contextRoot) + "\n" //
                     + "}\n");
-            when(client.execute(eq(readDeploymentModel(nameFor(contextRoot))), any(OperationMessageHandler.class))) //
-                    .thenReturn(ModelNode.fromString(successCli(deploymentCli(contextRoot))));
         }
-        all.append("]");
-        when(client.execute(eq(readDeploymentModel("*")), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(successCli(all.toString())));
+        out.append("]");
+        return out.toString();
     }
 
     public static CheckSum checksumFor(String name) {

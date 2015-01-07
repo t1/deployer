@@ -150,37 +150,37 @@ public class DeploymentsContainer {
     }
 
     public Deployment getDeploymentByContextRoot(String contextRoot) {
-        ModelNode node = readDeployments(contextRoot + ".war"); // TODO get name from CLI
-        Deployment deployment = toDeployment(node);
-        check(deployment, contextRoot);
-
+        List<Deployment> all = getAllDeployments();
+        Deployment deployment = find(all, contextRoot);
         log.debug("found deployment {}", deployment);
         return deployment;
     }
 
-    private void check(Deployment deployment, String contextRoot) {
-        if (!deployment.getContextRoot().equals(contextRoot)) {
-            log.debug("deployment context root {} doesn't match {}", deployment.getContextRoot(), contextRoot);
-            throw new WebApplicationException(NOT_FOUND);
+    private Deployment find(List<Deployment> all, String contextRoot) {
+        for (Deployment deployment : all) {
+            if (deployment.getContextRoot().equals(contextRoot)) {
+                return deployment;
+            }
         }
+        throw new WebApplicationException("no deployment with context root [" + contextRoot + "]", NOT_FOUND);
     }
 
     public List<Deployment> getAllDeployments() {
         List<Deployment> list = new ArrayList<>();
-        for (ModelNode cliDeploymentMatch : readDeployments("*").asList())
+        for (ModelNode cliDeploymentMatch : readAllDeployments())
             list.add(toDeployment(cliDeploymentMatch.get("result")));
         return list;
     }
 
-    private ModelNode readDeployments(String name) {
-        ModelNode result = execute(readDeploymentModel(name));
+    private List<ModelNode> readAllDeployments() {
+        ModelNode result = execute(readDeployments());
         checkOutcome(result);
-        return result.get("result");
+        return result.get("result").asList();
     }
 
-    public static ModelNode readDeploymentModel(String deployment) {
+    private static ModelNode readDeployments() {
         ModelNode node = new ModelNode();
-        node.get("address").add("deployment", deployment);
+        node.get("address").add("deployment", "*");
         node.get("operation").set("read-resource");
         node.get("recursive").set(true);
         return node;

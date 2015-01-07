@@ -1,6 +1,5 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.DeploymentsContainer.*;
 import static com.github.t1.deployer.TestData.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
@@ -38,20 +37,18 @@ public class DeploymentsContainerTest {
 
     @Test
     public void shouldFailToGetDeploymentByUnknownContextRoot() throws IOException {
-        String notFound = "JBAS014807: Management resource '[(\\\"deployment\\\" => \\\"unknown.war\\\")]' not found\"";
-        when(client.execute(eq(readDeploymentModel("unknown.war")), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(failedCli(notFound)));
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
+                .thenReturn(ModelNode.fromString(successCli("[]")));
 
         expectedException.expect(RuntimeException.class);
-        expectedException.expectMessage("JBAS014807");
-        expectedException.expectMessage("unknown");
+        expectedException.expectMessage("no deployment with context root [unknown]");
 
         container.getDeploymentByContextRoot("unknown");
     }
 
     @Test
-    public void shouldFailToGetDeploymentFromMissingContainer() throws IOException {
-        when(client.execute(eq(readDeploymentModel("*")), any(OperationMessageHandler.class))) //
+    public void shouldFailToGetDeploymentFromFailingContainer() throws IOException {
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
                 .thenThrow(new IOException("dummy"));
 
         expectedException.expect(IOException.class);
