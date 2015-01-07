@@ -19,6 +19,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeploymentsContainerTest {
+    private static final Version NO_VERSION = null;
+
     @InjectMocks
     DeploymentsContainer container;
     @Mock
@@ -34,16 +36,11 @@ public class DeploymentsContainerTest {
         TestData.givenDeployments(client, deploymentNames);
     }
 
-    private static void assertDeployment(String name, Deployment deployment) {
-        assertEquals(name, deployment.getContextRoot());
-        assertEquals(name + ".war", deployment.getName());
-    }
-
     @Test
     public void shouldFailToGetDeploymentByUnknownContextRoot() throws IOException {
         String notFound = "JBAS014807: Management resource '[(\\\"deployment\\\" => \\\"unknown.war\\\")]' not found\"";
         when(client.execute(eq(readDeploymentModel("unknown.war")), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(failed(notFound)));
+                .thenReturn(ModelNode.fromString(failedCli(notFound)));
 
         expectedException.expect(RuntimeException.class);
         expectedException.expectMessage("JBAS014807");
@@ -69,7 +66,7 @@ public class DeploymentsContainerTest {
 
         Deployment deployment = container.getDeploymentByContextRoot(FOO);
 
-        assertDeployment(FOO, deployment);
+        assertDeployment(FOO, NO_VERSION, deployment);
     }
 
     @Test
@@ -78,7 +75,7 @@ public class DeploymentsContainerTest {
 
         Deployment deployment = container.getDeploymentByContextRoot(FOO);
 
-        assertDeployment(FOO, deployment);
+        assertDeployment(FOO, NO_VERSION, deployment);
     }
 
     @Test
@@ -87,7 +84,7 @@ public class DeploymentsContainerTest {
 
         Deployment deployment = container.getDeploymentByContextRoot(BAR);
 
-        assertDeployment(BAR, deployment);
+        assertDeployment(BAR, NO_VERSION, deployment);
     }
 
     @Test
@@ -97,7 +94,7 @@ public class DeploymentsContainerTest {
         List<Deployment> deployments = container.getAllDeployments();
 
         assertEquals(2, deployments.size());
-        assertDeployment(FOO, deployments.get(0));
-        assertDeployment(BAR, deployments.get(1));
+        assertDeployment(FOO, NO_VERSION, deployments.get(0));
+        assertDeployment(BAR, NO_VERSION, deployments.get(1));
     }
 }

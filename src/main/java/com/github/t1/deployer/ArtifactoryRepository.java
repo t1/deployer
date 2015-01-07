@@ -44,15 +44,15 @@ public class ArtifactoryRepository implements Repository {
     }
 
     @Override
-    public List<Version> availableVersionsFor(String md5sum) {
-        URI uri = searchByChecksum(md5sum).getUri();
+    public List<Version> availableVersionsFor(CheckSum checkSum) {
+        URI uri = searchByChecksum(checkSum).getUri();
         UriBuilder uriBuilder = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri));
 
         Response response = webClient.target(uriBuilder) //
                 .request().get();
 
         if (OK.getStatusCode() != response.getStatus())
-            throw new RuntimeException("error from artifactory: " + response.getStatusInfo() + ": " + uriBuilder);
+            throw new RuntimeException("error from repository: " + response.getStatusInfo() + ": " + uriBuilder);
         return versionsIn(response.readEntity(FolderInfo.class));
     }
 
@@ -92,20 +92,20 @@ public class ArtifactoryRepository implements Repository {
         URI downloadUri;
     }
 
-    private ChecksumSearchResultItem searchByChecksum(String md5sum) {
+    private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
         Response response = artifactory //
                 .path("/api/search/checksum") //
-                .queryParam("md5", md5sum) //
+                .queryParam("md5", checkSum.hexString()) //
                 .request() //
                 .get();
 
         if (OK.getStatusCode() != response.getStatus())
-            throw new RuntimeException("error from artifactory: " + response.getStatusInfo());
+            throw new RuntimeException("error from repository: " + response.getStatusInfo());
         List<ChecksumSearchResultItem> results = response.readEntity(ChecksumSearchResult.class).getResults();
         if (results.size() == 0)
-            throw new RuntimeException("checksum not found in artifactory: " + md5sum);
+            throw new RuntimeException("checksum not found in repository: " + checkSum);
         if (results.size() > 1)
-            throw new RuntimeException("checksum not unique in artifactory: " + md5sum);
+            throw new RuntimeException("checksum not unique in repository: " + checkSum);
         return results.get(0);
     }
 
@@ -114,8 +114,8 @@ public class ArtifactoryRepository implements Repository {
      * <code>X-Result-Detail</code> header doesn't provide it.
      */
     @Override
-    public Version getVersionByChecksum(String md5sum) {
-        URI result = searchByChecksum(md5sum).getUri();
+    public Version getVersionByChecksum(CheckSum checkSum) {
+        URI result = searchByChecksum(checkSum).getUri();
         Path path = path(result);
         int length = path.getNameCount();
         return new Version(path.getName(length - 2).toString());
@@ -127,8 +127,8 @@ public class ArtifactoryRepository implements Repository {
 
     @Override
     @SneakyThrows(IOException.class)
-    public InputStream getArtifactInputStream(String md5sum) {
-        URI uri = searchByChecksum(md5sum).getDownloadUri();
+    public InputStream getArtifactInputStream(CheckSum checkSum) {
+        URI uri = searchByChecksum(checkSum).getDownloadUri();
         return uri.toURL().openStream();
     }
 }

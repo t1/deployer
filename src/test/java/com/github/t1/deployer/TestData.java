@@ -2,7 +2,6 @@ package com.github.t1.deployer;
 
 import static com.github.t1.deployer.DeploymentsContainer.*;
 import static java.util.Arrays.*;
-import static javax.xml.bind.DatatypeConverter.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -10,7 +9,6 @@ import static org.mockito.Mockito.*;
 import java.io.*;
 import java.util.*;
 
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 
@@ -72,6 +70,16 @@ public class TestData {
             new Version("0.2") //
             );
 
+    public static Deployment deploymentFor(String contextRoot) {
+        return deploymentFor(contextRoot, versionFor(contextRoot));
+    }
+
+    public static Deployment deploymentFor(String contextRoot, Version version) {
+        Deployment deployment = new Deployment(nameFor(contextRoot), contextRoot, checksumFor(contextRoot));
+        deployment.setVersion(version);
+        return deployment;
+    }
+
     public static void givenDeployments(Repository repository, String... deploymentNames) {
         for (String name : deploymentNames) {
             when(repository.getVersionByChecksum(checksumFor(name))).thenReturn(versionFor(name));
@@ -85,7 +93,7 @@ public class TestData {
     public static void givenDeployments(DeploymentsContainer container, String... contextRoots) {
         List<Deployment> deployments = new ArrayList<>();
         for (String contextRoot : contextRoots) {
-            Deployment deployment = new Deployment(contextRoot + ".war", contextRoot, checksumFor(contextRoot));
+            Deployment deployment = deploymentFor(contextRoot);
             deployments.add(deployment);
             when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
         }
@@ -95,30 +103,34 @@ public class TestData {
     @SneakyThrows(IOException.class)
     public static void givenDeployments(ModelControllerClient client, String... deploymentNames) {
         StringBuilder all = new StringBuilder();
-        for (String name : deploymentNames) {
+        for (String contextRoot : deploymentNames) {
             if (all.length() == 0)
                 all.append("[");
             else
                 all.append(",");
             all.append("{\n" //
-                    + "\"address\" => [(\"deployment\" => \"" + name + ".war\")],\n" //
+                    + "\"address\" => [(\"deployment\" => \"" + nameFor(contextRoot) + "\")],\n" //
                     + "\"outcome\" => \"success\",\n" //
-                    + "\"result\" => " + deployment(name) + "\n" //
+                    + "\"result\" => " + deploymentCli(contextRoot) + "\n" //
                     + "}\n");
-            when(client.execute(eq(readDeploymentModel(name + ".war")), any(OperationMessageHandler.class))) //
-                    .thenReturn(ModelNode.fromString(success(deployment(name))));
+            when(client.execute(eq(readDeploymentModel(nameFor(contextRoot))), any(OperationMessageHandler.class))) //
+                    .thenReturn(ModelNode.fromString(successCli(deploymentCli(contextRoot))));
         }
         all.append("]");
         when(client.execute(eq(readDeploymentModel("*")), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(success(all.toString())));
+                .thenReturn(ModelNode.fromString(successCli(all.toString())));
     }
 
-    public static String checksumFor(String name) {
+    public static CheckSum checksumFor(String name) {
         return checksumFor(name, versionFor(name));
     }
 
-    public static String checksumFor(String name, Version version) {
-        return printHexBinary(("md5(" + name + "@" + version + ")").getBytes());
+    public static CheckSum checksumFor(String name, Version version) {
+        return CheckSum.of(("md5(" + name + "@" + version + ")").getBytes());
+    }
+
+    public static String nameFor(String contextRoot) {
+        return contextRoot + ".war";
     }
 
     public static Version versionFor(String name) {
@@ -147,49 +159,39 @@ public class TestData {
         return new StringInputStream(name + "-content@" + version);
     }
 
-    public static String byteArray(String checksum) {
-        StringBuilder out = new StringBuilder();
-        for (int i = 0; i < checksum.length(); i++) {
-            if (i != 0)
-                out.append(", ");
-            out.append("0x").append(checksum.charAt(i++)).append(checksum.charAt(i));
-        }
-        return out.toString();
-    }
-
-    public static String failed(String message) {
+    public static String failedCli(String message) {
         return "{\"outcome\" => \"failed\",\n" //
                 + "\"failure-description\" => \"" + message + "\n" //
                 + "}\n";
     }
 
-    public static String success(String result) {
+    public static String successCli(String result) {
         return "{\n" //
                 + "\"outcome\" => \"success\",\n" //
                 + "\"result\" => " + result + "\n" //
                 + "}\n";
     }
 
-    public static String[] deployments(String... deployments) {
+    public static String[] deploymentsCli(String... deployments) {
         String[] result = new String[deployments.length];
         for (int i = 0; i < deployments.length; i++) {
-            result[i] = deployment(deployments[i]);
+            result[i] = deploymentCli(deployments[i]);
         }
         return result;
     }
 
-    public static String deployment(String deployment) {
+    public static String deploymentCli(String contextRoot) {
         return "{\n" //
                 + "\"content\" => [{\"hash\" => bytes {\n" //
-                + byteArray(checksumFor(deployment)) //
+                + checksumFor(contextRoot).hexByteArray() //
                 + "}}],\n" //
                 + "\"enabled\" => true,\n" //
-                + ("\"name\" => \"" + deployment + ".war\",\n") //
+                + ("\"name\" => \"" + nameFor(contextRoot) + "\",\n") //
                 + "\"persistent\" => true,\n" //
-                + ("\"runtime-name\" => \"" + deployment + ".war\",\n") //
+                + ("\"runtime-name\" => \"" + nameFor(contextRoot) + "\",\n") //
                 + "\"subdeployment\" => undefined,\n" //
                 + "\"subsystem\" => {\"web\" => {\n" //
-                + ("\"context-root\" => \"/" + deployment + "\",\n") //
+                + ("\"context-root\" => \"/" + contextRoot + "\",\n") //
                 + "\"virtual-host\" => \"default-host\",\n" //
                 + "\"servlet\" => {\"javax.ws.rs.core.Application\" => {\n" //
                 + "\"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n" //
@@ -199,13 +201,17 @@ public class TestData {
                 + "}";
     }
 
-    public static Entity<String> entity(String contextRoot, Version version) {
-        return Entity.json("{\n" //
-                + "   \"name\" : \"" + contextRoot + ".war\",\n" //
-                + "   \"contextRoot\" : \"" + contextRoot + "\",\n" //
-                + "   \"hash\" : \"" + checksumFor(contextRoot) + "\",\n" //
-                + "   \"version\" : \"" + version + "\"\n" //
-                + "}");
+    public static String deploymentJson(String contextRoot) {
+        return deploymentJson(contextRoot, versionFor(contextRoot));
+    }
+
+    public static String deploymentJson(String contextRoot, Version version) {
+        return "{" //
+                + "\"name\":\"" + nameFor(contextRoot) + "\"," //
+                + "\"contextRoot\":\"" + contextRoot + "\"," //
+                + "\"checkSum\":\"" + checksumFor(contextRoot, version) + "\"," //
+                + "\"version\":\"" + version + "\"" //
+                + "}";
     }
 
     public static void assertStatus(Status status, Response response) {
@@ -222,5 +228,15 @@ public class TestData {
 
             fail(message.toString());
         }
+    }
+
+    public static void assertDeployment(String contextRoot, Deployment deployment) {
+        assertDeployment(contextRoot, versionFor(contextRoot), deployment);
+    }
+
+    public static void assertDeployment(String contextRoot, Version expectedVersion, Deployment deployment) {
+        assertEquals(contextRoot, deployment.getContextRoot());
+        assertEquals(nameFor(contextRoot), deployment.getName());
+        assertEquals(expectedVersion, deployment.getVersion());
     }
 }

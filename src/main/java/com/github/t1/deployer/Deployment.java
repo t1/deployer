@@ -13,7 +13,7 @@ import lombok.*;
 public class Deployment {
     private final String name;
     private final String contextRoot;
-    private final String hash;
+    private final CheckSum checkSum;
 
     private Version version;
 
@@ -22,6 +22,6 @@ public class Deployment {
     private Deployment() {
         this.name = null;
         this.contextRoot = null;
-        this.hash = null;
+        this.checkSum = null;
     }
 }

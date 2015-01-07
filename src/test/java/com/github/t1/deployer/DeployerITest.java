@@ -35,6 +35,12 @@ public class DeployerITest {
         reset(container, repository);
     }
 
+    private WebTarget deploymentsWebTarget(String contextRoot) {
+        return deployer() //
+                .path("/deployments") //
+                .matrixParam("context-root", contextRoot);
+    }
+
     private WebTarget deployer() {
         URI baseUri = deployer.baseUri();
         // URI baseUri = URI.create("http://localhost:8080/deployer/");
@@ -44,12 +50,6 @@ public class DeployerITest {
     private void given(String... contextRoots) {
         givenDeployments(repository, contextRoots);
         givenDeployments(container, contextRoots);
-    }
-
-    private void assertFoo(Deployment deployment) {
-        assertEquals("foo.war", deployment.getName());
-        assertEquals(FOO, deployment.getContextRoot());
-        assertEquals("1.3.1", deployment.getVersion().toString());
     }
 
     @Test
@@ -78,15 +78,13 @@ public class DeployerITest {
     public void shouldGetDeploymentByContextRoot() {
         given(FOO, BAR);
 
-        Response response = deployer() //
-                .path("/deployments") //
-                .matrixParam("context-root", FOO) //
+        Response response = deploymentsWebTarget(FOO) //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
         assertStatus(OK, response);
         Deployment deployment = response.readEntity(Deployment.class);
-        assertFoo(deployment);
+        assertDeployment(FOO, deployment);
     }
 
     @Test
@@ -94,9 +92,7 @@ public class DeployerITest {
     public void shouldGetAvailableVersion() {
         given(FOO, BAR);
 
-        Response response = deployer() //
-                .path("/deployments") //
-                .matrixParam("context-root", FOO) //
+        Response response = deploymentsWebTarget(FOO) //
                 .path("available-versions") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
@@ -110,12 +106,10 @@ public class DeployerITest {
     public void shouldDeploy() {
         given(FOO, BAR);
 
-        WebTarget uri = deployer() //
-                .path("/deployments") //
-                .matrixParam("context-root", FOO);
+        WebTarget uri = deploymentsWebTarget(FOO);
         Response response = uri //
                 .request(APPLICATION_JSON_TYPE) //
-                .put(entity(FOO, CURRENT_FOO_VERSION));
+                .put(Entity.json(deploymentJson(FOO, CURRENT_FOO_VERSION)));
 
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
@@ -126,12 +120,10 @@ public class DeployerITest {
     public void shouldUpgrade() {
         given(FOO, BAR);
 
-        WebTarget uri = deployer() //
-                .path("/deployments") //
-                .matrixParam("context-root", FOO);
+        WebTarget uri = deploymentsWebTarget(FOO);
         Response response = uri //
                 .request(APPLICATION_JSON_TYPE) //
-                .put(entity(FOO, NEWEST_FOO_VERSION));
+                .put(Entity.json(deploymentJson(FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
@@ -142,9 +134,7 @@ public class DeployerITest {
     public void shouldUndeploy() {
         given(FOO, BAR);
 
-        Response response = deployer() //
-                .path("/deployments") //
-                .matrixParam("context-root", FOO) //
+        Response response = deploymentsWebTarget(FOO) //
                 .request(APPLICATION_JSON_TYPE) //
                 .delete();
 

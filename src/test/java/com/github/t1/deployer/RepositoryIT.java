@@ -17,9 +17,9 @@ import org.junit.*;
 import org.junit.rules.ExpectedException;
 
 public class RepositoryIT {
-    private static final String FAILING_CHECKSUM = "1111111111111111111111111111111111111111";
-    private static final String AMBIGUOUS_CHECKSUM = "2222222222222222222222222222222222222222";
-    private static final String UNKNOWN_CHECKSUM = "3333333333333333333333333333333333333333";
+    private static final CheckSum FAILING_CHECKSUM = CheckSum.ofHexString("1111111111111111111111111111111111111111");
+    private static final CheckSum AMBIGUOUS_CHECKSUM = CheckSum.ofHexString("2222222222222222222222222222222222222222");
+    private static final CheckSum UNKNOWN_CHECKSUM = CheckSum.ofHexString("3333333333333333333333333333333333333333");
 
     @Path("/artifactory")
     public static class ArtifactoryMock {
@@ -34,10 +34,10 @@ public class RepositoryIT {
         @Path("/api/search/checksum")
         @Produces("application/vnd.org.jfrog.artifactory.search.checksumsearchresult+json")
         public String searchChecksum(@QueryParam("md5") String md5) {
-            return "{\"results\": [" + resultsFor(md5) + "]}";
+            return "{\"results\": [" + resultsFor(CheckSum.ofHexString(md5)) + "]}";
         }
 
-        private String resultsFor(String md5) {
+        private String resultsFor(CheckSum md5) {
             if (checksumFor(FOO).equals(md5)) {
                 return uriJar(FOO, CURRENT_FOO_VERSION);
             } else if (checksumFor(BAR).equals(md5)) {
@@ -130,7 +130,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        expectedException.expectMessage("error from artifactory");
+        expectedException.expectMessage("error from repository");
 
         repository().getVersionByChecksum(FAILING_CHECKSUM);
     }

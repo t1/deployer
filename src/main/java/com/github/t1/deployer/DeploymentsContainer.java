@@ -2,7 +2,6 @@ package com.github.t1.deployer;
 
 import static java.util.concurrent.TimeUnit.*;
 import static javax.ws.rs.core.Response.Status.*;
-import static javax.xml.bind.DatatypeConverter.*;
 
 import java.io.*;
 import java.util.*;
@@ -151,7 +150,7 @@ public class DeploymentsContainer {
     }
 
     public Deployment getDeploymentByContextRoot(String contextRoot) {
-        ModelNode node = readDeployments(contextRoot + ".war");
+        ModelNode node = readDeployments(contextRoot + ".war"); // TODO get name from CLI
         Deployment deployment = toDeployment(node);
         check(deployment, contextRoot);
 
@@ -190,7 +189,7 @@ public class DeploymentsContainer {
     private Deployment toDeployment(ModelNode cliDeployment) {
         String name = cliDeployment.get("name").asString();
         String contextRoot = getContextRoot(cliDeployment);
-        String hash = printHexBinary(cliDeployment.get("content").get(0).get("hash").asBytes());
+        CheckSum hash = CheckSum.of(cliDeployment.get("content").get(0).get("hash").asBytes());
         log.debug("{} -> {} -> {}", name, contextRoot, hash);
         return new Deployment(name, contextRoot, hash);
     }

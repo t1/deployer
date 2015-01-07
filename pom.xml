@@ -10,6 +10,10 @@
     <name>Deployer</name>
     <description>Deploys web archives to a JBoss web container</description>
 
+    <properties>
+        <jackson.version>1.9.13</jackson.version>
+    </properties>
+
     <scm>
         <developerConnection>scm:git:https://github.com/t1/deployer</developerConnection>
         <tag>HEAD</tag>
@@ -96,8 +100,16 @@
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
-            <version>1.9.9</version>
+            <version>${jackson.version}</version>
             <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>${jackson.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <!-- compile scope -->
