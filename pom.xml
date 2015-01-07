@@ -11,7 +11,9 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>1.9.13</jackson.version>
+        <!-- we need both versions: JBoss 7 uses codehaus, Dropwizard uses fasterxml -->
+        <jackson.codehaus.version>1.9.13</jackson.codehaus.version>
+        <jackson.fasterxml.version>2.4.3</jackson.fasterxml.version>
     </properties>
 
     <scm>
@@ -99,15 +101,15 @@
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-core-asl</artifactId>
-            <version>${jackson.version}</version>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>${jackson.codehaus.version}</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-mapper-asl</artifactId>
-            <version>${jackson.version}</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.fasterxml.version}</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -178,12 +180,6 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
             <version>0.8.0-rc1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>2.13</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
