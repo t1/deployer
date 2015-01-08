@@ -198,7 +198,8 @@ public class DeploymentsContainer {
         ModelNode subsystems = cliDeployment.get("subsystem");
         // JBoss 8 uses 'undertow' while JBoss 7 uses 'web'
         ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
-        return web.get("context-root").asString().substring(1);
+        ModelNode contextRoot = web.get("context-root");
+        return contextRoot.isDefined() ? contextRoot.asString().substring(1) : "?";
     }
 
     public void deploy(String contextRoot, InputStream deployment) {
