@@ -21,7 +21,9 @@ import com.github.t1.log.Logged;
 @ApplicationScoped
 public class Config implements Serializable {
     private static final long serialVersionUID = 1L;
-    private static final Path PATH = Paths.get("artifactory.properties").toAbsolutePath();
+    private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
+    private static final Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
+            .toAbsolutePath();
 
     private Properties properties;
 
@@ -46,9 +48,9 @@ public class Config implements Serializable {
     @SneakyThrows(IOException.class)
     private Properties properties() {
         if (properties == null) {
-            log.debug("read config from {}", PATH);
+            log.debug("read config from {}", CONFIG_FILE);
             properties = new Properties();
-            properties.load(Files.newInputStream(PATH));
+            properties.load(Files.newInputStream(CONFIG_FILE));
         }
         return properties;
     }

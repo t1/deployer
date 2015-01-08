@@ -33,23 +33,7 @@ public class Deployments {
     @Path("*")
     @Produces(TEXT_HTML)
     public String getAllDeploymentsAsHtml() {
-        return "<html><body>" + listDeployments() + "</body></html>";
-    }
-
-    private String listDeployments() {
-        StringBuilder out = new StringBuilder();
-        out.append("<table>");
-        List<Deployment> deployments = getAllDeploymentsWithVersions();
-        for (Deployment deployment : deployments) {
-            out.append("") //
-                    .append("<tr><td>") //
-                    .append(deployment.getContextRoot()) //
-                    .append("</td><td>") //
-                    .append(deployment.getVersion()) //
-                    .append("</td></tr>");
-        }
-        out.append("</table>");
-        return out.toString();
+        return new DeploymentsListHtml(getAllDeploymentsWithVersions()).toString();
     }
 
     @GET
