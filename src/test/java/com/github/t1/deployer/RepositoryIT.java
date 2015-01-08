@@ -47,9 +47,9 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnknown() {
-        expectedException.expectMessage("checksum not found");
+        Version version = repository().getVersionByChecksum(UNKNOWN_CHECKSUM);
 
-        repository().getVersionByChecksum(UNKNOWN_CHECKSUM);
+        assertNull(version);
     }
 
     @Test
