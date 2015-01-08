@@ -1,5 +1,6 @@
 package com.github.t1.deployer;
 
+import static com.github.t1.deployer.ArtifactoryMock.*;
 import static com.github.t1.deployer.TestData.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;

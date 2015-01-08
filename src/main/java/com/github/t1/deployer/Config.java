@@ -1,7 +1,7 @@
 package com.github.t1.deployer;
 
 import java.io.IOException;
-import java.net.InetAddress;
+import java.net.*;
 
 import javax.enterprise.inject.*;
 
@@ -13,7 +13,7 @@ import com.github.t1.log.Logged;
 
 @Slf4j
 @Logged
-public class ModelControllerClientProducer {
+public class Config {
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
         InetAddress host = InetAddress.getByName("localhost");
@@ -24,5 +24,14 @@ public class ModelControllerClientProducer {
 
     void closeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {
         client.close();
+    }
+
+    private static final String SYSTEM_PROPERTY_NAME = "deployer.artifactory.uri";
+    private static final String DEFAULT_URI = "http://localhost:8081/artifactory";
+
+    @Produces
+    @Artifactory
+    public URI produceArtifactoryUri() {
+        return URI.create(System.getProperty(SYSTEM_PROPERTY_NAME, DEFAULT_URI));
     }
 }

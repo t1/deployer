@@ -8,6 +8,7 @@ import lombok.*;
 
 @Data
 @RequiredArgsConstructor
+@AllArgsConstructor
 @XmlRootElement
 @XmlAccessorType(FIELD)
 public class Deployment {

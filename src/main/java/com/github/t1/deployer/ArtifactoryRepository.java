@@ -8,25 +8,33 @@ import java.nio.file.*;
 import java.util.*;
 
 import javax.annotation.PreDestroy;
-import javax.ws.rs.client.*;
-import javax.ws.rs.core.*;
+import javax.inject.Inject;
+import javax.ws.rs.core.UriBuilder;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+
+import org.apache.http.client.methods.*;
+import org.apache.http.impl.client.*;
+import org.apache.http.util.EntityUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import com.github.t1.log.Logged;
 
+@Slf4j
 @Logged
 public class ArtifactoryRepository implements Repository {
-    private final Client webClient = ClientBuilder.newClient();
-    private final WebTarget artifactory;
+    private final CloseableHttpClient http = HttpClients.createDefault();
+    private final URI baseUri;
 
-    public ArtifactoryRepository(URI baseUri) {
-        this.artifactory = webClient.target(baseUri).path("artifactory");
+    @Inject
+    public ArtifactoryRepository(@Artifactory URI baseUri) {
+        this.baseUri = baseUri;
     }
 
     @PreDestroy
-    void closeWebClient() {
-        webClient.close();
+    void closeWebClient() throws IOException {
+        http.close();
     }
 
     @Data
@@ -49,20 +57,28 @@ public class ArtifactoryRepository implements Repository {
     @Override
     public List<Version> availableVersionsFor(CheckSum checkSum) {
         URI uri = searchByChecksum(checkSum).getUri();
-        UriBuilder uriBuilder = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri));
+        uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build(); // TODO double check
 
-        Response response = webClient.target(uriBuilder) //
-                .request().get();
-
-        if (OK.getStatusCode() != response.getStatus())
-            throw new RuntimeException("error from repository: " + response.getStatusInfo() + ": " + uriBuilder);
-        return versionsIn(response.readEntity(FolderInfo.class));
+        log.debug("GET {}", uri);
+        try (CloseableHttpResponse response = http.execute(new HttpGet(uri))) {
+            log.debug("response {}", response);
+            if (OK.getStatusCode() != response.getStatusLine().getStatusCode())
+                throw new RuntimeException("error from repository: " + response.getStatusLine() + ": " + uri);
+            return versionsIn(readEntity(response, FolderInfo.class));
+        } catch (IOException e) {
+            throw new RuntimeException("can't read available versions for " + checkSum, e);
+        }
     }
 
     private String versionsFolder(URI uri) {
         Path path = path(uri);
         int length = path.getNameCount();
         return path.subpath(0, length - 2).toString();
+    }
+
+    private <T> T readEntity(CloseableHttpResponse response, Class<T> type) throws IOException {
+        String string = EntityUtils.toString(response.getEntity());
+        return new ObjectMapper().readValue(string, type);
     }
 
     private List<Version> versionsIn(FolderInfo folderInfo) {
@@ -96,20 +112,24 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
-        Response response = artifactory //
+        URI uri = UriBuilder.fromUri(baseUri) //
                 .path("/api/search/checksum") //
                 .queryParam("md5", checkSum.hexString()) //
-                .request() //
-                .get();
-
-        if (OK.getStatusCode() != response.getStatus())
-            throw new RuntimeException("error from repository: " + response.getStatusInfo());
-        List<ChecksumSearchResultItem> results = response.readEntity(ChecksumSearchResult.class).getResults();
-        if (results.size() == 0)
-            throw new RuntimeException("checksum not found in repository: " + checkSum);
-        if (results.size() > 1)
-            throw new RuntimeException("checksum not unique in repository: " + checkSum);
-        return results.get(0);
+                .build();
+        log.debug("GET {}", uri);
+        try (CloseableHttpResponse response = http.execute(new HttpGet(uri))) {
+            log.debug("response {}", response);
+            if (OK.getStatusCode() != response.getStatusLine().getStatusCode())
+                throw new RuntimeException("error from repository: " + response.getStatusLine() + ": " + uri);
+            List<ChecksumSearchResultItem> results = readEntity(response, ChecksumSearchResult.class).getResults();
+            if (results.size() == 0)
+                throw new RuntimeException("checksum not found in repository: " + checkSum);
+            if (results.size() > 1)
+                throw new RuntimeException("checksum not unique in repository: " + checkSum);
+            return results.get(0);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

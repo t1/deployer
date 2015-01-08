@@ -1,11 +1,11 @@
 package com.github.t1.deployer;
 
-import static java.util.Arrays.*;
+import static com.github.t1.deployer.ArtifactoryMock.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 
 import javax.ws.rs.core.*;
@@ -17,58 +17,6 @@ import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 public class TestData {
-    private static final class StringInputStream extends ByteArrayInputStream {
-        private final String string;
-
-        private StringInputStream(String string) {
-            super(string.getBytes());
-            this.string = string;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null || getClass() != obj.getClass())
-                return false;
-            StringInputStream that = (StringInputStream) obj;
-            return this.string.equals(that.string);
-        }
-
-        @Override
-        public int hashCode() {
-            return string.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "[" + string + "]";
-        }
-    }
-
-    public static final String FOO = "foo";
-    public static final String BAR = "bar";
-
-    public static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
-    public static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
-
-    public static final List<Version> FOO_VERSIONS = asList(//
-            NEWEST_FOO_VERSION, //
-            new Version("1.3.2"), //
-            CURRENT_FOO_VERSION, //
-            new Version("1.3.0"), //
-            new Version("1.2.1"), //
-            new Version("1.2.1-SNAPSHOT"), //
-            new Version("1.2.0") //
-            );
-
-    public static final Version CURRENT_BAR_VERSION = new Version("0.3");
-
-    public static final List<Version> BAR_VERSIONS = asList(//
-            CURRENT_BAR_VERSION, //
-            new Version("0.2") //
-            );
-
     public static Deployment deploymentFor(String contextRoot) {
         return deploymentFor(contextRoot, versionFor(contextRoot));
     }
@@ -130,42 +78,8 @@ public class TestData {
         return out.toString();
     }
 
-    public static CheckSum checksumFor(String name) {
-        return checksumFor(name, versionFor(name));
-    }
-
-    public static CheckSum checksumFor(String name, Version version) {
-        return CheckSum.of(("md5(" + name + "@" + version + ")").getBytes());
-    }
-
     public static String nameFor(String contextRoot) {
         return contextRoot + ".war";
-    }
-
-    public static Version versionFor(String name) {
-        switch (name) {
-            case FOO:
-                return CURRENT_FOO_VERSION;
-            case BAR:
-                return CURRENT_BAR_VERSION;
-            default:
-                throw new IllegalArgumentException("no test data 'version' defined for " + name);
-        }
-    }
-
-    public static List<Version> availableVersionsFor(String name) {
-        switch (name) {
-            case FOO:
-                return FOO_VERSIONS;
-            case BAR:
-                return BAR_VERSIONS;
-            default:
-                throw new IllegalArgumentException("no test data 'available versions' defined for " + name);
-        }
-    }
-
-    public static InputStream inputStreamFor(String name, Version version) {
-        return new StringInputStream(name + "-content@" + version);
     }
 
     public static String failedCli(String message) {
