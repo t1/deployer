@@ -18,7 +18,7 @@ public class RepositoryIT {
     public static DropwizardClientRule artifactory = new DropwizardClientRule(new ArtifactoryMock());
 
     private Repository repository() {
-        return new ArtifactoryRepository(URI.create(artifactory.baseUri() + "/artifactory"));
+        return new ArtifactoryRepository(URI.create(artifactory.baseUri() + "/artifactory"), null);
     }
 
     @Rule

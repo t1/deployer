@@ -77,18 +77,18 @@ public class ArtifactoryMock {
     @GET
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.checksumsearchresult+json")
-    public String searchChecksum(@QueryParam("md5") String md5) {
-        return "{\"results\": [" + resultsFor(CheckSum.ofHexString(md5)) + "]}";
+    public String searchChecksum(@QueryParam("sha1") String checkSum) {
+        return "{\"results\": [" + resultsFor(CheckSum.ofHexString(checkSum)) + "]}";
     }
 
-    private String resultsFor(CheckSum md5) {
-        if (checksumFor(FOO).equals(md5)) {
+    private String resultsFor(CheckSum checkSum) {
+        if (checksumFor(FOO).equals(checkSum)) {
             return uriJar(FOO, CURRENT_FOO_VERSION);
-        } else if (checksumFor(BAR).equals(md5)) {
+        } else if (checksumFor(BAR).equals(checkSum)) {
             return uriJar(BAR, CURRENT_BAR_VERSION);
-        } else if (FAILING_CHECKSUM.equals(md5)) {
+        } else if (FAILING_CHECKSUM.equals(checkSum)) {
             throw new RuntimeException("error in repo");
-        } else if (AMBIGUOUS_CHECKSUM.equals(md5)) {
+        } else if (AMBIGUOUS_CHECKSUM.equals(checkSum)) {
             return uriJar("x", null) + "," + uriJar("y", null);
         } else { // UNKNOWN_CHECKSUM or anything else
             return "";
@@ -185,6 +185,6 @@ public class ArtifactoryMock {
     }
 
     public static CheckSum checksumFor(String name, Version version) {
-        return CheckSum.of(("md5(" + name + "@" + version + ")").getBytes());
+        return CheckSum.of(("checkSum(" + name + "@" + version + ")").getBytes());
     }
 }

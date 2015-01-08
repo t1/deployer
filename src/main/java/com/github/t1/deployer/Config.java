@@ -1,19 +1,30 @@
 package com.github.t1.deployer;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
+import java.nio.file.*;
+import java.util.Properties;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.*;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import com.github.t1.log.Logged;
 
 @Slf4j
 @Logged
-public class Config {
+@ApplicationScoped
+public class Config implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private static final Path PATH = Paths.get("artifactory.properties").toAbsolutePath();
+
+    private Properties properties;
+
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
         InetAddress host = InetAddress.getByName("localhost");
@@ -26,12 +37,27 @@ public class Config {
         client.close();
     }
 
-    private static final String SYSTEM_PROPERTY_NAME = "deployer.artifactory.uri";
-    private static final String DEFAULT_URI = "http://localhost:8081/artifactory";
-
     @Produces
     @Artifactory
     public URI produceArtifactoryUri() {
-        return URI.create(System.getProperty(SYSTEM_PROPERTY_NAME, DEFAULT_URI));
+        return URI.create(properties().getProperty("deployer.artifactory.uri", "http://localhost:8081/artifactory"));
+    }
+
+    @SneakyThrows(IOException.class)
+    private Properties properties() {
+        if (properties == null) {
+            log.debug("read config from {}", PATH);
+            properties = new Properties();
+            properties.load(Files.newInputStream(PATH));
+        }
+        return properties;
+    }
+
+    @Produces
+    @Artifactory
+    public UsernamePasswordCredentials produceArtifactoryCredentials() {
+        return new UsernamePasswordCredentials( //
+                properties().getProperty("deployer.artifactory.username"), //
+                properties().getProperty("deployer.artifactory.password"));
     }
 }
