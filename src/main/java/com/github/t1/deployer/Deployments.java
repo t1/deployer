@@ -15,7 +15,7 @@ import com.github.t1.log.Logged;
 @Logged(level = INFO)
 @Path("/deployments")
 public class Deployments {
-    private static final String CONTEXT_ROOT = "context-root";
+    public static final String CONTEXT_ROOT = "context-root";
 
     public static URI path(UriInfo uriInfo, Deployment deployment) {
         return uriInfo.getBaseUriBuilder() //
@@ -32,8 +32,8 @@ public class Deployments {
     @GET
     @Path("*")
     @Produces(TEXT_HTML)
-    public String getAllDeploymentsAsHtml() {
-        return new DeploymentsListHtml(getAllDeploymentsWithVersions()).toString();
+    public String getAllDeploymentsAsHtml(@Context UriInfo uriInfo) {
+        return new DeploymentsListHtmlWriter(uriInfo, getAllDeploymentsWithVersions()).toString();
     }
 
     @GET

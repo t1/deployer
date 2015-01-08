@@ -1,5 +1,7 @@
 package com.github.t1.deployer;
 
+import static javax.ws.rs.core.MediaType.*;
+
 import java.io.*;
 import java.util.List;
 
@@ -20,6 +22,12 @@ public class DeploymentResource {
     @GET
     public Deployment self() {
         return deployment;
+    }
+
+    @GET
+    @Produces(TEXT_HTML)
+    public String html() {
+        return new DeploymentHtmlWriter(this).toString();
     }
 
     @PUT
@@ -54,6 +62,12 @@ public class DeploymentResource {
     @Path("version")
     public Version getVersion() {
         return deployment.getVersion();
+    }
+
+    @GET
+    @Path("checksum")
+    public CheckSum getCheckSum() {
+        return deployment.getCheckSum();
     }
 
     @GET
