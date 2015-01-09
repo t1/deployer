@@ -144,9 +144,7 @@ public class ArtifactoryRepository implements Repository {
                 .path("/api/search/checksum") //
                 .queryParam("sha1", checkSum.hexString()) //
                 .build();
-        log.debug("GET {}", uri);
         try (CloseableHttpResponse response = httpGet(uri)) {
-            log.debug("response {}", response);
             if (OK.getStatusCode() != response.getStatusLine().getStatusCode())
                 throw new RuntimeException("error from repository: " + response.getStatusLine() + ": " + uri);
             List<ChecksumSearchResultItem> results = readEntity(response, ChecksumSearchResult.class).getResults();
@@ -170,6 +168,7 @@ public class ArtifactoryRepository implements Repository {
         if (item == null)
             return null;
         URI result = item.getUri();
+        log.debug("got uri {}", result);
         Path path = path(result);
         int length = path.getNameCount();
         return new Version(path.getName(length - 2).toString());

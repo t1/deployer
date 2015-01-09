@@ -19,7 +19,7 @@ public class DeploymentsListHtmlWriter extends HtmlWriter {
     @Override
     protected String body() {
         StringBuilder out = new StringBuilder();
-        out.append("    <table>");
+        out.append("    <table>\n");
         for (Deployment deployment : deployments) {
             out.append("        ") //
                     .append("<tr><td><a href=\"").append(Deployments.path(uriInfo, deployment)).append("\">") //

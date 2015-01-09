@@ -28,7 +28,7 @@ public class DeploymentsTest {
     @Mock
     Repository repository;
     @Mock
-    DeploymentsContainer container;
+    Container container;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();

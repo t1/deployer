@@ -18,11 +18,11 @@ import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DeploymentsContainerTest {
+public class ContainerTest {
     private static final Version NO_VERSION = null;
 
     @InjectMocks
-    DeploymentsContainer container;
+    Container container;
     @Mock
     ModelControllerClient client;
     @Mock
@@ -41,7 +41,7 @@ public class DeploymentsContainerTest {
         when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
                 .thenReturn(ModelNode.fromString(successCli("[]")));
 
-        expectedException.expect(RuntimeException.class);
+        expectedException.expect(WebException.class);
         expectedException.expectMessage("no deployment with context root [unknown]");
 
         container.getDeploymentByContextRoot("unknown");

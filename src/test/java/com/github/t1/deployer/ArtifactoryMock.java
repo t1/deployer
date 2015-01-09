@@ -3,6 +3,7 @@ package com.github.t1.deployer;
 import static java.util.Arrays.*;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -17,6 +18,9 @@ public class ArtifactoryMock {
 
     public static final String FOO = "foo";
     public static final String BAR = "bar";
+
+    public static final String FOO_WAR = FOO + ".war";
+    public static final String BAR_WAR = BAR + ".war";
 
     public static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
     public static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
@@ -70,18 +74,18 @@ public class ArtifactoryMock {
     @Context
     UriInfo uriInfo;
 
-    private UriBuilder base(String path) {
-        return uriInfo.getBaseUriBuilder().path(ArtifactoryMock.class).path(path);
+    private URI base(String path) {
+        return uriInfo.getBaseUriBuilder().path(ArtifactoryMock.class).path(path).build();
     }
 
     @GET
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.checksumsearchresult+json")
-    public String searchChecksum(@QueryParam("sha1") String checkSum) {
-        return "{\"results\": [" + resultsFor(CheckSum.ofHexString(checkSum)) + "]}";
+    public String searchByChecksum(@QueryParam("sha1") String checkSum) {
+        return "{\"results\": [" + searchResultsFor(CheckSum.ofHexString(checkSum)) + "]}";
     }
 
-    private String resultsFor(CheckSum checkSum) {
+    private String searchResultsFor(CheckSum checkSum) {
         if (checksumFor(FOO).equals(checkSum)) {
             return uriJar(FOO, CURRENT_FOO_VERSION);
         } else if (checksumFor(BAR).equals(checkSum)) {
@@ -90,9 +94,21 @@ public class ArtifactoryMock {
             throw new RuntimeException("error in repo");
         } else if (AMBIGUOUS_CHECKSUM.equals(checkSum)) {
             return uriJar("x", null) + "," + uriJar("y", null);
-        } else { // UNKNOWN_CHECKSUM or anything else
+        } else if (UNKNOWN_CHECKSUM.equals(checkSum)) {
             return "";
+        } else {
+            String name = nameFor(checkSum);
+            Version version = versionFor(checkSum);
+            return uriJar(name, version);
         }
+    }
+
+    public static CheckSum checksumFor(String name) {
+        return checksumFor(name, versionFor(name));
+    }
+
+    public static CheckSum checksumFor(String name, Version version) {
+        return CheckSum.of(("checkSum(" + name + "@" + version + ")").getBytes());
     }
 
     private String uriJar(String name, Version version) {
@@ -101,6 +117,25 @@ public class ArtifactoryMock {
                 + "\"uri\":\"" + base("api/storage" + path) + "\",\n" //
                 + "\"downloadUri\" : \"" + base(path) + "\"\n" //
                 + "}";
+    }
+
+    private static String nameFor(CheckSum checkSum) {
+        return checkSum.hexString().substring(0, 6);
+    }
+
+    public static Version versionFor(CheckSum checkSum) {
+        return versionFor(checkSum.getBytes());
+    }
+
+    private static Version versionFor(byte[] bytes) {
+        StringBuilder string = new StringBuilder();
+        for (int i = 0; i < 3 && i <= bytes.length; i++) {
+            if (i > 0)
+                string.append(".");
+            int digit = 0x07 & bytes[i];
+            string.append(digit);
+        }
+        return new Version(string.toString());
     }
 
     @GET
@@ -142,7 +177,7 @@ public class ArtifactoryMock {
             case BAR:
                 return CURRENT_BAR_VERSION;
             default:
-                throw new IllegalArgumentException("no test data 'version' defined for " + name);
+                return versionFor(name.getBytes());
         }
     }
 
@@ -153,8 +188,23 @@ public class ArtifactoryMock {
             case BAR:
                 return BAR_VERSIONS;
             default:
-                throw new IllegalArgumentException("no test data 'available versions' defined for " + name);
+                return arbitraryVersionFor(name);
         }
+    }
+
+    private static List<Version> arbitraryVersionFor(String name) {
+        byte[] bytes = name.getBytes();
+        Version v = versionFor(bytes);
+        bytes[1]--;
+        Version m1 = versionFor(bytes);
+        bytes[1]++;
+        bytes[0]++;
+        Version p1 = versionFor(bytes);
+        bytes[1]++;
+        Version p2 = versionFor(bytes);
+        bytes[2]++;
+        Version p3 = versionFor(bytes);
+        return asList(m1, v, p1, p2, p3);
     }
 
     private String version(String version) {
@@ -167,7 +217,7 @@ public class ArtifactoryMock {
 
     @GET
     @Path("/{repository}/{path:.*}")
-    public InputStream getFiles(@SuppressWarnings("unused") @PathParam("repository") String repository,
+    public InputStream getFile(@SuppressWarnings("unused") @PathParam("repository") String repository,
             @PathParam("path") String pathString) {
         java.nio.file.Path path = Paths.get(pathString);
         int n = path.getNameCount();
@@ -177,14 +227,12 @@ public class ArtifactoryMock {
     }
 
     public static InputStream inputStreamFor(String name, Version version) {
+        // if ((FOO_WAR).equals(name))
+        // try {
+        // return Files.newInputStream(Paths.get(FOO_WAR));
+        // } catch (IOException e) {
+        // throw new RuntimeException(e);
+        // }
         return new StringInputStream(name + "-content@" + version);
-    }
-
-    public static CheckSum checksumFor(String name) {
-        return checksumFor(name, versionFor(name));
-    }
-
-    public static CheckSum checksumFor(String name, Version version) {
-        return CheckSum.of(("checkSum(" + name + "@" + version + ")").getBytes());
     }
 }

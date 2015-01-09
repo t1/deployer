@@ -37,7 +37,7 @@ public class TestData {
         }
     }
 
-    public static void givenDeployments(DeploymentsContainer container, String... contextRoots) {
+    public static void givenDeployments(Container container, String... contextRoots) {
         List<Deployment> deployments = new ArrayList<>();
         for (String contextRoot : contextRoots) {
             Deployment deployment = deploymentFor(contextRoot);

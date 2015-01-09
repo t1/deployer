@@ -20,6 +20,7 @@ import com.github.t1.log.Logged;
 @Logged
 @ApplicationScoped
 public class Config implements Serializable {
+    private static final String URI_SYSTEM_PROPERTY = "deployer.artifactory.uri";
     private static final long serialVersionUID = 1L;
     private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
     private static final Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
@@ -42,7 +43,12 @@ public class Config implements Serializable {
     @Produces
     @Artifactory
     public URI produceArtifactoryUri() {
-        return URI.create(properties().getProperty("deployer.artifactory.uri", "http://localhost:8081/artifactory"));
+        String value = properties().getProperty(URI_SYSTEM_PROPERTY);
+        if (value == null)
+            value = System.getProperty(URI_SYSTEM_PROPERTY);
+        if (value == null)
+            value = "http://localhost:8081/artifactory";
+        return URI.create(value);
     }
 
     @SneakyThrows(IOException.class)
@@ -50,7 +56,10 @@ public class Config implements Serializable {
         if (properties == null) {
             log.debug("read config from {}", CONFIG_FILE);
             properties = new Properties();
-            properties.load(Files.newInputStream(CONFIG_FILE));
+            if (Files.isReadable(CONFIG_FILE))
+                properties.load(Files.newInputStream(CONFIG_FILE));
+            else
+                log.debug("no config file found at {}; use defaults", CONFIG_FILE);
         }
         return properties;
     }
@@ -58,8 +67,12 @@ public class Config implements Serializable {
     @Produces
     @Artifactory
     public UsernamePasswordCredentials produceArtifactoryCredentials() {
-        return new UsernamePasswordCredentials( //
-                properties().getProperty("deployer.artifactory.username"), //
-                properties().getProperty("deployer.artifactory.password"));
+        String username = properties().getProperty("deployer.artifactory.username");
+        if (username == null)
+            return null;
+        String password = properties().getProperty("deployer.artifactory.password");
+        if (password == null)
+            return null;
+        return new UsernamePasswordCredentials(username, password);
     }
 }

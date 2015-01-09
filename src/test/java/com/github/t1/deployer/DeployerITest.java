@@ -18,7 +18,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.*;
 
 public class DeployerITest {
-    private static DeploymentsContainer container = mock(DeploymentsContainer.class);
+    private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
 
     @ClassRule
@@ -27,7 +27,7 @@ public class DeployerITest {
                 @Override
                 protected void configure() {
                     bind(repository).to(Repository.class);
-                    bind(container).to(DeploymentsContainer.class);
+                    bind(container).to(Container.class);
                 }
             });
 
@@ -114,7 +114,7 @@ public class DeployerITest {
 
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
-        verify(container).deploy(FOO, inputStreamFor(FOO, CURRENT_FOO_VERSION));
+        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
     }
 
     @Test
@@ -128,7 +128,7 @@ public class DeployerITest {
 
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
-        verify(container).deploy(FOO, inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
     @Test

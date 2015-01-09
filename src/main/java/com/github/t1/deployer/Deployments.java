@@ -25,7 +25,7 @@ public class Deployments {
     }
 
     @Inject
-    DeploymentsContainer container;
+    Container container;
     @Inject
     Repository repository;
 

@@ -20,6 +20,10 @@ import lombok.*;
 public class CheckSum {
     @com.fasterxml.jackson.annotation.JsonCreator
     @org.codehaus.jackson.annotate.JsonCreator
+    public static CheckSum fromString(String hexString) {
+        return ofHexString(hexString);
+    }
+
     public static CheckSum ofHexString(String hexString) {
         return of(parseHexBinary(hexString));
     }

@@ -1,9 +1,12 @@
 package com.github.t1.deployer;
 
+import javax.ws.rs.core.UriInfo;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class DeploymentHtmlWriter extends HtmlWriter {
+    private final UriInfo uriInfo;
     private final DeploymentResource deployment;
 
     @Override
@@ -24,10 +27,18 @@ public class DeploymentHtmlWriter extends HtmlWriter {
         for (Version version : deployment.getAvailableVersions()) {
             out.append("        <tr>");
             out.append("<td>").append(version).append("</td>");
-            out.append("<td><a href=\"").append("install").append("\">").append("Install").append("</td>");
+            out.append("<td>").append(installForm()).append("</td>");
             out.append("</tr>\n");
         }
         out.append("    </table>\n");
         return out.toString();
+    }
+
+    private String installForm() {
+        return "<form method=\"post\" action=\"" + Deployments.path(uriInfo, deployment.self()) + "\">\n" //
+                + "<input type=\"hidden\" name=\"contextRoot\" value=\"" + deployment.getContextRoot() + "\">\n" //
+                + "<input type=\"hidden\" name=\"checkSum\" value=\"" + deployment.getCheckSum() + "\">\n" //
+                + "<input type=\"submit\" value=\"Deploy\">\n" //
+                + "</form>";
     }
 }

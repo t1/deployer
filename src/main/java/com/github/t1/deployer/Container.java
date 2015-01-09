@@ -1,14 +1,13 @@
 package com.github.t1.deployer;
 
+import static com.github.t1.deployer.WebException.*;
 import static java.util.concurrent.TimeUnit.*;
-import static javax.ws.rs.core.Response.Status.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,7 @@ import com.github.t1.log.Logged;
 
 @Slf4j
 @Logged
-public class DeploymentsContainer {
+public class Container {
     private abstract class AbstractPlan {
         public void execute() {
             try (ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(client)) {
@@ -162,7 +161,7 @@ public class DeploymentsContainer {
                 return deployment;
             }
         }
-        throw new WebApplicationException("no deployment with context root [" + contextRoot + "]", NOT_FOUND);
+        throw notFound("no deployment with context root [" + contextRoot + "]");
     }
 
     public List<Deployment> getAllDeployments() {
