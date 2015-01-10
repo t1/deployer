@@ -41,7 +41,7 @@ public class DeploymentResource {
             throw badRequest("checksum missing");
         deploy(checkSum);
 
-        return Response.created(Deployments.path(uriInfo, deployment)).build();
+        return Response.seeOther(Deployments.path(uriInfo, deployment)).build();
     }
 
     @PUT

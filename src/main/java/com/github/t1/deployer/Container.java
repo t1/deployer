@@ -137,7 +137,7 @@ public class Container {
     private ModelNode execute(ModelNode command) {
         log.debug("execute command {}", command);
         ModelNode result = client.execute(command, LOGGING);
-        log.debug("-> {}", result);
+        log.trace("-> {}", result);
         return result;
     }
 
