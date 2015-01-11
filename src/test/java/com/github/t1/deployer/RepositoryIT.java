@@ -66,7 +66,7 @@ public class RepositoryIT {
 
         String content = read(inputStream);
 
-        assertEquals("foo-1.3.1.jar-content@1.3.1", content);
+        assertEquals("foo-1.3.1.war-content@1.3.1", content);
     }
 
     @SneakyThrows(IOException.class)

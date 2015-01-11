@@ -3,6 +3,10 @@ package com.github.t1.deployer;
 import static javax.xml.bind.DatatypeConverter.*;
 import static javax.xml.bind.annotation.XmlAccessType.*;
 
+import java.io.IOException;
+import java.nio.file.*;
+import java.security.*;
+
 import javax.xml.bind.annotation.*;
 
 import lombok.*;
@@ -30,6 +34,12 @@ public class CheckSum {
 
     public static CheckSum ofBase64(String hexString) {
         return of(parseBase64Binary(hexString));
+    }
+
+    @SneakyThrows({ NoSuchAlgorithmException.class, IOException.class })
+    public static CheckSum of(Path path) {
+        MessageDigest hash = MessageDigest.getInstance("SHA-1");
+        return of(hash.digest(Files.readAllBytes(path)));
     }
 
     public static CheckSum of(byte[] bytes) {

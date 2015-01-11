@@ -64,7 +64,7 @@ public class ArtifactoryRepository implements Repository {
     @Override
     public List<Version> availableVersionsFor(CheckSum checkSum) {
         URI uri = searchByChecksum(checkSum).getUri();
-        uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build(); // TODO double check
+        uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
         try (CloseableHttpResponse response = httpGet(uri)) {
             return versionsIn(readEntity(response, FolderInfo.class));
         } catch (IOException e) {
@@ -152,7 +152,9 @@ public class ArtifactoryRepository implements Repository {
                 return null;
             if (results.size() > 1)
                 throw new RuntimeException("checksum not unique in repository: " + checkSum);
-            return results.get(0);
+            ChecksumSearchResultItem result = results.get(0);
+            log.debug("got {}", result);
+            return result;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
