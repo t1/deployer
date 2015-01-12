@@ -9,3 +9,14 @@ Also supports a REST API.
 * SSO
 * audit log (who deployed what when)
 * cluster support
+* Puppet support
+
+# Configuration
+
+## Security
+
+```
+/subsystem=security/security-domain=deployer:add()
+/subsystem=security/security-domain=deployer:add(cache-type=default)
+
+```

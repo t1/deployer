@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app version="3.0"
-    xmlns="http://java.sun.com/xml/ns/javaee"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
     <servlet>
         <servlet-name>javax.ws.rs.core.Application</servlet-name>
@@ -10,4 +8,32 @@
         <servlet-name>javax.ws.rs.core.Application</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
+<!-- 
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Deployer Command</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>Deployer</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <login-config>
+        <auth-method>FORM</auth-method>
+        <realm-name>Deployer</realm-name>
+        <form-login-config>
+            <form-login-page>/jsp/login.jsp</form-login-page>
+            <form-error-page>/jsp/login-error.jsp</form-error-page>
+        </form-login-config>
+    </login-config>
+
+    <filter>
+        <filter-name>IDPFilter</filter-name>
+        <filter-class>org.picketlink.identity.federation.web.filters.IDPFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>IDPFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+-->
 </web-app>
