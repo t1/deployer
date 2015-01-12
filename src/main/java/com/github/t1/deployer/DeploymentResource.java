@@ -33,15 +33,21 @@ public class DeploymentResource {
 
     @POST
     public Response post(@Context UriInfo uriInfo, //
+            @FormParam("action") String action, //
             @FormParam("contextRoot") String contextRoot, //
             @FormParam("checkSum") CheckSum checkSum //
     ) {
         check(contextRoot);
-        if (checkSum == null)
-            throw badRequest("checksum missing");
-        deploy(checkSum);
-
-        return Response.seeOther(Deployments.path(uriInfo, deployment)).build();
+        switch (action) {
+            case "deploy":
+                deploy(checkSum);
+                return Response.seeOther(Deployments.path(uriInfo, deployment)).build();
+            case "undeploy":
+                delete();
+                return Response.seeOther(Deployments.pathAll(uriInfo)).build();
+            default:
+                throw badRequest("invalid action '" + action + "'");
+        }
     }
 
     @PUT
@@ -61,6 +67,8 @@ public class DeploymentResource {
     }
 
     private void deploy(CheckSum checkSum) {
+        if (checkSum == null)
+            throw badRequest("checksum missing");
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
             container.deploy(getName(), inputStream);
         } catch (IOException e) {

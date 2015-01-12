@@ -24,6 +24,13 @@ public class Deployments {
                 .build();
     }
 
+    public static URI pathAll(UriInfo uriInfo) {
+        return uriInfo.getBaseUriBuilder() //
+                .path(Deployments.class) //
+                .path("*") //
+                .build();
+    }
+
     @Inject
     Container container;
     @Inject
