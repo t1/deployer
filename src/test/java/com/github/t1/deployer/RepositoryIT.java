@@ -26,37 +26,46 @@ public class RepositoryIT {
 
     @Test
     public void shouldGetAvailableVersions() {
-        List<Version> versions = repository().availableVersionsFor(checksumFor(FOO));
+        List<Deployment> deployments = repository().availableVersionsFor(checksumFor(FOO));
 
-        assertEquals(FOO_VERSIONS, versions);
+        for (int i = 0; i < deployments.size(); i++) {
+            Deployment deployment = deployments.get(i);
+            Version version = FOO_VERSIONS.get(i);
+
+            assertEquals(FOO, deployment.getContextRoot());
+            assertEquals(FOO + ".war", deployment.getName());
+            assertEquals(checksumFor(FOO, version), deployment.getCheckSum());
+            assertEquals(version, deployment.getVersion());
+        }
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
         expectedException.expectMessage("error from repository");
 
-        repository().getVersionByChecksum(FAILING_CHECKSUM);
+        repository().getByChecksum(FAILING_CHECKSUM);
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
         expectedException.expectMessage("checksum not unique");
 
-        repository().getVersionByChecksum(AMBIGUOUS_CHECKSUM);
+        repository().getByChecksum(AMBIGUOUS_CHECKSUM);
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnknown() {
-        Version version = repository().getVersionByChecksum(UNKNOWN_CHECKSUM);
+        Deployment deployment = repository().getByChecksum(UNKNOWN_CHECKSUM);
 
-        assertNull(version);
+        assertNull(deployment);
     }
 
     @Test
     public void shouldSearchByChecksum() {
-        Version version = repository().getVersionByChecksum(checksumFor(FOO));
+        Deployment deployment = repository().getByChecksum(checksumFor(FOO));
 
-        assertEquals(CURRENT_FOO_VERSION, version);
+        assertEquals(CURRENT_FOO_VERSION, deployment.getVersion());
+        // TODO check other fields
     }
 
     @Test

@@ -29,6 +29,21 @@ import com.github.t1.log.Logged;
 @Slf4j
 @Logged
 public class ArtifactoryRepository implements Repository {
+    public static String contextRoot(Path path) {
+        return element(-3, path); // this is not perfect... we should read it from the container and pass it in
+    }
+
+    public static Version version(Path path) {
+        String string = element(-2, path);
+        return new Version(string);
+    }
+
+    public static String element(int n, Path path) {
+        if (n < 0)
+            n += path.getNameCount();
+        return path.getName(n).toString();
+    }
+
     private final CloseableHttpClient http = HttpClients.createDefault();
     private final URI baseUri;
     private final Credentials credentials;
@@ -42,40 +57,6 @@ public class ArtifactoryRepository implements Repository {
     @PreDestroy
     void closeWebClient() throws IOException {
         http.close();
-    }
-
-    @Data
-    @NoArgsConstructor
-    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
-    private static class FolderInfo {
-        List<FolderInfoChild> children;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
-    private static class FolderInfoChild {
-        boolean folder;
-        URI uri;
-    }
-
-    @Override
-    public List<Version> availableVersionsFor(CheckSum checkSum) {
-        URI uri = searchByChecksum(checkSum).getUri();
-        uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
-        try (CloseableHttpResponse response = httpGet(uri)) {
-            return versionsIn(readEntity(response, FolderInfo.class));
-        } catch (IOException e) {
-            throw new RuntimeException("can't read available versions for " + checkSum, e);
-        }
-    }
-
-    private String versionsFolder(URI uri) {
-        Path path = path(uri);
-        int length = path.getNameCount();
-        return path.subpath(0, length - 2).toString();
     }
 
     private CloseableHttpResponse httpGet(URI uri) throws IOException, ClientProtocolException {
@@ -109,17 +90,19 @@ public class ArtifactoryRepository implements Repository {
         return new ObjectMapper().readValue(string, type);
     }
 
-    private List<Version> versionsIn(FolderInfo folderInfo) {
-        List<Version> result = new ArrayList<>();
-        for (FolderInfoChild child : folderInfo.getChildren()) {
-            if (child.isFolder()) {
-                String version = child.getUri().getPath();
-                if (version.startsWith("/"))
-                    version = version.substring(1);
-                result.add(new Version(version));
-            }
-        }
-        return result;
+    /**
+     * It's not really nice to get the version out of the repo path, but where else would I get it? Even the
+     * <code>X-Result-Detail</code> header doesn't provide it.
+     */
+    @Override
+    public Deployment getByChecksum(CheckSum checkSum) {
+        ChecksumSearchResultItem item = searchByChecksum(checkSum);
+        if (item == null)
+            return null;
+        URI result = item.getUri();
+        log.debug("got uri {}", result);
+        Path path = path(result);
+        return deployment(checkSum, path);
     }
 
     @Data
@@ -145,8 +128,6 @@ public class ArtifactoryRepository implements Repository {
                 .queryParam("sha1", checkSum.hexString()) //
                 .build();
         try (CloseableHttpResponse response = httpGet(uri)) {
-            if (OK.getStatusCode() != response.getStatusLine().getStatusCode())
-                throw new RuntimeException("error from repository: " + response.getStatusLine() + ": " + uri);
             List<ChecksumSearchResultItem> results = readEntity(response, ChecksumSearchResult.class).getResults();
             if (results.size() == 0)
                 return null;
@@ -160,24 +141,106 @@ public class ArtifactoryRepository implements Repository {
         }
     }
 
-    /**
-     * It's not really nice to get the version out of the repo path, but where else would I get it? Even the
-     * <code>X-Result-Detail</code> header doesn't provide it.
-     */
-    @Override
-    public Version getVersionByChecksum(CheckSum checkSum) {
-        ChecksumSearchResultItem item = searchByChecksum(checkSum);
-        if (item == null)
-            return null;
-        URI result = item.getUri();
-        log.debug("got uri {}", result);
-        Path path = path(result);
-        int length = path.getNameCount();
-        return new Version(path.getName(length - 2).toString());
-    }
-
     private Path path(URI result) {
         return Paths.get(result.getPath());
+    }
+
+    private Deployment deployment(CheckSum checkSum, Path path) {
+        String name = fileNameWithoutVersion(path);
+        String contextRoot = contextRoot(path);
+        Version version = version(path);
+        return new Deployment(name, contextRoot, checkSum, version);
+    }
+
+    private String fileNameWithoutVersion(URI uri) {
+        return fileNameWithoutVersion(Paths.get(uri.getPath()));
+    }
+
+    private String fileNameWithoutVersion(Path path) {
+        String version = element(-2, path);
+        String fileName = element(-1, path);
+        int versionIndex = fileName.indexOf("-" + version);
+        int suffixIndex = fileName.lastIndexOf('.');
+        String prefix = (versionIndex >= 0) ? fileName.substring(0, versionIndex) : fileName;
+        String suffix = (suffixIndex >= 0) ? fileName.substring(suffixIndex, fileName.length()) : "";
+        return prefix + suffix;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+    private static class FolderInfo {
+        List<ChildInfo> children;
+        URI uri;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ChildInfo {
+        boolean folder;
+        URI uri;
+        Map<String, CheckSum> checksums;
+
+        public CheckSum getChecksum(String type) {
+            return checksums.get(type);
+        }
+    }
+
+    @Override
+    public List<Deployment> availableVersionsFor(CheckSum checkSum) {
+        ChecksumSearchResultItem deployment = searchByChecksum(checkSum);
+        URI uri = deployment.getUri();
+        uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
+        return deploymentsIn(fileNameWithoutVersion(deployment.getUri()), uri);
+    }
+
+    private String versionsFolder(URI uri) {
+        Path path = path(uri);
+        int length = path.getNameCount();
+        return path.subpath(0, length - 2).toString();
+    }
+
+    private List<Deployment> deploymentsIn(String fileName, URI uri) {
+        // eventually it would be more efficient to use the Artifactory Pro feature 'List File':
+        // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
+        try (CloseableHttpResponse response = httpGet(uri)) {
+            return deploymentsIn(fileName, readEntity(response, FolderInfo.class));
+        } catch (IOException e) {
+            throw new RuntimeException("can't read files in " + uri, e);
+        }
+    }
+
+    private List<Deployment> deploymentsIn(String fileName, FolderInfo folderInfo) {
+        URI root = folderInfo.getUri();
+        List<Deployment> result = new ArrayList<>();
+        for (ChildInfo child : folderInfo.getChildren()) {
+            URI uri = UriBuilder.fromUri(root).path(child.getUri().toString()).build();
+            if (child.isFolder()) {
+                result.addAll(deploymentsIn(fileName, uri));
+            } else {
+                Deployment deployment = deploymentIn(uri);
+                if (deployment.getName().equals(fileName)) {
+                    result.add(deployment);
+                }
+            }
+        }
+        return result;
+    }
+
+    private Deployment deploymentIn(URI uri) {
+        try (CloseableHttpResponse response = httpGet(uri)) {
+            ChildInfo file = readEntity(response, ChildInfo.class);
+            return deployment(file);
+        } catch (IOException e) {
+            throw new RuntimeException("can't read files in " + uri, e);
+        }
+    }
+
+    private Deployment deployment(ChildInfo file) {
+        return deployment(file.getChecksum("sha1"), Paths.get(file.getUri().getPath()));
     }
 
     @Override

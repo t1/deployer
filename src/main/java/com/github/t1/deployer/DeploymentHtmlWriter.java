@@ -21,23 +21,22 @@ public class DeploymentHtmlWriter extends HtmlWriter {
         out.append("    Context-Root: ").append(deployment.getContextRoot()).append("<br/>\n");
         out.append("    Version: ").append(deployment.getVersion()).append("<br/>\n");
         out.append("    CheckSum: ").append(deployment.getCheckSum()).append("<br/>\n");
-        out.append(actionForm("Undeploy")).append("<br/>\n");
+        out.append(actionForm("Undeploy", deployment.self())).append("<br/>\n");
 
         out.append("    <h2>Available Versions:</h2>");
         out.append("    <table>");
-        for (Version version : deployment.getAvailableVersions()) {
-            // FIXME deploy the version, not the deployment itself!
+        for (Deployment deployment : deployment.getAvailableVersions()) {
             out.append("        <tr>");
-            out.append("<td>").append(version).append("</td>");
-            out.append("<td>").append(actionForm("Deploy")).append("</td>");
+            out.append("<td>").append(deployment.getVersion()).append("</td>");
+            out.append("<td>").append(actionForm("Deploy", deployment)).append("</td>");
             out.append("</tr>\n");
         }
         out.append("    </table>\n");
         return out.toString();
     }
 
-    private String actionForm(String action) {
-        return "<form method=\"post\" action=\"" + Deployments.path(uriInfo, deployment.self()) + "\">\n" //
+    private String actionForm(String action, Deployment deployment) {
+        return "<form method=\"post\" action=\"" + Deployments.path(uriInfo, this.deployment.self()) + "\">\n" //
                 + "<input type=\"hidden\" name=\"contextRoot\" value=\"" + deployment.getContextRoot() + "\">\n" //
                 + "<input type=\"hidden\" name=\"checkSum\" value=\"" + deployment.getCheckSum() + "\">\n" //
                 + "<input type=\"hidden\" name=\"action\" value=\"" + action.toLowerCase() + "\">\n" //

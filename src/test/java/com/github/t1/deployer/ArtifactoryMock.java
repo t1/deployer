@@ -1,5 +1,6 @@
 package com.github.t1.deployer;
 
+import static com.github.t1.deployer.ArtifactoryRepository.*;
 import static java.util.Arrays.*;
 
 import java.io.*;
@@ -22,6 +23,8 @@ import org.joda.time.format.PeriodFormat;
 @Path("/artifactory")
 public class ArtifactoryMock {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+
+    private static final java.nio.file.Path REPO_NAME = Paths.get("libs-release-local");
 
     private static final java.nio.file.Path MAVEN_HOME = Paths.get(System.getProperty("user.home"), ".m2");
     private static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
@@ -109,12 +112,12 @@ public class ArtifactoryMock {
         } else if (FAILING_CHECKSUM.equals(checkSum)) {
             throw new RuntimeException("error in repo");
         } else if (AMBIGUOUS_CHECKSUM.equals(checkSum)) {
-            return uriWar("x", null) + "," + uriWar("y", null);
+            return uriWar("x", new Version("1.0")) + "," + uriWar("y", new Version("2.0"));
         } else if (UNKNOWN_CHECKSUM.equals(checkSum)) {
             return "";
         } else if (isIndexed(checkSum)) {
             java.nio.file.Path path = index().get(checkSum);
-            return uriWar("/repo/" + path);
+            return uriWar(REPO_NAME + "/" + path);
         } else {
             String name = nameFor(checkSum);
             Version version = versionFor(checkSum);
@@ -142,22 +145,22 @@ public class ArtifactoryMock {
     }
 
     private String uriWar(String name, Version version) {
-        return uriWar("/libs-release-local/" + name + "/" + version + "/" + name + "-" + version + ".war");
+        return uriWar(pathFor(name, version).toString());
+    }
+
+    public static java.nio.file.Path pathFor(String name, Version version) {
+        return REPO_NAME.resolve(name).resolve(version.toString()).resolve(name + "-" + version + ".war");
     }
 
     private String uriWar(String path) {
         return "{" //
-                + "\"uri\":\"" + base("api/storage" + path) + "\",\n" //
+                + "\"uri\":\"" + base("api/storage/" + path) + "\",\n" //
                 + "\"downloadUri\" : \"" + base(path) + "\"\n" //
                 + "}";
     }
 
     private boolean isIndexed(CheckSum checkSum) {
         return index().containsKey(checkSum);
-    }
-
-    private static Version version(java.nio.file.Path path) {
-        return new Version(path.getName(path.getNameCount() - 2).toString());
     }
 
     private static Map<CheckSum, java.nio.file.Path> index() {
@@ -186,55 +189,77 @@ public class ArtifactoryMock {
     }
 
     @GET
-    @Path("/api/storage/{repoKey}/{folder-path:.*}")
+    @Path("/api/storage/{repoKey}/{path:.*}")
     @Produces("application/vnd.org.jfrog.artifactory.storage.FolderInfo+json")
-    public String listFiles(@PathParam("repoKey") String repoKey, @PathParam("folder-path") String folderPath) {
+    public String fileInfo(@PathParam("repoKey") String repoKey, @PathParam("path") String path) throws IOException {
         return "{\n" //
-                + "   \"path\" : \"" + folderPath + "\",\n" //
-                + "   \"createdBy\" : \"kirk\",\n" //
                 + "   \"repo\" : \"" + repoKey + "\",\n" //
-                + "   \"modifiedBy\" : \"spock\",\n" //
+                + "   \"path\" : \"" + path + "\",\n" //
                 + "   \"created\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
-                + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
-                + "   \"children\" : [\n" //
-                + foldersIn(folderPath) //
-                + "      {\n" //
-                + "         \"folder\" : false,\n" //
-                + "         \"uri\" : \"/maven-metadata.xml\"\n" //
-                + "      }\n" //
-                + "   ],\n" //
+                + "   \"createdBy\" : \"kirk\",\n" //
+                + "   \"modifiedBy\" : \"spock\",\n" //
                 + "   \"lastModified\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
-                + "   \"uri\" : \"" + base(repoKey + "/" + folderPath) + "\"\n" //
+                + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
+                + info(Paths.get(path)) //
+                + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n" //
                 + "}\n" //
         ;
     }
 
-    private String foldersIn(String path) {
-        StringBuilder out = new StringBuilder();
-        for (Version version : availableVersionsFor(path)) {
-            out.append(version(version.getVersion()));
+    private String info(java.nio.file.Path path) throws IOException {
+        if (FOO.equals(path.getName(0).toString())) {
+            if (path.getNameCount() == 1)
+                return folderInfo(path);
+            if (path.getNameCount() == 2) {
+                StringBuilder out = childrenBuilder();
+                Version version = version(path.resolve("dummyFile"));
+                out.append(fileChild(FOO + "-" + version + ".war"));
+                out.append(fileChild(FOO + "-" + version + ".pom"));
+                return closeChildrenBuilder(out);
+            }
+            Version version = version(path);
+            return fileInfo(12345L, checksumFor(FOO, version), CheckSum.fromString("1234567890abcdef"));
         }
-        return out.toString();
+        java.nio.file.Path resolved = MAVEN_REPOSITORY.resolve(path);
+        if (Files.isDirectory(resolved)) {
+            return folderInfo(path);
+        } else {
+            return fileInfo(resolved);
+        }
     }
 
-    public static List<Version> availableVersionsFor(String path) {
-        if (isIndexed(Paths.get(path))) {
-            List<Version> result = new ArrayList<>();
-            for (java.nio.file.Path p : index().values()) {
-                if (p.startsWith(path)) {
-                    result.add(version(p));
-                }
+    private String folderInfo(java.nio.file.Path path) throws IOException {
+        final StringBuilder out = childrenBuilder();
+        if (isIndexed(path)) {
+            Files.walkFileTree(MAVEN_REPOSITORY.resolve(path), EnumSet.noneOf(FileVisitOption.class), 1,
+                    new SimpleFileVisitor<java.nio.file.Path>() {
+                        @Override
+                        public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
+                            if (Files.isDirectory(file))
+                                out.append(folderChild(file.getFileName().toString()));
+                            else
+                                out.append(fileChild(file.getFileName().toString()));
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+        } else {
+            for (Version version : availableVersionsFor(path.toString())) {
+                out.append(folderChild(version.toString()));
             }
-            return result;
         }
-        switch (path) {
-            case FOO:
-                return FOO_VERSIONS;
-            case BAR:
-                return BAR_VERSIONS;
-            default:
-                return arbitraryVersionFor(path);
-        }
+        return closeChildrenBuilder(out);
+    }
+
+    private StringBuilder childrenBuilder() {
+        final StringBuilder out = new StringBuilder();
+        out.append("   \"children\" : [\n");
+        return out;
+    }
+
+    private String closeChildrenBuilder(final StringBuilder out) {
+        out.setLength(out.length() - 2); // final comma and \n
+        out.append("\n   ],\n");
+        return out.toString();
     }
 
     private static boolean isIndexed(java.nio.file.Path path) {
@@ -244,6 +269,17 @@ public class ArtifactoryMock {
             }
         }
         return false;
+    }
+
+    public static List<Version> availableVersionsFor(String name) {
+        switch (name.toString()) {
+            case FOO:
+                return FOO_VERSIONS;
+            case BAR:
+                return BAR_VERSIONS;
+            default:
+                return arbitraryVersionFor(name);
+        }
     }
 
     private static List<Version> arbitraryVersionFor(String name) {
@@ -261,12 +297,40 @@ public class ArtifactoryMock {
         return asList(m1, v, p1, p2, p3);
     }
 
-    private String version(String version) {
+    private String folderChild(String fileName) {
         return "      {\n" //
                 + "         \"folder\" : true,\n" //
-                + "         \"uri\" : \"/" + version + "\"\n" //
+                + "         \"uri\" : \"/" + fileName + "\"\n" //
                 + "      },\n" //
         ;
+    }
+
+    private String fileChild(String fileName) {
+        return "      {\n" //
+                + "         \"folder\" : false,\n" //
+                + "         \"uri\" : \"/" + fileName + "\"\n" //
+                + "      },\n" //
+        ;
+    }
+
+    private String fileInfo(java.nio.file.Path path) throws IOException {
+        long size = Files.size(path);
+        CheckSum sha1 = CheckSum.sha1(path);
+        CheckSum md5 = CheckSum.md5(path);
+        return fileInfo(size, sha1, md5);
+    }
+
+    private String fileInfo(long size, CheckSum sha1, CheckSum md5) {
+        return "  \"mimeType\" : \"application/java-archive\",\n" //
+                + "  \"size\" : \"" + size + "\",\n" //
+                + "  \"checksums\" : {\n" //
+                + "    \"sha1\" : \"" + sha1 + "\",\n" //
+                + "    \"md5\" : \"" + md5 + "\"\n" //
+                + "  },\n" //
+                + "  \"originalChecksums\" : {\n" //
+                + "    \"sha1\" : \"" + sha1 + "\",\n" //
+                + "    \"md5\" : \"" + md5 + "\"\n" //
+                + "  },\n";
     }
 
     @GET
@@ -299,7 +363,7 @@ public class ArtifactoryMock {
         public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attrs) {
             if (!isDeployable(path.getFileName().toString()))
                 return FileVisitResult.CONTINUE;
-            CheckSum checkSum = CheckSum.of(path);
+            CheckSum checkSum = CheckSum.sha1(path);
             java.nio.file.Path relativePath = root.relativize(path);
             // System.out.println(relativePath + " (" + count++ + ") -> " + checkSum);
             INDEX.put(checkSum, relativePath);

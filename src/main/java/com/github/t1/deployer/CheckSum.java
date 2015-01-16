@@ -36,9 +36,17 @@ public class CheckSum {
         return of(parseBase64Binary(hexString));
     }
 
+    public static CheckSum sha1(Path path) {
+        return of(path, "SHA-1");
+    }
+
+    public static CheckSum md5(Path path) {
+        return of(path, "MD5");
+    }
+
     @SneakyThrows({ NoSuchAlgorithmException.class, IOException.class })
-    public static CheckSum of(Path path) {
-        MessageDigest hash = MessageDigest.getInstance("SHA-1");
+    public static CheckSum of(Path path, String algorithm) {
+        MessageDigest hash = MessageDigest.getInstance(algorithm);
         return of(hash.digest(Files.readAllBytes(path)));
     }
 

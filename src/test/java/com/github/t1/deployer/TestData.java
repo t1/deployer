@@ -17,40 +17,18 @@ import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 public class TestData {
-    public static Deployment deploymentFor(String contextRoot) {
-        return deploymentFor(contextRoot, versionFor(contextRoot));
-    }
-
     public static Deployment deploymentFor(String contextRoot, Version version) {
         Deployment deployment = new Deployment(nameFor(contextRoot), contextRoot, checksumFor(contextRoot));
         deployment.setVersion(version);
         return deployment;
     }
 
-    public static void givenDeployments(Repository repository, String... deploymentNames) {
-        for (String name : deploymentNames) {
-            when(repository.getVersionByChecksum(checksumFor(name))).thenReturn(versionFor(name));
-            for (Version version : availableVersionsFor(name)) {
-                when(repository.getArtifactInputStream(checksumFor(name, version))) //
-                        .thenReturn(inputStreamFor(name, version));
-            }
-        }
+    public static String nameFor(String contextRoot) {
+        return contextRoot + ".war";
     }
 
-    public static void givenDeployments(Container container, String... contextRoots) {
-        List<Deployment> deployments = new ArrayList<>();
-        for (String contextRoot : contextRoots) {
-            Deployment deployment = deploymentFor(contextRoot);
-            deployments.add(deployment);
-            when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
-        }
-        when(container.getAllDeployments()).thenReturn(deployments);
-    }
-
-    @SneakyThrows(IOException.class)
-    public static void givenDeployments(ModelControllerClient client, String... deploymentNames) {
-        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(deploymentNames))));
+    public static Deployment deploymentFor(String contextRoot) {
+        return deploymentFor(contextRoot, versionFor(contextRoot));
     }
 
     public static ModelNode readAllDeploymentsCli() {
@@ -76,10 +54,6 @@ public class TestData {
         }
         out.append("]");
         return out.toString();
-    }
-
-    public static String nameFor(String contextRoot) {
-        return contextRoot + ".war";
     }
 
     public static String failedCli(String message) {
@@ -122,6 +96,32 @@ public class TestData {
                 + "}}\n" //
                 + "}}\n" //
                 + "}";
+    }
+
+    public static void givenDeployments(Repository repository, String... deploymentNames) {
+        for (String name : deploymentNames) {
+            when(repository.getByChecksum(checksumFor(name))).thenReturn(deploymentFor(name));
+            for (Version version : availableVersionsFor(name)) {
+                when(repository.getArtifactInputStream(checksumFor(name, version))) //
+                        .thenReturn(inputStreamFor(name, version));
+            }
+        }
+    }
+
+    public static void givenDeployments(Container container, String... contextRoots) {
+        List<Deployment> deployments = new ArrayList<>();
+        for (String contextRoot : contextRoots) {
+            Deployment deployment = deploymentFor(contextRoot);
+            deployments.add(deployment);
+            when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
+        }
+        when(container.getAllDeployments()).thenReturn(deployments);
+    }
+
+    @SneakyThrows(IOException.class)
+    public static void givenDeployments(ModelControllerClient client, String... deploymentNames) {
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
+                .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(deploymentNames))));
     }
 
     public static String deploymentJson(String contextRoot) {

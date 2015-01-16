@@ -45,9 +45,9 @@ public class DeploymentsTest {
         Deployment deployment;
 
         public void availableVersions(String... versions) {
-            List<Version> list = new ArrayList<>();
+            List<Deployment> list = new ArrayList<>();
             for (String version : versions) {
-                list.add(new Version(version));
+                list.add(deploymentFor(deployment.getContextRoot(), new Version(version)));
             }
             when(repository.availableVersionsFor(deployment.getCheckSum())).thenReturn(list);
         }
@@ -56,7 +56,7 @@ public class DeploymentsTest {
     private OngoingDeploymentStub givenDeployment(String contextRoot) {
         Deployment deployment = deploymentFor(contextRoot);
         installedDeployments.add(deployment);
-        when(repository.getVersionByChecksum(checksumFor(contextRoot))).thenReturn(versionFor(contextRoot));
+        when(repository.getByChecksum(checksumFor(contextRoot))).thenReturn(deploymentFor(contextRoot));
         when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
         return new OngoingDeploymentStub(deploymentFor(contextRoot, versionFor(contextRoot)));
     }
@@ -131,7 +131,8 @@ public class DeploymentsTest {
         DeploymentResource deployment = deployments.getDeploymentsByContextRoot("foo");
 
         assertEquals("1.3.1", deployment.getVersion().toString());
-        assertEquals("[1.3.1]", deployment.getAvailableVersions().toString());
+        assertEquals(1, deployment.getAvailableVersions().size());
+        assertEquals("1.3.1", deployment.getAvailableVersions().get(0).getVersion().toString());
     }
 
     @Test
@@ -141,7 +142,12 @@ public class DeploymentsTest {
         DeploymentResource deployment = deployments.getDeploymentsByContextRoot("foo");
 
         assertEquals("1.3.1", deployment.getVersion().toString());
-        assertEquals("[1.3.2, 1.3.1, 1.3.0, 1.2.8-SNAPSHOT, 1.2.7, 1.2.6]", deployment.getAvailableVersions()
-                .toString());
+        assertEquals(6, deployment.getAvailableVersions().size());
+        assertEquals("1.3.2", deployment.getAvailableVersions().get(0).getVersion().toString());
+        assertEquals("1.3.1", deployment.getAvailableVersions().get(1).getVersion().toString());
+        assertEquals("1.3.0", deployment.getAvailableVersions().get(2).getVersion().toString());
+        assertEquals("1.2.8-SNAPSHOT", deployment.getAvailableVersions().get(3).getVersion().toString());
+        assertEquals("1.2.7", deployment.getAvailableVersions().get(4).getVersion().toString());
+        assertEquals("1.2.6", deployment.getAvailableVersions().get(5).getVersion().toString());
     }
 }

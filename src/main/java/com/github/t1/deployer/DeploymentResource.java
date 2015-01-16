@@ -18,7 +18,7 @@ public class DeploymentResource {
 
     private final Deployment deployment;
 
-    private List<Version> availableVersions;
+    private List<Deployment> availableVersions;
 
     @GET
     public Deployment self() {
@@ -107,7 +107,7 @@ public class DeploymentResource {
 
     @GET
     @Path("/available-versions")
-    public List<Version> getAvailableVersions() {
+    public List<Deployment> getAvailableVersions() {
         if (availableVersions == null)
             availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
         return availableVersions;
