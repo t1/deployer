@@ -20,6 +20,7 @@ import org.junit.*;
 public class DeployerITest {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
+    private static Audit audit = mock(Audit.class);
 
     @ClassRule
     public static DropwizardClientRule deployer = new DropwizardClientRule(new Deployments(), //
@@ -28,12 +29,18 @@ public class DeployerITest {
                 protected void configure() {
                     bind(repository).to(Repository.class);
                     bind(container).to(Container.class);
+                    bind(audit).to(Audit.class);
                 }
             });
 
     @Before
     public void before() {
         reset(container, repository);
+    }
+
+    @After
+    public void after() {
+        verifyNoMoreInteractions(audit);
     }
 
     private WebTarget deploymentsWebTarget(String contextRoot) {
@@ -115,6 +122,7 @@ public class DeployerITest {
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
         verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
+        verify(audit).deploy(FOO_WAR, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -129,6 +137,7 @@ public class DeployerITest {
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
         verify(container).deploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        verify(audit).deploy(FOO_WAR, NEWEST_FOO_VERSION);
     }
 
     @Test
@@ -140,5 +149,6 @@ public class DeployerITest {
                 .delete();
 
         assertStatus(NO_CONTENT, response);
+        verify(audit).undeploy(FOO_WAR, CURRENT_FOO_VERSION);
     }
 }

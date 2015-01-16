@@ -100,9 +100,10 @@ public class TestData {
 
     public static void givenDeployments(Repository repository, String... deploymentNames) {
         for (String name : deploymentNames) {
-            when(repository.getByChecksum(checksumFor(name))).thenReturn(deploymentFor(name));
             for (Version version : availableVersionsFor(name)) {
-                when(repository.getArtifactInputStream(checksumFor(name, version))) //
+                CheckSum checksum = checksumFor(name, version);
+                when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(name, version));
+                when(repository.getArtifactInputStream(checksum)) //
                         .thenReturn(inputStreamFor(name, version));
             }
         }

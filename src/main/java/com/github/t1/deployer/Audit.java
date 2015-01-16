@@ -9,7 +9,7 @@ import com.github.t1.log.Logged;
 public class Audit {
     // TODO @Inject @LogContext Identity identity;
 
-    public void deploy(String contextRoot) {}
+    public void deploy(String name, Version version) {}
 
-    public void undeploy(String deploymentName) {}
+    public void undeploy(String name, Version version) {}
 }

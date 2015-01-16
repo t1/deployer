@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class DeploymentResource {
     private final Container container;
     private final Repository repository;
+    private final Audit audit;
 
     private final Deployment deployment;
 
@@ -69,6 +70,7 @@ public class DeploymentResource {
     private void deploy(CheckSum checkSum) {
         if (checkSum == null)
             throw badRequest("checksum missing");
+        audit.deploy(getName(), repository.getByChecksum(checkSum).getVersion());
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
             container.deploy(getName(), inputStream);
         } catch (IOException e) {
@@ -78,6 +80,7 @@ public class DeploymentResource {
 
     @DELETE
     public void delete() {
+        audit.undeploy(deployment.getName(), deployment.getVersion());
         container.undeploy(deployment.getName());
     }
 

@@ -131,8 +131,6 @@ public class Container {
     ModelControllerClient client;
     @Inject
     Repository repository;
-    @Inject
-    Audit audit;
 
     @SneakyThrows(IOException.class)
     private ModelNode execute(ModelNode command) {
@@ -203,12 +201,10 @@ public class Container {
     }
 
     public void deploy(String contextRoot, InputStream deployment) {
-        audit.deploy(contextRoot);
         new ReplacePlan(contextRoot, deployment).execute();
     }
 
     public void undeploy(String deploymentName) {
-        audit.undeploy(deploymentName);
         new UndeployPlan(deploymentName).execute();
     }
 }

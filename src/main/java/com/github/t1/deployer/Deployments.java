@@ -35,6 +35,8 @@ public class Deployments {
     Container container;
     @Inject
     Repository repository;
+    @Inject
+    Audit audit;
 
     @GET
     @Path("*")
@@ -71,6 +73,6 @@ public class Deployments {
 
     private DeploymentResource toResource(Deployment deployment) {
         loadVersion(deployment);
-        return new DeploymentResource(container, repository, deployment);
+        return new DeploymentResource(container, repository, audit, deployment);
     }
 }
