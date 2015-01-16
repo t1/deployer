@@ -7,7 +7,6 @@ Also supports a REST API.
 # TODO
 
 * SSO
-* audit log (who deployed what when)
 * cluster support
 * Puppet support
 
