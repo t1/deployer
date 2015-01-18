@@ -159,6 +159,13 @@
 
         <!-- runtime scope -->
         <dependency>
+        <!-- if this dependency is missing, you'll have to create it ;)
+            download from http://getbootstrap.com/getting-started/
+            unzip bootstrap-3.3.1-dist.zip
+            cd dist
+            zip -r bootstrap.zip *
+            mvn install:install-file -Dpackaging=zip -DgroupId=com.twitter -DartifactId=bootstrap -Dversion=3.3.1 -DgeneratePom=true -Dfile=bootstrap.zip
+         -->
             <groupId>com.twitter</groupId>
             <artifactId>bootstrap</artifactId>
             <version>3.3.1</version>
