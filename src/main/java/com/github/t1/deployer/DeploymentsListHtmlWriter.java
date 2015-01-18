@@ -4,12 +4,13 @@ import java.util.List;
 
 import javax.ws.rs.core.UriInfo;
 
-import lombok.AllArgsConstructor;
-
-@AllArgsConstructor
 public class DeploymentsListHtmlWriter extends HtmlWriter {
-    private final UriInfo uriInfo;
     private final List<Deployment> deployments;
+
+    public DeploymentsListHtmlWriter(UriInfo uriInfo, List<Deployment> deployments) {
+        super(uriInfo);
+        this.deployments = deployments;
+    }
 
     @Override
     protected String title() {

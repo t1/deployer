@@ -2,12 +2,13 @@ package com.github.t1.deployer;
 
 import javax.ws.rs.core.UriInfo;
 
-import lombok.AllArgsConstructor;
-
-@AllArgsConstructor
 public class DeploymentHtmlWriter extends HtmlWriter {
-    private final UriInfo uriInfo;
     private final DeploymentResource deployment;
+
+    public DeploymentHtmlWriter(UriInfo uriInfo, DeploymentResource deployment) {
+        super(uriInfo);
+        this.deployment = deployment;
+    }
 
     @Override
     protected String title() {
