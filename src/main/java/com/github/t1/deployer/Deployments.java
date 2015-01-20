@@ -4,6 +4,7 @@ import static com.github.t1.log.LogLevel.*;
 import static javax.ws.rs.core.MediaType.*;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -37,12 +38,14 @@ public class Deployments {
     Repository repository;
     @Inject
     Audit audit;
+    @Inject
+    Principal principal;
 
     @GET
     @Path("*")
     @Produces(TEXT_HTML)
     public String getAllDeploymentsAsHtml(@Context UriInfo uriInfo) {
-        return new DeploymentsListHtmlWriter(uriInfo, getAllDeploymentsWithVersions()).toString();
+        return new DeploymentsListHtmlWriter(uriInfo, principal, getAllDeploymentsWithVersions()).toString();
     }
 
     @GET

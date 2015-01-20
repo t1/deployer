@@ -1,14 +1,17 @@
 package com.github.t1.deployer;
 
+import java.security.Principal;
 import java.util.List;
 
 import javax.ws.rs.core.UriInfo;
 
 public class DeploymentsListHtmlWriter extends HtmlWriter {
     private final List<Deployment> deployments;
+    private final Principal principal;
 
-    public DeploymentsListHtmlWriter(UriInfo uriInfo, List<Deployment> deployments) {
+    public DeploymentsListHtmlWriter(UriInfo uriInfo, Principal principal, List<Deployment> deployments) {
         super(uriInfo);
+        this.principal = principal;
         this.deployments = deployments;
     }
 
@@ -31,6 +34,7 @@ public class DeploymentsListHtmlWriter extends HtmlWriter {
                     .append("</td></tr>\n");
         }
         out.append("    </table>\n");
+        out.append("<footer>Principal: ").append((principal == null) ? "?" : principal.getName()).append("</footer>\n");
         return out.toString();
     }
 }
