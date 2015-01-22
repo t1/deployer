@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.List;
 
 import javax.ws.rs.client.*;
@@ -21,6 +22,12 @@ public class DeployerITest {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);
+    private static Principal principal = new Principal() {
+        @Override
+        public String getName() {
+            return "the-prince";
+        }
+    };
 
     @ClassRule
     public static DropwizardClientRule deployer = new DropwizardClientRule(new Deployments(), //
@@ -30,6 +37,7 @@ public class DeployerITest {
                     bind(repository).to(Repository.class);
                     bind(container).to(Container.class);
                     bind(audit).to(Audit.class);
+                    bind(principal).to(Principal.class);
                 }
             });
 
