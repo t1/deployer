@@ -1,7 +1,5 @@
 package com.github.t1.deployer;
 
-import static javax.ws.rs.core.Response.Status.*;
-
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
@@ -14,16 +12,7 @@ import javax.ws.rs.core.UriBuilder;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.*;
-import org.apache.http.client.*;
-import org.apache.http.client.methods.*;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.*;
-import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-
+import com.github.t1.deployer.RestClient.RestResponse;
 import com.github.t1.log.Logged;
 
 @Slf4j
@@ -44,50 +33,12 @@ public class ArtifactoryRepository implements Repository {
         return path.getName(n).toString();
     }
 
-    private final CloseableHttpClient http = HttpClients.createDefault();
-    private final URI baseUri;
-    private final Credentials credentials;
-
     @Inject
-    public ArtifactoryRepository(@Artifactory URI baseUri, @Artifactory Credentials credentials) {
-        this.baseUri = baseUri;
-        this.credentials = credentials;
-    }
+    RestClient rest;
 
     @PreDestroy
-    void closeWebClient() throws IOException {
-        http.close();
-    }
-
-    private CloseableHttpResponse httpGet(URI uri) throws IOException, ClientProtocolException {
-        log.debug("GET {}", uri);
-        HttpHost targetHost = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
-        CloseableHttpResponse response = http.execute(targetHost, new HttpGet(uri), authContext(targetHost));
-        log.debug("response {}", response);
-        return response;
-    }
-
-    private HttpClientContext authContext(HttpHost host) {
-        HttpClientContext context = HttpClientContext.create();
-
-        if (credentials != null) {
-            CredentialsProvider credsProvider = new BasicCredentialsProvider();
-            credsProvider.setCredentials(new AuthScope(host.getHostName(), host.getPort()), credentials);
-            context.setCredentialsProvider(credsProvider);
-
-            AuthCache authCache = new BasicAuthCache();
-            authCache.put(host, new BasicScheme());
-            context.setAuthCache(authCache);
-        }
-
-        return context;
-    }
-
-    private <T> T readEntity(CloseableHttpResponse response, Class<T> type) throws IOException {
-        if (OK.getStatusCode() != response.getStatusLine().getStatusCode())
-            throw new RuntimeException("error from repository: " + response.getStatusLine());
-        String string = EntityUtils.toString(response.getEntity());
-        return new ObjectMapper().readValue(string, type);
+    void disconnect() throws IOException {
+        rest.close();
     }
 
     /**
@@ -123,12 +74,12 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
-        URI uri = UriBuilder.fromUri(baseUri) //
+        URI uri = rest.base() //
                 .path("/api/search/checksum") //
                 .queryParam("sha1", checkSum.hexString()) //
                 .build();
-        try (CloseableHttpResponse response = httpGet(uri)) {
-            List<ChecksumSearchResultItem> results = readEntity(response, ChecksumSearchResult.class).getResults();
+        try (RestResponse response = rest.get(uri)) {
+            List<ChecksumSearchResultItem> results = response.readEntity(ChecksumSearchResult.class).getResults();
             if (results.size() == 0)
                 return null;
             if (results.size() > 1)
@@ -204,10 +155,10 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private List<Deployment> deploymentsIn(String fileName, URI uri) {
-        // eventually it would be more efficient to use the Artifactory Pro feature 'List File':
+        // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
-        try (CloseableHttpResponse response = httpGet(uri)) {
-            return deploymentsIn(fileName, readEntity(response, FolderInfo.class));
+        try (RestResponse response = rest.get(uri)) {
+            return deploymentsIn(fileName, response.readEntity(FolderInfo.class));
         } catch (IOException e) {
             throw new RuntimeException("can't read files in " + uri, e);
         }
@@ -231,8 +182,8 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private Deployment deploymentIn(URI uri) {
-        try (CloseableHttpResponse response = httpGet(uri)) {
-            ChildInfo file = readEntity(response, ChildInfo.class);
+        try (RestResponse response = rest.get(uri)) {
+            ChildInfo file = response.readEntity(ChildInfo.class);
             return deployment(file);
         } catch (IOException e) {
             throw new RuntimeException("can't read files in " + uri, e);

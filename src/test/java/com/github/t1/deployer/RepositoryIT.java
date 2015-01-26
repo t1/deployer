@@ -18,7 +18,9 @@ public class RepositoryIT {
     public static DropwizardClientRule artifactory = new DropwizardClientRule(new ArtifactoryMock());
 
     private Repository repository() {
-        return new ArtifactoryRepository(URI.create(artifactory.baseUri() + "/artifactory"), null);
+        ArtifactoryRepository repo = new ArtifactoryRepository();
+        repo.rest = RestClient.of(URI.create(artifactory.baseUri() + "/artifactory"));
+        return repo;
     }
 
     @Rule
@@ -41,7 +43,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        expectedException.expectMessage("error from repository");
+        expectedException.expectMessage("rest error: HTTP/1.1 500 Internal Server Error");
 
         repository().getByChecksum(FAILING_CHECKSUM);
     }
