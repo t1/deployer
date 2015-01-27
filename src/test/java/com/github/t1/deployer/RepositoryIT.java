@@ -19,7 +19,7 @@ public class RepositoryIT {
 
     private Repository repository() {
         ArtifactoryRepository repo = new ArtifactoryRepository();
-        repo.rest = RestClient.of(URI.create(artifactory.baseUri() + "/artifactory"));
+        repo.rest = new RestClient(URI.create(artifactory.baseUri() + "/artifactory"));
         return repo;
     }
 

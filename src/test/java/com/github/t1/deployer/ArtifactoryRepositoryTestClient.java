@@ -32,7 +32,7 @@ public class ArtifactoryRepositoryTestClient {
         URI uri = UriBuilder.fromUri(dropwizard.baseUri()).path("artifactory").build();
 
         ArtifactoryRepository repo = new ArtifactoryRepository();
-        repo.rest = RestClient.of(uri);
+        repo.rest = new RestClient(uri);
 
         try {
             List<Deployment> list = repo.availableVersionsFor(CHECKSUM);

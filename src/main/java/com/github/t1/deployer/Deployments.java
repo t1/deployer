@@ -16,6 +16,7 @@ import com.github.t1.log.Logged;
 @Logged(level = INFO)
 @Path("/deployments")
 public class Deployments {
+    private static final Version UNKNOWN_VERSION = new Version("unknown");
     public static final String CONTEXT_ROOT = "context-root";
 
     public static URI path(UriInfo uriInfo, Deployment deployment) {
@@ -65,7 +66,7 @@ public class Deployments {
 
     private void loadVersion(Deployment deployment) {
         Deployment byChecksum = repository.getByChecksum(deployment.getCheckSum());
-        deployment.setVersion(byChecksum.getVersion());
+        deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
     }
 
     @Path("")

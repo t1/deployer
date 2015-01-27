@@ -1,5 +1,8 @@
 package com.github.t1.deployer;
 
+import static java.util.Collections.*;
+import static javax.ws.rs.core.Response.Status.*;
+
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
@@ -7,6 +10,7 @@ import java.util.*;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriBuilder;
 
 import lombok.*;
@@ -78,7 +82,7 @@ public class ArtifactoryRepository implements Repository {
                 .path("/api/search/checksum") //
                 .queryParam("sha1", checkSum.hexString()) //
                 .build();
-        try (RestResponse response = rest.get(uri)) {
+        try (RestResponse response = rest.get(uri).header("X-Result-Detail", "info").execute()) {
             List<ChecksumSearchResultItem> results = response.readEntity(ChecksumSearchResult.class).getResults();
             if (results.size() == 0)
                 return null;
@@ -143,6 +147,8 @@ public class ArtifactoryRepository implements Repository {
     @Override
     public List<Deployment> availableVersionsFor(CheckSum checkSum) {
         ChecksumSearchResultItem deployment = searchByChecksum(checkSum);
+        if (deployment == null)
+            return emptyList();
         URI uri = deployment.getUri();
         uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
         return deploymentsIn(fileNameWithoutVersion(deployment.getUri()), uri);
@@ -157,7 +163,7 @@ public class ArtifactoryRepository implements Repository {
     private List<Deployment> deploymentsIn(String fileName, URI uri) {
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
-        try (RestResponse response = rest.get(uri)) {
+        try (RestResponse response = rest.get(uri).execute()) {
             return deploymentsIn(fileName, response.readEntity(FolderInfo.class));
         } catch (IOException e) {
             throw new RuntimeException("can't read files in " + uri, e);
@@ -182,7 +188,7 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private Deployment deploymentIn(URI uri) {
-        try (RestResponse response = rest.get(uri)) {
+        try (RestResponse response = rest.get(uri).execute()) {
             ChildInfo file = response.readEntity(ChildInfo.class);
             return deployment(file);
         } catch (IOException e) {
@@ -197,7 +203,11 @@ public class ArtifactoryRepository implements Repository {
     @Override
     @SneakyThrows(IOException.class)
     public InputStream getArtifactInputStream(CheckSum checkSum) {
-        URI uri = searchByChecksum(checkSum).getDownloadUri();
-        return uri.toURL().openStream();
+        ChecksumSearchResultItem found = searchByChecksum(checkSum);
+        if (found == null)
+            throw new WebApplicationException(NOT_FOUND);
+        URI uri = found.getDownloadUri();
+        log.info("found {} for checksum {}", uri, checkSum);
+        return rest.get(uri).execute().stream();
     }
 }
