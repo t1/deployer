@@ -43,7 +43,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        expectedException.expectMessage("rest error: HTTP/1.1 500 Internal Server Error");
+        expectedException.expectMessage("rest error: expected 200 OK but got 500 Internal Server Error");
 
         repository().getByChecksum(FAILING_CHECKSUM);
     }

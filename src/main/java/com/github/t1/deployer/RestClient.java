@@ -13,7 +13,7 @@ import javax.ws.rs.core.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.http.HttpHost;
+import org.apache.http.*;
 import org.apache.http.auth.*;
 import org.apache.http.client.*;
 import org.apache.http.client.methods.*;
@@ -50,10 +50,12 @@ public class RestClient implements AutoCloseable {
     public static class RestResponse implements AutoCloseable {
         private final CloseableHttpResponse response;
 
-        public void expecting(Status status) {
-            if (status.getStatusCode() != response.getStatusLine().getStatusCode())
-                throw new RuntimeException("rest error: expected " + status.getStatusCode() + " "
-                        + status.getReasonPhrase() + " but got " + response.getStatusLine());
+        public void expecting(Status expected) {
+            StatusLine actual = response.getStatusLine();
+            if (expected.getStatusCode() != actual.getStatusCode())
+                throw new RuntimeException("rest error: " //
+                        + "expected " + expected.getStatusCode() + " " + expected.getReasonPhrase() //
+                        + " but got " + actual.getStatusCode() + " " + actual.getReasonPhrase());
         }
 
         public <T> T readEntity(Class<T> type) throws IOException {

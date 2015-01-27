@@ -18,7 +18,7 @@ import javax.ws.rs.core.*;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.*;
 
-public class DeployerITest {
+public class DeployerIT {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);
