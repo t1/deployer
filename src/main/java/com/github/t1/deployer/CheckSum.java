@@ -22,6 +22,10 @@ import lombok.*;
 @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
 @RequiredArgsConstructor
 public class CheckSum {
+    public static CheckSum of(byte[] bytes) {
+        return new CheckSum(bytes);
+    }
+
     @com.fasterxml.jackson.annotation.JsonCreator
     @org.codehaus.jackson.annotate.JsonCreator
     public static CheckSum fromString(String hexString) {
@@ -44,14 +48,23 @@ public class CheckSum {
         return of(path, "MD5");
     }
 
-    @SneakyThrows({ NoSuchAlgorithmException.class, IOException.class })
+    @SneakyThrows(IOException.class)
     public static CheckSum of(Path path, String algorithm) {
-        MessageDigest hash = MessageDigest.getInstance(algorithm);
-        return of(hash.digest(Files.readAllBytes(path)));
+        return of(Files.readAllBytes(path), algorithm);
     }
 
-    public static CheckSum of(byte[] bytes) {
-        return new CheckSum(bytes);
+    public static CheckSum sha1(byte[] bytes) {
+        return of(bytes, "SHA-1");
+    }
+
+    public static CheckSum md5(byte[] bytes) {
+        return of(bytes, "MD5");
+    }
+
+    @SneakyThrows(NoSuchAlgorithmException.class)
+    public static CheckSum of(byte[] bytes, String algorithm) {
+        MessageDigest hash = MessageDigest.getInstance(algorithm);
+        return of(hash.digest(bytes));
     }
 
     @XmlValue

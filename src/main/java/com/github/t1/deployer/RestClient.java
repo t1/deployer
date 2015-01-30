@@ -30,6 +30,7 @@ public class RestClient implements AutoCloseable {
     public class RestRequest {
         private final HttpUriRequest request;
 
+        // TODO this should probably be immutable
         public RestRequest header(String key, String value) {
             request.addHeader(key, value);
             return this;

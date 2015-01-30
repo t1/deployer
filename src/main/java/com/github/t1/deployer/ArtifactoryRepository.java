@@ -128,6 +128,10 @@ public class ArtifactoryRepository implements Repository {
     private static class FolderInfo {
         List<ChildInfo> children;
         URI uri;
+
+        public List<ChildInfo> getChildren() {
+            return (children == null) ? Collections.<ChildInfo> emptyList() : children;
+        }
     }
 
     @Data
@@ -161,10 +165,13 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private List<Deployment> deploymentsIn(String fileName, URI uri) {
+        log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
         try (RestResponse response = rest.get(uri).execute()) {
-            return deploymentsIn(fileName, response.readEntity(FolderInfo.class));
+            FolderInfo folderInfo = response.readEntity(FolderInfo.class);
+            log.trace("got {}", folderInfo);
+            return deploymentsIn(fileName, folderInfo);
         } catch (IOException e) {
             throw new RuntimeException("can't read files in " + uri, e);
         }
@@ -178,6 +185,7 @@ public class ArtifactoryRepository implements Repository {
             if (child.isFolder()) {
                 result.addAll(deploymentsIn(fileName, uri));
             } else {
+                log.trace("get deployment in {} (fileName: {})", uri, fileName);
                 Deployment deployment = deploymentIn(uri);
                 if (deployment.getName().equals(fileName)) {
                     result.add(deployment);

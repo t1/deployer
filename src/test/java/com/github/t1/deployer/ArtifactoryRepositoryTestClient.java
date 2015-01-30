@@ -8,9 +8,7 @@ import java.util.List;
 import javax.ws.rs.core.UriBuilder;
 
 public class ArtifactoryRepositoryTestClient {
-    private static final CheckSum CHECKSUM = CheckSum.ofHexString("120cdac84b8119934b394116bba32409894379a0");
-    public static final URI ARTIFACTORY = URI.create("http://localhost:8081/artifactory");
-    public static final URI ARTIFACTORY_MOCK = URI.create("http://localhost:8080/deployer/artifactory");
+    private static final CheckSum CHECKSUM = CheckSum.ofHexString("5064E70F510D3E01A939A344B4712C0594081BBB");
 
     private static final class Dropwizard extends DropwizardClientRule {
         private Dropwizard() {
@@ -35,6 +33,7 @@ public class ArtifactoryRepositoryTestClient {
         repo.rest = new RestClient(uri);
 
         try {
+            // Deployment deployment = repo.getByChecksum(CHECKSUM);
             List<Deployment> list = repo.availableVersionsFor(CHECKSUM);
             for (Deployment deployment : list) {
                 System.out.println("-> " + deployment);

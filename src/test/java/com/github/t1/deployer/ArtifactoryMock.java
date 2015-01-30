@@ -15,13 +15,20 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import org.joda.time.*;
 import org.joda.time.format.PeriodFormat;
 
 /** If you don't have a real Artifactory Pro available, move this to main and configure the endpoint. */
+@Slf4j
 @Path("/artifactory")
 public class ArtifactoryMock {
+    private static final MediaType FILE_INFO = MediaType
+            .valueOf("application/vnd.org.jfrog.artifactory.storage.FileInfo+json");
+    private static final MediaType FOLDER_INFO = MediaType
+            .valueOf("application/vnd.org.jfrog.artifactory.storage.FolderInfo+json");
+
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private static final java.nio.file.Path REPO_NAME = Paths.get("libs-release-local");
@@ -101,27 +108,29 @@ public class ArtifactoryMock {
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
     public String searchByChecksum(@QueryParam("sha1") CheckSum checkSum) {
+        log.debug("search by checksum: {}", checkSum);
         return "{\"results\": [" + searchResultsFor(checkSum) + "]}";
     }
 
     private String searchResultsFor(CheckSum checkSum) {
         if (checksumFor(FOO).equals(checkSum)) {
-            return uriWar(FOO, CURRENT_FOO_VERSION);
+            return fileSearchResult(FOO, CURRENT_FOO_VERSION);
         } else if (checksumFor(BAR).equals(checkSum)) {
-            return uriWar(BAR, CURRENT_BAR_VERSION);
+            return fileSearchResult(BAR, CURRENT_BAR_VERSION);
         } else if (FAILING_CHECKSUM.equals(checkSum)) {
             throw new RuntimeException("error in repo");
         } else if (AMBIGUOUS_CHECKSUM.equals(checkSum)) {
-            return uriWar("x", new Version("1.0")) + "," + uriWar("y", new Version("2.0"));
+            return fileSearchResult("x", new Version("1.0")) + "," + fileSearchResult("y", new Version("2.0"));
         } else if (UNKNOWN_CHECKSUM.equals(checkSum)) {
             return "";
         } else if (isIndexed(checkSum)) {
             java.nio.file.Path path = index().get(checkSum);
-            return uriWar(REPO_NAME + "/" + path);
+            return fileSearchResult(REPO_NAME + "/" + path);
         } else {
             String name = nameFor(checkSum);
             Version version = versionFor(checkSum);
-            return uriWar(name, version);
+            log.debug("fake search result for {}: {}@{}", checkSum, name, version);
+            return fileSearchResult(name, version);
         }
     }
 
@@ -141,18 +150,23 @@ public class ArtifactoryMock {
     }
 
     public static CheckSum checksumFor(String name, Version version) {
-        return CheckSum.of(("checkSum(" + name + "@" + version + ")").getBytes());
+        CheckSum result = CheckSum.sha1((name + "@" + version).getBytes()); // arbitrary but fixed for name/version
+        result.getBytes()[0] = (byte) 0xFA;
+        result.getBytes()[1] = (byte) 0xCE;
+        result.getBytes()[2] = (byte) 0x00;
+        result.getBytes()[3] = (byte) 0x00;
+        return result;
     }
 
-    private String uriWar(String name, Version version) {
-        return uriWar(pathFor(name, version).toString());
+    private String fileSearchResult(String name, Version version) {
+        return fileSearchResult(pathFor(name, version).toString());
     }
 
     public static java.nio.file.Path pathFor(String name, Version version) {
         return REPO_NAME.resolve(name).resolve(version.toString()).resolve(name + "-" + version + ".war");
     }
 
-    private String uriWar(String path) {
+    private String fileSearchResult(String path) {
         return "{" //
                 + "\"uri\":\"" + base("api/storage/" + path) + "\",\n" //
                 + "\"downloadUri\" : \"" + base(path) + "\"\n" //
@@ -170,7 +184,7 @@ public class ArtifactoryMock {
     }
 
     private static String nameFor(CheckSum checkSum) {
-        return checkSum.hexString().substring(0, 6);
+        return "fake-" + checkSum.hexString().substring(0, 6);
     }
 
     public static Version versionFor(CheckSum checkSum) {
@@ -190,9 +204,10 @@ public class ArtifactoryMock {
 
     @GET
     @Path("/api/storage/{repoKey}/{path:.*}")
-    @Produces("application/vnd.org.jfrog.artifactory.storage.FolderInfo+json")
-    public String fileInfo(@PathParam("repoKey") String repoKey, @PathParam("path") String path) throws IOException {
-        return "{\n" //
+    public Response fileOrFolderInfo(@PathParam("repoKey") String repoKey, @PathParam("path") String path)
+            throws IOException {
+        log.debug("get file/folder info for {} in {}", path, repoKey);
+        String info = "{\n" //
                 + "   \"repo\" : \"" + repoKey + "\",\n" //
                 + "   \"path\" : \"" + path + "\",\n" //
                 + "   \"created\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
@@ -202,8 +217,8 @@ public class ArtifactoryMock {
                 + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
                 + info(Paths.get(path)) //
                 + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n" //
-                + "}\n" //
-        ;
+                + "}\n";
+        return Response.ok(info, info.contains("\"children\"") ? FOLDER_INFO : FILE_INFO).build();
     }
 
     private String info(java.nio.file.Path path) throws IOException {
@@ -221,11 +236,13 @@ public class ArtifactoryMock {
             return fileInfo(12345L, checksumFor(FOO, version), CheckSum.fromString("1234567890abcdef"));
         }
         java.nio.file.Path resolved = MAVEN_REPOSITORY.resolve(path);
-        if (Files.isDirectory(resolved)) {
+        if (Files.isDirectory(resolved))
             return folderInfo(path);
-        } else {
+        else if (Files.isRegularFile(resolved))
             return fileInfo(resolved);
-        }
+        log.debug("fake info for: {}", path);
+        CheckSum checksum = checksumFor(path.getFileName().toString());
+        return fileInfo(12345, checksum, checksum);
     }
 
     private String folderInfo(java.nio.file.Path path) throws IOException {
@@ -340,7 +357,7 @@ public class ArtifactoryMock {
         java.nio.file.Path path = Paths.get(pathString);
         if (isIndexed(path)) {
             java.nio.file.Path repoPath = MAVEN_REPOSITORY.resolve(path);
-            System.out.println("return repository file stream: " + repoPath);
+            log.debug("return repository file stream: {}", repoPath);
             return Files.newInputStream(repoPath);
         }
         int n = path.getNameCount();
