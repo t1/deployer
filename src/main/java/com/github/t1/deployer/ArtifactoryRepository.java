@@ -165,6 +165,7 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private List<Deployment> deploymentsIn(String fileName, URI uri) {
+        // TODO we assume the path of files anyways... so we could reduce the number of requests and not recurse fully
         log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]

@@ -56,17 +56,12 @@
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
+                    <!-- has to be overlayed to work in JBoss 7.x -->
                     <overlays>
                         <overlay>
                             <groupId>com.github.t1</groupId>
                             <artifactId>logging-interceptor</artifactId>
                             <type>jar</type>
-                            <targetPath>WEB-INF/classes</targetPath>
-                        </overlay>
-                        <overlay>
-                            <groupId>com.twitter</groupId>
-                            <artifactId>bootstrap</artifactId>
-                            <type>zip</type>
                             <targetPath>WEB-INF/classes</targetPath>
                         </overlay>
                     </overlays>
@@ -136,7 +131,14 @@
             <version>7.0</version>
             <scope>provided</scope>
         </dependency>
-
+<!--
+         <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-as7-adapter</artifactId>
+            <version>1.0.5.Final</version>
+            <scope>provided</scope>
+        </dependency>
+ -->
         <!-- compile scope -->
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
@@ -160,6 +162,8 @@
             <artifactId>httpclient</artifactId>
             <version>4.3.6</version>
         </dependency>
+
+        <!-- overlay scope -->
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>logging-interceptor</artifactId>
@@ -167,20 +171,11 @@
             <optional>true</optional><!-- will be overlayed -->
         </dependency>
 
-        <!-- runtime scope -->
+        <!-- compile scope -->
         <dependency>
-        <!-- if this dependency is missing, you'll have to create it ;)
-            download from http://getbootstrap.com/getting-started/
-            unzip bootstrap-3.3.1-dist.zip
-            cd dist
-            zip -r bootstrap.zip *
-            mvn install:install-file -Dpackaging=zip -DgroupId=com.twitter -DartifactId=bootstrap -Dversion=3.3.1 -DgeneratePom=true -Dfile=bootstrap.zip
-         -->
-            <groupId>com.twitter</groupId>
+            <groupId>org.webjars</groupId>
             <artifactId>bootstrap</artifactId>
-            <version>3.3.1</version>
-            <type>zip</type>
-            <scope>runtime</scope>
+            <version>3.3.2</version>
         </dependency>
 
         <!-- test scope -->
