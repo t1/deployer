@@ -20,8 +20,11 @@ import com.github.t1.log.Logged;
 @Logged
 @ApplicationScoped
 public class Config implements Serializable {
-    private static final String URI_SYSTEM_PROPERTY = "deployer.artifactory.uri";
     private static final long serialVersionUID = 1L;
+
+    private static final String ARTIFACTORY_URI_PROPERTY = "deployer.artifactory.uri";
+    private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
+
     private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
     private static final Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
             .toAbsolutePath();
@@ -30,8 +33,11 @@ public class Config implements Serializable {
 
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
-        InetAddress host = InetAddress.getByName("localhost");
-        int port = 9999;
+        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:9999");
+        log.debug("JBoss AS admin: {}", uri);
+        assert "http-remoting".equals(uri.getScheme());
+        InetAddress host = InetAddress.getByName(uri.getHost());
+        int port = uri.getPort();
         log.info("create client to JBoss AS on {}:{}", host, port);
         return ModelControllerClient.Factory.create(host, port);
     }
@@ -43,11 +49,15 @@ public class Config implements Serializable {
     @Produces
     @Artifactory
     public URI produceArtifactoryUri() {
-        String value = properties().getProperty(URI_SYSTEM_PROPERTY);
+        return getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
+    }
+
+    private URI getUriProperty(String propertyName, String defaultUri) {
+        String value = properties().getProperty(propertyName);
         if (value == null)
-            value = System.getProperty(URI_SYSTEM_PROPERTY);
+            value = System.getProperty(propertyName);
         if (value == null)
-            value = "http://localhost:8081/artifactory";
+            value = defaultUri;
         return URI.create(value);
     }
 
