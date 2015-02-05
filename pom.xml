@@ -139,6 +139,7 @@
             <scope>provided</scope>
         </dependency>
  -->
+
         <!-- compile scope -->
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
@@ -177,6 +178,18 @@
             <artifactId>bootstrap</artifactId>
             <version>3.3.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery</artifactId>
+            <version>2.1.3</version>
+        </dependency>
+<!--
+  <dependency>
+    <groupId>org.webjars</groupId>
+    <artifactId>backbonejs</artifactId>
+    <version>1.1.2-4</version>
+</dependency>
+ -->
 
         <!-- test scope -->
         <dependency>

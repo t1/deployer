@@ -18,7 +18,7 @@ import com.github.t1.log.Logged;
 
 /**
  * Serve static resources from <code>src/main/resources</code> or any <a href="http://www.webjars.org">webjar</a>
- * dependency. Currently only <code>bootstrap</code> is supported, but that's trivially extended.
+ * dependency.
  * <p/>
  * This class is not suitable for heavy load. Really heavy load should be fulfilled by serving static resources from
  * e.g. Apache or even a CDN. But the performance of this class could also be improved by:
@@ -31,8 +31,6 @@ import com.github.t1.log.Logged;
 @Path("/")
 @Logged(level = TRACE)
 public class StaticFilesResource {
-    private static final String[] WEBJARS = { "bootstrap", "angularjs" };
-
     private abstract class StaticFilesLoader {
         public String prefix() {
             return "";
@@ -64,20 +62,43 @@ public class StaticFilesResource {
         }
     }
 
-    private final List<StaticFilesLoader> loaders = new ArrayList<>();
+    private final Map<String, StaticFilesLoader> loaders = new HashMap<>();
 
-    public StaticFilesResource() {
-        loaders.add(new WebappStaticFilesLoader());
-        for (String artifact : WEBJARS) {
-            addLoaderFor(artifact);
+    @GET
+    @Path("/{artifact}/{file-path:.*}")
+    @SuppressWarnings("resource")
+    public Response getStaticResource(@PathParam("artifact") String artifact, @PathParam("file-path") String filePath) {
+        StaticFilesLoader loader = getLoaderFor(artifact);
+        if (loader != null) {
+            String path = loader.prefix() + "/" + filePath;
+            InputStream stream = classLoader().getResourceAsStream(path);
+            if (stream != null) {
+                log.debug("found {} {} in {}", artifact, filePath, loader.name());
+                return Response.ok(stream).build();
+            }
         }
+        log.warn("not found: {}: {}", artifact, filePath);
+        return Response //
+                .status(NOT_FOUND) //
+                .entity("no static " + artifact + " resource found: " + filePath) //
+                .type(TEXT_PLAIN) //
+                .build();
     }
 
-    private void addLoaderFor(String artifact) {
+    private StaticFilesLoader getLoaderFor(String artifact) {
+        StaticFilesLoader loader = loaders.get(artifact);
+        if (loader == null)
+            loader = createLoaderFor(artifact);
+        return loader;
+    }
+
+    private StaticFilesLoader createLoaderFor(String artifact) {
+        if ("webapp".equals(artifact))
+            return new WebappStaticFilesLoader();
         String version = versionOf(artifact);
-        if (version != null) {
-            loaders.add(new WebjarFilesLoader(artifact, version));
-        }
+        if (version == null)
+            return null;
+        return new WebjarFilesLoader(artifact, version);
     }
 
     private String versionOf(String artifact) {
@@ -99,25 +120,5 @@ public class StaticFilesResource {
         if (loader == null)
             loader = getClass().getClassLoader();
         return loader;
-    }
-
-    @GET
-    @Path("/{type}/{file-path:.*}")
-    @SuppressWarnings("resource")
-    public Response getStaticResource(@PathParam("type") String type, @PathParam("file-path") String fileName) {
-        for (StaticFilesLoader loader : loaders) {
-            String path = loader.prefix() + "/" + type + "/" + fileName;
-            InputStream stream = classLoader().getResourceAsStream(path);
-            if (stream != null) {
-                log.debug("found {} {} in {}", type, fileName, loader.name());
-                return Response.ok(stream).build();
-            }
-        }
-        log.warn("not found: {}: {}", type, fileName);
-        return Response //
-                .status(NOT_FOUND) //
-                .entity("no static " + type + " resource found: " + fileName) //
-                .type(TEXT_PLAIN) //
-                .build();
     }
 }
