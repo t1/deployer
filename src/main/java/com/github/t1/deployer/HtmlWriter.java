@@ -20,18 +20,26 @@ public abstract class HtmlWriter {
                 + "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" //
                 + "    <title>" + title() + "</title>\n" //
                 + "\n" //
-                + "    <link href=\"" + base("bootstrap/css/bootstrap.min.css") + "\" rel=\"stylesheet\">\n" //
-                + "    <link href=\"" + base("webapp/css/style.css") + "\" rel=\"stylesheet\">\n" //
+                + "    " + stylesheet("bootstrap/css/bootstrap.min.css") + "\n" //
+                + "    " + stylesheet("webapp/css/style.css") + "\n" //
                 + "  </head>\n" //
                 + "  <body>\n" //
                 + "    <h1>" + title() + "</h1>\n" //
                 + "\n" //
                 + body() //
                 + "\n" //
-                + "    <script src=\"" + base("jquery/jquery.min.js") + "\"></script>\n" //
-                + "    <script src=\"" + base("bootstrap/js/bootstrap.min.js") + "\"></script>\n" //
+                + "    " + script("jquery/jquery.min.js") + "\n" //
+                + "    " + script("bootstrap/js/bootstrap.min.js") + "\n" //
                 + "  </body>\n" //
                 + "</html>";
+    }
+
+    private String stylesheet(String path) {
+        return "<link href=\"" + base(path) + "\" rel=\"stylesheet\"/>";
+    }
+
+    private String script(String path) {
+        return "<script src=\"" + base(path) + "\"/>";
     }
 
     protected URI base(String path) {
