@@ -18,13 +18,16 @@ import com.github.t1.log.Logged;
 
 /**
  * Serve static resources from <code>src/main/resources</code> or any <a href="http://www.webjars.org">webjar</a>
- * dependency.
+ * dependency. Note that this is only necessary if you configure your JAX-RS root to be <code>/</code> which hides the
+ * built-in mechanism to serve resources from <code>WEB-INF</code> and <code>META-INF/resources</code>. But it does have
+ * the additional benefit that you don't have to put, e.g., <code>webjars/bootstrap/3.3.2</code> into the path.
  * <p/>
  * This class is not suitable for heavy load. Really heavy load should be fulfilled by serving static resources from
  * e.g. Apache or even a CDN. But the performance of this class could also be improved by:
  * <ul>
- * <li>Let the clients cache, by adding etags and modified-since headers.</li>
- * <li>Cache the resources in this class.</li>
+ * <li>Let the clients cache, by adding etags (e.g. the version number), modified-since (from the pom.properties
+ * comment), and cache control headers.</li>
+ * <li>Cache the resources in this class (e.g. with JCache).</li>
  * </ul>
  */
 @Slf4j
