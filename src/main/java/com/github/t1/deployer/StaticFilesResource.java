@@ -69,20 +69,20 @@ public class StaticFilesResource {
     @SuppressWarnings("resource")
     public Response getStaticResource(@PathParam("artifact") String artifact, @PathParam("file-path") String filePath) {
         StaticFilesLoader loader = getLoaderFor(artifact);
-        if (loader != null) {
-            String path = loader.prefix() + "/" + filePath;
-            InputStream stream = classLoader().getResourceAsStream(path);
-            if (stream != null) {
-                log.debug("found {} {} in {}", artifact, filePath, loader.name());
-                return Response.ok(stream).build();
-            }
+        if (loader == null)
+            return notFound("artifact not found '" + artifact + "' (for path '" + filePath + "')");
+        String path = loader.prefix() + "/" + filePath;
+        InputStream stream = classLoader().getResourceAsStream(path);
+        if (stream != null) {
+            log.debug("found {} {} in {}", artifact, filePath, loader.name());
+            return Response.ok(stream).build();
         }
-        log.warn("not found: {}: {}", artifact, filePath);
-        return Response //
-                .status(NOT_FOUND) //
-                .entity("no static " + artifact + " resource found: " + filePath) //
-                .type(TEXT_PLAIN) //
-                .build();
+        return notFound("resource '" + filePath + "' not found in '" + artifact + "'");
+    }
+
+    private Response notFound(String message) {
+        log.warn("not found: {}", message);
+        return Response.status(NOT_FOUND).entity(message + "\n").type(TEXT_PLAIN).build();
     }
 
     private StaticFilesLoader getLoaderFor(String artifact) {
