@@ -3,7 +3,6 @@ package com.github.t1.deployer;
 import static com.github.t1.deployer.WebException.*;
 import static javax.ws.rs.core.MediaType.*;
 
-import java.io.*;
 import java.util.List;
 
 import javax.ws.rs.*;
@@ -17,6 +16,7 @@ public class DeploymentResource {
     private final Repository repository;
     private final Audit audit;
 
+    private final DeploymentsList deploymentsList;
     private final Deployment deployment;
 
     private List<Deployment> availableVersions;
@@ -35,7 +35,7 @@ public class DeploymentResource {
     @POST
     public Response post(@Context UriInfo uriInfo, //
             @FormParam("action") String action, //
-            @FormParam("contextRoot") String contextRoot, //
+            @FormParam("contextRoot") ContextRoot contextRoot, //
             @FormParam("checkSum") CheckSum checkSum //
     ) {
         check(contextRoot);
@@ -62,7 +62,7 @@ public class DeploymentResource {
         return Response.created(Deployments.path(uriInfo, deployment)).build();
     }
 
-    private void check(String contextRoot) {
+    private void check(ContextRoot contextRoot) {
         if (!contextRoot.equals(getContextRoot()))
             throw badRequest("context roots don't match: " + contextRoot + " is not " + getContextRoot());
     }
@@ -70,29 +70,28 @@ public class DeploymentResource {
     private void deploy(CheckSum checkSum) {
         if (checkSum == null)
             throw badRequest("checksum missing");
-        audit.deploy(getName(), repository.getByChecksum(checkSum).getVersion());
-        try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
-            container.deploy(getName(), inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        Deployment newDeployment = repository.getByChecksum(checkSum);
+        audit.deploy(newDeployment.getContextRoot(), newDeployment.getVersion());
+        newDeployment.deploy(container, repository);
+        deploymentsList.writeDeploymentsList();
     }
 
     @DELETE
     public void delete() {
-        audit.undeploy(deployment.getName(), deployment.getVersion());
-        container.undeploy(deployment.getName());
+        audit.undeploy(getContextRoot(), deployment.getVersion());
+        container.undeploy(getName());
+        deploymentsList.writeDeploymentsList();
     }
 
     @GET
     @Path("name")
-    public String getName() {
+    public DeploymentName getName() {
         return deployment.getName();
     }
 
     @GET
     @Path("context-root")
-    public String getContextRoot() {
+    public ContextRoot getContextRoot() {
         return deployment.getContextRoot();
     }
 

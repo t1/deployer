@@ -38,6 +38,9 @@ public class DeployerIT {
                     bind(container).to(Container.class);
                     bind(audit).to(Audit.class);
                     bind(principal).to(Principal.class);
+
+                    System.setProperty("jboss.server.config.dir", "target");
+                    bind(DeploymentsList.class).to(DeploymentsList.class);
                 }
             });
 
@@ -51,7 +54,7 @@ public class DeployerIT {
         verifyNoMoreInteractions(audit);
     }
 
-    private WebTarget deploymentsWebTarget(String contextRoot) {
+    private WebTarget deploymentsWebTarget(ContextRoot contextRoot) {
         return deployer() //
                 .path("/deployments") //
                 .matrixParam("context-root", contextRoot);
@@ -63,7 +66,7 @@ public class DeployerIT {
         return ClientBuilder.newClient().target(baseUri);
     }
 
-    private void given(String... contextRoots) {
+    private void given(ContextRoot... contextRoots) {
         givenDeployments(repository, contextRoots);
         givenDeployments(container, contextRoots);
     }
@@ -130,7 +133,7 @@ public class DeployerIT {
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
         verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
-        verify(audit).deploy(FOO_WAR, CURRENT_FOO_VERSION);
+        verify(audit).deploy(FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -144,8 +147,8 @@ public class DeployerIT {
 
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
+        verify(audit).deploy(FOO, NEWEST_FOO_VERSION);
         verify(container).deploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
-        verify(audit).deploy(FOO_WAR, NEWEST_FOO_VERSION);
     }
 
     @Test
@@ -157,6 +160,6 @@ public class DeployerIT {
                 .delete();
 
         assertStatus(NO_CONTENT, response);
-        verify(audit).undeploy(FOO_WAR, CURRENT_FOO_VERSION);
+        verify(audit).undeploy(FOO, CURRENT_FOO_VERSION);
     }
 }

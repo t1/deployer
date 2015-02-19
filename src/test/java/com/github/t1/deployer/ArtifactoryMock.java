@@ -14,13 +14,14 @@ import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
 
-import lombok.*;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import org.joda.time.*;
-import org.joda.time.format.PeriodFormat;
-
-/** If you don't have a real Artifactory Pro available, move this to main and configure the endpoint. */
+/**
+ * If you don't have a real Artifactory Pro available, move this to main and configure the endpoint.
+ * 
+ * @see ArtifactoryMockIndexBuilder
+ */
 @Slf4j
 @Path("/artifactory")
 public class ArtifactoryMock {
@@ -29,24 +30,48 @@ public class ArtifactoryMock {
     private static final MediaType FOLDER_INFO = MediaType
             .valueOf("application/vnd.org.jfrog.artifactory.storage.FolderInfo+json");
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    static final Charset UTF_8 = Charset.forName("UTF-8");
+
+    static final java.nio.file.Path MAVEN_HOME = Paths.get(System.getProperty("user.home"), ".m2");
+    static final java.nio.file.Path MAVEN_REPOSITORY = MAVEN_HOME.resolve("repository");
+    static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
+
+    private static final Map<CheckSum, java.nio.file.Path> INDEX = new HashMap<>();
+
+    static Map<CheckSum, java.nio.file.Path> index() {
+        if (INDEX.isEmpty())
+            readIndex();
+        return INDEX;
+    }
+
+    @SneakyThrows(IOException.class)
+    private static void readIndex() {
+        try (BufferedReader reader = Files.newBufferedReader(MAVEN_INDEX_FILE, UTF_8)) {
+            while (true) {
+                String line = reader.readLine();
+                if (line == null)
+                    break;
+                int index = line.indexOf(":");
+                if (index != 40)
+                    throw new IllegalStateException("unexpected line in index file");
+                CheckSum checkSum = CheckSum.ofHexString(line.substring(0, index));
+                java.nio.file.Path path = Paths.get(line.substring(index + 1));
+                INDEX.put(checkSum, path);
+            }
+        }
+    }
 
     private static final java.nio.file.Path REPO_NAME = Paths.get("libs-release-local");
-
-    private static final java.nio.file.Path MAVEN_HOME = Paths.get(System.getProperty("user.home"), ".m2");
-    private static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
-    private static final java.nio.file.Path MAVEN_REPOSITORY = MAVEN_HOME.resolve("repository");
-    private static final Map<CheckSum, java.nio.file.Path> INDEX = new HashMap<>();
 
     public static final CheckSum FAILING_CHECKSUM = CheckSum.ofHexString("1111111111111111111111111111111111111111");
     public static final CheckSum AMBIGUOUS_CHECKSUM = CheckSum.ofHexString("2222222222222222222222222222222222222222");
     public static final CheckSum UNKNOWN_CHECKSUM = CheckSum.ofHexString("3333333333333333333333333333333333333333");
 
-    public static final String FOO = "foo";
-    public static final String BAR = "bar";
+    public static final ContextRoot FOO = new ContextRoot("foo");
+    public static final ContextRoot BAR = new ContextRoot("bar");
 
-    public static final String FOO_WAR = FOO + ".war";
-    public static final String BAR_WAR = BAR + ".war";
+    public static final DeploymentName FOO_WAR = new DeploymentName(FOO + ".war");
+    public static final DeploymentName BAR_WAR = new DeploymentName(BAR + ".war");
 
     public static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
     public static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
@@ -120,36 +145,36 @@ public class ArtifactoryMock {
         } else if (FAILING_CHECKSUM.equals(checkSum)) {
             throw new RuntimeException("error in repo");
         } else if (AMBIGUOUS_CHECKSUM.equals(checkSum)) {
-            return fileSearchResult("x", new Version("1.0")) + "," + fileSearchResult("y", new Version("2.0"));
+            return fileSearchResult(new ContextRoot("x"), new Version("1.0")) + ","
+                    + fileSearchResult(new ContextRoot("y"), new Version("2.0"));
         } else if (UNKNOWN_CHECKSUM.equals(checkSum)) {
             return "";
         } else if (isIndexed(checkSum)) {
             java.nio.file.Path path = index().get(checkSum);
             return fileSearchResult(REPO_NAME + "/" + path);
         } else {
-            String name = nameFor(checkSum);
+            ContextRoot contextRoot = contextRootFor(checkSum);
             Version version = versionFor(checkSum);
-            log.debug("fake search result for {}: {}@{}", checkSum, name, version);
-            return fileSearchResult(name, version);
+            log.debug("fake search result for {}: {}@{}", checkSum, contextRoot, version);
+            return fileSearchResult(contextRoot, version);
         }
     }
 
-    public static CheckSum checksumFor(String name) {
-        return checksumFor(name, versionFor(name));
+    public static CheckSum checksumFor(ContextRoot contextRoot) {
+        return checksumFor(contextRoot, versionFor(contextRoot));
     }
 
-    public static Version versionFor(String name) {
-        switch (name) {
-            case FOO:
-                return CURRENT_FOO_VERSION;
-            case BAR:
-                return CURRENT_BAR_VERSION;
-            default:
-                return versionFor(name.getBytes());
+    public static Version versionFor(ContextRoot contextRoot) {
+        if (FOO.equals(contextRoot)) {
+            return CURRENT_FOO_VERSION;
+        } else if (BAR.equals(contextRoot)) {
+            return CURRENT_BAR_VERSION;
+        } else {
+            return versionFor(contextRoot.getValue().getBytes());
         }
     }
 
-    public static CheckSum checksumFor(String name, Version version) {
+    public static CheckSum checksumFor(ContextRoot name, Version version) {
         CheckSum result = CheckSum.sha1((name + "@" + version).getBytes()); // arbitrary but fixed for name/version
         result.getBytes()[0] = (byte) 0xFA;
         result.getBytes()[1] = (byte) 0xCE;
@@ -158,12 +183,13 @@ public class ArtifactoryMock {
         return result;
     }
 
-    private String fileSearchResult(String name, Version version) {
-        return fileSearchResult(pathFor(name, version).toString());
+    private String fileSearchResult(ContextRoot contextRoot, Version version) {
+        return fileSearchResult(pathFor(contextRoot, version).toString());
     }
 
-    public static java.nio.file.Path pathFor(String name, Version version) {
-        return REPO_NAME.resolve(name).resolve(version.toString()).resolve(name + "-" + version + ".war");
+    public static java.nio.file.Path pathFor(ContextRoot contextRoot, Version version) {
+        return REPO_NAME.resolve(contextRoot.toString()).resolve(version.toString())
+                .resolve(contextRoot + "-" + version + ".war");
     }
 
     private String fileSearchResult(String path) {
@@ -177,14 +203,8 @@ public class ArtifactoryMock {
         return index().containsKey(checkSum);
     }
 
-    private static Map<CheckSum, java.nio.file.Path> index() {
-        if (INDEX.isEmpty())
-            readIndex();
-        return INDEX;
-    }
-
-    private static String nameFor(CheckSum checkSum) {
-        return "fake-" + checkSum.hexString().substring(0, 6);
+    private static ContextRoot contextRootFor(CheckSum checkSum) {
+        return new ContextRoot("fake-" + checkSum.hexString().substring(0, 6));
     }
 
     public static Version versionFor(CheckSum checkSum) {
@@ -241,7 +261,7 @@ public class ArtifactoryMock {
         else if (Files.isRegularFile(resolved))
             return fileInfo(resolved);
         log.debug("fake info for: {}", path);
-        CheckSum checksum = checksumFor(path.getFileName().toString());
+        CheckSum checksum = checksumFor(new ContextRoot(path.getFileName().toString()));
         return fileInfo(12345, checksum, checksum);
     }
 
@@ -260,7 +280,7 @@ public class ArtifactoryMock {
                         }
                     });
         } else {
-            for (Version version : availableVersionsFor(path.toString())) {
+            for (Version version : availableVersionsFor(new ContextRoot(path.toString()))) {
                 out.append(folderChild(version.toString()));
             }
         }
@@ -288,19 +308,18 @@ public class ArtifactoryMock {
         return false;
     }
 
-    public static List<Version> availableVersionsFor(String name) {
-        switch (name.toString()) {
-            case FOO:
-                return FOO_VERSIONS;
-            case BAR:
-                return BAR_VERSIONS;
-            default:
-                return arbitraryVersionFor(name);
+    public static List<Version> availableVersionsFor(ContextRoot contextRoot) {
+        if (contextRoot.equals(FOO)) {
+            return FOO_VERSIONS;
+        } else if (contextRoot.equals(BAR)) {
+            return BAR_VERSIONS;
+        } else {
+            return arbitraryVersionFor(contextRoot);
         }
     }
 
-    private static List<Version> arbitraryVersionFor(String name) {
-        byte[] bytes = name.getBytes();
+    private static List<Version> arbitraryVersionFor(ContextRoot contextRoot) {
+        byte[] bytes = contextRoot.getValue().getBytes();
         Version v = versionFor(bytes);
         bytes[1]--;
         Version m1 = versionFor(bytes);
@@ -361,73 +380,12 @@ public class ArtifactoryMock {
             return Files.newInputStream(repoPath);
         }
         int n = path.getNameCount();
-        String name = path.getName(n - 1).toString();
+        ContextRoot contextRoot = new ContextRoot(path.getName(n - 1).toString());
         Version version = new Version(path.getName(n - 2).toString());
-        return inputStreamFor(name, version);
+        return inputStreamFor(contextRoot, version);
     }
 
-    public static InputStream inputStreamFor(String name, Version version) {
-        return new StringInputStream(name + "-content@" + version);
-    }
-
-    @RequiredArgsConstructor
-    private static final class BuildChecksumsFileVisitor extends SimpleFileVisitor<java.nio.file.Path> {
-        private final java.nio.file.Path root;
-        @Getter
-        private final int count = 0;
-
-        @Override
-        public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attrs) {
-            if (!isDeployable(path.getFileName().toString()))
-                return FileVisitResult.CONTINUE;
-            CheckSum checkSum = CheckSum.sha1(path);
-            java.nio.file.Path relativePath = root.relativize(path);
-            // System.out.println(relativePath + " (" + count++ + ") -> " + checkSum);
-            INDEX.put(checkSum, relativePath);
-            return FileVisitResult.CONTINUE;
-        }
-
-        private boolean isDeployable(String fileName) {
-            return fileName.endsWith(".war") || fileName.endsWith(".ear");
-        }
-    }
-
-    public static void main(String[] args) throws IOException {
-        System.out.println("build local maven repository checksum index");
-        BuildChecksumsFileVisitor visitor = new BuildChecksumsFileVisitor(MAVEN_REPOSITORY);
-        Instant start = Instant.now();
-        Files.walkFileTree(MAVEN_REPOSITORY, visitor);
-        Instant end = Instant.now();
-        Duration duration = new Duration(start, end);
-        System.out.println("ended after " + PeriodFormat.getDefault().print(duration.toPeriod()) //
-                + " for " + visitor.getCount() + " deployables");
-        writeIndex();
-    }
-
-    @SneakyThrows(IOException.class)
-    public static void readIndex() {
-        try (BufferedReader reader = Files.newBufferedReader(MAVEN_INDEX_FILE, UTF_8)) {
-            while (true) {
-                String line = reader.readLine();
-                if (line == null)
-                    break;
-                int index = line.indexOf(":");
-                if (index != 40)
-                    throw new IllegalStateException("unexpected line in index file");
-                CheckSum checkSum = CheckSum.ofHexString(line.substring(0, index));
-                java.nio.file.Path path = Paths.get(line.substring(index + 1));
-                INDEX.put(checkSum, path);
-            }
-        }
-    }
-
-    @SneakyThrows(IOException.class)
-    public static void writeIndex() {
-        try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
-            for (Map.Entry<CheckSum, java.nio.file.Path> entry : INDEX.entrySet()) {
-                writer.append(entry.getKey().hexString()).append(":") //
-                        .append(entry.getValue().toString()).append("\n");
-            }
-        }
+    public static InputStream inputStreamFor(ContextRoot contextRoot, Version version) {
+        return new StringInputStream(contextRoot + "-content@" + version);
     }
 }

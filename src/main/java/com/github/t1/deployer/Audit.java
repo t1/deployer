@@ -26,9 +26,9 @@ public class Audit {
     @LogContext
     String host = getLocalHost().getHostName();
 
-    @Logged("{identity};deploy;{name};{version};{host}")
-    public void deploy(String name, Version version) {}
+    @Logged("{identity};deploy;{contextRoot};{version};{host}")
+    public void deploy(ContextRoot contextRoot, Version version) {}
 
-    @Logged("{identity};undeploy;{name};{version};{host}")
-    public void undeploy(String name, Version version) {}
+    @Logged("{identity};undeploy;{contextRoot};{version};{host}")
+    public void undeploy(ContextRoot contextRoot, Version version) {}
 }

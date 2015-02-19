@@ -33,7 +33,7 @@ import com.github.t1.log.Logged;
 @Slf4j
 @Path("/")
 @Logged(level = TRACE)
-public class StaticFilesResource {
+public class WebJarsResource {
     private abstract class StaticFilesLoader {
         public String prefix() {
             return "";
@@ -77,7 +77,7 @@ public class StaticFilesResource {
         String path = loader.prefix() + "/" + filePath;
         InputStream stream = classLoader().getResourceAsStream(path);
         if (stream != null) {
-            log.debug("found {} {} in {}", artifact, filePath, loader.name());
+            log.debug("found {} in {}", filePath, loader.name());
             return Response.ok(stream).build();
         }
         return notFound("resource '" + filePath + "' not found in '" + artifact + "'");

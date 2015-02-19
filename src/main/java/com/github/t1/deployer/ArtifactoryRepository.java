@@ -21,9 +21,10 @@ import com.github.t1.log.Logged;
 
 @Slf4j
 @Logged
-public class ArtifactoryRepository implements Repository {
-    public static String contextRoot(Path path) {
-        return element(-3, path); // this is not perfect... we should read it from the container and pass it in
+public class ArtifactoryRepository extends Repository {
+    public static ContextRoot contextRoot(Path path) {
+        // this is not perfect... we should read it from the container and pass it in
+        return new ContextRoot(element(-3, path));
     }
 
     public static Version version(Path path) {
@@ -101,8 +102,8 @@ public class ArtifactoryRepository implements Repository {
     }
 
     private Deployment deployment(CheckSum checkSum, Path path) {
-        String name = fileNameWithoutVersion(path);
-        String contextRoot = contextRoot(path);
+        DeploymentName name = new DeploymentName(fileNameWithoutVersion(path));
+        ContextRoot contextRoot = contextRoot(path);
         Version version = version(path);
         return new Deployment(name, contextRoot, checkSum, version);
     }
@@ -188,7 +189,7 @@ public class ArtifactoryRepository implements Repository {
             } else {
                 log.trace("get deployment in {} (fileName: {})", uri, fileName);
                 Deployment deployment = deploymentIn(uri);
-                if (deployment.getName().equals(fileName)) {
+                if (deployment.getName().getValue().equals(fileName)) {
                     result.add(deployment);
                 }
             }

@@ -13,13 +13,12 @@ import javax.xml.bind.JAXB;
 
 import lombok.AllArgsConstructor;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeploymentsTest {
@@ -53,7 +52,7 @@ public class DeploymentsTest {
         }
     }
 
-    private OngoingDeploymentStub givenDeployment(String contextRoot) {
+    private OngoingDeploymentStub givenDeployment(ContextRoot contextRoot) {
         Deployment deployment = deploymentFor(contextRoot);
         installedDeployments.add(deployment);
         when(repository.getByChecksum(checksumFor(contextRoot))).thenReturn(deploymentFor(contextRoot));
@@ -61,7 +60,7 @@ public class DeploymentsTest {
         return new OngoingDeploymentStub(deploymentFor(contextRoot, versionFor(contextRoot)));
     }
 
-    private static String deploymentXml(String contextRoot) {
+    private static String deploymentXml(ContextRoot contextRoot) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" //
                 + "<deployment>\n" //
                 + "    <name>" + nameFor(contextRoot) + "</name>\n" //
@@ -128,7 +127,7 @@ public class DeploymentsTest {
     public void shouldGetDeploymentByContextRootMatrix() {
         givenDeployment(FOO).availableVersions("1.3.1");
 
-        DeploymentResource deployment = deployments.getDeploymentsByContextRoot("foo");
+        DeploymentResource deployment = deployments.getDeploymentsByContextRoot(FOO);
 
         assertEquals("1.3.1", deployment.getVersion().toString());
         assertEquals(1, deployment.getAvailableVersions().size());
@@ -139,7 +138,7 @@ public class DeploymentsTest {
     public void shouldGetDeploymentVersions() {
         givenDeployment(FOO).availableVersions("1.3.2", "1.3.1", "1.3.0", "1.2.8-SNAPSHOT", "1.2.7", "1.2.6");
 
-        DeploymentResource deployment = deployments.getDeploymentsByContextRoot("foo");
+        DeploymentResource deployment = deployments.getDeploymentsByContextRoot(FOO);
 
         assertEquals("1.3.1", deployment.getVersion().toString());
         assertEquals(6, deployment.getAvailableVersions().size());

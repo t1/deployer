@@ -41,6 +41,8 @@ public class Deployments {
     Audit audit;
     @Inject
     Principal principal;
+    @Inject
+    private DeploymentsList deploymentsList;
 
     @GET
     @Path("*")
@@ -70,13 +72,13 @@ public class Deployments {
     }
 
     @Path("")
-    public DeploymentResource getDeploymentsByContextRoot(@MatrixParam(CONTEXT_ROOT) String contextRoot) {
+    public DeploymentResource getDeploymentsByContextRoot(@MatrixParam(CONTEXT_ROOT) ContextRoot contextRoot) {
         Deployment deployment = container.getDeploymentByContextRoot(contextRoot);
         return toResource(deployment);
     }
 
     private DeploymentResource toResource(Deployment deployment) {
         loadVersion(deployment);
-        return new DeploymentResource(container, repository, audit, deployment);
+        return new DeploymentResource(container, repository, audit, deploymentsList, deployment);
     }
 }

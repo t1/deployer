@@ -17,17 +17,17 @@ import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 public class TestData {
-    public static Deployment deploymentFor(String contextRoot, Version version) {
-        Deployment deployment = new Deployment(nameFor(contextRoot), contextRoot, checksumFor(contextRoot));
+    public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
+        Deployment deployment = new Deployment(nameFor(contextRoot), contextRoot, checksumFor(contextRoot, version));
         deployment.setVersion(version);
         return deployment;
     }
 
-    public static String nameFor(String contextRoot) {
-        return contextRoot + ".war";
+    public static DeploymentName nameFor(ContextRoot contextRoot) {
+        return new DeploymentName(contextRoot + ".war");
     }
 
-    public static Deployment deploymentFor(String contextRoot) {
+    public static Deployment deploymentFor(ContextRoot contextRoot) {
         return deploymentFor(contextRoot, versionFor(contextRoot));
     }
 
@@ -39,9 +39,9 @@ public class TestData {
         return node;
     }
 
-    private static String readDeploymentsCliResult(String... deploymentNames) {
+    private static String readDeploymentsCliResult(ContextRoot... contextRoots) {
         StringBuilder out = new StringBuilder();
-        for (String contextRoot : deploymentNames) {
+        for (ContextRoot contextRoot : contextRoots) {
             if (out.length() == 0)
                 out.append("[");
             else
@@ -69,15 +69,15 @@ public class TestData {
                 + "}\n";
     }
 
-    public static String[] deploymentsCli(String... deployments) {
-        String[] result = new String[deployments.length];
-        for (int i = 0; i < deployments.length; i++) {
-            result[i] = deploymentCli(deployments[i]);
+    public static String[] deploymentsCli(ContextRoot... contextRoots) {
+        String[] result = new String[contextRoots.length];
+        for (int i = 0; i < contextRoots.length; i++) {
+            result[i] = deploymentCli(contextRoots[i]);
         }
         return result;
     }
 
-    public static String deploymentCli(String contextRoot) {
+    public static String deploymentCli(ContextRoot contextRoot) {
         return "{\n" //
                 + "\"content\" => [{\"hash\" => bytes {\n" //
                 + checksumFor(contextRoot).hexByteArray() //
@@ -98,20 +98,20 @@ public class TestData {
                 + "}";
     }
 
-    public static void givenDeployments(Repository repository, String... deploymentNames) {
-        for (String name : deploymentNames) {
-            for (Version version : availableVersionsFor(name)) {
-                CheckSum checksum = checksumFor(name, version);
-                when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(name, version));
+    public static void givenDeployments(Repository repository, ContextRoot... contextRoots) {
+        for (ContextRoot contextRoot : contextRoots) {
+            for (Version version : availableVersionsFor(contextRoot)) {
+                CheckSum checksum = checksumFor(contextRoot, version);
+                when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(contextRoot, version));
                 when(repository.getArtifactInputStream(checksum)) //
-                        .thenReturn(inputStreamFor(name, version));
+                        .thenReturn(inputStreamFor(contextRoot, version));
             }
         }
     }
 
-    public static void givenDeployments(Container container, String... contextRoots) {
+    public static void givenDeployments(Container container, ContextRoot... contextRoots) {
         List<Deployment> deployments = new ArrayList<>();
-        for (String contextRoot : contextRoots) {
+        for (ContextRoot contextRoot : contextRoots) {
             Deployment deployment = deploymentFor(contextRoot);
             deployments.add(deployment);
             when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
@@ -120,16 +120,16 @@ public class TestData {
     }
 
     @SneakyThrows(IOException.class)
-    public static void givenDeployments(ModelControllerClient client, String... deploymentNames) {
+    public static void givenDeployments(ModelControllerClient client, ContextRoot... contextRoots) {
         when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(deploymentNames))));
+                .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(contextRoots))));
     }
 
-    public static String deploymentJson(String contextRoot) {
+    public static String deploymentJson(ContextRoot contextRoot) {
         return deploymentJson(contextRoot, versionFor(contextRoot));
     }
 
-    public static String deploymentJson(String contextRoot, Version version) {
+    public static String deploymentJson(ContextRoot contextRoot, Version version) {
         return "{" //
                 + "\"name\":\"" + nameFor(contextRoot) + "\"," //
                 + "\"contextRoot\":\"" + contextRoot + "\"," //
@@ -154,11 +154,11 @@ public class TestData {
         }
     }
 
-    public static void assertDeployment(String contextRoot, Deployment deployment) {
+    public static void assertDeployment(ContextRoot contextRoot, Deployment deployment) {
         assertDeployment(contextRoot, versionFor(contextRoot), deployment);
     }
 
-    public static void assertDeployment(String contextRoot, Version expectedVersion, Deployment deployment) {
+    public static void assertDeployment(ContextRoot contextRoot, Version expectedVersion, Deployment deployment) {
         assertEquals(contextRoot, deployment.getContextRoot());
         assertEquals(nameFor(contextRoot), deployment.getName());
         assertEquals(expectedVersion, deployment.getVersion());

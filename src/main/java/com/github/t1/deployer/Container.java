@@ -7,6 +7,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 import lombok.*;
@@ -21,6 +22,8 @@ import com.github.t1.log.Logged;
 @Slf4j
 @Logged
 public class Container {
+    public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
+
     private abstract class AbstractPlan {
         public void execute() {
             try (ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(client)) {
@@ -75,38 +78,38 @@ public class Container {
 
     @AllArgsConstructor
     private class DeployPlan extends AbstractPlan {
-        private final String contextRoot;
+        private final DeploymentName deploymentName;
         private final InputStream inputStream;
 
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
             return plan //
-                    .add(contextRoot, inputStream) //
-                    .deploy(contextRoot) //
+                    .add(deploymentName.getValue(), inputStream) //
+                    .deploy(deploymentName.getValue()) //
             ;
         }
     }
 
     @AllArgsConstructor
     private class ReplacePlan extends AbstractPlan {
-        private final String contextRoot;
+        private final DeploymentName deploymentName;
         private final InputStream inputStream;
 
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            return plan.replace(contextRoot, inputStream);
+            return plan.replace(deploymentName.getValue(), inputStream);
         }
     }
 
     @AllArgsConstructor
     private class UndeployPlan extends AbstractPlan {
-        private final String deploymentName;
+        private final DeploymentName deploymentName;
 
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
             return plan //
-                    .undeploy(deploymentName) //
-                    .remove(deploymentName) //
+                    .undeploy(deploymentName.getValue()) //
+                    .remove(deploymentName.getValue()) //
             ;
         }
     }
@@ -129,8 +132,6 @@ public class Container {
 
     @Inject
     ModelControllerClient client;
-    @Inject
-    Repository repository;
 
     @SneakyThrows(IOException.class)
     private ModelNode execute(ModelNode command) {
@@ -147,14 +148,14 @@ public class Container {
         }
     }
 
-    public Deployment getDeploymentByContextRoot(String contextRoot) {
+    public Deployment getDeploymentByContextRoot(ContextRoot contextRoot) {
         List<Deployment> all = getAllDeployments();
         Deployment deployment = find(all, contextRoot);
         log.debug("found deployment {}", deployment);
         return deployment;
     }
 
-    private Deployment find(List<Deployment> all, String contextRoot) {
+    private Deployment find(List<Deployment> all, ContextRoot contextRoot) {
         for (Deployment deployment : all) {
             if (deployment.getContextRoot().equals(contextRoot)) {
                 return deployment;
@@ -185,26 +186,32 @@ public class Container {
     }
 
     private Deployment toDeployment(ModelNode cliDeployment) {
-        String name = cliDeployment.get("name").asString();
-        String contextRoot = getContextRoot(cliDeployment);
+        DeploymentName name = new DeploymentName(cliDeployment.get("name").asString());
+        ContextRoot contextRoot = getContextRoot(cliDeployment);
         CheckSum hash = CheckSum.of(cliDeployment.get("content").get(0).get("hash").asBytes());
         log.debug("{} -> {} -> {}", name, contextRoot, hash);
         return new Deployment(name, contextRoot, hash);
     }
 
-    private String getContextRoot(ModelNode cliDeployment) {
+    private ContextRoot getContextRoot(ModelNode cliDeployment) {
         ModelNode subsystems = cliDeployment.get("subsystem");
         // JBoss 8 uses 'undertow' while JBoss 7 uses 'web'
         ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
         ModelNode contextRoot = web.get("context-root");
-        return contextRoot.isDefined() ? contextRoot.asString().substring(1) : "?";
+        return toContextRoot(contextRoot);
     }
 
-    public void deploy(String contextRoot, InputStream deployment) {
-        new ReplacePlan(contextRoot, deployment).execute();
+    private ContextRoot toContextRoot(ModelNode contextRoot) {
+        if (!contextRoot.isDefined())
+            return UNDEFINED_CONTEXT_ROOT;
+        return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
     }
 
-    public void undeploy(String deploymentName) {
+    public void deploy(DeploymentName deploymentName, InputStream deployment) {
+        new ReplacePlan(deploymentName, deployment).execute();
+    }
+
+    public void undeploy(DeploymentName deploymentName) {
         new UndeployPlan(deploymentName).execute();
     }
 }

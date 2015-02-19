@@ -31,7 +31,7 @@ public class ContainerTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private void givenDeployments(String... deploymentNames) {
+    private void givenDeployments(ContextRoot... deploymentNames) {
         TestData.givenDeployments(repository, deploymentNames);
         TestData.givenDeployments(client, deploymentNames);
     }
@@ -44,7 +44,7 @@ public class ContainerTest {
         expectedException.expect(WebException.class);
         expectedException.expectMessage("no deployment with context root [unknown]");
 
-        container.getDeploymentByContextRoot("unknown");
+        container.getDeploymentByContextRoot(new ContextRoot("unknown"));
     }
 
     @Test
