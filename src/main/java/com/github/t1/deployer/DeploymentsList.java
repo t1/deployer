@@ -39,9 +39,13 @@ public class DeploymentsList {
 
         @Override
         public void run() {
-            if (!Objects.equals(lastModified, lastModified())) {
-                lastModified = lastModified();
-                updateFromList();
+            try {
+                if (!Objects.equals(lastModified, lastModified())) {
+                    lastModified = lastModified();
+                    updateFromList();
+                }
+            } catch (RuntimeException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -83,13 +87,13 @@ public class DeploymentsList {
 
     @PostConstruct
     void start() {
-        log.debug("start executor");
+        log.debug("start file watcher");
         executor.scheduleWithFixedDelay(new FileWatcher(), 0, 1, SECONDS);
     }
 
     @PreDestroy
     void stop() {
-        log.debug("stop executor");
+        log.debug("stop file watcher");
         executor.shutdown();
     }
 
@@ -135,7 +139,10 @@ public class DeploymentsList {
             ContextRoot contextRoot = deployment.getContextRoot();
             if (UNDEFINED_CONTEXT_ROOT.equals(contextRoot))
                 continue;
-            Version version = repository.getByChecksum(deployment.getCheckSum()).getVersion();
+            Deployment withVersion = repository.getByChecksum(deployment.getCheckSum());
+            if (withVersion == null)
+                continue;
+            Version version = withVersion.getVersion();
             deployment.setVersion(version);
             out.add(deployment);
         }

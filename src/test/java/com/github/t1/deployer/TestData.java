@@ -18,7 +18,7 @@ import org.jboss.dmr.ModelNode;
 
 public class TestData {
     public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
-        Deployment deployment = new Deployment(nameFor(contextRoot), contextRoot, checksumFor(contextRoot, version));
+        Deployment deployment = new Deployment(nameFor(contextRoot), contextRoot, fakeChecksumFor(contextRoot, version));
         deployment.setVersion(version);
         return deployment;
     }
@@ -28,7 +28,7 @@ public class TestData {
     }
 
     public static Deployment deploymentFor(ContextRoot contextRoot) {
-        return deploymentFor(contextRoot, versionFor(contextRoot));
+        return deploymentFor(contextRoot, fakeVersionFor(contextRoot));
     }
 
     public static ModelNode readAllDeploymentsCli() {
@@ -80,7 +80,7 @@ public class TestData {
     public static String deploymentCli(ContextRoot contextRoot) {
         return "{\n" //
                 + "\"content\" => [{\"hash\" => bytes {\n" //
-                + checksumFor(contextRoot).hexByteArray() //
+                + fakeChecksumFor(contextRoot).hexByteArray() //
                 + "}}],\n" //
                 + "\"enabled\" => true,\n" //
                 + ("\"name\" => \"" + nameFor(contextRoot) + "\",\n") //
@@ -100,8 +100,8 @@ public class TestData {
 
     public static void givenDeployments(Repository repository, ContextRoot... contextRoots) {
         for (ContextRoot contextRoot : contextRoots) {
-            for (Version version : availableVersionsFor(contextRoot)) {
-                CheckSum checksum = checksumFor(contextRoot, version);
+            for (Version version : fakeVersionsFor(contextRoot)) {
+                CheckSum checksum = fakeChecksumFor(contextRoot, version);
                 when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(contextRoot, version));
                 when(repository.getArtifactInputStream(checksum)) //
                         .thenReturn(inputStreamFor(contextRoot, version));
@@ -126,14 +126,14 @@ public class TestData {
     }
 
     public static String deploymentJson(ContextRoot contextRoot) {
-        return deploymentJson(contextRoot, versionFor(contextRoot));
+        return deploymentJson(contextRoot, fakeVersionFor(contextRoot));
     }
 
     public static String deploymentJson(ContextRoot contextRoot, Version version) {
         return "{" //
                 + "\"name\":\"" + nameFor(contextRoot) + "\"," //
                 + "\"contextRoot\":\"" + contextRoot + "\"," //
-                + "\"checkSum\":\"" + checksumFor(contextRoot, version) + "\"," //
+                + "\"checkSum\":\"" + fakeChecksumFor(contextRoot, version) + "\"," //
                 + "\"version\":\"" + version + "\"" //
                 + "}";
     }
@@ -155,7 +155,7 @@ public class TestData {
     }
 
     public static void assertDeployment(ContextRoot contextRoot, Deployment deployment) {
-        assertDeployment(contextRoot, versionFor(contextRoot), deployment);
+        assertDeployment(contextRoot, fakeVersionFor(contextRoot), deployment);
     }
 
     public static void assertDeployment(ContextRoot contextRoot, Version expectedVersion, Deployment deployment) {

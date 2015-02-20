@@ -17,10 +17,8 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.RestClient.RestResponse;
-import com.github.t1.log.Logged;
 
 @Slf4j
-@Logged
 public class ArtifactoryRepository extends Repository {
     public static ContextRoot contextRoot(Path path) {
         // this is not perfect... we should read it from the container and pass it in

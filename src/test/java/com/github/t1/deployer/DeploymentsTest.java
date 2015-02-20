@@ -55,9 +55,9 @@ public class DeploymentsTest {
     private OngoingDeploymentStub givenDeployment(ContextRoot contextRoot) {
         Deployment deployment = deploymentFor(contextRoot);
         installedDeployments.add(deployment);
-        when(repository.getByChecksum(checksumFor(contextRoot))).thenReturn(deploymentFor(contextRoot));
+        when(repository.getByChecksum(fakeChecksumFor(contextRoot))).thenReturn(deploymentFor(contextRoot));
         when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
-        return new OngoingDeploymentStub(deploymentFor(contextRoot, versionFor(contextRoot)));
+        return new OngoingDeploymentStub(deploymentFor(contextRoot, fakeVersionFor(contextRoot)));
     }
 
     private static String deploymentXml(ContextRoot contextRoot) {
@@ -66,8 +66,8 @@ public class DeploymentsTest {
                 + "    <name>" + nameFor(contextRoot) + "</name>\n" //
                 + "    <contextRoot>" + contextRoot + "</contextRoot>\n" //
                 // base64 as the @XmlSchemaType(name = "hexBinary") doesn't seem to work
-                + "    <checkSum>" + checksumFor(contextRoot).base64() + "</checkSum>\n" //
-                + "    <version>" + versionFor(contextRoot) + "</version>\n" //
+                + "    <checkSum>" + fakeChecksumFor(contextRoot).base64() + "</checkSum>\n" //
+                + "    <version>" + fakeVersionFor(contextRoot) + "</version>\n" //
                 + "</deployment>\n";
     }
 

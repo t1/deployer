@@ -26,9 +26,19 @@ public class RepositoryIT {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    @Before
+    public void before() {
+        ArtifactoryMock.FAKES = true;
+    }
+
+    @After
+    public void after() {
+        ArtifactoryMock.FAKES = false;
+    }
+
     @Test
     public void shouldGetAvailableVersions() {
-        List<Deployment> deployments = repository().availableVersionsFor(checksumFor(FOO));
+        List<Deployment> deployments = repository().availableVersionsFor(fakeChecksumFor(FOO));
 
         for (int i = 0; i < deployments.size(); i++) {
             Deployment deployment = deployments.get(i);
@@ -36,7 +46,7 @@ public class RepositoryIT {
 
             assertEquals(FOO, deployment.getContextRoot());
             assertEquals(FOO + ".war", deployment.getName());
-            assertEquals(checksumFor(FOO, version), deployment.getCheckSum());
+            assertEquals(fakeChecksumFor(FOO, version), deployment.getCheckSum());
             assertEquals(version, deployment.getVersion());
         }
     }
@@ -64,7 +74,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldSearchByChecksum() {
-        Deployment deployment = repository().getByChecksum(checksumFor(FOO));
+        Deployment deployment = repository().getByChecksum(fakeChecksumFor(FOO));
 
         assertEquals(CURRENT_FOO_VERSION, deployment.getVersion());
         // TODO check other fields
@@ -73,7 +83,7 @@ public class RepositoryIT {
     @Test
     public void shouldGetArtifact() {
         @SuppressWarnings("resource")
-        InputStream inputStream = repository().getArtifactInputStream(checksumFor(FOO));
+        InputStream inputStream = repository().getArtifactInputStream(fakeChecksumFor(FOO));
 
         String content = read(inputStream);
 

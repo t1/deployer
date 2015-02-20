@@ -2,6 +2,8 @@ package com.github.t1.deployer;
 
 import static com.github.t1.deployer.ArtifactoryRepository.*;
 import static java.util.Arrays.*;
+import static javax.ws.rs.core.MediaType.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 import java.io.*;
 import java.net.URI;
@@ -25,10 +27,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Path("/artifactory")
 public class ArtifactoryMock {
-    private static final MediaType FILE_INFO = MediaType
-            .valueOf("application/vnd.org.jfrog.artifactory.storage.FileInfo+json");
-    private static final MediaType FOLDER_INFO = MediaType
-            .valueOf("application/vnd.org.jfrog.artifactory.storage.FolderInfo+json");
+    static boolean FAKES = false;
+
+    private static final MediaType FILE_INFO = vendorTypeJFrog("FileInfo");
+    private static final MediaType FOLDER_INFO = vendorTypeJFrog("FolderInfo");
+
+    private static MediaType vendorTypeJFrog(String type) {
+        return MediaType.valueOf("application/vnd.org.jfrog.artifactory.storage." + type + "+json");
+    }
 
     static final Charset UTF_8 = Charset.forName("UTF-8");
 
@@ -138,12 +144,12 @@ public class ArtifactoryMock {
     }
 
     private String searchResultsFor(CheckSum checkSum) {
-        if (checksumFor(FOO).equals(checkSum)) {
+        if (fakeChecksumFor(FOO).equals(checkSum)) {
             return fileSearchResult(FOO, CURRENT_FOO_VERSION);
-        } else if (checksumFor(BAR).equals(checkSum)) {
+        } else if (fakeChecksumFor(BAR).equals(checkSum)) {
             return fileSearchResult(BAR, CURRENT_BAR_VERSION);
         } else if (FAILING_CHECKSUM.equals(checkSum)) {
-            throw new RuntimeException("error in repo");
+            throw new RuntimeException("fake error in repo");
         } else if (AMBIGUOUS_CHECKSUM.equals(checkSum)) {
             return fileSearchResult(new ContextRoot("x"), new Version("1.0")) + ","
                     + fileSearchResult(new ContextRoot("y"), new Version("2.0"));
@@ -152,29 +158,31 @@ public class ArtifactoryMock {
         } else if (isIndexed(checkSum)) {
             java.nio.file.Path path = index().get(checkSum);
             return fileSearchResult(REPO_NAME + "/" + path);
-        } else {
-            ContextRoot contextRoot = contextRootFor(checkSum);
-            Version version = versionFor(checkSum);
+        } else if (FAKES) {
+            ContextRoot contextRoot = fakeContextRootFor(checkSum);
+            Version version = fakeVersionFor(checkSum);
             log.debug("fake search result for {}: {}@{}", checkSum, contextRoot, version);
             return fileSearchResult(contextRoot, version);
+        } else {
+            return "";
         }
     }
 
-    public static CheckSum checksumFor(ContextRoot contextRoot) {
-        return checksumFor(contextRoot, versionFor(contextRoot));
+    public static CheckSum fakeChecksumFor(ContextRoot contextRoot) {
+        return fakeChecksumFor(contextRoot, fakeVersionFor(contextRoot));
     }
 
-    public static Version versionFor(ContextRoot contextRoot) {
+    public static Version fakeVersionFor(ContextRoot contextRoot) {
         if (FOO.equals(contextRoot)) {
             return CURRENT_FOO_VERSION;
         } else if (BAR.equals(contextRoot)) {
             return CURRENT_BAR_VERSION;
         } else {
-            return versionFor(contextRoot.getValue().getBytes());
+            return fakeVersionFor(contextRoot.getValue().getBytes());
         }
     }
 
-    public static CheckSum checksumFor(ContextRoot name, Version version) {
+    public static CheckSum fakeChecksumFor(ContextRoot name, Version version) {
         CheckSum result = CheckSum.sha1((name + "@" + version).getBytes()); // arbitrary but fixed for name/version
         result.getBytes()[0] = (byte) 0xFA;
         result.getBytes()[1] = (byte) 0xCE;
@@ -203,15 +211,15 @@ public class ArtifactoryMock {
         return index().containsKey(checkSum);
     }
 
-    private static ContextRoot contextRootFor(CheckSum checkSum) {
+    private static ContextRoot fakeContextRootFor(CheckSum checkSum) {
         return new ContextRoot("fake-" + checkSum.hexString().substring(0, 6));
     }
 
-    public static Version versionFor(CheckSum checkSum) {
-        return versionFor(checkSum.getBytes());
+    public static Version fakeVersionFor(CheckSum checkSum) {
+        return fakeVersionFor(checkSum.getBytes());
     }
 
-    private static Version versionFor(byte[] bytes) {
+    private static Version fakeVersionFor(byte[] bytes) {
         StringBuilder string = new StringBuilder();
         for (int i = 0; i < 3 && i <= bytes.length; i++) {
             if (i > 0)
@@ -253,16 +261,24 @@ public class ArtifactoryMock {
                 return closeChildrenBuilder(out);
             }
             Version version = version(path);
-            return fileInfo(12345L, checksumFor(FOO, version), CheckSum.fromString("1234567890abcdef"));
+            return fileInfo(12345L, fakeChecksumFor(FOO, version), CheckSum.fromString("1234567890abcdef"));
         }
         java.nio.file.Path resolved = MAVEN_REPOSITORY.resolve(path);
         if (Files.isDirectory(resolved))
             return folderInfo(path);
         else if (Files.isRegularFile(resolved))
             return fileInfo(resolved);
-        log.debug("fake info for: {}", path);
-        CheckSum checksum = checksumFor(new ContextRoot(path.getFileName().toString()));
-        return fileInfo(12345, checksum, checksum);
+        if (FAKES) {
+            log.debug("fake info for: {}", path);
+            CheckSum checksum = fakeChecksumFor(new ContextRoot(path.getFileName().toString()));
+            return fileInfo(12345, checksum, checksum);
+        }
+        throw new WebApplicationException(Response.status(NOT_FOUND).type(APPLICATION_JSON).entity("{\n" //
+                + "  \"errors\" : [ {\n" //
+                + "    \"status\" : 404,\n" //
+                + "    \"message\" : \"Unable to find item\"\n" //
+                + "  } ]\n" //
+                + "}").build());
     }
 
     private String folderInfo(java.nio.file.Path path) throws IOException {
@@ -279,8 +295,8 @@ public class ArtifactoryMock {
                             return FileVisitResult.CONTINUE;
                         }
                     });
-        } else {
-            for (Version version : availableVersionsFor(new ContextRoot(path.toString()))) {
+        } else if (FAKES) {
+            for (Version version : fakeVersionsFor(new ContextRoot(path.toString()))) {
                 out.append(folderChild(version.toString()));
             }
         }
@@ -308,28 +324,27 @@ public class ArtifactoryMock {
         return false;
     }
 
-    public static List<Version> availableVersionsFor(ContextRoot contextRoot) {
+    public static List<Version> fakeVersionsFor(ContextRoot contextRoot) {
         if (contextRoot.equals(FOO)) {
             return FOO_VERSIONS;
         } else if (contextRoot.equals(BAR)) {
             return BAR_VERSIONS;
         } else {
-            return arbitraryVersionFor(contextRoot);
+            return fakeVersionsFor(contextRoot.getValue().getBytes());
         }
     }
 
-    private static List<Version> arbitraryVersionFor(ContextRoot contextRoot) {
-        byte[] bytes = contextRoot.getValue().getBytes();
-        Version v = versionFor(bytes);
+    private static List<Version> fakeVersionsFor(byte[] bytes) {
+        Version v = fakeVersionFor(bytes);
         bytes[1]--;
-        Version m1 = versionFor(bytes);
+        Version m1 = fakeVersionFor(bytes);
         bytes[1]++;
         bytes[0]++;
-        Version p1 = versionFor(bytes);
+        Version p1 = fakeVersionFor(bytes);
         bytes[1]++;
-        Version p2 = versionFor(bytes);
+        Version p2 = fakeVersionFor(bytes);
         bytes[2]++;
-        Version p3 = versionFor(bytes);
+        Version p3 = fakeVersionFor(bytes);
         return asList(m1, v, p1, p2, p3);
     }
 

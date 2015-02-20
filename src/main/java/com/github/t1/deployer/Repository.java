@@ -3,6 +3,9 @@ package com.github.t1.deployer;
 import java.io.InputStream;
 import java.util.List;
 
+import com.github.t1.log.Logged;
+
+@Logged
 public abstract class Repository {
     public abstract Deployment getByChecksum(CheckSum checkSum);
 
