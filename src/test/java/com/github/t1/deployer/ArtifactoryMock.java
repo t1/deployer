@@ -20,7 +20,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * If you don't have a real Artifactory Pro available, move this to main and configure the endpoint.
+ * If you don't have a real Artifactory Pro available, move this to src/main/java and configure the endpoint by setting
+ * the system property <code>deployer.artifactory.uri</code> to <code>http://localhost:8080/deployer/artifactory</code>
  * 
  * @see ArtifactoryMockIndexBuilder
  */

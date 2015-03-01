@@ -40,8 +40,12 @@ public class ArtifactoryRepository extends Repository {
     RestClient rest;
 
     @PreDestroy
-    void disconnect() throws IOException {
-        rest.close();
+    void disconnect() {
+        try {
+            rest.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
