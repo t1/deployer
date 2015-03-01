@@ -1,0 +1,53 @@
+diff --git a/pom.xml b/pom.xml
+index 670c884..db327a9 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -56,15 +56,6 @@
+                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                         </manifest>
+                     </archive>
+-                    <!-- has to be overlayed to work in JBoss 7.x -->
+-                    <overlays>
+-                        <overlay>
+-                            <groupId>com.github.t1</groupId>
+-                            <artifactId>logging-interceptor</artifactId>
+-                            <type>jar</type>
+-                            <targetPath>WEB-INF/classes</targetPath>
+-                        </overlay>
+-                    </overlays>
+                 </configuration>
+             </plugin>
+             <plugin>
+@@ -169,7 +160,7 @@
+             <groupId>com.github.t1</groupId>
+             <artifactId>logging-interceptor</artifactId>
+             <version>2.3.0-SNAPSHOT</version>
+-            <optional>true</optional><!-- will be overlayed -->
++            <optional>true</optional>
+         </dependency>
+ 
+         <!-- compile scope -->
+diff --git a/src/main/java/com/github/t1/deployer/Config.java b/src/main/java/com/github/t1/deployer/Config.java
+index 09497af..c8abc98 100644
+--- a/src/main/java/com/github/t1/deployer/Config.java
++++ b/src/main/java/com/github/t1/deployer/Config.java
+@@ -33,7 +33,7 @@
+ 
+     @Produces
+     ModelControllerClient produceModelControllerClient() throws IOException {
+-        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:9999");
++        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:9990");
+         log.debug("JBoss AS admin: {}", uri);
+         assert "http-remoting".equals(uri.getScheme());
+         InetAddress host = InetAddress.getByName(uri.getHost());
+diff --git a/src/main/webapp/WEB-INF/beans.xml b/src/main/webapp/WEB-INF/beans.xml
+index 743ff86..28d0d42 100644
+--- a/src/main/webapp/WEB-INF/beans.xml
++++ b/src/main/webapp/WEB-INF/beans.xml
+@@ -1,6 +1,3 @@
+ <beans xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
+-    <interceptors>
+-        <class>com.github.t1.log.LoggingInterceptor</class>
+-    </interceptors>
+ </beans>
