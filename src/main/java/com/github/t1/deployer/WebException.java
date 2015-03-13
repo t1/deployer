@@ -19,6 +19,6 @@ public class WebException extends WebApplicationException {
     }
 
     public WebException(Status status, String message) {
-        super(message, Response.status(status).type(TEXT_PLAIN_TYPE).entity(message).build());
+        super(Response.status(status).type(TEXT_PLAIN_TYPE).entity(message).build());
     }
 }

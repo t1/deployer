@@ -2,6 +2,7 @@ package com.github.t1.deployer;
 
 import static com.github.t1.deployer.ArtifactoryMock.*;
 import static com.github.t1.deployer.TestData.*;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -41,10 +42,13 @@ public class ContainerTest {
         when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
                 .thenReturn(ModelNode.fromString(successCli("[]")));
 
-        expectedException.expect(WebException.class);
-        expectedException.expectMessage("no deployment with context root [unknown]");
-
-        container.getDeploymentByContextRoot(new ContextRoot("unknown"));
+        try {
+            container.getDeploymentByContextRoot(new ContextRoot("unknown"));
+            fail("WebException expected");
+        } catch (WebException e) {
+            assertEquals(NOT_FOUND, e.getResponse().getStatusInfo());
+            assertEquals("no deployment with context root [unknown]", e.getResponse().getEntity());
+        }
     }
 
     @Test
