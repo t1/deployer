@@ -4,6 +4,7 @@ import static com.github.t1.deployer.ArtifactoryMock.*;
 import static com.github.t1.deployer.TestData.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
@@ -161,5 +162,16 @@ public class DeployerIT {
 
         assertStatus(NO_CONTENT, response);
         verify(audit).undeploy(FOO, CURRENT_FOO_VERSION);
+    }
+
+    @Test
+    public void shouldDisplayDeploymentsForm() {
+        Response response = deployer() //
+                .path("/deployments/deployment-form") //
+                .request(TEXT_HTML) //
+                .get();
+
+        assertStatus(OK, response);
+        assertThat(response.readEntity(String.class), containsString("<form"));
     }
 }

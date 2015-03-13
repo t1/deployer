@@ -52,6 +52,13 @@ public class Deployments {
     }
 
     @GET
+    @Path("deployment-form")
+    @Produces(TEXT_HTML)
+    public String getNewDeploymentsForm(@Context UriInfo uriInfo) {
+        return new DeploymentsFormHtmlWriter(uriInfo).toString();
+    }
+
+    @GET
     @Path("*")
     public Response getAllDeployments() {
         List<Deployment> deployments = getAllDeploymentsWithVersions();

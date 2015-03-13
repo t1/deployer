@@ -33,6 +33,7 @@ public class DeploymentsListHtmlWriter extends HtmlWriter {
                     .append(deployment.getVersion()) //
                     .append("</td></tr>\n");
         }
+        out.append("    <tr><td colspan='3'><a href=\"deployment-form\">+</a></td></tr>");
         out.append("    </table>\n");
         out.append("<footer>Principal: ").append((principal == null) ? "?" : principal.getName()).append("</footer>\n");
         return out.toString();
