@@ -21,6 +21,9 @@ import com.github.t1.log.Logged;
 
 @Slf4j
 @Logged
+@Stateless
+// org.jboss.ejb3:jboss-ejb3-ext-api:2.1.0 contains org.jboss.ejb3.annotation.SecurityDomain
+// @SecurityDomain("deployer")
 public class Container {
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
 
@@ -148,7 +151,16 @@ public class Container {
         }
     }
 
-    public Deployment getDeploymentByContextRoot(ContextRoot contextRoot) {
+    public boolean hasDeploymentWith(ContextRoot contextRoot) {
+        for (Deployment deployment : getAllDeployments()) {
+            if (deployment.getContextRoot().equals(contextRoot)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Deployment getDeploymentWith(ContextRoot contextRoot) {
         List<Deployment> all = getAllDeployments();
         Deployment deployment = find(all, contextRoot);
         log.debug("found deployment {}", deployment);
@@ -162,6 +174,22 @@ public class Container {
             }
         }
         throw notFound("no deployment with context root [" + contextRoot + "]");
+    }
+
+    public Deployment getDeploymentWith(CheckSum checkSum) {
+        List<Deployment> all = getAllDeployments();
+        Deployment deployment = find(all, checkSum);
+        log.debug("found deployment {}", deployment);
+        return deployment;
+    }
+
+    private Deployment find(List<Deployment> all, CheckSum checkSum) {
+        for (Deployment deployment : all) {
+            if (deployment.getCheckSum().equals(checkSum)) {
+                return deployment;
+            }
+        }
+        throw notFound("no deployment with context root [" + checkSum + "]");
     }
 
     public List<Deployment> getAllDeployments() {
@@ -207,10 +235,17 @@ public class Container {
         return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
     }
 
+    // @RolesAllowed("deployer")
     public void deploy(DeploymentName deploymentName, InputStream deployment) {
+        new DeployPlan(deploymentName, deployment).execute();
+    }
+
+    // @RolesAllowed("deployer")
+    public void redeploy(DeploymentName deploymentName, InputStream deployment) {
         new ReplacePlan(deploymentName, deployment).execute();
     }
 
+    // @RolesAllowed("deployer")
     public void undeploy(DeploymentName deploymentName) {
         new UndeployPlan(deploymentName).execute();
     }

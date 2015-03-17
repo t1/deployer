@@ -16,9 +16,15 @@ import java.util.List;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.*;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.junit.*;
+import lombok.extern.java.Log;
 
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.filter.LoggingFilter;
+import org.junit.*;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
+
+@Log
 public class DeployerIT {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
@@ -31,7 +37,9 @@ public class DeployerIT {
     };
 
     @ClassRule
-    public static DropwizardClientRule deployer = new DropwizardClientRule(new Deployments(), //
+    public static DropwizardClientRule deployer = new DropwizardClientRule( //
+            new Deployments(), //
+            new LoggingFilter(log, true), //
             new AbstractBinder() {
                 @Override
                 protected void configure() {
@@ -47,7 +55,7 @@ public class DeployerIT {
 
     @Before
     public void before() {
-        reset(container, repository);
+        reset(container, repository, audit);
     }
 
     @After
@@ -55,10 +63,28 @@ public class DeployerIT {
         verifyNoMoreInteractions(audit);
     }
 
+    @Rule
+    public TestWatcher logRule = new TestWatcher() {
+        @Override
+        protected void starting(Description description) {
+            log.info("starting: " + description.getMethodName());
+        }
+
+        @Override
+        protected void finished(Description description) {
+            log.info("starting: " + description.getMethodName());
+        }
+    };
+
     private WebTarget deploymentsWebTarget(ContextRoot contextRoot) {
-        return deployer() //
-                .path("/deployments") //
+        return deploymentsWebTarget() //
                 .matrixParam("context-root", contextRoot);
+    }
+
+    private WebTarget deploymentsWebTarget() {
+        return deployer() //
+                .register(new LoggingFilter(log, false)) //
+                .path("deployments");
     }
 
     private WebTarget deployer() {
@@ -77,7 +103,7 @@ public class DeployerIT {
         given(FOO, BAR);
 
         Response response = deployer() //
-                .path("/deployments/*") //
+                .path("deployments/*") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
@@ -124,7 +150,8 @@ public class DeployerIT {
 
     @Test
     public void shouldDeploy() {
-        given(FOO, BAR);
+        givenDeployments(repository, FOO, BAR);
+        givenDeployments(container, BAR);
 
         WebTarget uri = deploymentsWebTarget(FOO);
         Response response = uri //
@@ -146,10 +173,9 @@ public class DeployerIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .put(Entity.json(deploymentJson(FOO, NEWEST_FOO_VERSION)));
 
-        assertStatus(CREATED, response);
-        assertEquals(uri.getUri(), response.getLocation());
-        verify(audit).deploy(FOO, NEWEST_FOO_VERSION);
-        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        assertStatus(NO_CONTENT, response);
+        verify(audit).redeploy(FOO, NEWEST_FOO_VERSION);
+        verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
     @Test
@@ -165,13 +191,56 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDisplayDeploymentsForm() {
+    public void shouldPostDeploy() {
+        givenDeployments(repository, FOO, BAR);
+        givenDeployments(container, BAR);
+
+        Response response = deploymentsWebTarget().request() //
+                .post(Entity.form(new Form("action", "deploy") //
+                        .param("checkSum", fakeChecksumFor(FOO, CURRENT_FOO_VERSION).toString()) //
+                        ));
+
+        assertStatus(OK, response); // redirected
+        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
+        verify(audit).deploy(FOO, CURRENT_FOO_VERSION);
+    }
+
+    @Test
+    public void shouldPostRedeploy() {
+        given(FOO, BAR);
+
+        WebTarget uri = deploymentsWebTarget();
+        Response response = uri.request() //
+                .post(Entity.form(deploymentForm("redeploy", FOO, NEWEST_FOO_VERSION)));
+
+        assertStatus(OK, response); // redirected
+        verify(audit).redeploy(FOO, NEWEST_FOO_VERSION);
+        verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
+    }
+
+    @Test
+    public void shouldPostUndeploy() {
+        given(FOO, BAR);
+
+        Response response = deploymentsWebTarget(FOO) //
+                .request() //
+                .post(Entity.form(deploymentForm("undeploy", FOO, NEWEST_FOO_VERSION)));
+
+        assertStatus(OK, response); // redirected
+        verify(audit).undeploy(FOO, CURRENT_FOO_VERSION);
+    }
+
+    @Test
+    public void shouldGetDeploymentsForm() {
         Response response = deployer() //
-                .path("/deployments/deployment-form") //
+                .path("deployments/deployment-form") //
                 .request(TEXT_HTML) //
                 .get();
 
         assertStatus(OK, response);
-        assertThat(response.readEntity(String.class), containsString("<form"));
+        assertThat(
+                response.readEntity(String.class),
+                allOf(containsString("Add Deployment"), containsString("<form"),
+                        containsString("name=\"action\" value=\"deploy\"")));
     }
 }

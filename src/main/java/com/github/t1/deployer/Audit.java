@@ -29,6 +29,9 @@ public class Audit {
     @Logged("{identity};deploy;{contextRoot};{version};{host}")
     public void deploy(ContextRoot contextRoot, Version version) {}
 
+    @Logged("{identity};redeploy;{contextRoot};{version};{host}")
+    public void redeploy(ContextRoot contextRoot, Version version) {}
+
     @Logged("{identity};undeploy;{contextRoot};{version};{host}")
     public void undeploy(ContextRoot contextRoot, Version version) {}
 }

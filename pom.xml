@@ -16,7 +16,7 @@
 
         <!-- we need both versions: JBoss 7 uses codehaus, Dropwizard uses fasterxml -->
         <jackson.codehaus.version>1.9.13</jackson.codehaus.version>
-        <jackson.fasterxml.version>2.4.3</jackson.fasterxml.version>
+        <jackson.fasterxml.version>2.5.1</jackson.fasterxml.version>
     </properties>
 
     <scm>
@@ -55,8 +55,11 @@
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
+                        <manifestEntries>
+                            <Dependencies>org.codehaus.jackson.jackson-mapper-asl services</Dependencies>
+                        </manifestEntries>
                     </archive>
-                    <!-- has to be overlayed to work in JBoss 7.x -->
+                    <!-- has to be overlayed to work in JBoss 7.x: -->
                     <overlays>
                         <overlay>
                             <groupId>com.github.t1</groupId>
@@ -92,6 +95,16 @@
                 <version>1.1.5.Final</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>18.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-common</artifactId>
+                <version>2.16</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -145,12 +158,14 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>${jackson.codehaus.version}</version>
-            <!-- <optional>true</optional> -->
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.fasterxml.version}</version>
+            <scope>provided</scope>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -238,7 +253,7 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
-            <version>0.8.0-rc1</version>
+            <version>0.8.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

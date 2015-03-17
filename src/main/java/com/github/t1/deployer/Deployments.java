@@ -55,7 +55,7 @@ public class Deployments {
     @Path("deployment-form")
     @Produces(TEXT_HTML)
     public String getNewDeploymentsForm(@Context UriInfo uriInfo) {
-        return new DeploymentsFormHtmlWriter(uriInfo).toString();
+        return new NewDeploymentFormHtmlWriter(uriInfo).toString();
     }
 
     @GET
@@ -74,18 +74,27 @@ public class Deployments {
     }
 
     private void loadVersion(Deployment deployment) {
-        Deployment byChecksum = repository.getByChecksum(deployment.getCheckSum());
+        Deployment byChecksum =
+                (deployment.getCheckSum() == null) ? null : repository.getByChecksum(deployment.getCheckSum());
         deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
     }
 
     @Path("")
-    public DeploymentResource getDeploymentsByContextRoot(@MatrixParam(CONTEXT_ROOT) ContextRoot contextRoot) {
-        Deployment deployment = container.getDeploymentByContextRoot(contextRoot);
-        return toResource(deployment);
+    public DeploymentResource deploymentSubResourceByContextRoot(@MatrixParam(CONTEXT_ROOT) ContextRoot contextRoot) {
+        Deployment deployment = null;
+        if (contextRoot == null) {
+            deployment = new Deployment(null, contextRoot, null);
+        } else {
+            deployment = container.getDeploymentWith(contextRoot);
+            if (deployment == null) {
+                deployment = new Deployment(null, contextRoot, null);
+            }
+        }
+        loadVersion(deployment);
+        return deploymentResource(deployment);
     }
 
-    private DeploymentResource toResource(Deployment deployment) {
-        loadVersion(deployment);
+    private DeploymentResource deploymentResource(Deployment deployment) {
         return new DeploymentResource(container, repository, audit, deploymentsList, deployment);
     }
 }

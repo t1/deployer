@@ -76,8 +76,10 @@ public class RepositoryIT {
     public void shouldSearchByChecksum() {
         Deployment deployment = repository().getByChecksum(fakeChecksumFor(FOO));
 
+        assertEquals(FOO, deployment.getContextRoot());
+        assertEquals(FOO_WAR, deployment.getName());
+        assertEquals(fakeChecksumFor(FOO, CURRENT_FOO_VERSION), deployment.getCheckSum());
         assertEquals(CURRENT_FOO_VERSION, deployment.getVersion());
-        // TODO check other fields
     }
 
     @Test
@@ -85,9 +87,7 @@ public class RepositoryIT {
         @SuppressWarnings("resource")
         InputStream inputStream = repository().getArtifactInputStream(fakeChecksumFor(FOO));
 
-        String content = read(inputStream);
-
-        assertEquals("foo-1.3.1.war-content@1.3.1", content);
+        assertEquals("foo-1.3.1.war@1.3.1", read(inputStream));
     }
 
     @SneakyThrows(IOException.class)

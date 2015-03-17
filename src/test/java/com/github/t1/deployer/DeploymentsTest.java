@@ -56,7 +56,7 @@ public class DeploymentsTest {
         Deployment deployment = deploymentFor(contextRoot);
         installedDeployments.add(deployment);
         when(repository.getByChecksum(fakeChecksumFor(contextRoot))).thenReturn(deploymentFor(contextRoot));
-        when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
+        when(container.getDeploymentWith(contextRoot)).thenReturn(deployment);
         return new OngoingDeploymentStub(deploymentFor(contextRoot, fakeVersionFor(contextRoot)));
     }
 
@@ -127,7 +127,7 @@ public class DeploymentsTest {
     public void shouldGetDeploymentByContextRootMatrix() {
         givenDeployment(FOO).availableVersions("1.3.1");
 
-        DeploymentResource deployment = deployments.getDeploymentsByContextRoot(FOO);
+        DeploymentResource deployment = deployments.deploymentSubResourceByContextRoot(FOO);
 
         assertEquals("1.3.1", deployment.getVersion().toString());
         assertEquals(1, deployment.getAvailableVersions().size());
@@ -138,7 +138,7 @@ public class DeploymentsTest {
     public void shouldGetDeploymentVersions() {
         givenDeployment(FOO).availableVersions("1.3.2", "1.3.1", "1.3.0", "1.2.8-SNAPSHOT", "1.2.7", "1.2.6");
 
-        DeploymentResource deployment = deployments.getDeploymentsByContextRoot(FOO);
+        DeploymentResource deployment = deployments.deploymentSubResourceByContextRoot(FOO);
 
         assertEquals("1.3.1", deployment.getVersion().toString());
         assertEquals(6, deployment.getAvailableVersions().size());

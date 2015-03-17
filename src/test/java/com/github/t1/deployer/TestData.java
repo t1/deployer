@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import javax.ws.rs.core.*;
@@ -15,12 +15,28 @@ import lombok.SneakyThrows;
 
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class TestData {
     public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
-        Deployment deployment = new Deployment(nameFor(contextRoot), contextRoot, fakeChecksumFor(contextRoot, version));
+        Deployment deployment =
+                new Deployment(nameFor(contextRoot), contextRoot, fakeChecksumFor(contextRoot, version));
         deployment.setVersion(version);
         return deployment;
+    }
+
+    public static Deployment deploymentFrom(InputStream inputStream) {
+        String string = inputStream.toString();
+        assert string.startsWith("[") && string.endsWith("]");
+        string = string.substring(1, string.length() - 1);
+        String[] parts = string.split("@");
+        assert parts.length == 2;
+        ContextRoot contextRoot = new ContextRoot(parts[0]);
+        Version version = new Version(parts[1]);
+        DeploymentName name = nameFor(contextRoot);
+        CheckSum checkSum = fakeChecksumFor(contextRoot, version);
+        return new Deployment(name, contextRoot, checkSum);
     }
 
     public static DeploymentName nameFor(ContextRoot contextRoot) {
@@ -109,14 +125,31 @@ public class TestData {
         }
     }
 
-    public static void givenDeployments(Container container, ContextRoot... contextRoots) {
-        List<Deployment> deployments = new ArrayList<>();
+    public static void givenDeployments(final Container container, ContextRoot... contextRoots) {
+        final List<Deployment> deployments = new ArrayList<>();
         for (ContextRoot contextRoot : contextRoots) {
             Deployment deployment = deploymentFor(contextRoot);
-            deployments.add(deployment);
-            when(container.getDeploymentByContextRoot(contextRoot)).thenReturn(deployment);
+            givenDeployment(container, deployments, deployment);
         }
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                DeploymentName deploymentName = invocation.getArgumentAt(0, DeploymentName.class);
+                Deployment deployment = deploymentFrom(invocation.getArgumentAt(1, InputStream.class));
+                assert deploymentName.equals(deployment.getName());
+                givenDeployment(container, deployments, deployment);
+                return null;
+            }
+        }).when(container).deploy(any(DeploymentName.class), any(InputStream.class));
         when(container.getAllDeployments()).thenReturn(deployments);
+    }
+
+    public static void givenDeployment(Container container, List<Deployment> deployments, Deployment deployment) {
+        ContextRoot contextRoot = deployment.getContextRoot();
+        when(container.getDeploymentWith(contextRoot)).thenReturn(deployment);
+        when(container.hasDeploymentWith(contextRoot)).thenReturn(true);
+        when(container.getDeploymentWith(deployment.getCheckSum())).thenReturn(deployment);
+        deployments.add(deployment);
     }
 
     @SneakyThrows(IOException.class)
@@ -136,6 +169,12 @@ public class TestData {
                 + "\"checkSum\":\"" + fakeChecksumFor(contextRoot, version) + "\"," //
                 + "\"version\":\"" + version + "\"" //
                 + "}";
+    }
+
+    public static Form deploymentForm(String action, ContextRoot contextRoot, Version version) {
+        return new Form("action", action) //
+                .param("checkSum", fakeChecksumFor(contextRoot, version).toString()) //
+                .param("contextRoot", contextRoot.getValue());
     }
 
     public static void assertStatus(Status status, Response response) {

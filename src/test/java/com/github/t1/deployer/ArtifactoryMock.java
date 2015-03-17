@@ -402,6 +402,6 @@ public class ArtifactoryMock {
     }
 
     public static InputStream inputStreamFor(ContextRoot contextRoot, Version version) {
-        return new StringInputStream(contextRoot + "-content@" + version);
+        return new StringInputStream(contextRoot + "@" + version);
     }
 }
