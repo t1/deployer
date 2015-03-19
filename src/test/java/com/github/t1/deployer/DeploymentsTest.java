@@ -14,6 +14,7 @@ import javax.xml.bind.JAXB;
 import lombok.AllArgsConstructor;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.glassfish.hk2.api.Factory;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -37,6 +38,20 @@ public class DeploymentsTest {
     @Before
     public void setup() {
         when(container.getAllDeployments()).thenReturn(installedDeployments);
+        deployments.deploymentResources = new FactoryInstance<>(new Factory<DeploymentResource>() {
+            @Override
+            public DeploymentResource provide() {
+                DeploymentResource result = new DeploymentResource();
+                result.container = container;
+                result.repository = repository;
+                result.audit = null;
+                result.deploymentsList = null;
+                return result;
+            }
+
+            @Override
+            public void dispose(DeploymentResource instance) {}
+        });
     }
 
     @AllArgsConstructor

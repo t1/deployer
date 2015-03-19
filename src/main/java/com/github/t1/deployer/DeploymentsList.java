@@ -80,8 +80,8 @@ public class DeploymentsList {
     @Inject
     Repository repository;
 
-    private final Path deploymentsList = //
-            Paths.get(System.getProperty("jboss.server.config.dir", "."), "deployments.properties");
+    private final Path configDir = Paths.get(System.getProperty("jboss.server.config.dir", "."));
+    private final Path deploymentsList = configDir.resolve("deployments.properties");
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 

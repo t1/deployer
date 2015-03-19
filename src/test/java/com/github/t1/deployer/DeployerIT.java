@@ -18,6 +18,7 @@ import javax.ws.rs.core.*;
 
 import lombok.extern.java.Log;
 
+import org.glassfish.hk2.api.*;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.junit.*;
@@ -29,6 +30,7 @@ public class DeployerIT {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);
+    private static DeploymentsList deploymentsList = mock(DeploymentsList.class);
     private static Principal principal = new Principal() {
         @Override
         public String getName() {
@@ -47,9 +49,22 @@ public class DeployerIT {
                     bind(container).to(Container.class);
                     bind(audit).to(Audit.class);
                     bind(principal).to(Principal.class);
+                    bind(new FactoryInstance<>(new Factory<DeploymentResource>() {
+                        @Override
+                        public DeploymentResource provide() {
+                            DeploymentResource result = new DeploymentResource();
+                            result.container = container;
+                            result.repository = repository;
+                            result.audit = audit;
+                            result.deploymentsList = deploymentsList;
+                            return result;
+                        }
 
-                    System.setProperty("jboss.server.config.dir", "target");
-                    bind(DeploymentsList.class).to(DeploymentsList.class);
+                        @Override
+                        public void dispose(DeploymentResource instance) {}
+                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentResource>>() {});
+
+                    bind(deploymentsList).to(DeploymentsList.class);
                 }
             });
 

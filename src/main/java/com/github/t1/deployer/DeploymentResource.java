@@ -6,23 +6,35 @@ import static javax.ws.rs.core.MediaType.*;
 import java.net.URI;
 import java.util.*;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.github.t1.log.Logged;
+
 @Slf4j
+@Logged
 @RequiredArgsConstructor
 public class DeploymentResource {
-    private final Container container;
-    private final Repository repository;
-    private final Audit audit;
+    @Inject
+    Container container;
+    @Inject
+    Repository repository;
+    @Inject
+    Audit audit;
+    @Inject
+    DeploymentsList deploymentsList;
 
-    private final DeploymentsList deploymentsList;
-    private final Deployment deployment;
-
+    private Deployment deployment;
     private List<Deployment> availableVersions;
+
+    DeploymentResource deployment(Deployment deployment) {
+        this.deployment = deployment;
+        return this;
+    }
 
     @GET
     public Deployment self() {

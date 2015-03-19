@@ -52,5 +52,7 @@ public class FactoryInstance<T> implements Instance<T> {
     }
 
     @Override
-    public void destroy(T instance) {}
+    public void destroy(T instance) {
+        factory.dispose(instance);
+    }
 }

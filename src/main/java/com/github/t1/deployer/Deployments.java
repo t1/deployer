@@ -7,6 +7,7 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.List;
 
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -38,11 +39,9 @@ public class Deployments {
     @Inject
     Repository repository;
     @Inject
-    Audit audit;
-    @Inject
     Principal principal;
     @Inject
-    private DeploymentsList deploymentsList;
+    Instance<DeploymentResource> deploymentResources;
 
     @GET
     @Path("*")
@@ -73,28 +72,32 @@ public class Deployments {
         return deployments;
     }
 
-    private void loadVersion(Deployment deployment) {
-        Deployment byChecksum =
-                (deployment.getCheckSum() == null) ? null : repository.getByChecksum(deployment.getCheckSum());
-        deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
-    }
-
     @Path("")
     public DeploymentResource deploymentSubResourceByContextRoot(@MatrixParam(CONTEXT_ROOT) ContextRoot contextRoot) {
         Deployment deployment = null;
         if (contextRoot == null) {
-            deployment = new Deployment(null, contextRoot, null);
+            deployment = tentativeDeploymentFor(contextRoot);
         } else {
             deployment = container.getDeploymentWith(contextRoot);
             if (deployment == null) {
-                deployment = new Deployment(null, contextRoot, null);
+                deployment = tentativeDeploymentFor(contextRoot);
             }
         }
         loadVersion(deployment);
         return deploymentResource(deployment);
     }
 
+    private Deployment tentativeDeploymentFor(ContextRoot contextRoot) {
+        return new Deployment(null, contextRoot, null);
+    }
+
+    private void loadVersion(Deployment deployment) {
+        Deployment byChecksum =
+                (deployment.getCheckSum() == null) ? null : repository.getByChecksum(deployment.getCheckSum());
+        deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
+    }
+
     private DeploymentResource deploymentResource(Deployment deployment) {
-        return new DeploymentResource(container, repository, audit, deploymentsList, deployment);
+        return deploymentResources.get().deployment(deployment);
     }
 }
