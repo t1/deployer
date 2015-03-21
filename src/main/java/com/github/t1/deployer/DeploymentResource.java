@@ -1,11 +1,13 @@
 package com.github.t1.deployer;
 
 import static com.github.t1.deployer.WebException.*;
+import static com.github.t1.log.LogLevel.*;
 import static javax.ws.rs.core.MediaType.*;
 
 import java.net.URI;
 import java.util.*;
 
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -16,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.github.t1.log.Logged;
 
 @Slf4j
-@Logged
+@Logged(level = INFO)
 @RequiredArgsConstructor
 public class DeploymentResource {
     @Inject
@@ -27,10 +29,15 @@ public class DeploymentResource {
     Audit audit;
     @Inject
     DeploymentsList deploymentsList;
+    @Inject
+    Instance<DeploymentHtmlWriter> htmlDeployments;
+    @Context
+    UriInfo uriInfo;
 
     private Deployment deployment;
     private List<Deployment> availableVersions;
 
+    @Logged(level = OFF)
     DeploymentResource deployment(Deployment deployment) {
         this.deployment = deployment;
         return this;
@@ -43,8 +50,9 @@ public class DeploymentResource {
 
     @GET
     @Produces(TEXT_HTML)
-    public String html(@Context UriInfo uriInfo) {
-        return new DeploymentHtmlWriter(uriInfo, this).toString();
+    public String html() {
+        log.error("uri info: {}", uriInfo);
+        return htmlDeployments.get().resource(this).uriInfo(uriInfo).toString();
     }
 
     @POST
@@ -171,6 +179,7 @@ public class DeploymentResource {
     }
 
     @Override
+    @Logged(level = OFF)
     public String toString() {
         return "Resource:" + deployment + "[" + availableVersions + "]";
     }

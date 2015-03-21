@@ -4,7 +4,6 @@ import static com.github.t1.log.LogLevel.*;
 import static javax.ws.rs.core.MediaType.*;
 
 import java.net.URI;
-import java.security.Principal;
 import java.util.List;
 
 import javax.enterprise.inject.Instance;
@@ -39,22 +38,26 @@ public class Deployments {
     @Inject
     Repository repository;
     @Inject
-    Principal principal;
-    @Inject
     Instance<DeploymentResource> deploymentResources;
+    @Inject
+    Instance<DeploymentsListHtmlWriter> htmlLists;
+    @Inject
+    Instance<NewDeploymentFormHtmlWriter> htmlForms;
+    @Context
+    UriInfo uriInfo;
 
     @GET
     @Path("*")
     @Produces(TEXT_HTML)
-    public String getAllDeploymentsAsHtml(@Context UriInfo uriInfo) {
-        return new DeploymentsListHtmlWriter(uriInfo, principal, getAllDeploymentsWithVersions()).toString();
+    public String getAllDeploymentsAsHtml() {
+        return htmlLists.get().uriInfo(uriInfo).toString();
     }
 
     @GET
     @Path("deployment-form")
     @Produces(TEXT_HTML)
-    public String getNewDeploymentsForm(@Context UriInfo uriInfo) {
-        return new NewDeploymentFormHtmlWriter(uriInfo).toString();
+    public String getNewDeploymentsForm() {
+        return htmlForms.get().uriInfo(uriInfo).toString();
     }
 
     @GET
@@ -64,12 +67,19 @@ public class Deployments {
         return Response.ok(deployments).build();
     }
 
-    private List<Deployment> getAllDeploymentsWithVersions() {
+    @javax.enterprise.inject.Produces
+    List<Deployment> getAllDeploymentsWithVersions() {
         List<Deployment> deployments = container.getAllDeployments();
         for (Deployment deployment : deployments) {
             loadVersion(deployment);
         }
         return deployments;
+    }
+
+    private void loadVersion(Deployment deployment) {
+        Deployment byChecksum =
+                (deployment.getCheckSum() == null) ? null : repository.getByChecksum(deployment.getCheckSum());
+        deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
     }
 
     @Path("")
@@ -89,12 +99,6 @@ public class Deployments {
 
     private Deployment tentativeDeploymentFor(ContextRoot contextRoot) {
         return new Deployment(null, contextRoot, null);
-    }
-
-    private void loadVersion(Deployment deployment) {
-        Deployment byChecksum =
-                (deployment.getCheckSum() == null) ? null : repository.getByChecksum(deployment.getCheckSum());
-        deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
     }
 
     private DeploymentResource deploymentResource(Deployment deployment) {

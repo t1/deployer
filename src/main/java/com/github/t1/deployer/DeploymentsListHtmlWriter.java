@@ -3,17 +3,13 @@ package com.github.t1.deployer;
 import java.security.Principal;
 import java.util.List;
 
-import javax.ws.rs.core.UriInfo;
+import javax.inject.Inject;
 
 public class DeploymentsListHtmlWriter extends HtmlWriter {
-    private final List<Deployment> deployments;
-    private final Principal principal;
-
-    public DeploymentsListHtmlWriter(UriInfo uriInfo, Principal principal, List<Deployment> deployments) {
-        super(uriInfo);
-        this.principal = principal;
-        this.deployments = deployments;
-    }
+    @Inject
+    List<Deployment> deployments;
+    @Inject
+    Principal principal;
 
     @Override
     protected String title() {

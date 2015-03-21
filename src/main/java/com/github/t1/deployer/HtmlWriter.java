@@ -4,11 +4,13 @@ import java.net.URI;
 
 import javax.ws.rs.core.UriInfo;
 
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 public abstract class HtmlWriter {
-    protected final UriInfo uriInfo;
+    UriInfo uriInfo;
+
+    public HtmlWriter uriInfo(UriInfo uriInfo) {
+        this.uriInfo = uriInfo;
+        return this;
+    }
 
     @Override
     public final String toString() {
@@ -31,7 +33,7 @@ public abstract class HtmlWriter {
                 + "    " + script("jquery/jquery.min.js") + "\n" //
                 + "    " + script("bootstrap/js/bootstrap.min.js") + "\n" //
                 + "  </body>\n" //
-                + "</html>";
+                + "</html>\n";
     }
 
     private String stylesheet(String path) {

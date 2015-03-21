@@ -2,13 +2,7 @@ package com.github.t1.deployer;
 
 import java.net.URI;
 
-import javax.ws.rs.core.UriInfo;
-
 public class NewDeploymentFormHtmlWriter extends HtmlWriter {
-    public NewDeploymentFormHtmlWriter(UriInfo uriInfo) {
-        super(uriInfo);
-    }
-
     @Override
     protected String title() {
         return "Add Deployment";

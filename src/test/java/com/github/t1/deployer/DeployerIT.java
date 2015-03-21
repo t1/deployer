@@ -6,12 +6,13 @@ import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.net.URI;
 import java.security.Principal;
-import java.util.List;
+import java.util.*;
 
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.*;
@@ -24,6 +25,7 @@ import org.glassfish.jersey.filter.LoggingFilter;
 import org.junit.*;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mockito.Matchers;
 
 @Log
 public class DeployerIT {
@@ -49,6 +51,26 @@ public class DeployerIT {
                     bind(container).to(Container.class);
                     bind(audit).to(Audit.class);
                     bind(principal).to(Principal.class);
+
+                    final FactoryInstance<DeploymentHtmlWriter> htmlDeployments =
+                            new FactoryInstance<>(new Factory<DeploymentHtmlWriter>() {
+                                @Override
+                                public DeploymentHtmlWriter provide() {
+                                    DeploymentHtmlWriter result = new DeploymentHtmlWriter();
+                                    return result;
+                                }
+
+                                @Override
+                                public void dispose(DeploymentHtmlWriter instance) {}
+                            });
+
+                    final UriInfo uriInfo = mock(UriInfo.class);
+                    UriBuilder uriBuilder = mock(UriBuilder.class);
+                    when(uriInfo.getBaseUriBuilder()).thenReturn(uriBuilder);
+                    when(uriBuilder.path(Matchers.any(Class.class))).thenReturn(uriBuilder);
+                    when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
+                    when(uriBuilder.build()).thenReturn(URI.create("http://no.where"));
+                    when(uriBuilder.matrixParam(anyString(), Matchers.any(Object[].class))).thenReturn(uriBuilder);
                     bind(new FactoryInstance<>(new Factory<DeploymentResource>() {
                         @Override
                         public DeploymentResource provide() {
@@ -57,12 +79,41 @@ public class DeployerIT {
                             result.repository = repository;
                             result.audit = audit;
                             result.deploymentsList = deploymentsList;
+                            result.htmlDeployments = htmlDeployments;
+                            result.uriInfo = uriInfo;
                             return result;
                         }
 
                         @Override
                         public void dispose(DeploymentResource instance) {}
                     })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentResource>>() {});
+
+                    bind(htmlDeployments).to(
+                            new TypeLiteral<javax.enterprise.inject.Instance<DeploymentHtmlWriter>>() {});
+
+                    bind(new FactoryInstance<>(new Factory<DeploymentsListHtmlWriter>() {
+                        @Override
+                        public DeploymentsListHtmlWriter provide() {
+                            DeploymentsListHtmlWriter result = new DeploymentsListHtmlWriter();
+                            result.deployments = new ArrayList<>();
+                            result.principal = principal;
+                            return result;
+                        }
+
+                        @Override
+                        public void dispose(DeploymentsListHtmlWriter instance) {}
+                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentsListHtmlWriter>>() {});
+
+                    bind(new FactoryInstance<>(new Factory<NewDeploymentFormHtmlWriter>() {
+                        @Override
+                        public NewDeploymentFormHtmlWriter provide() {
+                            NewDeploymentFormHtmlWriter result = new NewDeploymentFormHtmlWriter();
+                            return result;
+                        }
+
+                        @Override
+                        public void dispose(NewDeploymentFormHtmlWriter instance) {}
+                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<NewDeploymentFormHtmlWriter>>() {});
 
                     bind(deploymentsList).to(DeploymentsList.class);
                 }

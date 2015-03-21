@@ -1,13 +1,11 @@
 package com.github.t1.deployer;
 
-import javax.ws.rs.core.UriInfo;
-
 public class DeploymentHtmlWriter extends HtmlWriter {
-    private final DeploymentResource deploymentResource;
+    private DeploymentResource deploymentResource;
 
-    public DeploymentHtmlWriter(UriInfo uriInfo, DeploymentResource deploymentResource) {
-        super(uriInfo);
+    public DeploymentHtmlWriter resource(DeploymentResource deploymentResource) {
         this.deploymentResource = deploymentResource;
+        return this;
     }
 
     @Override
@@ -18,6 +16,8 @@ public class DeploymentHtmlWriter extends HtmlWriter {
     @Override
     protected String body() {
         StringBuilder out = new StringBuilder();
+        out.append("<a href=\"" + Deployments.pathAll(uriInfo) + "\">&lt;</a>");
+        out.append("<br/><br/>\n");
         out.append("    Name: ").append(deploymentResource.getName()).append("<br/>\n");
         out.append("    Context-Root: ").append(deploymentResource.getContextRoot()).append("<br/>\n");
         out.append("    Version: ").append(deploymentResource.getVersion()).append("<br/>\n");
