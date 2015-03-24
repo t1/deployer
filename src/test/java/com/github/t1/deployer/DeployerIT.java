@@ -10,6 +10,7 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.security.Principal;
 import java.util.*;
@@ -25,7 +26,8 @@ import org.glassfish.jersey.filter.LoggingFilter;
 import org.junit.*;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.mockito.Matchers;
+import org.mockito.*;
+import org.mockito.stubbing.Answer;
 
 @Log
 public class DeployerIT {
@@ -40,6 +42,31 @@ public class DeployerIT {
         }
     };
 
+    private static Container interceptedContainer = mock(Container.class);
+    static {
+        DeploymentUpdateInterceptor interceptor = new DeploymentUpdateInterceptor();
+        interceptor.audit = audit;
+        interceptor.deploymentsList = deploymentsList;
+        interceptor.principal = principal;
+
+        Answer<?> answer = new InterceptorAnswer(container, interceptor);
+        doAnswer(answer).when(interceptedContainer).deploy(anyDeployment(), anyInputStream());
+        doAnswer(answer).when(interceptedContainer).redeploy(anyDeployment(), anyInputStream());
+        doAnswer(answer).when(interceptedContainer).undeploy(anyDeployment());
+        doAnswer(answer).when(interceptedContainer).getAllDeployments();
+        doAnswer(answer).when(interceptedContainer).getDeploymentWith(Mockito.isA(CheckSum.class));
+        doAnswer(answer).when(interceptedContainer).getDeploymentWith(Mockito.isA(ContextRoot.class));
+        doAnswer(answer).when(interceptedContainer).hasDeploymentWith(Mockito.isA(ContextRoot.class));
+    }
+
+    private static Deployment anyDeployment() {
+        return Mockito.isA(Deployment.class);
+    }
+
+    private static InputStream anyInputStream() {
+        return Mockito.isA(InputStream.class);
+    }
+
     @ClassRule
     public static DropwizardClientRule deployer = new DropwizardClientRule( //
             new Deployments(), //
@@ -48,7 +75,7 @@ public class DeployerIT {
                 @Override
                 protected void configure() {
                     bind(repository).to(Repository.class);
-                    bind(InterceptorBinding.of(container, DeploymentUpdateInterceptor.class)).to(Container.class);
+                    bind(interceptedContainer).to(Container.class);
                     bind(audit).to(Audit.class);
                     bind(principal).to(Principal.class);
 
@@ -73,7 +100,7 @@ public class DeployerIT {
                         @Override
                         public DeploymentResource provide() {
                             DeploymentResource result = new DeploymentResource();
-                            result.container = container;
+                            result.container = interceptedContainer;
                             result.repository = repository;
                             result.htmlDeployments = htmlDeployments;
                             result.uriInfo = uriInfo;
@@ -229,7 +256,7 @@ public class DeployerIT {
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
         verify(container).deploy(deploymentFor(FOO), inputStreamFor(FOO, CURRENT_FOO_VERSION));
-        // TODO verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -242,7 +269,7 @@ public class DeployerIT {
                 .put(Entity.json(deploymentJson(FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(NO_CONTENT, response);
-        // TODO verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
+        verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
         verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
@@ -255,7 +282,7 @@ public class DeployerIT {
                 .delete();
 
         assertStatus(NO_CONTENT, response);
-        // TODO verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -270,7 +297,7 @@ public class DeployerIT {
 
         assertStatus(OK, response); // redirected
         verify(container).deploy(deploymentFor(FOO), inputStreamFor(FOO, CURRENT_FOO_VERSION));
-        // TODO verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -282,7 +309,7 @@ public class DeployerIT {
                 .post(Entity.form(deploymentForm("redeploy", FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(OK, response); // redirected
-        // TODO verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
+        verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
         verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
@@ -295,7 +322,7 @@ public class DeployerIT {
                 .post(Entity.form(deploymentForm("undeploy", FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(OK, response); // redirected
-        // TODO verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
