@@ -4,6 +4,7 @@ import static com.github.t1.deployer.WebException.*;
 import static com.github.t1.log.LogLevel.*;
 import static javax.ws.rs.core.MediaType.*;
 
+import java.io.*;
 import java.net.URI;
 import java.util.*;
 
@@ -26,10 +27,6 @@ public class DeploymentResource {
     @Inject
     Repository repository;
     @Inject
-    Audit audit;
-    @Inject
-    DeploymentsList deploymentsList;
-    @Inject
     Instance<DeploymentHtmlWriter> htmlDeployments;
     @Context
     UriInfo uriInfo;
@@ -51,7 +48,6 @@ public class DeploymentResource {
     @GET
     @Produces(TEXT_HTML)
     public String html() {
-        log.error("uri info: {}", uriInfo);
         return htmlDeployments.get().resource(this).uriInfo(uriInfo).toString();
     }
 
@@ -116,18 +112,22 @@ public class DeploymentResource {
             throw badRequest("context roots don't match: " + contextRoot + " is not " + getContextRoot());
     }
 
-    private void redeploy(CheckSum checkSum) {
-        Deployment newDeployment = getDeploymentFromRepository(checkSum);
-        audit.redeploy(newDeployment.getContextRoot(), newDeployment.getVersion());
-        newDeployment.redeploy(container, repository);
-        deploymentsList.writeDeploymentsList();
-    }
-
     private void deploy(CheckSum checkSum) {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
-        audit.deploy(newDeployment.getContextRoot(), newDeployment.getVersion());
-        newDeployment.deploy(container, repository);
-        deploymentsList.writeDeploymentsList();
+        try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
+            container.deploy(newDeployment, inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void redeploy(CheckSum checkSum) {
+        Deployment newDeployment = getDeploymentFromRepository(checkSum);
+        try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
+            container.redeploy(newDeployment, inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Deployment getDeploymentFromRepository(CheckSum checkSum) {
@@ -141,9 +141,7 @@ public class DeploymentResource {
 
     @DELETE
     public void delete() {
-        audit.undeploy(getContextRoot(), deployment.getVersion());
-        deployment.undeploy(container);
-        deploymentsList.writeDeploymentsList();
+        container.undeploy(deployment);
     }
 
     @GET

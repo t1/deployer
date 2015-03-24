@@ -2,5 +2,6 @@
     xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
     <interceptors>
         <class>com.github.t1.log.LoggingInterceptor</class>
+        <class>com.github.t1.deployer.DeploymentUpdateInterceptor</class>
     </interceptors>
 </beans>

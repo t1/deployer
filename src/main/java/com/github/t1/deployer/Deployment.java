@@ -2,8 +2,6 @@ package com.github.t1.deployer;
 
 import static javax.xml.bind.annotation.XmlAccessType.*;
 
-import java.io.*;
-
 import javax.xml.bind.annotation.*;
 
 import lombok.*;
@@ -26,25 +24,5 @@ public class Deployment {
         this.name = null;
         this.contextRoot = null;
         this.checkSum = null;
-    }
-
-    public void deploy(Container container, Repository repository) {
-        try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
-            container.deploy(name, inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void redeploy(Container container, Repository repository) {
-        try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
-            container.redeploy(name, inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void undeploy(Container container) {
-        container.undeploy(name);
     }
 }

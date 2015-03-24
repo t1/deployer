@@ -134,13 +134,13 @@ public class TestData {
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) {
-                DeploymentName deploymentName = invocation.getArgumentAt(0, DeploymentName.class);
-                Deployment deployment = deploymentFrom(invocation.getArgumentAt(1, InputStream.class));
-                assert deploymentName.equals(deployment.getName());
+                Deployment deployment = invocation.getArgumentAt(0, Deployment.class);
+                Deployment deploymentIs = deploymentFrom(invocation.getArgumentAt(1, InputStream.class));
+                assert deployment.equals(deploymentIs);
                 givenDeployment(container, deployments, deployment);
                 return null;
             }
-        }).when(container).deploy(any(DeploymentName.class), any(InputStream.class));
+        }).when(container).deploy(any(Deployment.class), any(InputStream.class));
         when(container.getAllDeployments()).thenReturn(deployments);
     }
 

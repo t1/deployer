@@ -104,10 +104,14 @@ public class DeploymentsList {
             ContextRoot contextRoot = actual.getContextRoot();
             Version expectedVersion = expected.get(contextRoot);
             if (expectedVersion == null) {
-                container.undeploy(actual.getName());
+                container.undeploy(actual);
             } else if (!expectedVersion.equals(actual.getVersion())) {
                 Deployment newDeployment = repository.getChecksumForVersion(actual, expectedVersion);
-                newDeployment.deploy(container, repository);
+                try (InputStream inputStream = repository.getArtifactInputStream(newDeployment.getCheckSum())) {
+                    container.redeploy(newDeployment, inputStream);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }

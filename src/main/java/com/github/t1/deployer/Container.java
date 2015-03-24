@@ -22,8 +22,6 @@ import com.github.t1.log.Logged;
 @Slf4j
 @Logged
 @Stateless
-// org.jboss.ejb3:jboss-ejb3-ext-api:2.1.0 contains org.jboss.ejb3.annotation.SecurityDomain
-// @SecurityDomain("deployer")
 public class Container {
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
 
@@ -235,18 +233,18 @@ public class Container {
         return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
     }
 
-    // @RolesAllowed("deployer")
-    public void deploy(DeploymentName deploymentName, InputStream deployment) {
-        new DeployPlan(deploymentName, deployment).execute();
+    @ContainerDeployment
+    public void deploy(Deployment deployment, InputStream inputStream) {
+        new DeployPlan(deployment.getName(), inputStream).execute();
     }
 
-    // @RolesAllowed("deployer")
-    public void redeploy(DeploymentName deploymentName, InputStream deployment) {
-        new ReplacePlan(deploymentName, deployment).execute();
+    @ContainerDeployment
+    public void redeploy(Deployment deployment, InputStream inputStream) {
+        new ReplacePlan(deployment.getName(), inputStream).execute();
     }
 
-    // @RolesAllowed("deployer")
-    public void undeploy(DeploymentName deploymentName) {
-        new UndeployPlan(deploymentName).execute();
+    @ContainerDeployment
+    public void undeploy(Deployment deployment) {
+        new UndeployPlan(deployment.getName()).execute();
     }
 }

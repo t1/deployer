@@ -44,10 +44,11 @@ diff --git a/src/main/webapp/WEB-INF/beans.xml b/src/main/webapp/WEB-INF/beans.x
 index 743ff86..28d0d42 100644
 --- a/src/main/webapp/WEB-INF/beans.xml
 +++ b/src/main/webapp/WEB-INF/beans.xml
-@@ -1,6 +1,3 @@
+@@ -1,7 +1,4 @@
  <beans xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
 -    <interceptors>
 -        <class>com.github.t1.log.LoggingInterceptor</class>
+-        <class>com.github.t1.deployer.DeploymentUpdateInterceptor</class>
 -    </interceptors>
  </beans>

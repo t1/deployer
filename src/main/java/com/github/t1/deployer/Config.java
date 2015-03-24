@@ -33,6 +33,7 @@ public class Config implements Serializable {
 
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
+        // TODO get port config from JMX -- maybe jboss.as/standard-sockets/management-http/boundPort
         URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:9999");
         log.debug("JBoss AS admin: {}", uri);
         assert "http-remoting".equals(uri.getScheme());

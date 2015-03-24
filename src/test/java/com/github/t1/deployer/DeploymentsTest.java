@@ -44,8 +44,6 @@ public class DeploymentsTest {
                 DeploymentResource result = new DeploymentResource();
                 result.container = container;
                 result.repository = repository;
-                result.audit = null;
-                result.deploymentsList = null;
                 return result;
             }
 

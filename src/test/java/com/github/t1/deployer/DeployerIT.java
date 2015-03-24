@@ -48,7 +48,7 @@ public class DeployerIT {
                 @Override
                 protected void configure() {
                     bind(repository).to(Repository.class);
-                    bind(container).to(Container.class);
+                    bind(InterceptorBinding.of(container, DeploymentUpdateInterceptor.class)).to(Container.class);
                     bind(audit).to(Audit.class);
                     bind(principal).to(Principal.class);
 
@@ -63,22 +63,18 @@ public class DeployerIT {
                                 @Override
                                 public void dispose(DeploymentHtmlWriter instance) {}
                             });
+                    bind(htmlDeployments).to(
+                            new TypeLiteral<javax.enterprise.inject.Instance<DeploymentHtmlWriter>>() {});
 
                     final UriInfo uriInfo = mock(UriInfo.class);
-                    UriBuilder uriBuilder = mock(UriBuilder.class);
-                    when(uriInfo.getBaseUriBuilder()).thenReturn(uriBuilder);
-                    when(uriBuilder.path(Matchers.any(Class.class))).thenReturn(uriBuilder);
-                    when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
-                    when(uriBuilder.build()).thenReturn(URI.create("http://no.where"));
-                    when(uriBuilder.matrixParam(anyString(), Matchers.any(Object[].class))).thenReturn(uriBuilder);
+                    bindUriBuilder(uriInfo);
+
                     bind(new FactoryInstance<>(new Factory<DeploymentResource>() {
                         @Override
                         public DeploymentResource provide() {
                             DeploymentResource result = new DeploymentResource();
                             result.container = container;
                             result.repository = repository;
-                            result.audit = audit;
-                            result.deploymentsList = deploymentsList;
                             result.htmlDeployments = htmlDeployments;
                             result.uriInfo = uriInfo;
                             return result;
@@ -87,9 +83,6 @@ public class DeployerIT {
                         @Override
                         public void dispose(DeploymentResource instance) {}
                     })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentResource>>() {});
-
-                    bind(htmlDeployments).to(
-                            new TypeLiteral<javax.enterprise.inject.Instance<DeploymentHtmlWriter>>() {});
 
                     bind(new FactoryInstance<>(new Factory<DeploymentsListHtmlWriter>() {
                         @Override
@@ -116,6 +109,15 @@ public class DeployerIT {
                     })).to(new TypeLiteral<javax.enterprise.inject.Instance<NewDeploymentFormHtmlWriter>>() {});
 
                     bind(deploymentsList).to(DeploymentsList.class);
+                }
+
+                private void bindUriBuilder(final UriInfo uriInfo) {
+                    UriBuilder uriBuilder = mock(UriBuilder.class);
+                    when(uriInfo.getBaseUriBuilder()).thenReturn(uriBuilder);
+                    when(uriBuilder.path(Matchers.any(Class.class))).thenReturn(uriBuilder);
+                    when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
+                    when(uriBuilder.build()).thenReturn(URI.create("http://no.where"));
+                    when(uriBuilder.matrixParam(anyString(), Matchers.any(Object[].class))).thenReturn(uriBuilder);
                 }
             });
 
@@ -226,8 +228,8 @@ public class DeployerIT {
 
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
-        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
-        verify(audit).deploy(FOO, CURRENT_FOO_VERSION);
+        verify(container).deploy(deploymentFor(FOO), inputStreamFor(FOO, CURRENT_FOO_VERSION));
+        // TODO verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -240,8 +242,8 @@ public class DeployerIT {
                 .put(Entity.json(deploymentJson(FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(NO_CONTENT, response);
-        verify(audit).redeploy(FOO, NEWEST_FOO_VERSION);
-        verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        // TODO verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
+        verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
     @Test
@@ -253,7 +255,7 @@ public class DeployerIT {
                 .delete();
 
         assertStatus(NO_CONTENT, response);
-        verify(audit).undeploy(FOO, CURRENT_FOO_VERSION);
+        // TODO verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -267,8 +269,8 @@ public class DeployerIT {
                         ));
 
         assertStatus(OK, response); // redirected
-        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
-        verify(audit).deploy(FOO, CURRENT_FOO_VERSION);
+        verify(container).deploy(deploymentFor(FOO), inputStreamFor(FOO, CURRENT_FOO_VERSION));
+        // TODO verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
@@ -280,8 +282,8 @@ public class DeployerIT {
                 .post(Entity.form(deploymentForm("redeploy", FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(OK, response); // redirected
-        verify(audit).redeploy(FOO, NEWEST_FOO_VERSION);
-        verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        // TODO verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
+        verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
     @Test
@@ -293,7 +295,7 @@ public class DeployerIT {
                 .post(Entity.form(deploymentForm("undeploy", FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(OK, response); // redirected
-        verify(audit).undeploy(FOO, CURRENT_FOO_VERSION);
+        // TODO verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
     }
 
     @Test
