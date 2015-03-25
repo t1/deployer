@@ -1,12 +1,14 @@
 package com.github.t1.deployer;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.nio.file.*;
 import java.util.Properties;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.*;
+import javax.management.*;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,8 @@ import com.github.t1.log.Logged;
 @Logged
 @ApplicationScoped
 public class Config implements Serializable {
+    private static final String MBEAN_PREFIX = "jboss.as:socket-binding-group=standard-sockets,socket-binding=";
+
     private static final long serialVersionUID = 1L;
 
     private static final String ARTIFACTORY_URI_PROPERTY = "deployer.artifactory.uri";
@@ -31,16 +35,51 @@ public class Config implements Serializable {
 
     private Properties properties;
 
+    private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
-        // TODO get port config from JMX -- maybe jboss.as/standard-sockets/management-http/boundPort
-        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:9999");
+        int boundPort = getBoundPort();
+        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:" + boundPort);
         log.debug("JBoss AS admin: {}", uri);
         assert "http-remoting".equals(uri.getScheme());
         InetAddress host = InetAddress.getByName(uri.getHost());
         int port = uri.getPort();
         log.info("create client to JBoss AS on {}:{}", host, port);
         return ModelControllerClient.Factory.create(host, port);
+    }
+
+    private int getBoundPort() {
+        Integer value = getBoundPort("management-native");
+        if (value == null)
+            value = getBoundPort("management-http");
+        if (value == null)
+            value = 9990;
+        return value;
+    }
+
+    private Integer getBoundPort(String name) {
+        ObjectName objectName = objectName(name);
+        try {
+            if (!server.isRegistered(objectName)) {
+                log.debug("MBean {} is not registered", objectName);
+                return null;
+            }
+            Object value = server.getAttribute(objectName, "boundPort");
+            log.debug("got MBean {} boundPort: {}", objectName, value);
+            return (Integer) value;
+        } catch (JMException e) {
+            log.error("could not get boundPort from " + objectName, e);
+            return null;
+        }
+    }
+
+    private ObjectName objectName(String name) {
+        try {
+            return new ObjectName(MBEAN_PREFIX + name);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void closeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {
