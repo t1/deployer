@@ -10,7 +10,6 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
-import java.io.InputStream;
 import java.net.URI;
 import java.security.Principal;
 import java.util.*;
@@ -26,8 +25,7 @@ import org.glassfish.jersey.filter.LoggingFilter;
 import org.junit.*;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.mockito.*;
-import org.mockito.stubbing.Answer;
+import org.mockito.Matchers;
 
 @Log
 public class DeployerIT {
@@ -42,29 +40,14 @@ public class DeployerIT {
         }
     };
 
-    private static Container interceptedContainer = mock(Container.class);
-    static {
+    private static Container interceptedContainer = InterceptorMock.intercept(container).with(interceptor());
+
+    private static DeploymentUpdateInterceptor interceptor() {
         DeploymentUpdateInterceptor interceptor = new DeploymentUpdateInterceptor();
         interceptor.audit = audit;
         interceptor.deploymentsList = deploymentsList;
         interceptor.principal = principal;
-
-        Answer<?> answer = new InterceptorAnswer(container, interceptor);
-        doAnswer(answer).when(interceptedContainer).deploy(anyDeployment(), anyInputStream());
-        doAnswer(answer).when(interceptedContainer).redeploy(anyDeployment(), anyInputStream());
-        doAnswer(answer).when(interceptedContainer).undeploy(anyDeployment());
-        doAnswer(answer).when(interceptedContainer).getAllDeployments();
-        doAnswer(answer).when(interceptedContainer).getDeploymentWith(Mockito.isA(CheckSum.class));
-        doAnswer(answer).when(interceptedContainer).getDeploymentWith(Mockito.isA(ContextRoot.class));
-        doAnswer(answer).when(interceptedContainer).hasDeploymentWith(Mockito.isA(ContextRoot.class));
-    }
-
-    private static Deployment anyDeployment() {
-        return Mockito.isA(Deployment.class);
-    }
-
-    private static InputStream anyInputStream() {
-        return Mockito.isA(InputStream.class);
+        return interceptor;
     }
 
     @ClassRule
