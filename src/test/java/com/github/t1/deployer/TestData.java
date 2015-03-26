@@ -1,6 +1,6 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.ArtifactoryMock.*;
+import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -17,6 +17,10 @@ import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import com.github.t1.deployer.container.Container;
+import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.repository.Repository;
 
 public class TestData {
     public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
