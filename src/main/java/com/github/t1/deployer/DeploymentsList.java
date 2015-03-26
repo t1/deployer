@@ -87,13 +87,13 @@ public class DeploymentsList {
 
     @PostConstruct
     void start() {
-        log.debug("start file watcher");
+        log.info("start file watcher");
         executor.scheduleWithFixedDelay(new FileWatcher(), 0, 1, SECONDS);
     }
 
     @PreDestroy
     void stop() {
-        log.debug("stop file watcher");
+        log.info("stop file watcher");
         executor.shutdown();
     }
 
@@ -120,6 +120,8 @@ public class DeploymentsList {
     public Map<ContextRoot, Version> read() {
         Map<ContextRoot, Version> out = new HashMap<>();
         for (String line : Files.readAllLines(deploymentsList, UTF_8)) {
+            if (line.trim().isEmpty() || line.startsWith("#"))
+                continue;
             DeploymentInfo info = DeploymentInfo.parse(line);
             out.put(info.contextRoot, info.version);
         }
