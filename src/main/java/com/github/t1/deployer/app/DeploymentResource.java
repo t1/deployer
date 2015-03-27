@@ -165,6 +165,20 @@ public class DeploymentResource {
         return deployment.getVersion();
     }
 
+    @PUT
+    @Path("version")
+    public Response putVersion(Version newVersion) {
+        if (!container.hasDeploymentWith(getContextRoot()))
+            throw badRequest("no context root: " + getContextRoot());
+        for (Deployment available : getAvailableVersions()) {
+            if (available.getVersion().equals(newVersion)) {
+                redeploy(available.getCheckSum());
+                return Response.noContent().build();
+            }
+        }
+        throw notFound("no version " + newVersion + " for " + getContextRoot());
+    }
+
     @GET
     @Path("checksum")
     public CheckSum getCheckSum() {
