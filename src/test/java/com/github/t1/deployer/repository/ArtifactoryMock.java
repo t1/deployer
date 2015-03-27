@@ -1,6 +1,6 @@
-package com.github.t1.deployer;
+package com.github.t1.deployer.repository;
 
-import static com.github.t1.deployer.ArtifactoryRepository.*;
+import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -19,6 +19,8 @@ import javax.ws.rs.core.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import com.github.t1.deployer.model.*;
+
 /**
  * If you don't have a real Artifactory Pro available, move this to src/main/java and configure the endpoint by setting
  * the system property <code>deployer.artifactory.uri</code> to <code>http://localhost:8080/deployer/artifactory</code>
@@ -28,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Path("/artifactory")
 public class ArtifactoryMock {
-    static boolean FAKES = false;
+    public static boolean FAKES = false;
 
     private static final MediaType FILE_INFO = vendorTypeJFrog("FileInfo");
     private static final MediaType FOLDER_INFO = vendorTypeJFrog("FolderInfo");

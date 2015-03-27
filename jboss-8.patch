@@ -27,19 +27,6 @@ index 670c884..db327a9 100644
          </dependency>
  
          <!-- compile scope -->
-diff --git a/src/main/java/com/github/t1/deployer/Config.java b/src/main/java/com/github/t1/deployer/Config.java
-index 09497af..c8abc98 100644
---- a/src/main/java/com/github/t1/deployer/Config.java
-+++ b/src/main/java/com/github/t1/deployer/Config.java
-@@ -33,7 +33,7 @@
- 
-     @Produces
-     ModelControllerClient produceModelControllerClient() throws IOException {
--        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:9999");
-+        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:9990");
-         log.debug("JBoss AS admin: {}", uri);
-         assert "http-remoting".equals(uri.getScheme());
-         InetAddress host = InetAddress.getByName(uri.getHost());
 diff --git a/src/main/webapp/WEB-INF/beans.xml b/src/main/webapp/WEB-INF/beans.xml
 index 743ff86..28d0d42 100644
 --- a/src/main/webapp/WEB-INF/beans.xml
@@ -49,6 +36,6 @@ index 743ff86..28d0d42 100644
      xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
 -    <interceptors>
 -        <class>com.github.t1.log.LoggingInterceptor</class>
--        <class>com.github.t1.deployer.DeploymentUpdateInterceptor</class>
+-        <class>com.github.t1.deployer.app.DeploymentUpdateInterceptor</class>
 -    </interceptors>
  </beans>
