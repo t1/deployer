@@ -8,7 +8,6 @@ import static org.mockito.Mockito.*;
 import java.io.*;
 import java.util.*;
 
-import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXB;
 
 import lombok.AllArgsConstructor;
@@ -131,11 +130,8 @@ public class DeploymentsTest {
         givenDeployment(FOO);
         givenDeployment(BAR);
 
-        Response response = deployments.getAllDeployments();
+        List<Deployment> list = deployments.getAllDeployments();
 
-        assertEquals(200, response.getStatus());
-        @SuppressWarnings("unchecked")
-        List<Deployment> list = (List<Deployment>) response.getEntity();
         assertEquals(2, list.size());
         assertDeployment(FOO, list.get(0));
         assertDeployment(BAR, list.get(1));

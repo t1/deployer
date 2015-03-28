@@ -1,18 +1,18 @@
 package com.github.t1.deployer.app;
 
 import java.security.Principal;
-import java.util.List;
 
 import javax.inject.Inject;
+import javax.ws.rs.ext.Provider;
 
-import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.Deployment;
 
-public class DeploymentListHtmlWriter extends HtmlWriter {
-    @Inject
-    List<Deployment> deployments;
-    @Inject
-    Container container;
+@Provider
+public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment> {
+    public DeploymentListHtmlWriter() {
+        super(Deployment.class);
+    }
+
     @Inject
     Principal principal;
 
@@ -23,15 +23,14 @@ public class DeploymentListHtmlWriter extends HtmlWriter {
 
     @Override
     protected String body() {
-        StringBuilder out = new StringBuilder();
-        deployments(out);
-        footer(out);
+        deployments();
+        footer();
         return out.toString();
     }
 
-    private void deployments(StringBuilder out) {
+    private void deployments() {
         out.append("    <table>\n");
-        for (Deployment deployment : deployments) {
+        for (Deployment deployment : target) {
             out.append("        ") //
                     .append("<tr><td><a href=\"").append(Deployments.path(uriInfo, deployment)).append("\">") //
                     .append(deployment.getContextRoot()).append("</a>") //
@@ -46,7 +45,7 @@ public class DeploymentListHtmlWriter extends HtmlWriter {
         out.append("<a href=\"" + Loggers.base(uriInfo) + "\">Loggers</a>");
     }
 
-    private void footer(StringBuilder out) {
+    private void footer() {
         out.append("<footer>Principal: ").append((principal == null) ? "?" : principal.getName()).append("</footer>\n");
     }
 }

@@ -12,7 +12,7 @@ import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.net.URI;
 import java.security.Principal;
-import java.util.*;
+import java.util.List;
 
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.*;
@@ -83,19 +83,6 @@ public class DeployerIT {
                         @Override
                         public void dispose(DeploymentResource instance) {}
                     })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentResource>>() {});
-
-                    bind(new FactoryInstance<>(new Factory<DeploymentListHtmlWriter>() {
-                        @Override
-                        public DeploymentListHtmlWriter provide() {
-                            DeploymentListHtmlWriter result = new DeploymentListHtmlWriter();
-                            result.deployments = new ArrayList<>();
-                            result.principal = principal;
-                            return result;
-                        }
-
-                        @Override
-                        public void dispose(DeploymentListHtmlWriter instance) {}
-                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentListHtmlWriter>>() {});
 
                     bind(new FactoryInstance<>(new Factory<NewDeploymentFormHtmlWriter>() {
                         @Override

@@ -47,18 +47,9 @@ public class Deployments {
     @Inject
     Instance<DeploymentResource> deploymentResources;
     @Inject
-    Instance<DeploymentListHtmlWriter> htmlLists;
-    @Inject
     Instance<NewDeploymentFormHtmlWriter> htmlForms;
     @Context
     UriInfo uriInfo;
-
-    @GET
-    @Path("*")
-    @Produces(TEXT_HTML)
-    public String getAllDeploymentsAsHtml() {
-        return htmlLists.get().uriInfo(uriInfo).toString();
-    }
 
     @GET
     @Path("deployment-form")
@@ -69,9 +60,8 @@ public class Deployments {
 
     @GET
     @Path("*")
-    public Response getAllDeployments() {
-        List<Deployment> deployments = getAllDeploymentsWithVersions();
-        return Response.ok(deployments).build();
+    public List<Deployment> getAllDeployments() {
+        return getAllDeploymentsWithVersions();
     }
 
     @javax.enterprise.inject.Produces

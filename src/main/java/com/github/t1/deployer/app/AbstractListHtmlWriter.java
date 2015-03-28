@@ -10,6 +10,8 @@ import javax.ws.rs.core.MediaType;
 public abstract class AbstractListHtmlWriter<T> extends AbstractHtmlWriter<List<T>> {
     private final Class<T> type;
 
+    /** @deprecated just required by weld */
+    @Deprecated
     public AbstractListHtmlWriter() {
         super(null);
         this.type = null;
