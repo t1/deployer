@@ -10,6 +10,8 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.util.List;
 
+import lombok.SneakyThrows;
+
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
@@ -24,7 +26,7 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.WebException;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ContainerTest {
+public class ContainerDeploymentsTest {
     private static final Version NO_VERSION = null;
 
     @InjectMocks
@@ -37,9 +39,65 @@ public class ContainerTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private void givenDeployments(ContextRoot... deploymentNames) {
-        TestData.givenDeployments(repository, deploymentNames);
-        TestData.givenDeployments(client, deploymentNames);
+    @SneakyThrows(IOException.class)
+    private void givenDeployments(ContextRoot... contextRoots) {
+        TestData.givenDeployments(repository, contextRoots);
+
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
+                .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(contextRoots))));
+    }
+
+    private static ModelNode readAllDeploymentsCli() {
+        ModelNode node = new ModelNode();
+        node.get("address").add("deployment", "*");
+        node.get("operation").set("read-resource");
+        node.get("recursive").set(true);
+        return node;
+    }
+
+    public static String readDeploymentsCliResult(ContextRoot... contextRoots) {
+        StringBuilder out = new StringBuilder();
+        out.append("[");
+        for (ContextRoot contextRoot : contextRoots) {
+            if (out.length() > 1)
+                out.append(",");
+            out.append("{\n" //
+                    + "\"address\" => [(\"deployment\" => \"" + nameFor(contextRoot) + "\")],\n" //
+                    + "\"outcome\" => \"success\",\n" //
+                    + "\"result\" => " + deploymentCli(contextRoot) + "\n" //
+                    + "}\n");
+        }
+        out.append("]");
+        return out.toString();
+    }
+
+    public static String[] deploymentsCli(ContextRoot... contextRoots) {
+        String[] result = new String[contextRoots.length];
+        for (int i = 0; i < contextRoots.length; i++) {
+            result[i] = deploymentCli(contextRoots[i]);
+        }
+        return result;
+    }
+
+    public static String deploymentCli(ContextRoot contextRoot) {
+        return "{\n" //
+                + "\"content\" => [{\"hash\" => bytes {\n" //
+                + fakeChecksumFor(contextRoot).hexByteArray() //
+                + "}}],\n" //
+                + "\"enabled\" => true,\n" //
+                + ("\"name\" => \"" + nameFor(contextRoot) + "\",\n") //
+                + "\"persistent\" => true,\n" //
+                + ("\"runtime-name\" => \"" + nameFor(contextRoot) + "\",\n") //
+                + "\"subdeployment\" => undefined,\n" //
+                + "\"subsystem\" => {\"web\" => {\n" //
+                + ("\"context-root\" => \"/" + contextRoot + "\",\n") //
+                + "\"virtual-host\" => \"default-host\",\n" //
+                + "\"servlet\" => {\"javax.ws.rs.core.Application\" => {\n" //
+                + "\"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n" //
+                + "\"servlet-name\" => \"javax.ws.rs.core.Application\"\n" //
+                + "}}\n" //
+                + "}}\n" //
+                + "}";
     }
 
     @Test
@@ -65,6 +123,15 @@ public class ContainerTest {
         expectedException.expectMessage("dummy");
 
         container.getAllDeployments();
+    }
+
+    @Test
+    public void shouldGetNoDeployment() {
+        givenDeployments();
+
+        boolean exists = container.hasDeploymentWith(FOO);
+
+        assertFalse(exists);
     }
 
     @Test

@@ -37,7 +37,7 @@ public class DeployerIT {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);
-    private static DeploymentsList deploymentsList = mock(DeploymentsList.class);
+    private static DeploymentListFile deploymentsList = mock(DeploymentListFile.class);
     private static Principal principal = new Principal() {
         @Override
         public String getName() {
@@ -99,18 +99,18 @@ public class DeployerIT {
                         public void dispose(DeploymentResource instance) {}
                     })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentResource>>() {});
 
-                    bind(new FactoryInstance<>(new Factory<DeploymentsListHtmlWriter>() {
+                    bind(new FactoryInstance<>(new Factory<DeploymentListHtmlWriter>() {
                         @Override
-                        public DeploymentsListHtmlWriter provide() {
-                            DeploymentsListHtmlWriter result = new DeploymentsListHtmlWriter();
+                        public DeploymentListHtmlWriter provide() {
+                            DeploymentListHtmlWriter result = new DeploymentListHtmlWriter();
                             result.deployments = new ArrayList<>();
                             result.principal = principal;
                             return result;
                         }
 
                         @Override
-                        public void dispose(DeploymentsListHtmlWriter instance) {}
-                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentsListHtmlWriter>>() {});
+                        public void dispose(DeploymentListHtmlWriter instance) {}
+                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentListHtmlWriter>>() {});
 
                     bind(new FactoryInstance<>(new Factory<NewDeploymentFormHtmlWriter>() {
                         @Override
@@ -123,7 +123,7 @@ public class DeployerIT {
                         public void dispose(NewDeploymentFormHtmlWriter instance) {}
                     })).to(new TypeLiteral<javax.enterprise.inject.Instance<NewDeploymentFormHtmlWriter>>() {});
 
-                    bind(deploymentsList).to(DeploymentsList.class);
+                    bind(deploymentsList).to(DeploymentListFile.class);
                 }
 
                 private void bindUriBuilder(final UriInfo uriInfo) {

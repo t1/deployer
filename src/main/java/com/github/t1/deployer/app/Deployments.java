@@ -22,17 +22,21 @@ public class Deployments {
     private static final Version UNKNOWN_VERSION = new Version("unknown");
     public static final String CONTEXT_ROOT = "context-root";
 
-    public static URI path(UriInfo uriInfo, Deployment deployment) {
-        return uriInfo.getBaseUriBuilder() //
-                .path(Deployments.class) //
-                .matrixParam(CONTEXT_ROOT, deployment.getContextRoot()) //
-                .build();
+    private static UriBuilder baseBuilder(UriInfo uriInfo) {
+        return uriInfo.getBaseUriBuilder().path(Deployments.class);
+    }
+
+    public static URI base(UriInfo uriInfo) {
+        return baseBuilder(uriInfo).build();
     }
 
     public static URI pathAll(UriInfo uriInfo) {
-        return uriInfo.getBaseUriBuilder() //
-                .path(Deployments.class) //
-                .path("*") //
+        return baseBuilder(uriInfo).path("*").build();
+    }
+
+    public static URI path(UriInfo uriInfo, Deployment deployment) {
+        return baseBuilder(uriInfo) //
+                .matrixParam(CONTEXT_ROOT, deployment.getContextRoot()) //
                 .build();
     }
 
@@ -43,7 +47,7 @@ public class Deployments {
     @Inject
     Instance<DeploymentResource> deploymentResources;
     @Inject
-    Instance<DeploymentsListHtmlWriter> htmlLists;
+    Instance<DeploymentListHtmlWriter> htmlLists;
     @Inject
     Instance<NewDeploymentFormHtmlWriter> htmlForms;
     @Context

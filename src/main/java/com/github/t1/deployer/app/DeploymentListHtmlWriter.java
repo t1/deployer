@@ -5,11 +5,14 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.Deployment;
 
-public class DeploymentsListHtmlWriter extends HtmlWriter {
+public class DeploymentListHtmlWriter extends HtmlWriter {
     @Inject
     List<Deployment> deployments;
+    @Inject
+    Container container;
     @Inject
     Principal principal;
 
@@ -21,6 +24,12 @@ public class DeploymentsListHtmlWriter extends HtmlWriter {
     @Override
     protected String body() {
         StringBuilder out = new StringBuilder();
+        deployments(out);
+        footer(out);
+        return out.toString();
+    }
+
+    private void deployments(StringBuilder out) {
         out.append("    <table>\n");
         for (Deployment deployment : deployments) {
             out.append("        ") //
@@ -31,9 +40,13 @@ public class DeploymentsListHtmlWriter extends HtmlWriter {
                     .append(deployment.getVersion()) //
                     .append("</td></tr>\n");
         }
-        out.append("    <tr><td colspan='3'><a href=\"deployment-form\">+</a></td></tr>");
+        out.append("    <tr><td colspan='3'><a href=\"deployment-form\">+</a></td></tr>\n");
         out.append("    </table>\n");
+        out.append("<br/><br/>\n");
+        out.append("<a href=\"" + Loggers.base(uriInfo) + "\">Loggers</a>");
+    }
+
+    private void footer(StringBuilder out) {
         out.append("<footer>Principal: ").append((principal == null) ? "?" : principal.getName()).append("</footer>\n");
-        return out.toString();
     }
 }

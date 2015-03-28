@@ -5,16 +5,12 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
-import java.io.*;
+import java.io.InputStream;
 import java.util.*;
 
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 
-import lombok.SneakyThrows;
-
-import org.jboss.as.controller.client.*;
-import org.jboss.dmr.ModelNode;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -51,31 +47,6 @@ public class TestData {
         return deploymentFor(contextRoot, fakeVersionFor(contextRoot));
     }
 
-    public static ModelNode readAllDeploymentsCli() {
-        ModelNode node = new ModelNode();
-        node.get("address").add("deployment", "*");
-        node.get("operation").set("read-resource");
-        node.get("recursive").set(true);
-        return node;
-    }
-
-    private static String readDeploymentsCliResult(ContextRoot... contextRoots) {
-        StringBuilder out = new StringBuilder();
-        for (ContextRoot contextRoot : contextRoots) {
-            if (out.length() == 0)
-                out.append("[");
-            else
-                out.append(",");
-            out.append("{\n" //
-                    + "\"address\" => [(\"deployment\" => \"" + nameFor(contextRoot) + "\")],\n" //
-                    + "\"outcome\" => \"success\",\n" //
-                    + "\"result\" => " + deploymentCli(contextRoot) + "\n" //
-                    + "}\n");
-        }
-        out.append("]");
-        return out.toString();
-    }
-
     public static String failedCli(String message) {
         return "{\"outcome\" => \"failed\",\n" //
                 + "\"failure-description\" => \"" + message + "\n" //
@@ -87,35 +58,6 @@ public class TestData {
                 + "\"outcome\" => \"success\",\n" //
                 + "\"result\" => " + result + "\n" //
                 + "}\n";
-    }
-
-    public static String[] deploymentsCli(ContextRoot... contextRoots) {
-        String[] result = new String[contextRoots.length];
-        for (int i = 0; i < contextRoots.length; i++) {
-            result[i] = deploymentCli(contextRoots[i]);
-        }
-        return result;
-    }
-
-    public static String deploymentCli(ContextRoot contextRoot) {
-        return "{\n" //
-                + "\"content\" => [{\"hash\" => bytes {\n" //
-                + fakeChecksumFor(contextRoot).hexByteArray() //
-                + "}}],\n" //
-                + "\"enabled\" => true,\n" //
-                + ("\"name\" => \"" + nameFor(contextRoot) + "\",\n") //
-                + "\"persistent\" => true,\n" //
-                + ("\"runtime-name\" => \"" + nameFor(contextRoot) + "\",\n") //
-                + "\"subdeployment\" => undefined,\n" //
-                + "\"subsystem\" => {\"web\" => {\n" //
-                + ("\"context-root\" => \"/" + contextRoot + "\",\n") //
-                + "\"virtual-host\" => \"default-host\",\n" //
-                + "\"servlet\" => {\"javax.ws.rs.core.Application\" => {\n" //
-                + "\"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n" //
-                + "\"servlet-name\" => \"javax.ws.rs.core.Application\"\n" //
-                + "}}\n" //
-                + "}}\n" //
-                + "}";
     }
 
     public static void givenDeployments(Repository repository, ContextRoot... contextRoots) {
@@ -154,12 +96,6 @@ public class TestData {
         when(container.hasDeploymentWith(contextRoot)).thenReturn(true);
         when(container.getDeploymentWith(deployment.getCheckSum())).thenReturn(deployment);
         deployments.add(deployment);
-    }
-
-    @SneakyThrows(IOException.class)
-    public static void givenDeployments(ModelControllerClient client, ContextRoot... contextRoots) {
-        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(contextRoots))));
     }
 
     public static String deploymentJson(ContextRoot contextRoot) {

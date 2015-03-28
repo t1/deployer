@@ -18,6 +18,12 @@ public class DeploymentHtmlWriter extends HtmlWriter {
     @Override
     protected String body() {
         StringBuilder out = new StringBuilder();
+        info(out);
+        availableVersions(out);
+        return out.toString();
+    }
+
+    private void info(StringBuilder out) {
         out.append("<a href=\"" + Deployments.pathAll(uriInfo) + "\">&lt;</a>");
         out.append("<br/><br/>\n");
         out.append("    Name: ").append(deploymentResource.getName()).append("<br/>\n");
@@ -25,7 +31,10 @@ public class DeploymentHtmlWriter extends HtmlWriter {
         out.append("    Version: ").append(deploymentResource.getVersion()).append("<br/>\n");
         out.append("    CheckSum: ").append(deploymentResource.getCheckSum()).append("<br/>\n");
         out.append(actionForm("Undeploy", "undeploy", deploymentResource.self())).append("<br/>\n");
+        out.append("<br/><br/>\n");
+    }
 
+    private void availableVersions(StringBuilder out) {
         out.append("    <h2>Available Versions:</h2>");
         out.append("    <table>");
         for (Deployment deployment : deploymentResource.getAvailableVersions()) {
@@ -35,7 +44,6 @@ public class DeploymentHtmlWriter extends HtmlWriter {
             out.append("</tr>\n");
         }
         out.append("    </table>\n");
-        return out.toString();
     }
 
     private String actionForm(String title, String action, Deployment deployment) {

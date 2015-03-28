@@ -33,7 +33,7 @@ public class DeploymentUpdateInterceptor {
     @Inject
     Audit audit;
     @Inject
-    DeploymentsList deploymentsList;
+    DeploymentListFile deploymentsList;
     @Inject
     Principal principal;
 

@@ -24,7 +24,7 @@ import com.github.t1.deployer.repository.Repository;
 @Slf4j
 @Startup
 @Singleton
-public class DeploymentsList {
+public class DeploymentListFile {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private class FileWatcher implements Runnable {

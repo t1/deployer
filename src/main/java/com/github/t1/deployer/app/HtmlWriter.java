@@ -13,7 +13,7 @@ public abstract class HtmlWriter {
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return "<!DOCTYPE html>\n" //
                 + "<html>\n" // lang="en"
                 + "  <head>\n" //
