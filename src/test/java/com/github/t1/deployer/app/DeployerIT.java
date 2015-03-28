@@ -67,20 +67,6 @@ public class DeployerIT {
                     bind(audit).to(Audit.class);
                     bind(principal).to(Principal.class);
 
-                    final FactoryInstance<DeploymentHtmlWriter> htmlDeployments =
-                            new FactoryInstance<>(new Factory<DeploymentHtmlWriter>() {
-                                @Override
-                                public DeploymentHtmlWriter provide() {
-                                    DeploymentHtmlWriter result = new DeploymentHtmlWriter();
-                                    return result;
-                                }
-
-                                @Override
-                                public void dispose(DeploymentHtmlWriter instance) {}
-                            });
-                    bind(htmlDeployments).to(
-                            new TypeLiteral<javax.enterprise.inject.Instance<DeploymentHtmlWriter>>() {});
-
                     final UriInfo uriInfo = mock(UriInfo.class);
                     bindUriBuilder(uriInfo);
 
@@ -90,7 +76,6 @@ public class DeployerIT {
                             DeploymentResource result = new DeploymentResource();
                             result.container = interceptedContainer;
                             result.repository = repository;
-                            result.htmlDeployments = htmlDeployments;
                             result.uriInfo = uriInfo;
                             return result;
                         }

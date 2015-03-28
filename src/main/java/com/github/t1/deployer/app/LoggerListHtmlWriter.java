@@ -1,14 +1,10 @@
 package com.github.t1.deployer.app;
 
-import static javax.ws.rs.core.MediaType.*;
-
-import javax.ws.rs.Produces;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.model.LoggerConfig;
 
 @Provider
-@Produces(TEXT_HTML)
 public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
     public LoggerListHtmlWriter() {
         super(LoggerConfig.class);

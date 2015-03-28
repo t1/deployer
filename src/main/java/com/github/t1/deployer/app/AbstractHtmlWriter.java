@@ -1,9 +1,12 @@
 package com.github.t1.deployer.app;
 
+import static javax.ws.rs.core.MediaType.*;
+
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.MessageBodyWriter;
 
@@ -11,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Produces(TEXT_HTML)
 @RequiredArgsConstructor
 public abstract class AbstractHtmlWriter<T> extends HtmlWriter implements MessageBodyWriter<T> {
     private final Class<T> type;
@@ -27,7 +31,7 @@ public abstract class AbstractHtmlWriter<T> extends HtmlWriter implements Messag
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return this.type.equals(type);
+        return this.type.isAssignableFrom(type);
     }
 
     @Override

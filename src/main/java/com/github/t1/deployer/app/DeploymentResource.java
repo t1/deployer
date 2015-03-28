@@ -2,13 +2,11 @@ package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.tools.WebException.*;
 import static com.github.t1.log.LogLevel.*;
-import static javax.ws.rs.core.MediaType.*;
 
 import java.io.*;
 import java.net.URI;
 import java.util.*;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -29,8 +27,6 @@ public class DeploymentResource {
     Container container;
     @Inject
     Repository repository;
-    @Inject
-    Instance<DeploymentHtmlWriter> htmlDeployments;
     @Context
     UriInfo uriInfo;
 
@@ -43,15 +39,13 @@ public class DeploymentResource {
         return this;
     }
 
-    @GET
-    public Deployment self() {
+    Deployment deployment() {
         return deployment;
     }
 
     @GET
-    @Produces(TEXT_HTML)
-    public String html() {
-        return htmlDeployments.get().resource(this).uriInfo(uriInfo).toString();
+    public DeploymentResource self() {
+        return this;
     }
 
     @POST
