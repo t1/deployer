@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.log.LogLevel.*;
-import static javax.ws.rs.core.MediaType.*;
 
 import java.net.URI;
 import java.util.List;
@@ -19,6 +18,8 @@ import com.github.t1.log.*;
 @Logged(level = INFO)
 @Path("/loggers")
 public class Loggers {
+    static final String NEW_LOGGER = "!";
+
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(Loggers.class);
     }
@@ -33,34 +34,34 @@ public class Loggers {
                 .build();
     }
 
-    public static URI newForm(UriInfo uriInfo) {
-        return baseBuilder(uriInfo).path("/new").build();
+    public static URI newLogger(UriInfo uriInfo) {
+        return baseBuilder(uriInfo).path(NEW_LOGGER).build();
     }
 
     @Inject
     Container container;
     @Inject
     Instance<LoggerResource> loggerResources;
-    @Inject
-    Instance<NewLoggerFormHtmlWriter> htmlForms;
     @Context
     UriInfo uriInfo;
-
-    @GET
-    @Path("/new")
-    @Produces(TEXT_HTML)
-    public String getNewLoggerForm() {
-        return htmlForms.get().uriInfo(uriInfo).toString();
-    }
 
     @GET
     public List<LoggerConfig> getAllLoggers() {
         return container.getLoggers();
     }
 
+    @GET
+    @Path(NEW_LOGGER)
+    public LoggerConfig newLogger() {
+        return new LoggerConfig(NEW_LOGGER, "");
+    }
+
     @Path("{loggerName}")
     public LoggerResource getLogger(@PathParam("loggerName") String loggerName) {
-        return loggerResources.get().logger(container.getLogger(loggerName));
+        LoggerResource loggerResource = loggerResources.get();
+        if (!NEW_LOGGER.equals(loggerName))
+            loggerResource.logger(container.getLogger(loggerName));
+        return loggerResource;
     }
 
     @POST

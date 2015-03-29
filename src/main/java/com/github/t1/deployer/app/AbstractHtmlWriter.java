@@ -42,7 +42,7 @@ public abstract class AbstractHtmlWriter<T> extends HtmlWriter implements Messag
     @Override
     public void writeTo(T target, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
-        log.debug("write as html: {}", target);
+        log.debug("write as html: {} for {}", target, uriInfo.getRequestUri());
         uriInfo(uriInfo);
         this.out = new StringBuilder();
         this.target = target;
@@ -50,5 +50,4 @@ public abstract class AbstractHtmlWriter<T> extends HtmlWriter implements Messag
         out.write(toString());
         out.flush();
     }
-
 }

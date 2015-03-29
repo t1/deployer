@@ -277,6 +277,19 @@ public class Container {
         return new LoggerConfig(name, level);
     }
 
+    public boolean hasLogger(String loggerName) {
+        ModelNode result = execute(readLogger(loggerName));
+        String outcome = result.get("outcome").asString();
+        if ("success".equals(outcome)) {
+            return true;
+        } else if (isNotFoundMessage(result)) {
+            return false;
+        } else {
+            log.error("failed: {}", result);
+            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
+        }
+    }
+
     public LoggerConfig getLogger(String loggerName) {
         ModelNode result = execute(readLogger(loggerName));
         String outcome = result.get("outcome").asString();
@@ -306,6 +319,7 @@ public class Container {
         node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
         node.get("operation").set("add");
         node.get("recursive").set(true);
+        node.get("level").set(logger.getLevel());
         return node;
     }
 

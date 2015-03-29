@@ -29,7 +29,7 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
             out.append(delete(logger));
             out.append("</td></tr>\n");
         }
-        out.append("    <tr><td colspan='3'><a href=\"" + Loggers.newForm(uriInfo) + "\">+</a></td></tr>");
+        out.append("    <tr><td colspan='3'><a href=\"" + Loggers.newLogger(uriInfo) + "\">+</a></td></tr>");
         out.append("    </table>\n");
         return out.toString();
     }
