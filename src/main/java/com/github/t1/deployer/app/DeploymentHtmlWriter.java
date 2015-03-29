@@ -1,5 +1,7 @@
 package com.github.t1.deployer.app;
 
+import static com.github.t1.deployer.app.Deployments.*;
+
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.model.Deployment;
@@ -10,16 +12,33 @@ public class DeploymentHtmlWriter extends AbstractHtmlWriter<DeploymentResource>
         super(DeploymentResource.class);
     }
 
+    private boolean isNew() {
+        return NULL_DEPLOYMENT.equals(target.deployment());
+    }
+
     @Override
     protected String title() {
-        return "Deployment: " + target.getContextRoot();
+        return isNew() ? "Add Deployment" : "Deployment: " + target.getContextRoot();
     }
 
     @Override
     protected String body() {
-        info();
-        availableVersions();
+        if (isNew()) {
+            newForm();
+        } else {
+            info();
+            availableVersions();
+        }
         return out.toString();
+    }
+
+    private StringBuilder newForm() {
+        return out.append("<p>Enter the checksum of a new artifact to deploy</p>" //
+                + "<form method=\"POST\" action=\"" + Deployments.base(uriInfo) + "\">\n" //
+                + "  <input type=\"hidden\" name=\"action\" value=\"deploy\">\n" //
+                + "  <input name=\"checkSum\">\n" //
+                + "  <input type=\"submit\" value=\"Deploy\">\n" //
+                + "</form>");
     }
 
     private void info() {

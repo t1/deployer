@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.log.LogLevel.*;
-import static javax.ws.rs.core.MediaType.*;
 
 import java.net.URI;
 import java.util.List;
@@ -19,8 +18,11 @@ import com.github.t1.log.Logged;
 @Logged(level = INFO)
 @Path("/deployments")
 public class Deployments {
-    private static final Version UNKNOWN_VERSION = new Version("unknown");
     public static final String CONTEXT_ROOT = "context-root";
+
+    private static final Version UNKNOWN_VERSION = new Version("unknown");
+    private static final String NEW_DEPLOYMENT = "!";
+    static final Deployment NULL_DEPLOYMENT = new Deployment(null, null, null);
 
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(Deployments.class);
@@ -40,23 +42,18 @@ public class Deployments {
                 .build();
     }
 
+    public static URI newDeployment(UriInfo uriInfo) {
+        return baseBuilder(uriInfo).path(NEW_DEPLOYMENT).build();
+    }
+
     @Inject
     Container container;
     @Inject
     Repository repository;
     @Inject
     Instance<DeploymentResource> deploymentResources;
-    @Inject
-    Instance<NewDeploymentFormHtmlWriter> htmlForms;
     @Context
     UriInfo uriInfo;
-
-    @GET
-    @Path("deployment-form")
-    @Produces(TEXT_HTML)
-    public String getNewDeploymentsForm() {
-        return htmlForms.get().uriInfo(uriInfo).toString();
-    }
 
     @GET
     @Path("*")
@@ -77,6 +74,12 @@ public class Deployments {
         Deployment byChecksum =
                 (deployment.getCheckSum() == null) ? null : repository.getByChecksum(deployment.getCheckSum());
         deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
+    }
+
+    @GET
+    @Path(NEW_DEPLOYMENT)
+    public DeploymentResource newDeployment() {
+        return deploymentResource(NULL_DEPLOYMENT);
     }
 
     @Path("")

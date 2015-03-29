@@ -4,7 +4,6 @@ import static com.github.t1.deployer.tools.WebException.*;
 import static com.github.t1.log.LogLevel.*;
 
 import java.io.*;
-import java.net.URI;
 import java.util.*;
 
 import javax.inject.Inject;
@@ -69,7 +68,7 @@ public class DeploymentResource {
                 if (getContextRoot() != null)
                     check(contextRoot);
                 redeploy(checkSum);
-                return Response.seeOther(uriFor(uriInfo, contextRoot)).build();
+                return Response.seeOther(Deployments.path(uriInfo, deployment)).build();
             case "undeploy":
                 if (getContextRoot() != null)
                     check(contextRoot);
@@ -78,11 +77,6 @@ public class DeploymentResource {
             default:
                 throw badRequest("invalid action '" + action + "'");
         }
-    }
-
-    private URI uriFor(UriInfo uriInfo, ContextRoot contextRoot) {
-        Deployment newDeployment = container.getDeploymentWith(contextRoot);
-        return Deployments.path(uriInfo, newDeployment);
     }
 
     @PUT

@@ -39,7 +39,7 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
                     .append(deployment.getVersion()) //
                     .append("</td></tr>\n");
         }
-        out.append("    <tr><td colspan='3'><a href=\"deployment-form\">+</a></td></tr>\n");
+        out.append("    <tr><td colspan='3'><a href=\"" + Deployments.newDeployment(uriInfo) + "\">+</a></td></tr>\n");
         out.append("    </table>\n");
         out.append("<br/><br/>\n");
         out.append("<a href=\"" + Loggers.base(uriInfo) + "\">Loggers</a>");

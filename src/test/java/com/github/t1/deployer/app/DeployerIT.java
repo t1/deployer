@@ -37,7 +37,7 @@ public class DeployerIT {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);
-    private static DeploymentListFile deploymentsList = mock(DeploymentListFile.class);
+    private static DeploymentListFile deploymentListFile = mock(DeploymentListFile.class);
     private static Principal principal = new Principal() {
         @Override
         public String getName() {
@@ -50,7 +50,7 @@ public class DeployerIT {
     private static DeploymentUpdateInterceptor interceptor() {
         DeploymentUpdateInterceptor interceptor = new DeploymentUpdateInterceptor();
         interceptor.audit = audit;
-        interceptor.deploymentsList = deploymentsList;
+        interceptor.deploymentsList = deploymentListFile;
         interceptor.principal = principal;
         return interceptor;
     }
@@ -84,18 +84,7 @@ public class DeployerIT {
                         public void dispose(DeploymentResource instance) {}
                     })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentResource>>() {});
 
-                    bind(new FactoryInstance<>(new Factory<NewDeploymentFormHtmlWriter>() {
-                        @Override
-                        public NewDeploymentFormHtmlWriter provide() {
-                            NewDeploymentFormHtmlWriter result = new NewDeploymentFormHtmlWriter();
-                            return result;
-                        }
-
-                        @Override
-                        public void dispose(NewDeploymentFormHtmlWriter instance) {}
-                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<NewDeploymentFormHtmlWriter>>() {});
-
-                    bind(deploymentsList).to(DeploymentListFile.class);
+                    bind(deploymentListFile).to(DeploymentListFile.class);
                 }
 
                 private void bindUriBuilder(final UriInfo uriInfo) {
