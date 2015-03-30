@@ -59,6 +59,7 @@ public class DeployerIT {
     public static DropwizardClientRule deployer = new DropwizardClientRule( //
             new Deployments(), //
             new LoggingFilter(log, true), //
+            new DeploymentHtmlWriter(), //
             new AbstractBinder() {
                 @Override
                 protected void configure() {
@@ -253,8 +254,7 @@ public class DeployerIT {
     public void shouldPostRedeploy() {
         given(FOO, BAR);
 
-        WebTarget uri = deploymentsWebTarget();
-        Response response = uri.request() //
+        Response response = deploymentsWebTarget().request() //
                 .post(Entity.form(deploymentForm("redeploy", FOO, NEWEST_FOO_VERSION)));
 
         assertStatus(OK, response); // redirected
@@ -277,7 +277,7 @@ public class DeployerIT {
     @Test
     public void shouldGetDeploymentsForm() {
         Response response = deployer() //
-                .path("deployments/deployment-form") //
+                .path("deployments/!") //
                 .request(TEXT_HTML) //
                 .get();
 

@@ -1,6 +1,7 @@
 package com.github.t1.deployer.container;
 
 import static com.github.t1.deployer.tools.WebException.*;
+import static com.github.t1.log.LogLevel.*;
 import static java.util.concurrent.TimeUnit.*;
 
 import java.io.*;
@@ -21,7 +22,7 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
 
 @Slf4j
-@Logged
+@Logged(level = INFO)
 @Stateless
 public class Container {
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");

@@ -25,4 +25,9 @@ public class Deployment {
         this.contextRoot = null;
         this.checkSum = null;
     }
+
+    public Deployment version(Version version) {
+        this.version = version;
+        return this;
+    }
 }

@@ -11,14 +11,12 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 
-@Slf4j
 @Logged(level = INFO)
 @RequiredArgsConstructor
 public class DeploymentResource {
@@ -43,8 +41,8 @@ public class DeploymentResource {
     }
 
     @GET
-    public DeploymentResource self() {
-        return this;
+    public Deployment self() {
+        return deployment;
     }
 
     @POST
@@ -53,22 +51,18 @@ public class DeploymentResource {
             @FormParam("contextRoot") ContextRoot contextRoot, //
             @FormParam("checkSum") CheckSum checkSum //
     ) {
-        log.debug("post uriInfo={}, action={}, contextRoot={}, checkSum={}", uriInfo, action, contextRoot, checkSum);
         switch (action) {
             case "deploy":
-                if (contextRoot != null || getContextRoot() != null)
+                if (contextRoot != null || deployment.getContextRoot() != null)
                     throw badRequest("context root to deploy must be null, not " + contextRoot + " and "
                             + getContextRoot());
-                deploy(checkSum);
-                Deployment newDeployment = container.getDeploymentWith(checkSum);
-                if (newDeployment == null)
-                    throw new RuntimeException("deployment didn't work: checksum not found");
-                return Response.seeOther(Deployments.path(uriInfo, newDeployment)).build();
+                Deployment newDeployment = deploy(checkSum);
+                return Response.seeOther(Deployments.path(uriInfo, newDeployment.getContextRoot())).build();
             case "redeploy":
                 if (getContextRoot() != null)
                     check(contextRoot);
                 redeploy(checkSum);
-                return Response.seeOther(Deployments.path(uriInfo, deployment)).build();
+                return Response.seeOther(Deployments.path(uriInfo, contextRoot)).build();
             case "undeploy":
                 if (getContextRoot() != null)
                     check(contextRoot);
@@ -95,7 +89,7 @@ public class DeploymentResource {
     }
 
     private Response created(UriInfo uriInfo) {
-        return Response.created(Deployments.path(uriInfo, deployment)).build();
+        return Response.created(Deployments.path(uriInfo, getContextRoot())).build();
     }
 
     private void check(ContextRoot contextRoot) {
@@ -103,13 +97,14 @@ public class DeploymentResource {
             throw badRequest("context roots don't match: " + contextRoot + " is not " + getContextRoot());
     }
 
-    private void deploy(CheckSum checkSum) {
+    private Deployment deploy(CheckSum checkSum) {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
             container.deploy(newDeployment, inputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return newDeployment;
     }
 
     private void redeploy(CheckSum checkSum) {

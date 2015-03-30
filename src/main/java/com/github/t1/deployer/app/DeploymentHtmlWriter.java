@@ -2,18 +2,23 @@ package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.app.Deployments.*;
 
+import javax.inject.Inject;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.model.Deployment;
+import com.github.t1.deployer.repository.Repository;
 
 @Provider
-public class DeploymentHtmlWriter extends AbstractHtmlWriter<DeploymentResource> {
+public class DeploymentHtmlWriter extends AbstractHtmlWriter<Deployment> {
+    @Inject
+    Repository repository;
+
     public DeploymentHtmlWriter() {
-        super(DeploymentResource.class);
+        super(Deployment.class);
     }
 
     private boolean isNew() {
-        return NULL_DEPLOYMENT.equals(target.deployment());
+        return NULL_DEPLOYMENT.equals(target);
     }
 
     @Override
@@ -48,26 +53,26 @@ public class DeploymentHtmlWriter extends AbstractHtmlWriter<DeploymentResource>
         out.append("    Context-Root: ").append(target.getContextRoot()).append("<br/>\n");
         out.append("    Version: ").append(target.getVersion()).append("<br/>\n");
         out.append("    CheckSum: ").append(target.getCheckSum()).append("<br/>\n");
-        out.append(actionForm("Undeploy", "undeploy")).append("<br/>\n");
+        out.append(actionForm("Undeploy", "undeploy", target)).append("<br/>\n");
         out.append("<br/><br/>\n");
     }
 
     private void availableVersions() {
         out.append("    <h2>Available Versions:</h2>");
         out.append("    <table>");
-        for (Deployment deployment : target.getAvailableVersions()) {
+        for (Deployment deployment : repository.availableVersionsFor(target.getCheckSum())) {
             out.append("        <tr>");
             out.append("<td>").append(deployment.getVersion()).append("</td>");
-            out.append("<td>").append(actionForm("Deploy", "redeploy")).append("</td>");
+            out.append("<td>").append(actionForm("Deploy", "redeploy", deployment)).append("</td>");
             out.append("</tr>\n");
         }
         out.append("    </table>\n");
     }
 
-    private String actionForm(String title, String action) {
-        return "<form method=\"post\" action=\"" + Deployments.path(uriInfo, target.deployment()) + "\">\n" //
-                + "  <input type=\"hidden\" name=\"contextRoot\" value=\"" + target.getContextRoot() + "\">\n" //
-                + "  <input type=\"hidden\" name=\"checkSum\" value=\"" + target.getCheckSum() + "\">\n" //
+    private String actionForm(String title, String action, Deployment deployment) {
+        return "<form method=\"post\" action=\"" + Deployments.path(uriInfo, deployment.getContextRoot()) + "\">\n" //
+                + "  <input type=\"hidden\" name=\"contextRoot\" value=\"" + deployment.getContextRoot() + "\">\n" //
+                + "  <input type=\"hidden\" name=\"checkSum\" value=\"" + deployment.getCheckSum() + "\">\n" //
                 + "  <input type=\"hidden\" name=\"action\" value=\"" + action + "\">\n" //
                 + "  <input type=\"submit\" value=\"" + title + "\">\n" //
                 + "</form>";

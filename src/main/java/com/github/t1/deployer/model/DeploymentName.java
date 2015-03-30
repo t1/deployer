@@ -4,12 +4,11 @@ import javax.xml.bind.annotation.XmlValue;
 
 import lombok.*;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.ser.std.ToStringSerializer;
-
 @Value
 @AllArgsConstructor
-@JsonSerialize(using = ToStringSerializer.class)
+@com.fasterxml.jackson.databind.annotation.JsonSerialize(
+        using = com.fasterxml.jackson.databind.ser.std.ToStringSerializer.class)
+@org.codehaus.jackson.map.annotate.JsonSerialize(using = org.codehaus.jackson.map.ser.std.ToStringSerializer.class)
 public class DeploymentName {
     @NonNull
     @XmlValue

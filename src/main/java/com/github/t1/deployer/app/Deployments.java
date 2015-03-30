@@ -21,7 +21,7 @@ public class Deployments {
     public static final String CONTEXT_ROOT = "context-root";
 
     private static final Version UNKNOWN_VERSION = new Version("unknown");
-    private static final String NEW_DEPLOYMENT = "!";
+    private static final String NEW_DEPLOYMENT_NAME = "!";
     static final Deployment NULL_DEPLOYMENT = new Deployment(null, null, null);
 
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
@@ -36,14 +36,12 @@ public class Deployments {
         return baseBuilder(uriInfo).path("*").build();
     }
 
-    public static URI path(UriInfo uriInfo, Deployment deployment) {
-        return baseBuilder(uriInfo) //
-                .matrixParam(CONTEXT_ROOT, deployment.getContextRoot()) //
-                .build();
+    public static URI path(UriInfo uriInfo, ContextRoot contextRoot) {
+        return baseBuilder(uriInfo).matrixParam(CONTEXT_ROOT, contextRoot).build();
     }
 
     public static URI newDeployment(UriInfo uriInfo) {
-        return baseBuilder(uriInfo).path(NEW_DEPLOYMENT).build();
+        return baseBuilder(uriInfo).path(NEW_DEPLOYMENT_NAME).build();
     }
 
     @Inject
@@ -77,9 +75,9 @@ public class Deployments {
     }
 
     @GET
-    @Path(NEW_DEPLOYMENT)
-    public DeploymentResource newDeployment() {
-        return deploymentResource(NULL_DEPLOYMENT);
+    @Path(NEW_DEPLOYMENT_NAME)
+    public Deployment newDeployment() {
+        return NULL_DEPLOYMENT;
     }
 
     @Path("")

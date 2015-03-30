@@ -31,8 +31,8 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
     private void deployments() {
         out.append("    <table>\n");
         for (Deployment deployment : target) {
-            out.append("        ") //
-                    .append("<tr><td><a href=\"").append(Deployments.path(uriInfo, deployment)).append("\">") //
+            out.append("        <tr><td>") //
+                    .append("<a href=\"").append(Deployments.path(uriInfo, deployment.getContextRoot())).append("\">") //
                     .append(deployment.getContextRoot()).append("</a>") //
                     .append("</td><td>").append(deployment.getName()) //
                     .append("</td><td title=\"SHA-1: ").append(deployment.getCheckSum()).append("\">") //

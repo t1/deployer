@@ -113,7 +113,16 @@ public class InterceptorMock<T> {
 
                 @Override
                 public Object proceed() throws Exception {
-                    return invocation.getMethod().invoke(target, parameters);
+                    try {
+                        return invocation.getMethod().invoke(target, parameters);
+                    } catch (InvocationTargetException e) {
+                        Throwable targetException = e.getTargetException();
+                        targetException.printStackTrace();
+                        throw new RuntimeException("can't proceed", targetException);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw e;
+                    }
                 }
 
                 @Override

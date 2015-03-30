@@ -36,7 +36,7 @@ public class TestData {
         Version version = new Version(parts[1]);
         DeploymentName name = nameFor(contextRoot);
         CheckSum checkSum = fakeChecksumFor(contextRoot, version);
-        return new Deployment(name, contextRoot, checkSum);
+        return new Deployment(name, contextRoot, checkSum).version(version);
     }
 
     public static DeploymentName nameFor(ContextRoot contextRoot) {
