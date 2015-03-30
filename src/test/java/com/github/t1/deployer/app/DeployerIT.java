@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.deployer.app.Deployments.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -277,7 +278,7 @@ public class DeployerIT {
     @Test
     public void shouldGetDeploymentsForm() {
         Response response = deployer() //
-                .path("deployments/!") //
+                .path("deployments/" + NEW_DEPLOYMENT_NAME) //
                 .request(TEXT_HTML) //
                 .get();
 

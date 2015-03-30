@@ -22,10 +22,9 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
     }
 
     @Override
-    protected String body() {
+    protected void body() {
         deployments();
         footer();
-        return out.toString();
     }
 
     private void deployments() {

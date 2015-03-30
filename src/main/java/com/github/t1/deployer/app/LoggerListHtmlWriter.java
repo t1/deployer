@@ -16,7 +16,7 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
     }
 
     @Override
-    protected String body() {
+    protected void body() {
         link("&lt;", Deployments.pathAll(uriInfo));
         br();
         out.append("    <table>\n");
@@ -31,7 +31,6 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
         }
         out.append("    <tr><td colspan='3'><a href=\"" + Loggers.newLogger(uriInfo) + "\">+</a></td></tr>");
         out.append("    </table>\n");
-        return out.toString();
     }
 
     private String delete(LoggerConfig logger) {

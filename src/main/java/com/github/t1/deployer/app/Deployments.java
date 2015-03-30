@@ -21,7 +21,7 @@ public class Deployments {
     public static final String CONTEXT_ROOT = "context-root";
 
     private static final Version UNKNOWN_VERSION = new Version("unknown");
-    private static final String NEW_DEPLOYMENT_NAME = "!";
+    static final String NEW_DEPLOYMENT_NAME = "!";
     static final Deployment NULL_DEPLOYMENT = new Deployment(null, null, null);
 
     private static UriBuilder baseBuilder(UriInfo uriInfo) {

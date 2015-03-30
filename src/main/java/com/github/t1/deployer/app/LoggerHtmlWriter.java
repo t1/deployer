@@ -22,7 +22,7 @@ public class LoggerHtmlWriter extends AbstractHtmlWriter<LoggerConfig> {
     }
 
     @Override
-    protected String body() {
+    protected void body() {
         out.append("<a href=\"" + Loggers.base(uriInfo) + "\">&lt;</a>");
         if (isNew()) {
             out.append("<p>Enter the name of a new logger to configure</p>" //
@@ -38,7 +38,6 @@ public class LoggerHtmlWriter extends AbstractHtmlWriter<LoggerConfig> {
             out.append("<br/>\n");
             out.append(delete());
         }
-        return out.toString();
     }
 
     private String delete() {
