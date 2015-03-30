@@ -14,6 +14,8 @@ import javax.ws.rs.core.*;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.junit.*;
 
+import com.github.t1.deployer.app.html.Index;
+
 public class IndexIT {
     @ClassRule
     public static DropwizardClientRule index = new DropwizardClientRule(new Index());

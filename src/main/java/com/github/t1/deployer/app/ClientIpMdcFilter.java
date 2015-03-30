@@ -5,7 +5,7 @@ import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
 
-import org.jboss.logging.MDC;
+import org.slf4j.MDC;
 
 /** Put the IP-Address of the client into the MDC */
 @WebFilter("/*")

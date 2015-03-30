@@ -1,4 +1,4 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.tools;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;

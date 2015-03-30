@@ -1,7 +1,9 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.app.html;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+
+import com.github.t1.deployer.app.Deployments;
 
 @Path("/")
 public class Index {
