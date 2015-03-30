@@ -1,4 +1,4 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.app.html;
 
 import static javax.ws.rs.core.MediaType.*;
 

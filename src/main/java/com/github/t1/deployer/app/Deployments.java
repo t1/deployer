@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.log.LogLevel.*;
 
 import java.net.URI;
@@ -22,7 +23,6 @@ public class Deployments {
 
     private static final Version UNKNOWN_VERSION = new Version("unknown");
     static final String NEW_DEPLOYMENT_NAME = "!";
-    static final Deployment NULL_DEPLOYMENT = new Deployment(null, null, null);
 
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(Deployments.class);

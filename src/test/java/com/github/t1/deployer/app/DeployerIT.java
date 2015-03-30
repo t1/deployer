@@ -28,6 +28,7 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.mockito.Matchers;
 
+import com.github.t1.deployer.app.html.DeploymentHtmlWriter;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;

@@ -1,10 +1,11 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.Deployments.*;
+import static com.github.t1.deployer.model.Deployment.*;
 
 import javax.inject.Inject;
 import javax.ws.rs.ext.Provider;
 
+import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
 

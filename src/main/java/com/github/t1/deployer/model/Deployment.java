@@ -12,6 +12,8 @@ import lombok.*;
 @XmlRootElement
 @XmlAccessorType(FIELD)
 public class Deployment {
+    public static final Deployment NULL_DEPLOYMENT = new Deployment(null, null, null);
+
     private final DeploymentName name;
     private final ContextRoot contextRoot;
     private final CheckSum checkSum;

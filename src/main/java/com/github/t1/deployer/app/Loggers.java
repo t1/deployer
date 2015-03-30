@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.log.LogLevel.*;
 
 import java.net.URI;
@@ -18,8 +19,6 @@ import com.github.t1.log.*;
 @Logged(level = INFO)
 @Path("/loggers")
 public class Loggers {
-    static final String NEW_LOGGER = "!";
-
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(Loggers.class);
     }

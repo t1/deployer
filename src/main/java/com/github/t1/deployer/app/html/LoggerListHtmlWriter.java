@@ -1,7 +1,8 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.app.html;
 
 import javax.ws.rs.ext.Provider;
 
+import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.model.LoggerConfig;
 
 @Provider

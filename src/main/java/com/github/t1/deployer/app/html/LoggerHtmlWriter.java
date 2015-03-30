@@ -1,9 +1,10 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.Loggers.*;
+import static com.github.t1.deployer.model.LoggerConfig.*;
 
 import javax.ws.rs.ext.Provider;
 
+import com.github.t1.deployer.app.Loggers;
 import com.github.t1.deployer.model.LoggerConfig;
 
 @Provider

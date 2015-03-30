@@ -4,6 +4,8 @@ import lombok.*;
 
 @Data
 public class LoggerConfig {
+    public static final String NEW_LOGGER = "!";
+
     @NonNull
     String category;
     @NonNull
