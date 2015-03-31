@@ -1,14 +1,16 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.Navigation.*;
+
 import javax.ws.rs.ext.Provider;
 
-import com.github.t1.deployer.app.*;
+import com.github.t1.deployer.app.Loggers;
 import com.github.t1.deployer.model.LoggerConfig;
 
 @Provider
 public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
     public LoggerListHtmlWriter() {
-        super(LoggerConfig.class);
+        super(LoggerConfig.class, LOGGERS);
     }
 
     @Override
@@ -18,19 +20,19 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
 
     @Override
     protected void body() {
-        link("&lt;", Deployments.pathAll(uriInfo));
-        br();
         out.append("    <table>\n");
         for (LoggerConfig logger : target) {
             out.append("        <tr><td>");
-            link(logger.getCategory(), Loggers.path(uriInfo, logger));
+            href(logger.getCategory(), Loggers.path(uriInfo, logger));
             out.append("</td><td>");
             out.append(logger.getLevel());
             out.append("</td><td>");
             out.append(delete(logger));
             out.append("</td></tr>\n");
         }
-        out.append("    <tr><td colspan='3'><a href=\"" + Loggers.newLogger(uriInfo) + "\">+</a></td></tr>");
+        out.append("    <tr><td colspan='3'>");
+        href("+", Loggers.newLogger(uriInfo));
+        out.append("</td></tr>");
         out.append("    </table>\n");
     }
 

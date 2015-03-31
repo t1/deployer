@@ -1,17 +1,19 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.Navigation.*;
+
 import java.security.Principal;
 
 import javax.inject.Inject;
 import javax.ws.rs.ext.Provider;
 
-import com.github.t1.deployer.app.*;
+import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.model.Deployment;
 
 @Provider
 public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment> {
     public DeploymentListHtmlWriter() {
-        super(Deployment.class);
+        super(Deployment.class, DEPLOYMENTS);
     }
 
     @Inject
@@ -31,18 +33,25 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
     private void deployments() {
         out.append("    <table>\n");
         for (Deployment deployment : target) {
-            out.append("        <tr><td>") //
-                    .append("<a href=\"").append(Deployments.path(uriInfo, deployment.getContextRoot())).append("\">") //
-                    .append(deployment.getContextRoot()).append("</a>") //
-                    .append("</td><td>").append(deployment.getName()) //
-                    .append("</td><td title=\"SHA-1: ").append(deployment.getCheckSum()).append("\">") //
+            out.append("        <tr>");
+
+            out.append("<td>");
+            href(deployment.getContextRoot().getValue(), Deployments.path(uriInfo, deployment.getContextRoot()));
+            out.append("</td>");
+
+            out.append("<td>").append(deployment.getName()).append("</td>");
+
+            out.append("<td title=\"SHA-1: ").append(deployment.getCheckSum()).append("\">") //
                     .append(deployment.getVersion()) //
-                    .append("</td></tr>\n");
+                    .append("</td>");
+
+            out.append("</tr>\n");
         }
-        out.append("    <tr><td colspan='3'><a href=\"" + Deployments.newDeployment(uriInfo) + "\">+</a></td></tr>\n");
+        out.append("    <tr><td colspan='3'>");
+        href("+", Deployments.newDeployment(uriInfo));
+        out.append("</td></tr>\n");
         out.append("    </table>\n");
         out.append("<br/><br/>\n");
-        out.append("<a href=\"" + Loggers.base(uriInfo) + "\">Loggers</a>");
     }
 
     private void footer() {

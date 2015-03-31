@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.model.LoggerConfig.*;
 
 import javax.ws.rs.ext.Provider;
@@ -10,7 +11,7 @@ import com.github.t1.deployer.model.LoggerConfig;
 @Provider
 public class LoggerHtmlWriter extends AbstractHtmlWriter<LoggerConfig> {
     public LoggerHtmlWriter() {
-        super(LoggerConfig.class);
+        super(LoggerConfig.class, LOGGERS);
     }
 
     private boolean isNew() {
@@ -24,7 +25,7 @@ public class LoggerHtmlWriter extends AbstractHtmlWriter<LoggerConfig> {
 
     @Override
     protected void body() {
-        out.append("<a href=\"" + Loggers.base(uriInfo) + "\">&lt;</a>");
+        href("&lt", Loggers.base(uriInfo));
         if (isNew()) {
             out.append("<p>Enter the name of a new logger to configure</p>" //
                     + "<form method=\"POST\" action=\"" + Loggers.base(uriInfo) + "\">\n" //

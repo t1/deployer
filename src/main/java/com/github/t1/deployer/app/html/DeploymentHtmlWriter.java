@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.model.Deployment.*;
 
 import javax.inject.Inject;
@@ -15,7 +16,7 @@ public class DeploymentHtmlWriter extends AbstractHtmlWriter<Deployment> {
     Repository repository;
 
     public DeploymentHtmlWriter() {
-        super(Deployment.class);
+        super(Deployment.class, DEPLOYMENTS);
     }
 
     private boolean isNew() {
@@ -47,7 +48,7 @@ public class DeploymentHtmlWriter extends AbstractHtmlWriter<Deployment> {
     }
 
     private void info() {
-        out.append("<a href=\"" + Deployments.pathAll(uriInfo) + "\">&lt;</a>");
+        href("&lt;", Deployments.pathAll(uriInfo));
         out.append("<br/><br/>\n");
         out.append("    Name: ").append(target.getName()).append("<br/>\n");
         out.append("    Context-Root: ").append(target.getContextRoot()).append("<br/>\n");

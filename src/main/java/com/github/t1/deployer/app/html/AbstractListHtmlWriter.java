@@ -2,7 +2,6 @@ package com.github.t1.deployer.app.html;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.net.URI;
 import java.util.List;
 
 import javax.ws.rs.core.MediaType;
@@ -13,12 +12,12 @@ public abstract class AbstractListHtmlWriter<T> extends AbstractHtmlWriter<List<
     /** @deprecated just required by weld */
     @Deprecated
     public AbstractListHtmlWriter() {
-        super(null);
+        super(null, null);
         this.type = null;
     }
 
-    public AbstractListHtmlWriter(Class<T> type) {
-        super(null);
+    public AbstractListHtmlWriter(Class<T> type, Navigation active) {
+        super(null, active);
         this.type = type;
     }
 
@@ -30,13 +29,5 @@ public abstract class AbstractListHtmlWriter<T> extends AbstractHtmlWriter<List<
                 && ((ParameterizedType) genericType).getActualTypeArguments()[0] instanceof Class //
                 && this.type.isAssignableFrom((Class<?>) //
                         ((ParameterizedType) genericType).getActualTypeArguments()[0]);
-    }
-
-    protected void link(String label, URI target) {
-        out.append("<a href=\"" + target + "\">" + label + "</a>");
-    }
-
-    protected void br() {
-        out.append("<br/><br/>\n");
     }
 }

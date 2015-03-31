@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
     private final Class<T> type;
+    private final Navigation active;
 
     @Context
     UriInfo uriInfo;
@@ -26,10 +27,11 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
     protected T target;
     protected StringBuilder out;
 
-    /** @deprecated this seems to be required by jax-rs */
+    /** @deprecated just required by weld */
     @Deprecated
     public AbstractHtmlWriter() {
         this.type = null;
+        this.active = null;
     }
 
     @Override
@@ -58,36 +60,74 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
         return uriInfo.getBaseUriBuilder().path(path).build();
     }
 
+    protected void nl() {
+        out.append("\n");
+    }
+
     protected void html() {
         out.append("<!DOCTYPE html>\n");
         out.append("<html>\n"); // lang="en"
         head();
-        out.append("  <body>\n");
+        out.append("  <body class=\"container\">\n");
+        navBar();
+        out.append("  <div class=\"jumbotron\">\n");
         out.append("    <h1>").append(title()).append("</h1>\n");
-        out.append("\n");
+        nl();
         body();
-        out.append("\n");
+        nl();
         out.append("    ").append(script("jquery/jquery.min.js")).append("\n");
         out.append("    ").append(script("bootstrap/js/bootstrap.min.js")).append("\n");
+        out.append("  </div>\n");
         out.append("  </body>\n");
         out.append("</html>\n");
     }
 
-    private void head() {
+    protected void head() {
         out.append("  <head>\n");
         out.append("    <meta charset=\"utf-8\">\n");
         out.append("    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n");
         out.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
         out.append("    <title>").append(title()).append("</title>\n");
-        out.append("\n");
+        nl();
         out.append("    ").append(stylesheet("bootstrap/css/bootstrap.min.css")).append("\n");
         out.append("    ").append(stylesheet("webapp/css/style.css")).append("\n");
         out.append("  </head>\n");
     }
 
+    protected void navBar() {
+        out.append("      <nav class=\"navbar navbar-default\">\n");
+        out.append("        <div class=\"container-fluid\">\n");
+        out.append("          <div class=\"navbar-header\">\n");
+        out.append("            <a class=\"navbar-brand\" href=\"#\">Deployer</a>\n");
+        out.append("          </div>\n");
+        out.append("          <div id=\"navbar\" class=\"navbar-collapse collapse\">\n");
+        out.append("            <ul class=\"nav navbar-nav navbar-right\">\n");
+        for (Navigation navigation : Navigation.values()) {
+            out.append("              <li ");
+            if (navigation == active)
+                out.append("class=\"active\"");
+            out.append(">");
+            href(navigation.title(), navigation.href(uriInfo));
+            out.append("</li>\n");
+        }
+        out.append("            </ul>\n");
+        out.append("          </div>\n");
+        out.append("        </div>\n");
+        out.append("      </nav>\n");
+        out.append("\n");
+    }
+
     protected abstract String title();
 
     protected abstract void body();
+
+    protected void href(String label, URI target) {
+        out.append("<a href=\"" + target + "\">" + label + "</a>");
+    }
+
+    protected void br() {
+        out.append("<br/><br/>\n");
+    }
 
     private String stylesheet(String path) {
         return "<link href=\"" + base(path) + "\" rel=\"stylesheet\"/>";
