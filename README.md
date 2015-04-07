@@ -20,5 +20,3 @@ Also supports a REST API, just look at the URIs and request them with content ty
 ## Security
 
 The Artifactory instance is by default expected to run on `http://localhost:8081/artifactory`. You can configure another instance with the system property `deployer.artifactory.uri`, or by creating a file `%{jboss.server.base.dir}/security/deployer.war/credentials.properties` with this property. If your Artifactory is configured to require authentication for read access, you'll also have to configure `deployer.artifactory.username` and `deployer.artifactory.password`.
-
-The JBoss is by default expected to run on `http-remoting://localhost:9999`. You can configure another instance with the system property `deployer.container.uri` (note that the scheme should be `http-remoting`), or by adding a property to the config file (see above).
