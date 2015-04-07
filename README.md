@@ -6,9 +6,7 @@ Also supports a REST API, just look at the URIs and request them with content ty
 
 # TODO
 
-* deploy new artifacts\
-	* by checksum
-	* search artifactory
+* deploy new artifacts by searching in artifactory
 * pre-deploy scanner
 	* data source scanner/config
 	* queue scanner/config
