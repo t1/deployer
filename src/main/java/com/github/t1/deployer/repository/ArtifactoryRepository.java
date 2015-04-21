@@ -3,12 +3,12 @@ package com.github.t1.deployer.repository;
 import static java.util.Collections.*;
 import static javax.ws.rs.core.Response.Status.*;
 
-import java.io.*;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 
-import javax.annotation.*;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriBuilder;
@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.auth.Credentials;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.tools.*;
-import com.github.t1.deployer.tools.RestClient.RestResponse;
+import com.github.t1.rest.*;
+import com.github.t1.rest.UriTemplate.UriScheme;
 
 @Slf4j
 public class ArtifactoryRepository extends Repository {
@@ -42,26 +42,25 @@ public class ArtifactoryRepository extends Repository {
 
     @Inject
     @Artifactory
-    private URI baseUri;
+    URI baseUri;
 
     @Inject
     @Artifactory
-    private Credentials credentials;
+    Credentials credentials;
 
-    RestClient rest;
+    RestResource artifactory;
 
     @PostConstruct
     void init() {
-        rest = new RestClient(baseUri, credentials);
+        UriTemplate template = UriScheme.of(baseUri).authority(baseUri.getAuthority()).path(baseUri.getPath());
+        RestResource resource = new RestResource(template);
+        // TODO if (credentials != null)
+        // resource = resource.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
+        this.artifactory = resource;
     }
 
-    @PreDestroy
-    void disconnect() {
-        try {
-            rest.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private String userInfo() {
+        return credentials.getUserPrincipal() + ":" + credentials.getPassword();
     }
 
     /**
@@ -81,56 +80,51 @@ public class ArtifactoryRepository extends Repository {
 
     @Data
     @NoArgsConstructor
-    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+    @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
     private static class ChecksumSearchResult {
         List<ChecksumSearchResultItem> results;
     }
 
     @Data
     @NoArgsConstructor
-    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
     private static class ChecksumSearchResultItem {
         URI uri;
         URI downloadUri;
     }
 
     private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
-        URI uri = rest.base() //
-                .path("/api/search/checksum") //
-                .queryParam("sha1", checkSum.hexString()) //
-                .build();
-        try (RestResponse response = rest.get(uri).header("X-Result-Detail", "info").execute()) {
-            List<ChecksumSearchResultItem> results = response.readEntity(ChecksumSearchResult.class).getResults();
-            if (results.size() == 0)
-                return null;
-            if (results.size() > 1)
-                throw new RuntimeException("checksum not unique in repository: " + checkSum);
-            ChecksumSearchResultItem result = results.get(0);
-            log.debug("got {}", result);
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        List<ChecksumSearchResultItem> results = artifactory //
+                .path("api/search/checksum") //
+                .query("sha1", checkSum.hexString()) //
+                .header("X-Result-Detail", "info") //
+                .accept(ChecksumSearchResult.class) //
+                .get() //
+                .getResults();
+        if (results.size() == 0)
+            return null;
+        if (results.size() > 1)
+            throw new RuntimeException("checksum not unique in repository: " + checkSum);
+        ChecksumSearchResultItem result = results.get(0);
+        log.debug("got {}", result);
+        return result;
     }
 
     private Path path(URI result) {
         return Paths.get(result.getPath());
     }
 
-    private Deployment deployment(CheckSum checkSum, Path path) {
+    private static Deployment deployment(CheckSum checkSum, Path path) {
         DeploymentName name = new DeploymentName(fileNameWithoutVersion(path));
         ContextRoot contextRoot = contextRoot(path);
         Version version = version(path);
         return new Deployment(name, contextRoot, checkSum, version);
     }
 
-    private String fileNameWithoutVersion(URI uri) {
+    private static String fileNameWithoutVersion(URI uri) {
         return fileNameWithoutVersion(Paths.get(uri.getPath()));
     }
 
-    private String fileNameWithoutVersion(Path path) {
+    private static String fileNameWithoutVersion(Path path) {
         String version = element(-2, path);
         String fileName = element(-1, path);
         int versionIndex = fileName.indexOf("-" + version);
@@ -142,28 +136,30 @@ public class ArtifactoryRepository extends Repository {
 
     @Data
     @NoArgsConstructor
-    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+    @VendorType("org.jfrog.artifactory.storage.FolderInfo")
     private static class FolderInfo {
-        List<ChildInfo> children;
+        List<FileInfo> children;
         URI uri;
 
-        public List<ChildInfo> getChildren() {
-            return (children == null) ? Collections.<ChildInfo> emptyList() : children;
+        public List<FileInfo> getChildren() {
+            return (children == null) ? Collections.<FileInfo> emptyList() : children;
         }
     }
 
     @Data
     @NoArgsConstructor
-    @org.codehaus.jackson.annotate.JsonIgnoreProperties(ignoreUnknown = true)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
-    private static class ChildInfo {
+    @VendorType("org.jfrog.artifactory.storage.FileInfo")
+    private static class FileInfo {
         boolean folder;
         URI uri;
         Map<String, CheckSum> checksums;
 
-        public CheckSum getChecksum(String type) {
-            return checksums.get(type);
+        public Deployment deployment() {
+            return ArtifactoryRepository.deployment(getChecksum(), Paths.get(getUri().getPath()));
+        }
+
+        public CheckSum getChecksum() {
+            return checksums.get("sha1");
         }
     }
 
@@ -188,19 +184,15 @@ public class ArtifactoryRepository extends Repository {
         log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
-        try (RestResponse response = rest.get(uri).execute()) {
-            FolderInfo folderInfo = response.readEntity(FolderInfo.class);
-            log.trace("got {}", folderInfo);
-            return deploymentsIn(fileName, folderInfo);
-        } catch (IOException e) {
-            throw new RuntimeException("can't read files in " + uri, e);
-        }
+        FolderInfo folderInfo = new RestResource(uri).get(FolderInfo.class);
+        log.trace("got {}", folderInfo);
+        return deploymentsIn(fileName, folderInfo);
     }
 
     private List<Deployment> deploymentsIn(String fileName, FolderInfo folderInfo) {
         URI root = folderInfo.getUri();
         List<Deployment> result = new ArrayList<>();
-        for (ChildInfo child : folderInfo.getChildren()) {
+        for (FileInfo child : folderInfo.getChildren()) {
             URI uri = UriBuilder.fromUri(root).path(child.getUri().toString()).build();
             if (child.isFolder()) {
                 result.addAll(deploymentsIn(fileName, uri));
@@ -216,26 +208,17 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private Deployment deploymentIn(URI uri) {
-        try (RestResponse response = rest.get(uri).execute()) {
-            ChildInfo file = response.readEntity(ChildInfo.class);
-            return deployment(file);
-        } catch (IOException e) {
-            throw new RuntimeException("can't read files in " + uri, e);
-        }
-    }
-
-    private Deployment deployment(ChildInfo file) {
-        return deployment(file.getChecksum("sha1"), Paths.get(file.getUri().getPath()));
+        FileInfo file = new RestResource(uri).get(FileInfo.class);
+        return file.deployment();
     }
 
     @Override
-    @SneakyThrows(IOException.class)
     public InputStream getArtifactInputStream(CheckSum checkSum) {
         ChecksumSearchResultItem found = searchByChecksum(checkSum);
         if (found == null)
             throw new WebApplicationException(NOT_FOUND);
         URI uri = found.getDownloadUri();
         log.info("found {} for checksum {}", uri, checkSum);
-        return rest.get(uri).execute().stream();
+        return new RestResource(uri).get(InputStream.class);
     }
 }

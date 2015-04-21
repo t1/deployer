@@ -35,7 +35,7 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.*;
 
 @Log
-public class DeployerIT {
+public class DeploymentsIT {
     private static Container container = mock(Container.class);
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);

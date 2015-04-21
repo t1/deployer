@@ -13,7 +13,7 @@ import com.github.t1.deployer.app.html.Index;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.RestClient;
+import com.github.t1.deployer.tools.Config;
 
 public class PackageDependenciesTest {
     private final JDepend jdepend = new JDepend();
@@ -56,7 +56,7 @@ public class PackageDependenciesTest {
         Package container = packageOf(Container.class);
         Package model = packageOf(Deployment.class);
         Package repository = packageOf(Repository.class);
-        Package tools = packageOf(RestClient.class);
+        Package tools = packageOf(Config.class);
 
         Package credentials = packageOf(org.apache.http.auth.Credentials.class);
 
@@ -69,21 +69,13 @@ public class PackageDependenciesTest {
                 packageOf(org.jboss.as.controller.client.ModelControllerClient.class),
                 packageOf(org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class),
                 packageOf(org.jboss.dmr.ModelNode.class));
-        repository.dependsUpon(model, tools, credentials);
+        repository.dependsUpon(model, credentials, packageOf("com.github.t1.rest"));
 
-        model.dependsUpon(packageOf(com.fasterxml.jackson.annotation.JsonCreator.class),
-                packageOf(org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion.class));
         tools.dependsUpon( //
                 packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient
-                packageOf("org.codehaus.jackson.map"), // RestClient -> ObjectMapper
-                packageOf("org.apache.http"), //
-                packageOf("org.apache.http.auth"), //
-                packageOf("org.apache.http.client"), //
-                packageOf("org.apache.http.client.methods"), //
-                packageOf("org.apache.http.client.protocol"), //
-                packageOf("org.apache.http.impl.auth"), //
-                packageOf("org.apache.http.impl.client"), //
-                packageOf("org.apache.http.util") //
+                packageOf("org.apache.http.auth"), // should move to Rest-Client
+                packageOf("com.fasterxml.jackson.dataformat.yaml.snakeyaml"), // YamlMessageBodyWriter
+                packageOf("com.github.t1.rest.fallback") // ConverterTools
         );
     }
 

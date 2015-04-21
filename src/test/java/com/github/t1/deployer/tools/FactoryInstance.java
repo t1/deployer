@@ -10,7 +10,6 @@ import javax.enterprise.inject.Instance;
 import lombok.AllArgsConstructor;
 
 import org.glassfish.hk2.api.Factory;
-import org.jboss.weld.exceptions.UnsupportedOperationException;
 
 @AllArgsConstructor
 public class FactoryInstance<T> implements Instance<T> {

@@ -13,10 +13,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <!-- we need both versions: JBoss 7 uses codehaus, Dropwizard uses fasterxml -->
-        <jackson.codehaus.version>1.9.13</jackson.codehaus.version>
-        <jackson.fasterxml.version>2.5.1</jackson.fasterxml.version>
     </properties>
 
     <scm>
@@ -55,15 +51,18 @@
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
-                        <manifestEntries>
-                            <Dependencies>org.codehaus.jackson.jackson-mapper-asl services</Dependencies>
-                        </manifestEntries>
                     </archive>
                     <!-- has to be overlayed to work in JBoss 7.x: -->
                     <overlays>
                         <overlay>
                             <groupId>com.github.t1</groupId>
                             <artifactId>logging-interceptor</artifactId>
+                            <type>jar</type>
+                            <targetPath>WEB-INF/classes</targetPath>
+                        </overlay>
+                        <overlay>
+                            <groupId>com.github.t1</groupId>
+                            <artifactId>rest-client</artifactId>
                             <type>jar</type>
                             <targetPath>WEB-INF/classes</targetPath>
                         </overlay>
@@ -92,7 +91,7 @@
             <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
-                <version>1.1.5.Final</version>
+                <version>1.1.7.Final</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -155,20 +154,6 @@
 
         <!-- compile scope -->
         <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-mapper-asl</artifactId>
-            <version>${jackson.codehaus.version}</version>
-            <scope>provided</scope>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.fasterxml.version}</version>
-            <scope>provided</scope>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
             <version>1.0.0.Alpha19</version>
@@ -179,12 +164,18 @@
             <version>4.3.6</version>
         </dependency>
 
-        <!-- overlay scope -->
+        <!-- "overlay" scope -->
+        <dependency>
+            <groupId>com.github.t1</groupId>
+            <artifactId>rest-client</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>logging-interceptor</artifactId>
             <version>2.3.0-SNAPSHOT</version>
-            <optional>true</optional><!-- will be overlayed -->
+            <optional>true</optional>
         </dependency>
 
         <!-- compile scope -->
@@ -239,18 +230,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jboss.arquillian.container</groupId>
-            <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-            <version>1.0.0.CR8</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.weld</groupId>
-            <artifactId>weld-core</artifactId>
-            <version>2.2.6.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
             <version>0.8.0</version>
@@ -263,4 +242,200 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>jboss-7.1-managed</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.17</version>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <arquillian.launch>jboss-7.1-managed</arquillian.launch>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>unpack</id>
+                                <phase>process-test-classes</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.jboss.as</groupId>
+                                            <artifactId>jboss-as-dist</artifactId>
+                                            <version>7.1.1.Final</version>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>target</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+                    <version>7.1.1.Final</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.arquillian.protocol</groupId>
+                    <artifactId>arquillian-protocol-servlet</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>jboss-8.1-embedded</id>
+
+            <properties>
+                <jboss.version>8.1.0.Final</jboss.version>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <executions>
+                            <execution>
+                                <id>unpack</id>
+                                <phase>process-test-classes</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.wildfly</groupId>
+                                            <artifactId>wildfly-dist</artifactId>
+                                            <version>${jboss.version}</version>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>target</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.17</version>
+                        <configuration>
+                            <forkMode>always</forkMode>
+                            <systemPropertyVariables>
+                                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                                <jbossHome>${project.basedir}/target/wildfly-${jboss.version}</jbossHome>
+                                <modulePath>${project.basedir}/target/wildfly-${jboss.version}/modules</modulePath>
+                                <arquillian.launch>jboss-8.1-embedded</arquillian.launch>
+                            </systemPropertyVariables>
+                            <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-arquillian-container-embedded</artifactId>
+                    <version>${jboss.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-embedded</artifactId>
+                    <version>${jboss.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>jboss-8.1-managed</id>
+
+            <properties>
+                <jboss.version>8.1.0.Final</jboss.version>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <executions>
+                            <execution>
+                                <id>unpack</id>
+                                <phase>process-test-classes</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.wildfly</groupId>
+                                            <artifactId>wildfly-dist</artifactId>
+                                            <version>${jboss.version}</version>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>target</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.17</version>
+                        <configuration>
+                            <forkMode>always</forkMode>
+                            <systemPropertyVariables>
+                                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                                <jbossHome>${project.basedir}/target/wildfly-${jboss.version}</jbossHome>
+                                <modulePath>${project.basedir}/target/wildfly-${jboss.version}/modules</modulePath>
+                                <arquillian.launch>jboss-8.1-managed</arquillian.launch>
+                            </systemPropertyVariables>
+                            <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-arquillian-container-managed</artifactId>
+                    <version>${jboss.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-embedded</artifactId>
+                    <version>${jboss.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

@@ -253,7 +253,7 @@ public class ArtifactoryMock {
     }
 
     private String info(java.nio.file.Path path) throws IOException {
-        if (FOO.equals(path.getName(0).toString())) {
+        if (FOO.getValue().equals(path.getName(0).toString())) {
             if (path.getNameCount() == 1)
                 return folderInfo(path);
             if (path.getNameCount() == 2) {
@@ -272,7 +272,7 @@ public class ArtifactoryMock {
         else if (Files.isRegularFile(resolved))
             return fileInfo(resolved);
         if (FAKES) {
-            log.debug("fake info for: {}", path);
+            log.debug("fake file info for: {}", path);
             CheckSum checksum = fakeChecksumFor(new ContextRoot(path.getFileName().toString()));
             return fileInfo(12345, checksum, checksum);
         }

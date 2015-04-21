@@ -24,7 +24,10 @@ public class ClientIpMdcFilter implements Filter {
         String remoteAddr = request.getRemoteAddr();
         if (remoteAddr != null)
             MDC.put(MDC_NAME, remoteAddr);
-        chain.doFilter(request, response);
-        MDC.remove(MDC_NAME);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            MDC.remove(MDC_NAME);
+        }
     }
 }

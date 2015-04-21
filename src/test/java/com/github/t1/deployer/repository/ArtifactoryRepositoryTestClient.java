@@ -2,13 +2,11 @@ package com.github.t1.deployer.repository;
 
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
-import java.net.URI;
 import java.util.List;
 
 import javax.ws.rs.core.UriBuilder;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.tools.RestClient;
 
 public class ArtifactoryRepositoryTestClient {
     private static final CheckSum CHECKSUM = CheckSum.ofHexString("5064E70F510D3E01A939A344B4712C0594081BBB");
@@ -30,19 +28,23 @@ public class ArtifactoryRepositoryTestClient {
 
     public static void main(String[] args) throws Throwable {
         Dropwizard dropwizard = new Dropwizard().start();
-        URI uri = UriBuilder.fromUri(dropwizard.baseUri()).path("artifactory").build();
-
-        ArtifactoryRepository repo = new ArtifactoryRepository();
-        repo.rest = new RestClient(uri);
+        ArtifactoryRepository repo = initRepo(dropwizard);
 
         try {
             // Deployment deployment = repo.getByChecksum(CHECKSUM);
             List<Deployment> list = repo.availableVersionsFor(CHECKSUM);
             for (Deployment deployment : list) {
-                System.out.println("-> " + deployment);
+                System.out.println("-> " + deployment.getVersion());
             }
         } finally {
             dropwizard.stop();
         }
+    }
+
+    private static ArtifactoryRepository initRepo(Dropwizard dropwizard) {
+        ArtifactoryRepository repo = new ArtifactoryRepository();
+        repo.baseUri = UriBuilder.fromUri(dropwizard.baseUri()).path("artifactory").build();
+        repo.init();
+        return repo;
     }
 }

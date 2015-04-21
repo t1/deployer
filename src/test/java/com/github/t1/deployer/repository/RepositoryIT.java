@@ -1,5 +1,6 @@
 package com.github.t1.deployer.repository;
 
+import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.junit.Assert.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
@@ -12,9 +13,11 @@ import lombok.SneakyThrows;
 
 import org.junit.*;
 import org.junit.rules.ExpectedException;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.*;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.tools.RestClient;
 
 public class RepositoryIT {
     @ClassRule
@@ -22,12 +25,24 @@ public class RepositoryIT {
 
     private Repository repository() {
         ArtifactoryRepository repo = new ArtifactoryRepository();
-        repo.rest = new RestClient(URI.create(artifactory.baseUri() + "/artifactory"));
+        repo.baseUri = URI.create(artifactory.baseUri() + "/artifactory");
+        repo.init();
         return repo;
     }
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    @Before
+    public void setLogLevels() {
+        setLogLevel("org.apache.http.wire", DEBUG);
+        // setLogLevel("com.github.t1.rest", DEBUG);
+        setLogLevel("com.github.t1.deployer", DEBUG);
+    }
+
+    private void setLogLevel(String loggerName, Level level) {
+        ((Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
+    }
 
     @Before
     public void before() {
@@ -48,7 +63,7 @@ public class RepositoryIT {
             Version version = FOO_VERSIONS.get(i);
 
             assertEquals(FOO, deployment.getContextRoot());
-            assertEquals(FOO + ".war", deployment.getName());
+            assertEquals(FOO + ".war", deployment.getName().getValue());
             assertEquals(fakeChecksumFor(FOO, version), deployment.getCheckSum());
             assertEquals(version, deployment.getVersion());
         }
@@ -56,7 +71,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        expectedException.expectMessage("rest error: expected 200 OK but got 500 Internal Server Error");
+        expectedException.expectMessage("expected status 200 OK but got 500 Internal Server Error");
 
         repository().getByChecksum(FAILING_CHECKSUM);
     }
