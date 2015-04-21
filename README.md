@@ -14,6 +14,7 @@ Also supports a REST API, just look at the URIs and request them with content ty
 * SSO
 * cluster support
 * Puppet support
+* Use MessageBodyReaders from the container (maybe like [this](https://jersey.java.net/documentation/latest/message-body-workers.html)?)
 
 # Configuration
 
