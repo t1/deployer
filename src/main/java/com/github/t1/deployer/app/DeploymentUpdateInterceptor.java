@@ -1,26 +1,22 @@
 package com.github.t1.deployer.app;
 
+import static com.github.t1.deployer.app.AuthorizationFilter.*;
 import static javax.interceptor.Interceptor.Priority.*;
-import static javax.ws.rs.core.MediaType.*;
-import static javax.ws.rs.core.Response.Status.*;
-
-import java.security.Principal;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.interceptor.*;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Deployment;
+import com.github.t1.deployer.tools.User;
 
 /**
  * Cross cutting concerns for updating the deployment status in a container:
  * <ul>
- * <li>Check privileges of the principal.</li>
+ * <li>Check privileges of the current user.</li>
  * <li>Write autit log.</li>
  * <li>Update the list of deployments.</li>
  * </ul>
@@ -34,27 +30,21 @@ public class DeploymentUpdateInterceptor {
     Audit audit;
     @Inject
     DeploymentListFile deploymentsList;
-    @Inject
-    Principal principal;
+
+    User user = User.getCurrent();
 
     @AroundInvoke
     Object aroundInvoke(InvocationContext context) throws Exception {
         Deployment deployment = (Deployment) context.getParameters()[0];
         String operation = context.getMethod().getName();
-        log.debug("intercept {} of {} by {}", operation, deployment, principal.getName());
-        if (!isAllowed()) {
+        log.debug("intercept {} of {} by {}", operation, deployment, user.getName());
+        if (!user.hasPrivilege(operation)) {
             audit.deny(operation, deployment.getContextRoot(), deployment.getVersion());
-            String message = principal.getName() + " is not allowed to perform " + operation + " on " + deployment;
-            Response response = Response.status(UNAUTHORIZED).entity(message).type(TEXT_PLAIN).build();
-            throw new WebApplicationException(response);
+            throw unauthorized(user + " is not allowed to perform " + operation + " on " + deployment);
         }
         audit.allow(operation, deployment.getContextRoot(), deployment.getVersion());
-        context.proceed();
+        Object result = context.proceed();
         deploymentsList.writeDeploymentsList();
-        return null;
-    }
-
-    private boolean isAllowed() {
-        return true;
+        return result;
     }
 }

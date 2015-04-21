@@ -59,10 +59,6 @@ public class ArtifactoryRepository extends Repository {
         this.artifactory = resource;
     }
 
-    private String userInfo() {
-        return credentials.getUserPrincipal() + ":" + credentials.getPassword();
-    }
-
     /**
      * It's not really nice to get the version out of the repo path, but where else would I get it? Even the
      * <code>X-Result-Detail</code> header doesn't provide it.

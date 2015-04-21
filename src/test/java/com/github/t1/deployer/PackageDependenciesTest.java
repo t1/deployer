@@ -61,7 +61,7 @@ public class PackageDependenciesTest {
         Package credentials = packageOf(org.apache.http.auth.Credentials.class);
 
         app.dependsUpon(model, container, repository, tools);
-        html.dependsUpon(model, repository, app); // app for resource paths
+        html.dependsUpon(model, repository, app, tools); // app for resource paths
 
         container.dependsUpon(
                 model,

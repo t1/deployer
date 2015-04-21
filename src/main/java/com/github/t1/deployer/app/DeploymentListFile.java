@@ -17,9 +17,12 @@ import javax.inject.Inject;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import org.slf4j.MDC;
+
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
+import com.github.t1.deployer.tools.User;
 
 @Slf4j
 @Startup
@@ -103,17 +106,25 @@ public class DeploymentListFile {
 
     private void updateFromList() {
         log.info("deployment list file has changed");
-        Map<ContextRoot, Version> expected = read();
-        for (Deployment actual : deployments()) {
-            ContextRoot contextRoot = actual.getContextRoot();
-            Version expectedVersion = expected.get(contextRoot);
-            if (expectedVersion == null) {
-                container.undeploy(actual);
-            } else if (expectedVersion.equals(actual.getVersion())) {
-                // already the expected version
-            } else {
-                redeploy(repository.getChecksumForVersion(actual, expectedVersion));
+        try {
+            MDC.put(ClientIpMdcFilter.MDC_NAME, "");
+            User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
+
+            Map<ContextRoot, Version> expected = read();
+            for (Deployment actual : deployments()) {
+                ContextRoot contextRoot = actual.getContextRoot();
+                Version expectedVersion = expected.get(contextRoot);
+                if (expectedVersion == null) {
+                    container.undeploy(actual);
+                } else if (expectedVersion.equals(actual.getVersion())) {
+                    // already the expected version
+                } else {
+                    redeploy(repository.getChecksumForVersion(actual, expectedVersion));
+                }
             }
+        } finally {
+            User.setCurrent(null);
+            MDC.remove(ClientIpMdcFilter.MDC_NAME);
         }
     }
 

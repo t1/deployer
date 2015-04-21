@@ -2,13 +2,11 @@ package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
 
-import java.security.Principal;
-
-import javax.inject.Inject;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.model.Deployment;
+import com.github.t1.deployer.tools.User;
 
 @Provider
 public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment> {
@@ -16,8 +14,7 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
         super(Deployment.class, DEPLOYMENTS);
     }
 
-    @Inject
-    Principal principal;
+    User user = User.getCurrent();
 
     @Override
     protected String title() {
@@ -55,6 +52,6 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
     }
 
     private void footer() {
-        out.append("<footer>Principal: ").append((principal == null) ? "?" : principal.getName()).append("</footer>\n");
+        out.append("<footer>Principal: ").append((user == null) ? "?" : user.getName()).append("</footer>\n");
     }
 }
