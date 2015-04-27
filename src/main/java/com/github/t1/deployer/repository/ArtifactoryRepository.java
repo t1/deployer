@@ -54,8 +54,6 @@ public class ArtifactoryRepository extends Repository {
     void init() {
         UriTemplate template = UriScheme.of(baseUri).authority(baseUri.getAuthority()).path(baseUri.getPath());
         RestResource resource = new RestResource(template);
-        // TODO if (credentials != null)
-        // resource = resource.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
         this.artifactory = resource;
     }
 
@@ -89,13 +87,14 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
-        List<ChecksumSearchResultItem> results = artifactory //
-                .path("api/search/checksum") //
-                .query("sha1", checkSum.hexString()) //
-                .header("X-Result-Detail", "info") //
-                .accept(ChecksumSearchResult.class) //
-                .get() //
-                .getResults();
+        List<ChecksumSearchResultItem> results = authenticated( //
+                artifactory //
+                        .path("api/search/checksum") //
+                        .query("sha1", checkSum.hexString()) //
+                        .header("X-Result-Detail", "info") //
+                ) //
+                .get(ChecksumSearchResult.class) //
+                        .getResults();
         if (results.size() == 0)
             return null;
         if (results.size() > 1)
@@ -103,6 +102,12 @@ public class ArtifactoryRepository extends Repository {
         ChecksumSearchResultItem result = results.get(0);
         log.debug("got {}", result);
         return result;
+    }
+
+    private RestRequest authenticated(RestRequest request) {
+        if (credentials != null && request.authority().equals(artifactory.authority()))
+            request = request.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
+        return request;
     }
 
     private Path path(URI result) {
@@ -180,7 +185,7 @@ public class ArtifactoryRepository extends Repository {
         log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
-        FolderInfo folderInfo = new RestResource(uri).get(FolderInfo.class);
+        FolderInfo folderInfo = authenticated(new RestResource(uri).request()).get(FolderInfo.class);
         log.trace("got {}", folderInfo);
         return deploymentsIn(fileName, folderInfo);
     }
@@ -204,7 +209,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private Deployment deploymentIn(URI uri) {
-        FileInfo file = new RestResource(uri).get(FileInfo.class);
+        FileInfo file = authenticated(new RestResource(uri).request()).get(FileInfo.class);
         return file.deployment();
     }
 
@@ -215,6 +220,6 @@ public class ArtifactoryRepository extends Repository {
             throw new WebApplicationException(NOT_FOUND);
         URI uri = found.getDownloadUri();
         log.info("found {} for checksum {}", uri, checkSum);
-        return new RestResource(uri).get(InputStream.class);
+        return authenticated(new RestResource(uri).request()).accept(InputStream.class).get();
     }
 }

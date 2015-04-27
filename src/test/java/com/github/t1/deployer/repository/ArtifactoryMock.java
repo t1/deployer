@@ -389,7 +389,8 @@ public class ArtifactoryMock {
 
     @GET
     @Path("/{repoKey}/{path:.*}")
-    public InputStream getFile(@SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
+    @Produces("application/java-archive")
+    public InputStream getFileStream(@SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
             @PathParam("path") String pathString) throws IOException {
         java.nio.file.Path path = Paths.get(pathString);
         if (isIndexed(path)) {

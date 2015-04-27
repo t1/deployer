@@ -69,8 +69,8 @@ public class Deployments {
     }
 
     private void loadVersion(Deployment deployment) {
-        Deployment byChecksum =
-                (deployment.getCheckSum() == null) ? null : repository.getByChecksum(deployment.getCheckSum());
+        CheckSum checkSum = deployment.getCheckSum();
+        Deployment byChecksum = (checkSum == null) ? null : repository.getByChecksum(checkSum);
         deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
     }
 
