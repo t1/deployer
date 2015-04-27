@@ -23,11 +23,6 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
 
     @Override
     protected void body() {
-        deployments();
-        footer();
-    }
-
-    private void deployments() {
         out.append("    <table>\n");
         for (Deployment deployment : target) {
             out.append("        <tr>");
@@ -49,9 +44,5 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
         out.append("</td></tr>\n");
         out.append("    </table>\n");
         out.append("<br/><br/>\n");
-    }
-
-    private void footer() {
-        out.append("<footer>Principal: ").append((user == null) ? "?" : user.getName()).append("</footer>\n");
     }
 }
