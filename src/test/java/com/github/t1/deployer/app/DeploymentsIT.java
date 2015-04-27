@@ -35,17 +35,17 @@ import com.github.t1.deployer.tools.*;
 
 @Log
 public class DeploymentsIT {
-    private static Container container = mock(Container.class);
+    private static LoggerContainer container = mock(LoggerContainer.class);
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);
     private static DeploymentListFile deploymentListFile = mock(DeploymentListFile.class);
 
-    private static Container interceptedContainer = InterceptorMock.intercept(container).with(interceptor());
+    private static LoggerContainer interceptedContainer = InterceptorMock.intercept(container).with(interceptor());
 
-    private static DeploymentUpdateInterceptor interceptor() {
+    private static DeploymentOperationInterceptor interceptor() {
         User.setCurrent(new User("the-prince").withPrivilege("deploy", "redeploy", "undeploy"));
 
-        DeploymentUpdateInterceptor interceptor = new DeploymentUpdateInterceptor();
+        DeploymentOperationInterceptor interceptor = new DeploymentOperationInterceptor();
         interceptor.audit = audit;
         interceptor.deploymentsList = deploymentListFile;
         return interceptor;
@@ -60,7 +60,7 @@ public class DeploymentsIT {
                 @Override
                 protected void configure() {
                     bind(repository).to(Repository.class);
-                    bind(interceptedContainer).to(Container.class);
+                    bind(interceptedContainer).to(LoggerContainer.class);
                     bind(audit).to(Audit.class);
 
                     final UriInfo uriInfo = mock(UriInfo.class);

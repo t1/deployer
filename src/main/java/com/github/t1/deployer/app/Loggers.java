@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import com.github.t1.deployer.container.Container;
+import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.log.*;
 
@@ -38,7 +38,7 @@ public class Loggers {
     }
 
     @Inject
-    Container container;
+    LoggerContainer container;
     @Inject
     Instance<LoggerResource> loggerResources;
     @Context

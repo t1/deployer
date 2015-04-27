@@ -10,7 +10,7 @@ import org.junit.*;
 
 import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.app.html.Index;
-import com.github.t1.deployer.container.Container;
+import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.Config;
@@ -53,7 +53,7 @@ public class PackageDependenciesTest {
     private void setupDependencies() {
         Package app = packageOf(Deployments.class);
         Package html = packageOf(Index.class);
-        Package container = packageOf(Container.class);
+        Package container = packageOf(LoggerContainer.class);
         Package model = packageOf(Deployment.class);
         Package repository = packageOf(Repository.class);
         Package tools = packageOf(Config.class);

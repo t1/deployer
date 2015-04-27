@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import static com.github.t1.deployer.container.Container.*;
+import static com.github.t1.deployer.container.LoggerContainer.*;
 import static java.util.concurrent.TimeUnit.*;
 
 import java.io.*;
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.MDC;
 
-import com.github.t1.deployer.container.Container;
+import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.User;
@@ -83,7 +83,7 @@ public class DeploymentListFile {
     }
 
     @Inject
-    Container container;
+    LoggerContainer container;
     @Inject
     Repository repository;
 

@@ -24,7 +24,7 @@ import com.github.t1.log.Logged;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-public class Container {
+public class DeploymentContainer {
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
 
     private abstract class AbstractPlan {
@@ -236,17 +236,17 @@ public class Container {
         return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
     }
 
-    @ContainerDeployment
+    @DeploymentOperation
     public void deploy(Deployment deployment, InputStream inputStream) {
         new DeployPlan(deployment.getName(), inputStream).execute();
     }
 
-    @ContainerDeployment
+    @DeploymentOperation
     public void redeploy(Deployment deployment, InputStream inputStream) {
         new ReplacePlan(deployment.getName(), inputStream).execute();
     }
 
-    @ContainerDeployment
+    @DeploymentOperation
     public void undeploy(Deployment deployment) {
         new UndeployPlan(deployment.getName()).execute();
     }

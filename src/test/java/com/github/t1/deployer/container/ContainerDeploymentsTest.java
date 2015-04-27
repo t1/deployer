@@ -30,7 +30,7 @@ public class ContainerDeploymentsTest {
     private static final Version NO_VERSION = null;
 
     @InjectMocks
-    Container container;
+    LoggerContainer container;
     @Mock
     ModelControllerClient client;
     @Mock

@@ -7,7 +7,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import com.github.t1.deployer.container.Container;
+import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.log.Logged;
 
@@ -16,7 +16,7 @@ public class LoggerResource {
     private LoggerConfig logger;
 
     @Inject
-    Container container;
+    LoggerContainer container;
 
     public LoggerResource logger(LoggerConfig logger) {
         this.logger = logger;

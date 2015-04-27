@@ -23,9 +23,9 @@ import com.github.t1.deployer.tools.User;
  */
 @Slf4j
 @Interceptor
-@ContainerDeployment
+@DeploymentOperation
 @Priority(APPLICATION + 523)
-public class DeploymentUpdateInterceptor {
+public class DeploymentOperationInterceptor {
     @Inject
     Audit audit;
     @Inject

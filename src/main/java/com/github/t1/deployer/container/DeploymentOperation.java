@@ -10,4 +10,4 @@ import javax.interceptor.InterceptorBinding;
 @InterceptorBinding
 @Target({ TYPE, ANNOTATION_TYPE, METHOD, CONSTRUCTOR })
 @Retention(RUNTIME)
-public @interface ContainerDeployment {}
+public @interface DeploymentOperation {}
