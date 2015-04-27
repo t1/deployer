@@ -10,7 +10,7 @@ import org.slf4j.MDC;
 /** Put the IP-Address of the client into the MDC */
 @WebFilter("/*")
 public class ClientIpMdcFilter implements Filter {
-    public static final String MDC_NAME = "client-ip";
+    private static final String MDC_NAME = "client-ip";
 
     @Override
     public void init(FilterConfig filterConfig) {}

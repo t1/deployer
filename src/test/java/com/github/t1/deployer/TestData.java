@@ -14,7 +14,7 @@ import javax.ws.rs.core.Response.Status;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.github.t1.deployer.container.LoggerContainer;
+import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 
@@ -71,7 +71,7 @@ public class TestData {
         }
     }
 
-    public static void givenDeployments(final LoggerContainer container, ContextRoot... contextRoots) {
+    public static void givenDeployments(final DeploymentContainer container, ContextRoot... contextRoots) {
         final List<Deployment> deployments = new ArrayList<>();
         for (ContextRoot contextRoot : contextRoots) {
             Deployment deployment = deploymentFor(contextRoot);
@@ -90,7 +90,8 @@ public class TestData {
         when(container.getAllDeployments()).thenReturn(deployments);
     }
 
-    public static void givenDeployment(LoggerContainer container, List<Deployment> deployments, Deployment deployment) {
+    public static void givenDeployment(DeploymentContainer container, List<Deployment> deployments,
+            Deployment deployment) {
         ContextRoot contextRoot = deployment.getContextRoot();
         when(container.getDeploymentWith(contextRoot)).thenReturn(deployment);
         when(container.hasDeploymentWith(contextRoot)).thenReturn(true);

@@ -9,6 +9,7 @@ import jdepend.framework.*;
 import org.junit.*;
 
 import com.github.t1.deployer.app.Deployments;
+import com.github.t1.deployer.app.file.DeploymentListFile;
 import com.github.t1.deployer.app.html.Index;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
@@ -53,6 +54,7 @@ public class PackageDependenciesTest {
     private void setupDependencies() {
         Package app = packageOf(Deployments.class);
         Package html = packageOf(Index.class);
+        Package file = packageOf(DeploymentListFile.class);
         Package container = packageOf(LoggerContainer.class);
         Package model = packageOf(Deployment.class);
         Package repository = packageOf(Repository.class);
@@ -60,8 +62,9 @@ public class PackageDependenciesTest {
 
         Package credentials = packageOf(org.apache.http.auth.Credentials.class);
 
-        app.dependsUpon(model, container, repository, tools);
+        app.dependsUpon(model, container, repository, tools, file);
         html.dependsUpon(model, repository, app, tools); // app for resource paths
+        file.dependsUpon(model, repository, container, tools);
 
         container.dependsUpon(
                 model,

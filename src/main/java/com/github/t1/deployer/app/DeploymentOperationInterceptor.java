@@ -9,6 +9,7 @@ import javax.interceptor.*;
 
 import lombok.extern.slf4j.Slf4j;
 
+import com.github.t1.deployer.app.file.DeploymentListFile;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.tools.User;

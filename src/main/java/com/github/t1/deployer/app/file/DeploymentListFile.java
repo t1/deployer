@@ -1,6 +1,6 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.app.file;
 
-import static com.github.t1.deployer.container.LoggerContainer.*;
+import static com.github.t1.deployer.container.DeploymentContainer.*;
 import static java.util.concurrent.TimeUnit.*;
 
 import java.io.*;
@@ -17,9 +17,7 @@ import javax.inject.Inject;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import org.slf4j.MDC;
-
-import com.github.t1.deployer.container.LoggerContainer;
+import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.User;
@@ -83,7 +81,7 @@ public class DeploymentListFile {
     }
 
     @Inject
-    LoggerContainer container;
+    DeploymentContainer container;
     @Inject
     Repository repository;
 
@@ -107,7 +105,6 @@ public class DeploymentListFile {
     private void updateFromList() {
         log.info("deployment list file has changed");
         try {
-            MDC.put(ClientIpMdcFilter.MDC_NAME, "");
             User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
 
             Map<ContextRoot, Version> expected = read();
@@ -124,7 +121,6 @@ public class DeploymentListFile {
             }
         } finally {
             User.setCurrent(null);
-            MDC.remove(ClientIpMdcFilter.MDC_NAME);
         }
     }
 

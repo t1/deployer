@@ -9,12 +9,10 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import javax.ejb.Stateless;
-import javax.inject.Inject;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.jboss.as.controller.client.*;
 import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
@@ -24,7 +22,7 @@ import com.github.t1.log.Logged;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-public class DeploymentContainer {
+public class DeploymentContainer extends AbstractContainer {
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
 
     private abstract class AbstractPlan {
@@ -114,41 +112,6 @@ public class DeploymentContainer {
                     .undeploy(deploymentName.getValue()) //
                     .remove(deploymentName.getValue()) //
             ;
-        }
-    }
-
-    private static final OperationMessageHandler LOGGING = new OperationMessageHandler() {
-        @Override
-        public void handleReport(MessageSeverity severity, String message) {
-            switch (severity) {
-                case ERROR:
-                    log.error(message);
-                case WARN:
-                    log.warn(message);
-                    break;
-                case INFO:
-                    log.info(message);
-                    break;
-            }
-        }
-    };
-
-    @Inject
-    ModelControllerClient client;
-
-    @SneakyThrows(IOException.class)
-    private ModelNode execute(ModelNode command) {
-        log.debug("execute command {}", command);
-        ModelNode result = client.execute(command, LOGGING);
-        log.trace("-> {}", result);
-        return result;
-    }
-
-    private void checkOutcome(ModelNode result) {
-        String outcome = result.get("outcome").asString();
-        if (!"success".equals(outcome)) {
-            log.error("failed: {}", result);
-            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
         }
     }
 
@@ -249,91 +212,5 @@ public class DeploymentContainer {
     @DeploymentOperation
     public void undeploy(Deployment deployment) {
         new UndeployPlan(deployment.getName()).execute();
-    }
-
-    public List<LoggerConfig> getLoggers() {
-        List<LoggerConfig> loggers = new ArrayList<>();
-        for (ModelNode cliLoggerMatch : readAllLoggers())
-            loggers.add(toLogger(cliLoggerMatch.get("result")));
-        return loggers;
-    }
-
-    private List<ModelNode> readAllLoggers() {
-        ModelNode result = execute(readLogger("*"));
-        checkOutcome(result);
-        return result.get("result").asList();
-    }
-
-    private static ModelNode readLogger(String name) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "logging").add("logger", name);
-        node.get("operation").set("read-resource");
-        node.get("recursive").set(true);
-        return node;
-    }
-
-    private LoggerConfig toLogger(ModelNode cliLogger) {
-        String name = cliLogger.get("category").asString();
-        String level = cliLogger.get("level").asString();
-        return new LoggerConfig(name, level);
-    }
-
-    public boolean hasLogger(String loggerName) {
-        ModelNode result = execute(readLogger(loggerName));
-        String outcome = result.get("outcome").asString();
-        if ("success".equals(outcome)) {
-            return true;
-        } else if (isNotFoundMessage(result)) {
-            return false;
-        } else {
-            log.error("failed: {}", result);
-            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
-        }
-    }
-
-    public LoggerConfig getLogger(String loggerName) {
-        ModelNode result = execute(readLogger(loggerName));
-        String outcome = result.get("outcome").asString();
-        if ("success".equals(outcome)) {
-            return toLogger(result.get("result"));
-        } else if (isNotFoundMessage(result)) {
-            throw notFound("no logger '" + loggerName + "'");
-        } else {
-            log.error("failed: {}", result);
-            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
-        }
-    }
-
-    private boolean isNotFoundMessage(ModelNode result) {
-        String failureDescription = result.get("failure-description").toString();
-        return failureDescription.contains("JBAS014807: Management resource")
-                && failureDescription.contains("not found");
-    }
-
-    public void add(LoggerConfig logger) {
-        ModelNode result = execute(addLogger(logger));
-        checkOutcome(result);
-    }
-
-    private static ModelNode addLogger(LoggerConfig logger) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
-        node.get("operation").set("add");
-        node.get("recursive").set(true);
-        node.get("level").set(logger.getLevel());
-        return node;
-    }
-
-    public void remove(LoggerConfig logger) {
-        ModelNode result = execute(removeLogger(logger));
-        checkOutcome(result);
-    }
-
-    private static ModelNode removeLogger(LoggerConfig logger) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
-        node.get("operation").set("remove");
-        node.get("recursive").set(true);
-        return node;
     }
 }

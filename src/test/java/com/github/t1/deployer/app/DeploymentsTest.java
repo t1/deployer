@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.t1.deployer.container.LoggerContainer;
+import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.FactoryInstance;
@@ -31,7 +31,7 @@ public class DeploymentsTest {
     @Mock
     Repository repository;
     @Mock
-    LoggerContainer container;
+    DeploymentContainer container;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();

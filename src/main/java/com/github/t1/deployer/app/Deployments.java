@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import com.github.t1.deployer.container.LoggerContainer;
+import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
@@ -45,7 +45,7 @@ public class Deployments {
     }
 
     @Inject
-    LoggerContainer container;
+    DeploymentContainer container;
     @Inject
     Repository repository;
     @Inject

@@ -12,7 +12,7 @@ import javax.ws.rs.core.*;
 
 import lombok.RequiredArgsConstructor;
 
-import com.github.t1.deployer.container.LoggerContainer;
+import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
@@ -21,7 +21,7 @@ import com.github.t1.log.Logged;
 @RequiredArgsConstructor
 public class DeploymentResource {
     @Inject
-    LoggerContainer container;
+    DeploymentContainer container;
     @Inject
     Repository repository;
     @Context
