@@ -71,7 +71,7 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
         out.append("  <body class=\"container\">\n");
         navBar();
         out.append("  <div class=\"jumbotron\">\n");
-        out.append("    <h1>").append(title()).append("</h1>\n");
+        out.append("    <h1>").append(bodyTitle()).append("</h1>\n");
         nl();
         body();
         nl();
@@ -87,7 +87,7 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
         out.append("    <meta charset=\"utf-8\">\n");
         out.append("    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n");
         out.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-        out.append("    <title>").append(title()).append("</title>\n");
+        out.append("    <title>").append(headerTitle()).append("</title>\n");
         nl();
         out.append("    ").append(stylesheet("bootstrap/css/bootstrap.min.css")).append("\n");
         out.append("    ").append(stylesheet("webapp/css/style.css")).append("\n");
@@ -115,6 +115,14 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
         out.append("        </div>\n");
         out.append("      </nav>\n");
         out.append("\n");
+    }
+
+    protected String headerTitle() {
+        return title();
+    }
+
+    protected String bodyTitle() {
+        return title();
     }
 
     protected abstract String title();

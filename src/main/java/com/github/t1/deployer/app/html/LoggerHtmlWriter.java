@@ -19,6 +19,11 @@ public class LoggerHtmlWriter extends AbstractHtmlWriter<LoggerConfig> {
     }
 
     @Override
+    protected String bodyTitle() {
+        return isNew() ? "Add Logger" : target.getCategory();
+    }
+
+    @Override
     protected String title() {
         return isNew() ? "Add Logger" : "Logger: " + target.getCategory();
     }

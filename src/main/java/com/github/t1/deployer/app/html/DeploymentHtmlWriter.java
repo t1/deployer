@@ -24,6 +24,11 @@ public class DeploymentHtmlWriter extends AbstractHtmlWriter<Deployment> {
     }
 
     @Override
+    protected String bodyTitle() {
+        return isNew() ? "Add Deployment" : target.getContextRoot().toString();
+    }
+
+    @Override
     protected String title() {
         return isNew() ? "Add Deployment" : "Deployment: " + target.getContextRoot();
     }
