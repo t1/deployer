@@ -19,6 +19,7 @@ And there's a file `${jboss.server.config.dir}/deployments.properties` that (aft
 * SSO
 * cluster support
 * Puppet support
+* Use MessageBodyReaders from the container (for Jersey, maybe like [this](https://jersey.java.net/documentation/latest/message-body-workers.html#d0e7606)?)
 
 # Configuration
 
