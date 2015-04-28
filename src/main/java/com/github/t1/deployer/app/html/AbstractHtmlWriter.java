@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 @Produces(TEXT_HTML)
 @RequiredArgsConstructor
 public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
+    private static final String MIN = ""; // ".min";
+
     private final Class<T> type;
     private final Navigation active;
 
@@ -25,7 +27,7 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
     UriInfo uriInfo;
 
     protected T target;
-    protected StringBuilder out;
+    private StringBuilder out;
 
     /** @deprecated just required by weld */
     @Deprecated
@@ -60,61 +62,62 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
         return uriInfo.getBaseUriBuilder().path(path).build();
     }
 
-    protected void nl() {
+    protected AbstractHtmlWriter<T> nl() {
         out.append("\n");
+        return this;
     }
 
     protected void html() {
-        out.append("<!DOCTYPE html>\n");
-        out.append("<html>\n"); // lang="en"
+        append("<!DOCTYPE html>\n");
+        append("<html>\n"); // lang="en"
         head();
-        out.append("  <body class=\"container\">\n");
+        append("  <body class=\"container\">\n");
         navBar();
-        out.append("  <div class=\"jumbotron\">\n");
-        out.append("    <h1>").append(bodyTitle()).append("</h1>\n");
+        append("  <div class=\"jumbotron\">\n");
+        append("    <h1>").append(bodyTitle()).append("</h1>\n");
         nl();
         body();
         nl();
-        out.append("    ").append(script("jquery/jquery.min.js")).append("\n");
-        out.append("    ").append(script("bootstrap/js/bootstrap.min.js")).append("\n");
-        out.append("  </div>\n");
-        out.append("  </body>\n");
-        out.append("</html>\n");
+        append("    ").append(script("jquery/jquery" + MIN + ".js")).append("\n");
+        append("    ").append(script("bootstrap/js/bootstrap" + MIN + ".js")).append("\n");
+        append("  </div>\n");
+        append("  </body>\n");
+        append("</html>\n");
     }
 
     protected void head() {
-        out.append("  <head>\n");
-        out.append("    <meta charset=\"utf-8\">\n");
-        out.append("    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n");
-        out.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-        out.append("    <title>").append(headerTitle()).append("</title>\n");
+        append("  <head>\n");
+        append("    <meta charset=\"utf-8\">\n");
+        append("    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n");
+        append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
+        append("    <title>").append(headerTitle()).append("</title>\n");
         nl();
-        out.append("    ").append(stylesheet("bootstrap/css/bootstrap.min.css")).append("\n");
-        out.append("    ").append(stylesheet("webapp/css/style.css")).append("\n");
-        out.append("  </head>\n");
+        append("    ").append(stylesheet("bootstrap/css/bootstrap" + MIN + ".css")).append("\n");
+        append("    ").append(stylesheet("webapp/css/style.css")).append("\n");
+        append("  </head>\n");
     }
 
     protected void navBar() {
-        out.append("      <nav class=\"navbar navbar-default\">\n");
-        out.append("        <div class=\"container-fluid\">\n");
-        out.append("          <div class=\"navbar-header\">\n");
-        out.append("            <a class=\"navbar-brand\" href=\"#\">Deployer</a>\n");
-        out.append("          </div>\n");
-        out.append("          <div id=\"navbar\" class=\"navbar-collapse collapse\">\n");
-        out.append("            <ul class=\"nav navbar-nav navbar-right\">\n");
+        append("      <nav class=\"navbar navbar-default\">\n");
+        append("        <div class=\"container-fluid\">\n");
+        append("          <div class=\"navbar-header\">\n");
+        append("            <a class=\"navbar-brand\" href=\"#\">Deployer</a>\n");
+        append("          </div>\n");
+        append("          <div id=\"navbar\" class=\"navbar-collapse collapse\">\n");
+        append("            <ul class=\"nav navbar-nav navbar-right\">\n");
         for (Navigation navigation : Navigation.values()) {
-            out.append("              <li ");
+            append("              <li ");
             if (navigation == active)
-                out.append("class=\"active\"");
-            out.append(">");
+                append("class=\"active\"");
+            append(">");
             href(navigation.title(), navigation.href(uriInfo));
-            out.append("</li>\n");
+            append("</li>\n");
         }
-        out.append("            </ul>\n");
-        out.append("          </div>\n");
-        out.append("        </div>\n");
-        out.append("      </nav>\n");
-        out.append("\n");
+        append("            </ul>\n");
+        append("          </div>\n");
+        append("        </div>\n");
+        append("      </nav>\n");
+        append("\n");
     }
 
     protected String headerTitle() {
@@ -129,12 +132,37 @@ public abstract class AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
 
     protected abstract void body();
 
-    protected void href(String label, URI target) {
-        out.append("<a href=\"" + target + "\">" + label + "</a>");
+    private int indent = 0;
+
+    protected StringBuilder append(Object value) {
+        ws(indent);
+        out.append(value);
+        return out;
+    }
+
+    protected AbstractHtmlWriter<T> in() {
+        indent += 2;
+        return this;
+    }
+
+    protected AbstractHtmlWriter<T> out() {
+        indent -= 2;
+        return this;
+    }
+
+    protected AbstractHtmlWriter<T> ws(int n) {
+        for (int i = 0; i < n; i++)
+            out.append(" ");
+        return this;
+    }
+
+    protected AbstractHtmlWriter<T> href(String label, URI target) {
+        append("<a href=\"").append(target).append("\">").append(label).append("</a>");
+        return this;
     }
 
     protected void br() {
-        out.append("<br/><br/>\n");
+        append("<br/><br/>\n");
     }
 
     private String stylesheet(String path) {

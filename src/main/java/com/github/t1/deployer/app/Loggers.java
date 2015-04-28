@@ -52,7 +52,7 @@ public class Loggers {
     @GET
     @Path(NEW_LOGGER)
     public LoggerConfig newLogger() {
-        return new LoggerConfig(NEW_LOGGER, "");
+        return new LoggerConfig(NEW_LOGGER, OFF);
     }
 
     @Path("{loggerName}")
@@ -68,7 +68,7 @@ public class Loggers {
             @NotNull @FormParam("category") String category, //
             @NotNull @FormParam("level") LogLevel level //
     ) {
-        LoggerConfig newLogger = new LoggerConfig(category, level.name());
+        LoggerConfig newLogger = new LoggerConfig(category, level);
         container.add(newLogger);
         return Response.seeOther(Loggers.path(uriInfo, newLogger)).build();
     }

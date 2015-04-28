@@ -9,7 +9,7 @@ import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.LoggerConfig;
-import com.github.t1.log.Logged;
+import com.github.t1.log.*;
 
 @Logged(level = INFO)
 public class LoggerResource {
@@ -36,7 +36,7 @@ public class LoggerResource {
 
     @GET
     @Path("level")
-    public String getLevel() {
+    public LogLevel getLevel() {
         return logger.getLevel();
     }
 

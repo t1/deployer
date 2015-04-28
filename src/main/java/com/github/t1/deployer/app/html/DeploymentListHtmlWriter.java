@@ -23,26 +23,26 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
 
     @Override
     protected void body() {
-        out.append("    <table>\n");
+        append("    <table>\n");
         for (Deployment deployment : target) {
-            out.append("        <tr>");
+            append("        <tr>");
 
-            out.append("<td>");
+            append("<td>");
             href(deployment.getContextRoot().getValue(), Deployments.path(uriInfo, deployment.getContextRoot()));
-            out.append("</td>");
+            append("</td>");
 
-            out.append("<td>").append(deployment.getName()).append("</td>");
+            append("<td>").append(deployment.getName()).append("</td>");
 
-            out.append("<td title=\"SHA-1: ").append(deployment.getCheckSum()).append("\">") //
+            append("<td title=\"SHA-1: ").append(deployment.getCheckSum()).append("\">") //
                     .append(deployment.getVersion()) //
                     .append("</td>");
 
-            out.append("</tr>\n");
+            append("</tr>\n");
         }
-        out.append("    <tr><td colspan='3'>");
+        append("    <tr><td colspan='3'>");
         href("+", Deployments.newDeployment(uriInfo));
-        out.append("</td></tr>\n");
-        out.append("    </table>\n");
-        out.append("<br/><br/>\n");
+        append("</td></tr>\n");
+        append("    </table>\n");
+        append("<br/><br/>\n");
     }
 }

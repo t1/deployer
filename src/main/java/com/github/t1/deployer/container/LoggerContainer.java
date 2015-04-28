@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
 import com.github.t1.deployer.model.LoggerConfig;
-import com.github.t1.log.Logged;
+import com.github.t1.log.*;
 
 @Slf4j
 @Logged(level = INFO)
@@ -41,7 +41,7 @@ public class LoggerContainer extends AbstractContainer {
 
     private LoggerConfig toLogger(ModelNode cliLogger) {
         String name = cliLogger.get("category").asString();
-        String level = cliLogger.get("level").asString();
+        LogLevel level = LogLevel.valueOf(cliLogger.get("level").asString());
         return new LoggerConfig(name, level);
     }
 
@@ -87,7 +87,7 @@ public class LoggerContainer extends AbstractContainer {
         node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
         node.get("operation").set("add");
         node.get("recursive").set(true);
-        node.get("level").set(logger.getLevel());
+        node.get("level").set(logger.getLevel().name());
         return node;
     }
 

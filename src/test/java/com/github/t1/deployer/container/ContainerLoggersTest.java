@@ -1,6 +1,7 @@
 package com.github.t1.deployer.container;
 
 import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
@@ -91,7 +92,7 @@ public class ContainerLoggersTest {
 
         assertEquals(1, loggers.size());
         assertEquals("foo", loggers.get(0).getCategory());
-        assertEquals("WARN", loggers.get(0).getLevel());
+        assertEquals(WARN, loggers.get(0).getLevel());
     }
 
     @Test
@@ -102,8 +103,8 @@ public class ContainerLoggersTest {
 
         assertEquals(2, loggers.size());
         assertEquals("foo", loggers.get(0).getCategory());
-        assertEquals("WARN", loggers.get(0).getLevel());
+        assertEquals(WARN, loggers.get(0).getLevel());
         assertEquals("bar", loggers.get(1).getCategory());
-        assertEquals("WARN", loggers.get(1).getLevel());
+        assertEquals(WARN, loggers.get(1).getLevel());
     }
 }

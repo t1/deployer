@@ -2,11 +2,13 @@ package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.model.LoggerConfig.*;
+import static com.github.t1.log.LogLevel.*;
 
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.Loggers;
 import com.github.t1.deployer.model.LoggerConfig;
+import com.github.t1.log.LogLevel;
 
 @Provider
 public class LoggerHtmlWriter extends AbstractHtmlWriter<LoggerConfig> {
@@ -30,27 +32,49 @@ public class LoggerHtmlWriter extends AbstractHtmlWriter<LoggerConfig> {
 
     @Override
     protected void body() {
-        href("&lt", Loggers.base(uriInfo));
+        in().in();
+        href("&lt", Loggers.base(uriInfo)).nl();
         if (isNew()) {
-            out.append("<p>Enter the name of a new logger to configure</p>" //
-                    + "<form method=\"POST\" action=\"" + Loggers.base(uriInfo) + "\">\n" //
-                    + "  <input name=\"category\">\n" //
-                    + "  <input name=\"level\">\n" //
-                    + "  <input type=\"submit\" value=\"Add\">\n" //
-                    + "</form>");
+            append("<p>Enter the name of a new logger to configure</p>\n");
+            append("<form method=\"POST\" action=\"").append(Loggers.base(uriInfo)).append("\">\n");
+            in();
+            append("<input name=\"category\"/>\n");
+            levelSelect();
+            append("<input type=\"submit\" value=\"Add\">\n");
+            out();
+            append("</form>\n");
         } else {
-            out.append("<br/>\n");
-            out.append("    Name: ").append(target.getCategory()).append("<br/>\n");
-            out.append("    Level: ").append(target.getLevel()).append("<br/>\n");
-            out.append("<br/>\n");
-            out.append(delete());
+            append("<form method=\"POST\" action=\"").append(Loggers.base(uriInfo)).append("\">\n");
+            in();
+            levelSelect();
+            append("<input type=\"submit\" value=\"Update\">\n");
+            out();
+            append("</form>\n");
+            delete();
         }
+        out().out();
     }
 
-    private String delete() {
-        return "<form method=\"POST\" action=\"" + Loggers.path(uriInfo, target) + "\">\n" //
-                + "  <input type=\"hidden\" name=\"action\" value=\"delete\">\n" //
-                + "  <input type=\"submit\" value=\"Delete\">\n" //
-                + "</form>";
+    private void levelSelect() {
+        append("<select name=\"level\"\n"); // onchange=\"alert(this.form.level.options[this.form.level.selectedIndex].value)\">\n"
+        for (LogLevel level : LogLevel.values())
+            if (level != _DERIVED_)
+                levelOption(level);
+        append("</select>\n");
+    }
+
+    private void levelOption(LogLevel level) {
+        append("  <option").append(selected(level)).append(">").append(level).append("</option>\n");
+    }
+
+    private String selected(LogLevel level) {
+        return (level == target.getLevel()) ? " selected" : "";
+    }
+
+    private void delete() {
+        append("<form method=\"POST\" action=\"" + Loggers.path(uriInfo, target) + "\">\n");
+        append("  <input type=\"hidden\" name=\"action\" value=\"delete\">\n");
+        append("  <input type=\"submit\" value=\"Delete\">\n");
+        append("</form>\n");
     }
 }

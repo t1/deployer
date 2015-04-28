@@ -20,20 +20,20 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
 
     @Override
     protected void body() {
-        out.append("    <table>\n");
+        append("    <table>\n");
         for (LoggerConfig logger : target) {
-            out.append("        <tr><td>");
+            append("        <tr><td>");
             href(logger.getCategory(), Loggers.path(uriInfo, logger));
-            out.append("</td><td>");
-            out.append(logger.getLevel());
-            out.append("</td><td>");
-            out.append(delete(logger));
-            out.append("</td></tr>\n");
+            append("</td><td>");
+            append(logger.getLevel());
+            append("</td><td>");
+            append(delete(logger));
+            append("</td></tr>\n");
         }
-        out.append("    <tr><td colspan='3'>");
+        append("    <tr><td colspan='3'>");
         href("+", Loggers.newLogger(uriInfo));
-        out.append("</td></tr>");
-        out.append("    </table>\n");
+        append("</td></tr>");
+        append("    </table>\n");
     }
 
     private String delete(LoggerConfig logger) {
