@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.log.LogLevel.*;
-import static javax.ws.rs.core.Response.Status.*;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -41,14 +40,13 @@ public class LoggerResource {
     }
 
     @POST
-    public Response post(@Context UriInfo uriInfo, @FormParam("action") String action) {
-        switch (action) {
-            case "delete":
-                delete();
-                return Response.seeOther(Loggers.base(uriInfo)).build();
-            default:
-                return Response.status(BAD_REQUEST).entity("invalid action [" + action + "]").build();
-        }
+    public Response post(@Context UriInfo uriInfo, @FormParam("action") String action,
+            @FormParam("level") LogLevel level) {
+        if ("delete".equals(action))
+            delete();
+        else
+            container.update(logger.setLevel(level));
+        return Response.seeOther(Loggers.base(uriInfo)).build();
     }
 
     @DELETE

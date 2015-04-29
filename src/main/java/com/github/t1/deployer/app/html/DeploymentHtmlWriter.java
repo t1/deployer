@@ -11,7 +11,7 @@ import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
 
 @Provider
-public class DeploymentHtmlWriter extends AbstractHtmlWriter<Deployment> {
+public class DeploymentHtmlWriter extends AbstractHtmlBodyWriter<Deployment> {
     @Inject
     Repository repository;
 

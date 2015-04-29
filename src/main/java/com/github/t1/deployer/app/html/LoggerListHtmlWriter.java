@@ -20,26 +20,32 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
 
     @Override
     protected void body() {
-        append("    <table>\n");
+        append("<table>\n");
+        in();
         for (LoggerConfig logger : target) {
-            append("        <tr><td>");
+            append("<tr><td>");
             href(logger.getCategory(), Loggers.path(uriInfo, logger));
-            append("</td><td>");
-            append(logger.getLevel());
-            append("</td><td>");
-            append(delete(logger));
+            out.append("</td><td>\n");
+            in();
+            buttons(logger);
+            out();
             append("</td></tr>\n");
         }
-        append("    <tr><td colspan='3'>");
+        append("<tr><td colspan='3'>");
         href("+", Loggers.newLogger(uriInfo));
-        append("</td></tr>");
-        append("    </table>\n");
+        out.append("</td></tr>\n");
+        out();
+        append("</table>\n");
     }
 
-    private String delete(LoggerConfig logger) {
-        return "<form method=\"POST\" action=\"" + Loggers.path(uriInfo, logger) + "\">\n" //
-                + "  <input type=\"hidden\" name=\"action\" value=\"delete\">\n" //
-                + "  <input type=\"submit\" value=\"Delete\">\n" //
-                + "</form>";
+    private void buttons(LoggerConfig logger) {
+        startForm(Loggers.path(uriInfo, logger));
+        new LogLevelSelectForm(logger.getLevel(), out).indent(indent).autoSubmit().write();
+        endForm("Update", true);
+        append("</td><td>");
+        append("<form method=\"POST\" action=\"" + Loggers.path(uriInfo, logger) + "\">\n");
+        append("  <input type=\"hidden\" name=\"action\" value=\"delete\">\n");
+        append("  <input type=\"submit\" value=\"Delete\">\n");
+        append("</form>\n");
     }
 }

@@ -103,4 +103,10 @@ public class LoggerContainer extends AbstractContainer {
         node.get("recursive").set(true);
         return node;
     }
+
+    public void update(LoggerConfig logger) {
+        // TODO write attribute level
+        remove(logger);
+        add(logger);
+    }
 }
