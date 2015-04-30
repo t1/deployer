@@ -11,7 +11,7 @@ import lombok.*;
 @RequiredArgsConstructor
 @XmlRootElement
 @XmlAccessorType(FIELD)
-public class Deployment {
+public class Deployment implements Comparable<Deployment> {
     public static final Deployment NULL_DEPLOYMENT = new Deployment(null, null, null);
 
     private final DeploymentName name;
@@ -31,5 +31,10 @@ public class Deployment {
     public Deployment version(Version version) {
         this.version = version;
         return this;
+    }
+
+    @Override
+    public int compareTo(Deployment that) {
+        return this.name.getValue().compareToIgnoreCase(that.name.getValue());
     }
 }

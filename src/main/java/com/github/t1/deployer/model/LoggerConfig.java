@@ -17,6 +17,6 @@ public class LoggerConfig implements Comparable<LoggerConfig> {
 
     @Override
     public int compareTo(LoggerConfig that) {
-        return this.category.compareTo(that.category);
+        return this.category.compareToIgnoreCase(that.category);
     }
 }

@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
+import static java.util.Collections.*;
 
 import javax.ws.rs.ext.Provider;
 
@@ -19,6 +20,7 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
     @Override
     protected void body() {
         append("    <table>\n");
+        sort(target);
         for (Deployment deployment : target) {
             append("        <tr>");
 
