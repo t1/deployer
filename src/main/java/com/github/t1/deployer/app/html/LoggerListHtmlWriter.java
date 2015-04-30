@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
+import static java.util.Collections.*;
 
 import javax.ws.rs.ext.Provider;
 
@@ -14,14 +15,10 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
     }
 
     @Override
-    protected String title() {
-        return "Loggers";
-    }
-
-    @Override
     protected void body() {
         append("<table>\n");
         in();
+        sort(target);
         for (LoggerConfig logger : target) {
             append("<tr><td>");
             href(logger.getCategory(), Loggers.path(uriInfo, logger));

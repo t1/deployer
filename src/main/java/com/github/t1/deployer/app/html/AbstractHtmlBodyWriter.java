@@ -21,7 +21,7 @@ public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> im
     private static final String MIN = ""; // ".min";
 
     private final Class<T> type;
-    private final Navigation active;
+    private final Navigation activeNavigation;
 
     @Context
     UriInfo uriInfo;
@@ -30,7 +30,7 @@ public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> im
     @Deprecated
     public AbstractHtmlBodyWriter() {
         this.type = null;
-        this.active = null;
+        this.activeNavigation = null;
     }
 
     @Override
@@ -117,7 +117,7 @@ public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> im
         in();
         for (Navigation navigation : Navigation.values()) {
             append("<li ");
-            if (navigation == active)
+            if (navigation == activeNavigation)
                 out.append("class=\"active\"");
             out.append(">");
             href(navigation.title(), navigation.href(uriInfo));
@@ -131,7 +131,7 @@ public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> im
         append("</div>\n");
         out();
         append("</nav>\n");
-        append("\n");
+        nl();
     }
 
     protected String headerTitle() {
@@ -142,7 +142,9 @@ public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> im
         return title();
     }
 
-    protected abstract String title();
+    protected String title() {
+        return activeNavigation.title();
+    }
 
     protected abstract void body();
 

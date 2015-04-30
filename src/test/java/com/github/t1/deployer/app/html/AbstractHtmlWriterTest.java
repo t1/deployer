@@ -67,7 +67,7 @@ public class AbstractHtmlWriterTest<T> {
                 + "        </div>\n" //
                 + "      </div>\n" //
                 + "    </nav>\n" //
-                + "    \n" //
+                + "\n" //
                 + "    <div class=\"jumbotron\">\n";
     }
 

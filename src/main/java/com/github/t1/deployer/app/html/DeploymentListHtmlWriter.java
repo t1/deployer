@@ -17,11 +17,6 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
     User user = User.getCurrent();
 
     @Override
-    protected String title() {
-        return "Deployments";
-    }
-
-    @Override
     protected void body() {
         append("    <table>\n");
         for (Deployment deployment : target) {

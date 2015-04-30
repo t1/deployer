@@ -7,11 +7,16 @@ import com.github.t1.log.LogLevel;
 
 @Data
 @Accessors(chain = true)
-public class LoggerConfig {
+public class LoggerConfig implements Comparable<LoggerConfig> {
     public static final String NEW_LOGGER = "!";
 
     @NonNull
     String category;
     @NonNull
     LogLevel level;
+
+    @Override
+    public int compareTo(LoggerConfig that) {
+        return this.category.compareTo(that.category);
+    }
 }
