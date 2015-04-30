@@ -86,7 +86,6 @@ public class LoggerContainer extends AbstractContainer {
         ModelNode node = new ModelNode();
         node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
         node.get("operation").set("add");
-        node.get("recursive").set(true);
         node.get("level").set(logger.getLevel().name());
         return node;
     }
@@ -100,13 +99,18 @@ public class LoggerContainer extends AbstractContainer {
         ModelNode node = new ModelNode();
         node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
         node.get("operation").set("remove");
-        node.get("recursive").set(true);
         return node;
     }
 
     public void update(LoggerConfig logger) {
-        // TODO write attribute level
-        remove(logger);
-        add(logger);
+        ModelNode node = new ModelNode();
+        node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
+        node.get("operation").set("write-attribute");
+        node.get("name").set("level");
+        node.get("value").set(logger.getLevel().name());
+
+        ModelNode result = execute(node);
+        checkOutcome(result);
+        System.out.println(result);
     }
 }

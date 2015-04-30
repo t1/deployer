@@ -42,11 +42,12 @@ public class LoggerResource {
     @POST
     public Response post(@Context UriInfo uriInfo, @FormParam("action") String action,
             @FormParam("level") LogLevel level) {
-        if ("delete".equals(action))
+        if ("delete".equals(action)) {
             delete();
-        else
-            container.update(logger.setLevel(level));
-        return Response.seeOther(Loggers.base(uriInfo)).build();
+            return Response.seeOther(Loggers.base(uriInfo)).build();
+        }
+        container.update(logger.setLevel(level));
+        return Response.noContent().build();
     }
 
     @DELETE
