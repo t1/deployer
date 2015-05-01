@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
+import static com.github.t1.deployer.app.html.StyleVariation.*;
 import static com.github.t1.deployer.model.DataSourceConfig.*;
 
 import javax.ws.rs.ext.Provider;
@@ -31,24 +32,19 @@ public class DataSourceHtmlWriter extends AbstractHtmlBodyWriter<DataSourceConfi
     @Override
     protected void body() {
         indent().href("&lt", DataSources.base(uriInfo)).nl();
-        if (isNew()) {
-            append("<p>Enter the name of a new data source to configure</p>\n");
-            startForm(DataSources.base(uriInfo));
-            append("<input name=\"name\"/>\n");
-            append("<input name=\"uri\"/>\n");
-            endForm("Add", false);
-        } else {
-            startForm(DataSources.path(uriInfo, target));
-            append("<input name=\"name\" value=\"" + target.getName() + "\"/>\n");
-            append("<input name=\"uri\" value=\"" + target.getUri() + "\"/>\n");
-            endForm("Update", false);
-            delete();
-        }
-    }
 
-    private void delete() {
-        startForm(DataSources.path(uriInfo, target));
-        hiddenInput("action", "delete");
-        endForm("Delete", false);
+        if (isNew())
+            append("<p>Enter the name of a new data source to configure</p>\n");
+        else
+            form().action(DataSources.path(uriInfo, target)) //
+                    .hiddenInput("action", "delete") //
+                    .submitIcon("remove", danger) //
+                    .close();
+
+        form().action(isNew() ? DataSources.base(uriInfo) : DataSources.path(uriInfo, target)) //
+                .input("Name", "name", isNew() ? null : target.getName()) //
+                .input("URI", "uri", target.getUri()) //
+                .submit(isNew() ? "Add" : "Update") //
+                .close();
     }
 }

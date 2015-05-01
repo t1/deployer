@@ -71,7 +71,11 @@ public class LoggerHtmlWriterTest extends AbstractHtmlWriterTest<LoggerConfig> {
                 + "      </form>\n" //
                 + "      <form method=\"POST\" action=\"http://localhost:8080/deployer/loggers/foo\">\n" //
                 + "        <input type=\"hidden\" name=\"action\" value=\"delete\"/>\n" //
-                + "        <input type=\"submit\" value=\"Delete\">\n" //
+                + "        <div class=\"btn-group btn-group-justified\" role=\"group\">\n" //
+                + "          <div class=\"btn-group\" role=\"group\">\n" //
+                + "            <button class=\"btn btn-lg btn-danger btn-block\" type=\"submit\">Delete</button>\n" //
+                + "          </div>\n" //
+                + "        </div>\n" //
                 + "      </form>\n" //
                 + footer() //
         , entity);

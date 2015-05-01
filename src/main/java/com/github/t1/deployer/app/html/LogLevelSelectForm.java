@@ -7,9 +7,8 @@ import com.github.t1.log.LogLevel;
 public class LogLevelSelectForm extends AbstractHtmlWriter<LogLevel> {
     private boolean autoSubmit = false;
 
-    public LogLevelSelectForm(LogLevel level, StringBuilder out) {
-        super.target = level;
-        super.out = out;
+    public LogLevelSelectForm(LogLevel level, HtmlBuilder container) {
+        super(container, level);
     }
 
     public LogLevelSelectForm autoSubmit() {

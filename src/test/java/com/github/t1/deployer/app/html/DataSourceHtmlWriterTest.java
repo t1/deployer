@@ -30,9 +30,15 @@ public class DataSourceHtmlWriterTest extends AbstractHtmlWriterTest<DataSourceC
                 + "      <a href=\"http://localhost:8080/deployer/data-sources\">&lt</a>\n" //
                 + "      <p>Enter the name of a new data source to configure</p>\n" //
                 + "      <form method=\"POST\" action=\"http://localhost:8080/deployer/data-sources\">\n" //
-                + "        <input name=\"name\"/>\n" //
-                + "        <input name=\"uri\"/>\n" //
-                + "        <input type=\"submit\" value=\"Add\">\n" //
+                + "        <label for=\"name\">Name</label>\n" //
+                + "        <input class=\"form-control\" name=\"name id=\"name\" required/>\n" //
+                + "        <label for=\"uri\">URI</label>\n" //
+                + "        <input class=\"form-control\" name=\"uri id=\"uri\" required/>\n" //
+                + "        <div class=\"btn-group btn-group-justified\" role=\"group\">\n" //
+                + "          <div class=\"btn-group\" role=\"group\">\n" //
+                + "            <button class=\"btn btn-lg btn-primary btn-block\" type=\"submit\">Add</button>\n" //
+                + "          </div>\n" //
+                + "        </div>\n" //
                 + "      </form>\n" //
                 + footer() //
         , entity);
@@ -49,17 +55,29 @@ public class DataSourceHtmlWriterTest extends AbstractHtmlWriterTest<DataSourceC
                 + "\n" //
                 + "      <a href=\"http://localhost:8080/deployer/data-sources\">&lt</a>\n" //
                 + "      <form method=\"POST\" action=\"http://localhost:8080/deployer/data-sources/foo\">\n" //
-                + "        <input name=\"name\" value=\"foo\"/>\n" //
-                + "        <input name=\"uri\" value=\"foo-uri\"/>\n" //
-                + "        <input type=\"submit\" value=\"Update\">\n" //
+                + "        <input type=\"hidden\" name=\"action\" value=\"delete\"/>\n" //
+                + "        <div class=\"btn-group btn-group-justified\" role=\"group\">\n" //
+                + "          <div class=\"btn-group\" role=\"group\">\n" //
+                + "            <button class=\"btn btn-lg btn-danger btn-block\" type=\"submit\">\n" //
+                + "              <span class=\"glyphicon glyphicon-remove\"></span>\n" //
+                + "            </button>\n" //
+                + "          </div>\n" //
+                + "        </div>\n" //
                 + "      </form>\n" //
                 + "      <form method=\"POST\" action=\"http://localhost:8080/deployer/data-sources/foo\">\n" //
-                + "        <input type=\"hidden\" name=\"action\" value=\"delete\"/>\n" //
-                + "        <input type=\"submit\" value=\"Delete\">\n" //
+                + "        <label for=\"name\">Name</label>\n" //
+                + "        <input class=\"form-control\" name=\"name id=\"name\" value=\"foo\" required/>\n" //
+                + "        <label for=\"uri\">URI</label>\n" //
+                + "        <input class=\"form-control\" name=\"uri id=\"uri\" value=\"foo-uri\" required/>\n" //
+                + "        <div class=\"btn-group btn-group-justified\" role=\"group\">\n" //
+                + "          <div class=\"btn-group\" role=\"group\">\n" //
+                + "            <button class=\"btn btn-lg btn-primary btn-block\" type=\"submit\">Update</button>\n" //
+                + "          </div>\n" //
+                + "        </div>\n" //
                 + "      </form>\n" //
                 + footer() //
         , entity);
     }
 
-    // TODO field labels
+    // TODO group buttons
 }

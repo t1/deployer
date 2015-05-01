@@ -11,12 +11,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.MessageBodyWriter;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Produces(TEXT_HTML)
-@RequiredArgsConstructor
 public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> implements MessageBodyWriter<T> {
     private static final String MIN = ""; // ".min";
 
@@ -26,9 +24,22 @@ public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> im
     @Context
     UriInfo uriInfo;
 
+    public AbstractHtmlBodyWriter(Class<T> type, Navigation activeNavigation) {
+        super(null);
+        this.type = type;
+        this.activeNavigation = activeNavigation;
+    }
+
+    public AbstractHtmlBodyWriter(HtmlBuilder container, Navigation activeNavigation, Class<T> type, T target) {
+        super(container, target);
+        this.type = type;
+        this.activeNavigation = activeNavigation;
+    }
+
     /** @deprecated just required by weld */
     @Deprecated
     public AbstractHtmlBodyWriter() {
+        super(null, null);
         this.type = null;
         this.activeNavigation = null;
     }
@@ -48,7 +59,7 @@ public abstract class AbstractHtmlBodyWriter<T> extends AbstractHtmlWriter<T> im
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         log.debug("write as html: {} for {}", target, uriInfo.getRequestUri());
         this.target = target;
-        this.out = new StringBuilder();
+        this.out.setLength(0);
 
         html();
 

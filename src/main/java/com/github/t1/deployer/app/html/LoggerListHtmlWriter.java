@@ -37,7 +37,7 @@ public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
 
     private void buttons(LoggerConfig logger) {
         startForm(Loggers.path(uriInfo, logger));
-        new LogLevelSelectForm(logger.getLevel(), out).indent(indent).autoSubmit().write();
+        new LogLevelSelectForm(logger.getLevel(), this).autoSubmit().write();
         endForm("Update", true);
         append("</td><td>");
         append("<form method=\"POST\" action=\"" + Loggers.path(uriInfo, logger) + "\">\n");
