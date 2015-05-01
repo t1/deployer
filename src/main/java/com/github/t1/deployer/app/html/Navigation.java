@@ -22,6 +22,12 @@ public enum Navigation {
         public URI href(UriInfo uriInfo) {
             return Loggers.base(uriInfo);
         }
+    },
+    DATA_SOURCES("Data-Sources") {
+        @Override
+        public URI href(UriInfo uriInfo) {
+            return DataSources.base(uriInfo);
+        }
     };
 
     @Getter

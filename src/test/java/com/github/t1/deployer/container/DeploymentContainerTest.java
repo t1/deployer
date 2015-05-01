@@ -26,7 +26,7 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.WebException;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ContainerDeploymentsTest {
+public class DeploymentContainerTest {
     private static final Version NO_VERSION = null;
 
     @InjectMocks

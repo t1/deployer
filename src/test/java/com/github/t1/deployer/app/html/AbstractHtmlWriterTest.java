@@ -39,7 +39,7 @@ public class AbstractHtmlWriterTest<T> {
         return new String(entityStream.toByteArray());
     }
 
-    protected String header(String title) {
+    protected String header(String title, Navigation activeNavigation) {
         return "<!DOCTYPE html>\n" //
                 + "<html>\n" //
                 + "  <head>\n" //
@@ -61,14 +61,24 @@ public class AbstractHtmlWriterTest<T> {
                 + "        </div>\n" //
                 + "        <div id=\"navbar\" class=\"navbar-collapse collapse\">\n" //
                 + "          <ul class=\"nav navbar-nav navbar-right\">\n" //
-                + "            <li ><a href=\"http://localhost:8080/deployer/deployments/*\">Deployments</a></li>\n" //
-                + "            <li class=\"active\"><a href=\"http://localhost:8080/deployer/loggers\">Loggers</a></li>\n" //
+                + nav(activeNavigation) //
                 + "          </ul>\n" //
                 + "        </div>\n" //
                 + "      </div>\n" //
                 + "    </nav>\n" //
                 + "\n" //
                 + "    <div class=\"jumbotron\">\n";
+    }
+
+    private String nav(Navigation activeNavigation) {
+        StringBuilder out = new StringBuilder();
+        for (Navigation nav : Navigation.values()) {
+            out.append("            <li ");
+            if (nav == activeNavigation)
+                out.append("class=\"active\"");
+            out.append("><a href=\"").append(nav.href(uriInfo)).append("\">").append(nav.title()).append("</a></li>\n");
+        }
+        return out.toString();
     }
 
     protected String footer() {

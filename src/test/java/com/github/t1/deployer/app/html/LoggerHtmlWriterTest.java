@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.junit.Assert.*;
@@ -22,7 +23,7 @@ public class LoggerHtmlWriterTest extends AbstractHtmlWriterTest<LoggerConfig> {
 
         String entity = write(logger);
 
-        assertEquals(header("Add Logger") //
+        assertEquals(header("Add Logger", LOGGERS) //
                 + "      <h1>Add Logger</h1>\n" //
                 + "\n" //
                 + "      <a href=\"http://localhost:8080/deployer/loggers\">&lt</a>\n" //
@@ -50,7 +51,7 @@ public class LoggerHtmlWriterTest extends AbstractHtmlWriterTest<LoggerConfig> {
 
         String entity = write(logger);
 
-        assertEquals(header("Logger: foo") //
+        assertEquals(header("Logger: foo", LOGGERS) //
                 + "      <h1>foo</h1>\n" //
                 + "\n" //
                 + "      <a href=\"http://localhost:8080/deployer/loggers\">&lt</a>\n" //

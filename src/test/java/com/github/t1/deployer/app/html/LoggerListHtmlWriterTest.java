@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.Arrays.*;
 import static org.junit.Assert.*;
@@ -24,7 +25,7 @@ public class LoggerListHtmlWriterTest extends AbstractHtmlWriterTest<List<Logger
 
         String entity = write(loggers);
 
-        assertEquals(header("Loggers") //
+        assertEquals(header("Loggers", LOGGERS) //
                 + "      <h1>Loggers</h1>\n" //
                 + "\n" //
                 + "      <table>\n" //

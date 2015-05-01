@@ -24,7 +24,7 @@ import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.deployer.repository.Repository;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ContainerLoggersTest {
+public class LoggerContainerTest {
     @InjectMocks
     LoggerContainer container;
     @Mock
