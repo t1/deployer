@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.junit.Assert.*;
@@ -23,26 +22,7 @@ public class LoggerHtmlWriterTest extends AbstractHtmlWriterTest<LoggerConfig> {
 
         String entity = write(logger);
 
-        assertEquals(header("Add Logger", LOGGERS) //
-                + "      <h1>Add Logger</h1>\n" //
-                + "\n" //
-                + "      <a href=\"http://localhost:8080/deployer/loggers\">&lt</a>\n" //
-                + "      <p>Enter the name of a new logger to configure</p>\n" //
-                + "      <form method=\"POST\" action=\"http://localhost:8080/deployer/loggers\">\n" //
-                + "        <input name=\"category\"/>\n" //
-                + "        <select name=\"level\">\n" //
-                + "          <option>ALL</option>\n" //
-                + "          <option>TRACE</option>\n" //
-                + "          <option>DEBUG</option>\n" //
-                + "          <option selected>INFO</option>\n" //
-                + "          <option>WARN</option>\n" //
-                + "          <option>ERROR</option>\n" //
-                + "          <option>OFF</option>\n" //
-                + "        </select>\n" //
-                + "        <input type=\"submit\" value=\"Add\">\n" //
-                + "      </form>\n" //
-                + footer() //
-        , entity);
+        assertEquals(readFile(), entity);
     }
 
     @Test
@@ -51,33 +31,6 @@ public class LoggerHtmlWriterTest extends AbstractHtmlWriterTest<LoggerConfig> {
 
         String entity = write(logger);
 
-        assertEquals(header("Logger: foo", LOGGERS) //
-                + "      <h1>foo</h1>\n" //
-                + "\n" //
-                + "      <a href=\"http://localhost:8080/deployer/loggers\">&lt</a>\n" //
-                + "      <form method=\"POST\" action=\"http://localhost:8080/deployer/loggers/foo\">\n" //
-                + "        <select name=\"level\" onchange=\"this.form.submit()\">\n" //
-                + "          <option>ALL</option>\n" //
-                + "          <option>TRACE</option>\n" //
-                + "          <option>DEBUG</option>\n" //
-                + "          <option selected>INFO</option>\n" //
-                + "          <option>WARN</option>\n" //
-                + "          <option>ERROR</option>\n" //
-                + "          <option>OFF</option>\n" //
-                + "        </select>\n" //
-                + "        <noscript>\n" //
-                + "          <input type=\"submit\" value=\"Update\">\n" //
-                + "        </noscript>\n" //
-                + "      </form>\n" //
-                + "      <form method=\"POST\" action=\"http://localhost:8080/deployer/loggers/foo\">\n" //
-                + "        <input type=\"hidden\" name=\"action\" value=\"delete\"/>\n" //
-                + "        <div class=\"btn-group btn-group-justified\" role=\"group\">\n" //
-                + "          <div class=\"btn-group\" role=\"group\">\n" //
-                + "            <button class=\"btn btn-lg btn-danger btn-block\" type=\"submit\">Delete</button>\n" //
-                + "          </div>\n" //
-                + "        </div>\n" //
-                + "      </form>\n" //
-                + footer() //
-        , entity);
+        assertEquals(readFile(), entity);
     }
 }

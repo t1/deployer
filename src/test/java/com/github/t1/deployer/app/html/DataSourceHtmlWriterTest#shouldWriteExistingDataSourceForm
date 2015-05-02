@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Data-Source: foo</title>
+
+    <link href="http://localhost:8080/deployer/bootstrap/css/bootstrap.css" rel="stylesheet"/>
+    <link href="http://localhost:8080/deployer/webapp/css/style.css" rel="stylesheet"/>
+  </head>
+  <body class="container">
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">Deployer</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li ><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
+            <li ><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
+            <li class="active"><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="jumbotron">
+      <h1>foo</h1>
+
+      <a href="http://localhost:8080/deployer/data-sources">&lt</a>
+      <form method="POST" action="http://localhost:8080/deployer/data-sources/foo">
+        <input type="hidden" name="action" value="delete"/>
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button class="btn btn-lg btn-danger btn-block" type="submit">
+              <span class="glyphicon glyphicon-remove"></span>
+            </button>
+          </div>
+        </div>
+      </form>
+      <form method="POST" action="http://localhost:8080/deployer/data-sources/foo">
+        <label for="name">Name</label>
+        <input class="form-control" name="name id="name" value="foo" required/>
+        <label for="uri">URI</label>
+        <input class="form-control" name="uri id="uri" value="foo-uri" required/>
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Update</button>
+          </div>
+        </div>
+      </form>
+
+      <script src="http://localhost:8080/deployer/jquery/jquery.js"/>
+      <script src="http://localhost:8080/deployer/bootstrap/js/bootstrap.js"/>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add Logger</title>
+
+    <link href="http://localhost:8080/deployer/bootstrap/css/bootstrap.css" rel="stylesheet"/>
+    <link href="http://localhost:8080/deployer/webapp/css/style.css" rel="stylesheet"/>
+  </head>
+  <body class="container">
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">Deployer</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li ><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
+            <li class="active"><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
+            <li ><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="jumbotron">
+      <h1>Add Logger</h1>
+
+      <a href="http://localhost:8080/deployer/loggers">&lt</a>
+      <p>Enter the name of a new logger to configure</p>
+      <form method="POST" action="http://localhost:8080/deployer/loggers">
+        <input name="category"/>
+        <select name="level">
+          <option>ALL</option>
+          <option>TRACE</option>
+          <option>DEBUG</option>
+          <option selected>INFO</option>
+          <option>WARN</option>
+          <option>ERROR</option>
+          <option>OFF</option>
+        </select>
+        <input type="submit" value="Add">
+      </form>
+
+      <script src="http://localhost:8080/deployer/jquery/jquery.js"/>
+      <script src="http://localhost:8080/deployer/bootstrap/js/bootstrap.js"/>
+    </div>
+  </body>
+</html>

@@ -1,8 +1,11 @@
 package com.github.t1.deployer.app.html;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import java.io.*;
+import java.net.*;
+import java.nio.file.*;
 
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.MessageBodyWriter;
@@ -13,10 +16,6 @@ import org.mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-/**
- * this should currently be seen as an experiment... I'm not sure if the html is going to stay 'semantic' enough to be
- * practical to test like this.
- */
 public class AbstractHtmlWriterTest<T> {
     @InjectMocks
     MessageBodyWriter<T> writer;
@@ -39,55 +38,14 @@ public class AbstractHtmlWriterTest<T> {
         return new String(entityStream.toByteArray());
     }
 
-    protected String header(String title, Navigation activeNavigation) {
-        return "<!DOCTYPE html>\n" //
-                + "<html>\n" //
-                + "  <head>\n" //
-                + "    <meta charset=\"utf-8\">\n" //
-                + "    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n" //
-                + "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" //
-                + "    <title>"
-                + title
-                + "</title>\n" //
-                + "\n" //
-                + "    <link href=\"http://localhost:8080/deployer/bootstrap/css/bootstrap.css\" rel=\"stylesheet\"/>\n" //
-                + "    <link href=\"http://localhost:8080/deployer/webapp/css/style.css\" rel=\"stylesheet\"/>\n" //
-                + "  </head>\n" //
-                + "  <body class=\"container\">\n" //
-                + "    <nav class=\"navbar navbar-default\">\n" //
-                + "      <div class=\"container-fluid\">\n" //
-                + "        <div class=\"navbar-header\">\n" //
-                + "          <a class=\"navbar-brand\" href=\"#\">Deployer</a>\n" //
-                + "        </div>\n" //
-                + "        <div id=\"navbar\" class=\"navbar-collapse collapse\">\n" //
-                + "          <ul class=\"nav navbar-nav navbar-right\">\n" //
-                + nav(activeNavigation) //
-                + "          </ul>\n" //
-                + "        </div>\n" //
-                + "      </div>\n" //
-                + "    </nav>\n" //
-                + "\n" //
-                + "    <div class=\"jumbotron\">\n";
+    protected String readFile() throws IOException, URISyntaxException {
+        StackTraceElement caller = new RuntimeException().getStackTrace()[1];
+        assertEquals(getClass().getName(), caller.getClassName());
+        String fileName = getClass().getSimpleName() + "#" + caller.getMethodName();
+        URL resource = getClass().getResource(fileName);
+        if (resource == null)
+            throw new AssertionError("test file not found: " + fileName);
+        Path path = Paths.get(resource.toURI());
+        return new String(Files.readAllBytes(path));
     }
-
-    private String nav(Navigation activeNavigation) {
-        StringBuilder out = new StringBuilder();
-        for (Navigation nav : Navigation.values()) {
-            out.append("            <li ");
-            if (nav == activeNavigation)
-                out.append("class=\"active\"");
-            out.append("><a href=\"").append(nav.href(uriInfo)).append("\">").append(nav.title()).append("</a></li>\n");
-        }
-        return out.toString();
-    }
-
-    protected String footer() {
-        return "\n" //
-                + "      <script src=\"http://localhost:8080/deployer/jquery/jquery.js\"/>\n" //
-                + "      <script src=\"http://localhost:8080/deployer/bootstrap/js/bootstrap.js\"/>\n" //
-                + "    </div>\n" //
-                + "  </body>\n" //
-                + "</html>\n";
-    }
-
 }
