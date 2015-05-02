@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
-import static com.github.t1.deployer.app.html.StyleVariation.*;
+import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.model.LoggerConfig.*;
 
 import javax.ws.rs.ext.Provider;
@@ -20,17 +20,17 @@ public class LoggerHtmlWriter extends AbstractHtmlBodyWriter<LoggerConfig> {
     }
 
     @Override
-    protected String bodyTitle() {
+    public String bodyTitle() {
         return isNew() ? "Add Logger" : target.getCategory();
     }
 
     @Override
-    protected String title() {
+    public String title() {
         return isNew() ? "Add Logger" : "Logger: " + target.getCategory();
     }
 
     @Override
-    protected void body() {
+    public void body() {
         indent().href("&lt", Loggers.base(uriInfo)).nl();
         if (isNew()) {
             append("<p>Enter the name of a new logger to configure</p>\n");

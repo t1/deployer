@@ -1,12 +1,12 @@
-package com.github.t1.deployer.app.html;
+package com.github.t1.deployer.app.html.builder;
 
-import static com.github.t1.deployer.app.html.StyleVariation.*;
+import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 
 import java.net.URI;
 
 
-public class FormBuilder extends HtmlBuilder {
-    public FormBuilder(HtmlBuilder htmlWriter) {
+public class FormBuilder extends BaseBuilder {
+    public FormBuilder(BaseBuilder htmlWriter) {
         super(htmlWriter);
     }
 
@@ -16,15 +16,15 @@ public class FormBuilder extends HtmlBuilder {
         return this;
     }
 
-    protected FormBuilder input(String label, String id) {
+    public FormBuilder input(String label, String id) {
         return input(label, id, null);
     }
 
-    protected FormBuilder input(String label, String id, Object value) {
+    public FormBuilder input(String label, String id, Object value) {
         return input(label, id, value, null);
     }
 
-    protected FormBuilder input(String label, String id, Object value, String placeholder) {
+    public FormBuilder input(String label, String id, Object value, String placeholder) {
         append("<label for=\"").append(id).append("\">").append(label).append("</label>\n");
         append("<input class=\"form-control\" name=\"").append(id).append(" id=\"").append(id);
         if (value != null)
@@ -35,23 +35,23 @@ public class FormBuilder extends HtmlBuilder {
         return this;
     }
 
-    protected FormBuilder hiddenInput(String name, String value) {
+    public FormBuilder hiddenInput(String name, String value) {
         append("<input type=\"hidden\" name=\"").append(name).append("\" value=\"").append(value).append("\"/>\n");
         return this;
     }
 
-    protected FormBuilder noscriptSubmit(String label) {
+    public FormBuilder noscriptSubmit(String label) {
         append("<noscript>\n  ");
         append("<input type=\"submit\" value=\"").append(label).append("\">\n");
         append("</noscript>\n");
         return this;
     }
 
-    protected FormBuilder submit(String label) {
+    public FormBuilder submit(String label) {
         return submit(label, primary);
     }
 
-    protected FormBuilder submit(String label, StyleVariation variation) {
+    public FormBuilder submit(String label, StyleVariation variation) {
         append("<div class=\"btn-group btn-group-justified\" role=\"group\">\n");
         append("  <div class=\"btn-group\" role=\"group\">\n");
         append("    <button class=\"btn btn-lg btn-").append(variation).append(" btn-block\" type=\"submit\">") //
@@ -62,7 +62,7 @@ public class FormBuilder extends HtmlBuilder {
         return this;
     }
 
-    public HtmlBuilder submitIcon(String icon, StyleVariation variation) {
+    public BaseBuilder submitIcon(String icon, StyleVariation variation) {
         append("<div class=\"btn-group btn-group-justified\" role=\"group\">\n");
         append("  <div class=\"btn-group\" role=\"group\">\n");
         append("    <button class=\"btn btn-lg btn-").append(variation).append(" btn-block\" type=\"submit\">\n");
@@ -74,7 +74,7 @@ public class FormBuilder extends HtmlBuilder {
     }
 
     @Override
-    protected HtmlBuilder close() {
+    public BaseBuilder close() {
         out();
         append("</form>\n");
         return super.close();

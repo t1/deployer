@@ -1,24 +1,24 @@
-package com.github.t1.deployer.app.html;
+package com.github.t1.deployer.app.html.builder;
 
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HtmlBuilder {
-    private final HtmlBuilder container;
+public abstract class BaseBuilder {
+    private final BaseBuilder container;
 
     private final Map<String, AtomicInteger> ids;
-    protected final StringBuilder out;
-    protected final AtomicInteger indent;
+    public final StringBuilder out;
+    public final AtomicInteger indent;
 
-    public HtmlBuilder() {
+    public BaseBuilder() {
         this.container = null;
         this.ids = new HashMap<>();
         this.out = new StringBuilder();
         this.indent = new AtomicInteger();
     }
 
-    public HtmlBuilder(HtmlBuilder container) {
+    public BaseBuilder(BaseBuilder container) {
         this.container = container;
         this.ids = container.ids;
         this.indent = container.indent;
@@ -34,55 +34,55 @@ public class HtmlBuilder {
         return result.get();
     }
 
-    public HtmlBuilder indent(int indent) {
+    public BaseBuilder indent(int indent) {
         this.indent.addAndGet(indent);
         return this;
     }
 
-    protected HtmlBuilder nl() {
+    public BaseBuilder nl() {
         out.append("\n");
         return this;
     }
 
-    protected StringBuilder append(Object value) {
+    public StringBuilder append(Object value) {
         indent();
         out.append(value);
         return out;
     }
 
-    protected HtmlBuilder indent() {
+    public BaseBuilder indent() {
         ws(indent.get());
         return this;
     }
 
-    protected HtmlBuilder in() {
+    public BaseBuilder in() {
         indent(2);
         return this;
     }
 
-    protected HtmlBuilder out() {
+    public BaseBuilder out() {
         indent(-2);
         return this;
     }
 
-    protected HtmlBuilder ws(int n) {
+    public BaseBuilder ws(int n) {
         for (int i = 0; i < n; i++)
             out.append(" ");
         return this;
     }
 
-    protected HtmlBuilder href(String label, URI target) {
+    public BaseBuilder href(String label, URI target) {
         out.append("<a href=\"").append(target).append("\">").append(label).append("</a>");
         return this;
     }
 
-    protected FormBuilder form() {
+    public FormBuilder form() {
         return new FormBuilder(this);
     }
 
     /** use form() */
     @Deprecated
-    protected HtmlBuilder startForm(URI uri) {
+    public BaseBuilder startForm(URI uri) {
         append("<form method=\"POST\" action=\"").append(uri).append("\">\n");
         in();
         return this;
@@ -90,7 +90,7 @@ public class HtmlBuilder {
 
     /** use form() */
     @Deprecated
-    protected HtmlBuilder endForm(String action, boolean autoHide) {
+    public BaseBuilder endForm(String action, boolean autoHide) {
         if (autoHide)
             append("<noscript>\n  ");
         append("<input type=\"submit\" value=\"").append(action).append("\">\n");
@@ -100,7 +100,7 @@ public class HtmlBuilder {
         return this;
     }
 
-    protected HtmlBuilder close() {
+    public BaseBuilder close() {
         return container;
     }
 }

@@ -6,17 +6,17 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
-public abstract class AbstractListHtmlWriter<T> extends AbstractHtmlBodyWriter<List<T>> {
+public abstract class AbstractListHtmlBodyWriter<T> extends AbstractHtmlBodyWriter<List<T>> {
     private final Class<T> type;
 
     /** @deprecated just required by weld */
     @Deprecated
-    public AbstractListHtmlWriter() {
+    public AbstractListHtmlBodyWriter() {
         super(null, null);
         this.type = null;
     }
 
-    public AbstractListHtmlWriter(Class<T> type, Navigation active) {
+    public AbstractListHtmlBodyWriter(Class<T> type, Navigation active) {
         super(null, active);
         this.type = type;
     }

@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
-import static com.github.t1.deployer.app.html.StyleVariation.*;
+import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.model.DataSourceConfig.*;
 
 import javax.ws.rs.ext.Provider;
@@ -20,17 +20,17 @@ public class DataSourceHtmlWriter extends AbstractHtmlBodyWriter<DataSourceConfi
     }
 
     @Override
-    protected String bodyTitle() {
+    public String bodyTitle() {
         return isNew() ? "Add Data-Source" : target.getName();
     }
 
     @Override
-    protected String title() {
+    public String title() {
         return isNew() ? "Add Data-Source" : "Data-Source: " + target.getName();
     }
 
     @Override
-    protected void body() {
+    public void body() {
         indent().href("&lt", DataSources.base(uriInfo)).nl();
 
         if (isNew())

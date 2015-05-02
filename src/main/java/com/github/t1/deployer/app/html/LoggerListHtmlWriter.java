@@ -9,13 +9,13 @@ import com.github.t1.deployer.app.Loggers;
 import com.github.t1.deployer.model.LoggerConfig;
 
 @Provider
-public class LoggerListHtmlWriter extends AbstractListHtmlWriter<LoggerConfig> {
+public class LoggerListHtmlWriter extends AbstractListHtmlBodyWriter<LoggerConfig> {
     public LoggerListHtmlWriter() {
         super(LoggerConfig.class, LOGGERS);
     }
 
     @Override
-    protected void body() {
+    public void body() {
         append("<table>\n");
         in();
         sort(target);

@@ -10,7 +10,7 @@ import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.tools.User;
 
 @Provider
-public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment> {
+public class DeploymentListHtmlWriter extends AbstractListHtmlBodyWriter<Deployment> {
     public DeploymentListHtmlWriter() {
         super(Deployment.class, DEPLOYMENTS);
     }
@@ -18,7 +18,7 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlWriter<Deployment>
     User user = User.getCurrent();
 
     @Override
-    protected void body() {
+    public void body() {
         append("    <table>\n");
         sort(target);
         for (Deployment deployment : target) {

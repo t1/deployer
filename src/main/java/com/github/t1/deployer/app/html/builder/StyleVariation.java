@@ -1,4 +1,4 @@
-package com.github.t1.deployer.app.html;
+package com.github.t1.deployer.app.html.builder;
 
 public enum StyleVariation {
     primary,

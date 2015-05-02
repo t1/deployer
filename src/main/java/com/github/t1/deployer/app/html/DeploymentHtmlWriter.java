@@ -24,17 +24,17 @@ public class DeploymentHtmlWriter extends AbstractHtmlBodyWriter<Deployment> {
     }
 
     @Override
-    protected String bodyTitle() {
+    public String bodyTitle() {
         return isNew() ? "Add Deployment" : target.getContextRoot().toString();
     }
 
     @Override
-    protected String title() {
+    public String title() {
         return isNew() ? "Add Deployment" : "Deployment: " + target.getContextRoot();
     }
 
     @Override
-    protected void body() {
+    public void body() {
         if (isNew()) {
             newForm();
         } else {

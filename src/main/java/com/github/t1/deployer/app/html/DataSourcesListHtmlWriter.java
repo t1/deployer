@@ -9,13 +9,13 @@ import com.github.t1.deployer.app.DataSources;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
-public class DataSourcesListHtmlWriter extends AbstractListHtmlWriter<DataSourceConfig> {
+public class DataSourcesListHtmlWriter extends AbstractListHtmlBodyWriter<DataSourceConfig> {
     public DataSourcesListHtmlWriter() {
         super(DataSourceConfig.class, DATA_SOURCES);
     }
 
     @Override
-    protected void body() {
+    public void body() {
         append("<table>\n");
         in();
         sort(target);

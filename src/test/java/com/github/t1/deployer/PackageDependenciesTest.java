@@ -11,6 +11,7 @@ import org.junit.*;
 import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.app.file.DeploymentListFile;
 import com.github.t1.deployer.app.html.Index;
+import com.github.t1.deployer.app.html.builder.HtmlBuilder;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
@@ -54,6 +55,7 @@ public class PackageDependenciesTest {
     private void setupDependencies() {
         Package app = packageOf(Deployments.class);
         Package html = packageOf(Index.class);
+        Package builder = packageOf(HtmlBuilder.class);
         Package file = packageOf(DeploymentListFile.class);
         Package container = packageOf(LoggerContainer.class);
         Package model = packageOf(Deployment.class);
@@ -63,7 +65,7 @@ public class PackageDependenciesTest {
         Package credentials = packageOf(org.apache.http.auth.Credentials.class);
 
         app.dependsUpon(model, container, repository, tools, file);
-        html.dependsUpon(model, repository, app, tools); // app for resource paths
+        html.dependsUpon(model, repository, app, tools, builder); // app for resource paths
         file.dependsUpon(model, repository, container, tools);
 
         container.dependsUpon(

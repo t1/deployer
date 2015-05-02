@@ -2,13 +2,16 @@ package com.github.t1.deployer.app.html;
 
 import static com.github.t1.log.LogLevel.*;
 
+import com.github.t1.deployer.app.html.builder.BaseBuilder;
 import com.github.t1.log.LogLevel;
 
-public class LogLevelSelectForm extends AbstractHtmlWriter<LogLevel> {
+public class LogLevelSelectForm extends BaseBuilder {
     private boolean autoSubmit = false;
+    private final LogLevel level;
 
-    public LogLevelSelectForm(LogLevel level, HtmlBuilder container) {
-        super(container, level);
+    public LogLevelSelectForm(LogLevel level, BaseBuilder container) {
+        super(container);
+        this.level = level;
     }
 
     public LogLevelSelectForm autoSubmit() {
@@ -32,7 +35,7 @@ public class LogLevelSelectForm extends AbstractHtmlWriter<LogLevel> {
     }
 
     private String selected(LogLevel level) {
-        return (level == target) ? " selected" : "";
+        return (this.level == level) ? " selected" : "";
     }
 
     @Override
