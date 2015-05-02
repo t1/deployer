@@ -16,32 +16,32 @@ public class LoggerHtmlWriter extends AbstractHtmlBodyWriter<LoggerConfig> {
     }
 
     private boolean isNew() {
-        return NEW_LOGGER.equals(target.getCategory());
+        return NEW_LOGGER.equals(getTarget().getCategory());
     }
 
     @Override
     public String bodyTitle() {
-        return isNew() ? "Add Logger" : target.getCategory();
+        return isNew() ? "Add Logger" : getTarget().getCategory();
     }
 
     @Override
     public String title() {
-        return isNew() ? "Add Logger" : "Logger: " + target.getCategory();
+        return isNew() ? "Add Logger" : "Logger: " + getTarget().getCategory();
     }
 
     @Override
     public void body() {
-        indent().href("&lt", Loggers.base(uriInfo)).nl();
+        indent().href("&lt", Loggers.base(getUriInfo())).nl();
         if (isNew()) {
             append("<p>Enter the name of a new logger to configure</p>\n");
-            form().action(Loggers.base(uriInfo)) //
+            form().action(Loggers.base(getUriInfo())) //
                     .input("Category", "category") //
-                    .closing(new LogLevelSelectForm(target.getLevel(), this)) //
+                    .closing(new LogLevelSelectForm(getTarget().getLevel(), this)) //
                     .submit("Add") //
                     .close();
         } else {
-            form().action(Loggers.path(uriInfo, target)) //
-                    .closing(new LogLevelSelectForm(target.getLevel(), this).autoSubmit()) //
+            form().action(Loggers.path(getUriInfo(), getTarget())) //
+                    .closing(new LogLevelSelectForm(getTarget().getLevel(), this).autoSubmit()) //
                     .noscriptSubmit("Update") //
                     .close();
             delete();
@@ -49,7 +49,7 @@ public class LoggerHtmlWriter extends AbstractHtmlBodyWriter<LoggerConfig> {
     }
 
     private void delete() {
-        form().action(Loggers.path(uriInfo, target)) //
+        form().action(Loggers.path(getUriInfo(), getTarget())) //
                 .hiddenInput("action", "delete") //
                 .submit("Delete", danger) //
                 .close();

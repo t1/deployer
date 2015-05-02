@@ -6,8 +6,8 @@ import java.net.URI;
 
 
 public class FormBuilder extends BaseBuilder {
-    public FormBuilder(BaseBuilder htmlWriter) {
-        super(htmlWriter);
+    public FormBuilder(BaseBuilder container) {
+        super(container);
     }
 
     public FormBuilder action(URI uri) {
@@ -26,16 +26,18 @@ public class FormBuilder extends BaseBuilder {
 
     public FormBuilder input(String label, String id, Object value, String placeholder) {
         append("<label for=\"").append(id).append("\">").append(label).append("</label>\n");
-        append("<input class=\"form-control\" name=\"").append(id).append(" id=\"").append(id);
+        TagBuilder input = tag("input").classes("form-control").name(id).id(id);
         if (value != null)
-            out.append("\" value=\"").append(value);
+            input.attribute("value", value);
         if (placeholder != null)
-            out.append("\" placeholder=\"").append(placeholder);
-        out.append("\" required/>\n");
+            input.attribute("placeholder", placeholder);
+        input.attribute("required", null);
+        input.close();
+        append(input).append("\n");
         return this;
     }
 
-    public FormBuilder hiddenInput(String name, String value) {
+    public FormBuilder hiddenInput(String name, Object value) {
         append("<input type=\"hidden\" name=\"").append(name).append("\" value=\"").append(value).append("\"/>\n");
         return this;
     }
@@ -80,6 +82,7 @@ public class FormBuilder extends BaseBuilder {
         return super.close();
     }
 
+    @Override
     public FormBuilder closing(BaseBuilder sub) {
         sub.close();
         return this;

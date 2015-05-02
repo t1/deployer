@@ -11,6 +11,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.MessageBodyWriter;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.app.html.builder.*;
@@ -22,7 +23,8 @@ public abstract class AbstractHtmlBodyWriter<T> extends TargetHtmlBuilder<T> imp
     private final Navigation activeNavigation;
 
     @Context
-    public UriInfo uriInfo;
+    @Getter
+    private UriInfo uriInfo;
 
     public AbstractHtmlBodyWriter(Class<T> type, Navigation activeNavigation) {
         super(null);
@@ -58,12 +60,12 @@ public abstract class AbstractHtmlBodyWriter<T> extends TargetHtmlBuilder<T> imp
     public void writeTo(T target, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         log.debug("write as html: {} for {}", target, uriInfo.getRequestUri());
-        this.target = target;
-        this.out.setLength(0);
+        this.setTarget(target);
+        resetOutput();
 
         html();
 
-        new OutputStreamWriter(entityStream).append(out.toString()).flush();
+        new OutputStreamWriter(entityStream).append(toString()).flush();
     }
 
     @Override
@@ -74,12 +76,12 @@ public abstract class AbstractHtmlBodyWriter<T> extends TargetHtmlBuilder<T> imp
     @Override
     public void navigation() {
         for (Navigation navigation : Navigation.values()) {
-            append("<li ");
+            TagBuilder li = li();
             if (navigation == activeNavigation)
-                out.append("class=\"active\"");
-            out.append(">");
-            href(navigation.title(), navigation.href(uriInfo));
-            out.append("</li>\n");
+                li.classes("active");
+            URI uri = navigation.href(uriInfo);
+            li.body(href(uri).body(navigation.title()));
+            append(li).append("\n");
         }
     }
 

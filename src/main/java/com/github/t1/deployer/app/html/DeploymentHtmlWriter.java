@@ -20,17 +20,17 @@ public class DeploymentHtmlWriter extends AbstractHtmlBodyWriter<Deployment> {
     }
 
     private boolean isNew() {
-        return NULL_DEPLOYMENT.equals(target);
+        return NULL_DEPLOYMENT.equals(getTarget());
     }
 
     @Override
     public String bodyTitle() {
-        return isNew() ? "Add Deployment" : target.getContextRoot().toString();
+        return isNew() ? "Add Deployment" : getTarget().getContextRoot().toString();
     }
 
     @Override
     public String title() {
-        return isNew() ? "Add Deployment" : "Deployment: " + target.getContextRoot();
+        return isNew() ? "Add Deployment" : "Deployment: " + getTarget().getContextRoot();
     }
 
     @Override
@@ -45,42 +45,44 @@ public class DeploymentHtmlWriter extends AbstractHtmlBodyWriter<Deployment> {
 
     private void newForm() {
         append("<p>Enter the checksum of a new artifact to deploy</p>");
-        append("<form method=\"POST\" action=\"").append(Deployments.base(uriInfo)).append("\">\n");
-        append("  <input type=\"hidden\" name=\"action\" value=\"deploy\">\n");
-        append("  <input name=\"checkSum\">\n");
-        append("  <input type=\"submit\" value=\"Deploy\">\n");
-        append("</form>");
+        form().action(Deployments.base(getUriInfo())) //
+                .hiddenInput("action", "deploy") //
+                .input("Checksum", "checkSum") //
+                .submit("Deploy") //
+                .close();
     }
 
     private void info() {
-        href("&lt;", Deployments.pathAll(uriInfo));
+        href("&lt;", Deployments.pathAll(getUriInfo()));
         append("<br/><br/>\n");
-        append("    Name: ").append(target.getName()).append("<br/>\n");
-        append("    Context-Root: ").append(target.getContextRoot()).append("<br/>\n");
-        append("    Version: ").append(target.getVersion()).append("<br/>\n");
-        append("    CheckSum: ").append(target.getCheckSum()).append("<br/>\n");
-        append(actionForm("Undeploy", "undeploy", target)).append("<br/>\n");
+        append("    Name: ").append(getTarget().getName()).append("<br/>\n");
+        append("    Context-Root: ").append(getTarget().getContextRoot()).append("<br/>\n");
+        append("    Version: ").append(getTarget().getVersion()).append("<br/>\n");
+        append("    CheckSum: ").append(getTarget().getCheckSum()).append("<br/>\n");
+        actionForm("Undeploy", "undeploy", getTarget());
         append("<br/><br/>\n");
     }
 
     private void availableVersions() {
         append("    <h2>Available Versions:</h2>");
         append("    <table>");
-        for (Deployment deployment : repository.availableVersionsFor(target.getCheckSum())) {
+        for (Deployment deployment : repository.availableVersionsFor(getTarget().getCheckSum())) {
             append("        <tr>");
             append("<td>").append(deployment.getVersion()).append("</td>");
-            append("<td>").append(actionForm("Deploy", "redeploy", deployment)).append("</td>");
+            append("<td>");
+            actionForm("Deploy", "redeploy", deployment);
+            rawAppend("</td>");
             append("</tr>\n");
         }
         append("    </table>\n");
     }
 
-    private String actionForm(String title, String action, Deployment deployment) {
-        return "<form method=\"post\" action=\"" + Deployments.path(uriInfo, deployment.getContextRoot()) + "\">\n" //
-                + "  <input type=\"hidden\" name=\"contextRoot\" value=\"" + deployment.getContextRoot() + "\">\n" //
-                + "  <input type=\"hidden\" name=\"checkSum\" value=\"" + deployment.getCheckSum() + "\">\n" //
-                + "  <input type=\"hidden\" name=\"action\" value=\"" + action + "\">\n" //
-                + "  <input type=\"submit\" value=\"" + title + "\">\n" //
-                + "</form>";
+    private void actionForm(String title, String action, Deployment deployment) {
+        form().action(Deployments.path(getUriInfo(), deployment.getContextRoot())) //
+                .hiddenInput("contextRoot", deployment.getContextRoot()) //
+                .hiddenInput("checkSum", deployment.getCheckSum()) //
+                .hiddenInput("action", action) //
+                .submit(title) //
+                .close();
     }
 }

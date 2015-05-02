@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
+import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static java.util.Collections.*;
 
 import javax.ws.rs.ext.Provider;
@@ -18,32 +19,32 @@ public class LoggerListHtmlWriter extends AbstractListHtmlBodyWriter<LoggerConfi
     public void body() {
         append("<table>\n");
         in();
-        sort(target);
-        for (LoggerConfig logger : target) {
+        sort(getTarget());
+        for (LoggerConfig logger : getTarget()) {
             append("<tr><td>");
-            href(logger.getCategory(), Loggers.path(uriInfo, logger));
-            out.append("</td><td>\n");
+            href(logger.getCategory(), Loggers.path(getUriInfo(), logger));
+            rawAppend("</td><td>\n");
             in();
             buttons(logger);
             out();
             append("</td></tr>\n");
         }
         append("<tr><td colspan='3'>");
-        href("+", Loggers.newLogger(uriInfo));
-        out.append("</td></tr>\n");
+        href("+", Loggers.newLogger(getUriInfo()));
+        rawAppend("</td></tr>\n");
         out();
         append("</table>\n");
     }
 
     private void buttons(LoggerConfig logger) {
-        form().action(Loggers.path(uriInfo, logger)) //
+        form().action(Loggers.path(getUriInfo(), logger)) //
                 .closing(new LogLevelSelectForm(logger.getLevel(), this).autoSubmit()) //
                 .noscriptSubmit("Update") //
                 .close();
         append("</td><td>");
-        append("<form method=\"POST\" action=\"" + Loggers.path(uriInfo, logger) + "\">\n");
-        append("  <input type=\"hidden\" name=\"action\" value=\"delete\">\n");
-        append("  <input type=\"submit\" value=\"Delete\">\n");
-        append("</form>\n");
+        form().action(Loggers.path(getUriInfo(), logger)) //
+                .hiddenInput("action", "delete") //
+                .submitIcon("remove", danger) //
+                .close();
     }
 }

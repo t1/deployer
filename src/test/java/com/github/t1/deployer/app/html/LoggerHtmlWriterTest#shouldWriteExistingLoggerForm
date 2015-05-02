@@ -17,9 +17,9 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li ><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
+            <li><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
             <li class="active"><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
-            <li ><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
+            <li><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
           </ul>
         </div>
       </div>

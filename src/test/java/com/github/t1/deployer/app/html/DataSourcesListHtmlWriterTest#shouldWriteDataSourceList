@@ -17,8 +17,8 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li ><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
-            <li ><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
+            <li><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
+            <li><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
             <li class="active"><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
           </ul>
         </div>
@@ -31,14 +31,26 @@
       <table>
         <tr><td><a href="http://localhost:8080/deployer/data-sources/bar">bar</a></td><td>
           <form method="POST" action="http://localhost:8080/deployer/data-sources/bar">
-            <input type="hidden" name="action" value="delete">
-            <input type="submit" value="Delete">
+            <input type="hidden" name="action" value="delete"/>
+            <div class="btn-group btn-group-justified" role="group">
+              <div class="btn-group" role="group">
+                <button class="btn btn-lg btn-danger btn-block" type="submit">
+                  <span class="glyphicon glyphicon-remove"></span>
+                </button>
+              </div>
+            </div>
           </form>
         </td></tr>
         <tr><td><a href="http://localhost:8080/deployer/data-sources/foo">foo</a></td><td>
           <form method="POST" action="http://localhost:8080/deployer/data-sources/foo">
-            <input type="hidden" name="action" value="delete">
-            <input type="submit" value="Delete">
+            <input type="hidden" name="action" value="delete"/>
+            <div class="btn-group btn-group-justified" role="group">
+              <div class="btn-group" role="group">
+                <button class="btn btn-lg btn-danger btn-block" type="submit">
+                  <span class="glyphicon glyphicon-remove"></span>
+                </button>
+              </div>
+            </div>
           </form>
         </td></tr>
         <tr><td colspan='2'><a href="http://localhost:8080/deployer/data-sources/!">+</a></td></tr>

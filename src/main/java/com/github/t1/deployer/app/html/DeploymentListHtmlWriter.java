@@ -20,12 +20,12 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlBodyWriter<Deploym
     @Override
     public void body() {
         append("    <table>\n");
-        sort(target);
-        for (Deployment deployment : target) {
+        sort(getTarget());
+        for (Deployment deployment : getTarget()) {
             append("        <tr>");
 
             append("<td>");
-            href(deployment.getContextRoot().getValue(), Deployments.path(uriInfo, deployment.getContextRoot()));
+            href(deployment.getContextRoot().getValue(), Deployments.path(getUriInfo(), deployment.getContextRoot()));
             append("</td>");
 
             append("<td>").append(deployment.getName()).append("</td>");
@@ -37,7 +37,7 @@ public class DeploymentListHtmlWriter extends AbstractListHtmlBodyWriter<Deploym
             append("</tr>\n");
         }
         append("    <tr><td colspan='3'>");
-        href("+", Deployments.newDeployment(uriInfo));
+        href("+", Deployments.newDeployment(getUriInfo()));
         append("</td></tr>\n");
         append("    </table>\n");
         append("<br/><br/>\n");

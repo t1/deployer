@@ -16,34 +16,34 @@ public class DataSourceHtmlWriter extends AbstractHtmlBodyWriter<DataSourceConfi
     }
 
     private boolean isNew() {
-        return NEW_DATA_SOURCE.equals(target.getName());
+        return NEW_DATA_SOURCE.equals(getTarget().getName());
     }
 
     @Override
     public String bodyTitle() {
-        return isNew() ? "Add Data-Source" : target.getName();
+        return isNew() ? "Add Data-Source" : getTarget().getName();
     }
 
     @Override
     public String title() {
-        return isNew() ? "Add Data-Source" : "Data-Source: " + target.getName();
+        return isNew() ? "Add Data-Source" : "Data-Source: " + getTarget().getName();
     }
 
     @Override
     public void body() {
-        indent().href("&lt", DataSources.base(uriInfo)).nl();
+        indent().href("&lt", DataSources.base(getUriInfo())).nl();
 
         if (isNew())
             append("<p>Enter the name of a new data source to configure</p>\n");
         else
-            form().action(DataSources.path(uriInfo, target)) //
+            form().action(DataSources.path(getUriInfo(), getTarget())) //
                     .hiddenInput("action", "delete") //
                     .submitIcon("remove", danger) //
                     .close();
 
-        form().action(isNew() ? DataSources.base(uriInfo) : DataSources.path(uriInfo, target)) //
-                .input("Name", "name", isNew() ? null : target.getName()) //
-                .input("URI", "uri", target.getUri()) //
+        form().action(isNew() ? DataSources.base(getUriInfo()) : DataSources.path(getUriInfo(), getTarget())) //
+                .input("Name", "name", isNew() ? null : getTarget().getName()) //
+                .input("URI", "uri", getTarget().getUri()) //
                 .submit(isNew() ? "Add" : "Update") //
                 .close();
     }
