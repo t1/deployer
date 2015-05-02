@@ -31,7 +31,8 @@
       <a href="http://localhost:8080/deployer/loggers">&lt</a>
       <p>Enter the name of a new logger to configure</p>
       <form method="POST" action="http://localhost:8080/deployer/loggers">
-        <input name="category"/>
+        <label for="category">Category</label>
+        <input class="form-control" name="category id="category" required/>
         <select name="level">
           <option>ALL</option>
           <option>TRACE</option>
@@ -41,7 +42,11 @@
           <option>ERROR</option>
           <option>OFF</option>
         </select>
-        <input type="submit" value="Add">
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Add</button>
+          </div>
+        </div>
       </form>
 
       <script src="http://localhost:8080/deployer/jquery/jquery.js"/>

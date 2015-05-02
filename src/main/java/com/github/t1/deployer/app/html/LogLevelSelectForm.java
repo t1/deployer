@@ -19,7 +19,8 @@ public class LogLevelSelectForm extends BaseBuilder {
         return this;
     }
 
-    public void write() {
+    @Override
+    public BaseBuilder close() {
         append("<select name=\"level\"");
         if (autoSubmit)
             out.append(" onchange=\"this.form.submit()\"");
@@ -28,6 +29,7 @@ public class LogLevelSelectForm extends BaseBuilder {
             if (level != _DERIVED_)
                 levelOption(level);
         append("</select>\n");
+        return super.close();
     }
 
     private void levelOption(LogLevel level) {

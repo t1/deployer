@@ -34,14 +34,16 @@ public class LoggerHtmlWriter extends AbstractHtmlBodyWriter<LoggerConfig> {
         indent().href("&lt", Loggers.base(uriInfo)).nl();
         if (isNew()) {
             append("<p>Enter the name of a new logger to configure</p>\n");
-            startForm(Loggers.base(uriInfo));
-            append("<input name=\"category\"/>\n");
-            new LogLevelSelectForm(target.getLevel(), this).write();
-            endForm("Add", false);
+            form().action(Loggers.base(uriInfo)) //
+                    .input("Category", "category") //
+                    .closing(new LogLevelSelectForm(target.getLevel(), this)) //
+                    .submit("Add") //
+                    .close();
         } else {
-            startForm(Loggers.path(uriInfo, target));
-            new LogLevelSelectForm(target.getLevel(), this).autoSubmit().write();
-            endForm("Update", true);
+            form().action(Loggers.path(uriInfo, target)) //
+                    .closing(new LogLevelSelectForm(target.getLevel(), this).autoSubmit()) //
+                    .noscriptSubmit("Update") //
+                    .close();
             delete();
         }
     }

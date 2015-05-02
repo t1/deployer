@@ -80,26 +80,6 @@ public abstract class BaseBuilder {
         return new FormBuilder(this);
     }
 
-    /** use form() */
-    @Deprecated
-    public BaseBuilder startForm(URI uri) {
-        append("<form method=\"POST\" action=\"").append(uri).append("\">\n");
-        in();
-        return this;
-    }
-
-    /** use form() */
-    @Deprecated
-    public BaseBuilder endForm(String action, boolean autoHide) {
-        if (autoHide)
-            append("<noscript>\n  ");
-        append("<input type=\"submit\" value=\"").append(action).append("\">\n");
-        if (autoHide)
-            append("</noscript>\n");
-        out().append("</form>\n");
-        return this;
-    }
-
     public BaseBuilder close() {
         return container;
     }

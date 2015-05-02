@@ -79,4 +79,9 @@ public class FormBuilder extends BaseBuilder {
         append("</form>\n");
         return super.close();
     }
+
+    public FormBuilder closing(BaseBuilder sub) {
+        sub.close();
+        return this;
+    }
 }

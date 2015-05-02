@@ -36,9 +36,10 @@ public class LoggerListHtmlWriter extends AbstractListHtmlBodyWriter<LoggerConfi
     }
 
     private void buttons(LoggerConfig logger) {
-        startForm(Loggers.path(uriInfo, logger));
-        new LogLevelSelectForm(logger.getLevel(), this).autoSubmit().write();
-        endForm("Update", true);
+        form().action(Loggers.path(uriInfo, logger)) //
+                .closing(new LogLevelSelectForm(logger.getLevel(), this).autoSubmit()) //
+                .noscriptSubmit("Update") //
+                .close();
         append("</td><td>");
         append("<form method=\"POST\" action=\"" + Loggers.path(uriInfo, logger) + "\">\n");
         append("  <input type=\"hidden\" name=\"action\" value=\"delete\">\n");
