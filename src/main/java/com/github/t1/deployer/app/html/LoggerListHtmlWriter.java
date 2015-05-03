@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
+import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static java.util.Collections.*;
 
@@ -20,31 +21,35 @@ public class LoggerListHtmlWriter extends AbstractListHtmlBodyWriter<LoggerConfi
         append("<table>\n");
         in();
         sort(getTarget());
+        int i = 0;
         for (LoggerConfig logger : getTarget()) {
-            append("<tr><td>");
-            href(logger.getCategory(), Loggers.path(getUriInfo(), logger));
-            rawAppend("</td><td>\n");
+            append("<tr><td>") //
+                    .append(href(logger.getCategory(), Loggers.path(getUriInfo(), logger))) //
+                    .append("</td><td>\n");
             in();
-            buttons(logger);
+            buttons(logger, i++);
             out();
             append("</td></tr>\n");
         }
-        append("<tr><td colspan='3'>");
-        href("+", Loggers.newLogger(getUriInfo()));
-        rawAppend("</td></tr>\n");
+        append("<tr><td colspan='3'>") //
+                .append(href("+", Loggers.newLogger(getUriInfo()))) //
+                .append("</td></tr>\n");
         out();
         append("</table>\n");
     }
 
-    private void buttons(LoggerConfig logger) {
+    private void buttons(LoggerConfig logger, int i) {
         form().action(Loggers.path(getUriInfo(), logger)) //
-                .closing(new LogLevelSelectForm(logger.getLevel(), this).autoSubmit()) //
+                .enclosing(new LogLevelSelect(logger.getLevel()).autoSubmit()) //
                 .noscriptSubmit("Update") //
                 .close();
-        append("</td><td>");
-        form().action(Loggers.path(getUriInfo(), logger)) //
+        append("</td><td>\n");
+        form().id("delete-" + i) //
+                .action(Loggers.path(getUriInfo(), logger)) //
                 .hiddenInput("action", "delete") //
-                .submitIcon("remove", danger) //
+                .close();
+        buttonGroup() //
+                .button().size(XS).style(danger).form("delete-" + i).type("submit").icon("remove").close() //
                 .close();
     }
 }

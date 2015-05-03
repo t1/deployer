@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
+import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.model.LoggerConfig.*;
 
@@ -31,27 +32,30 @@ public class LoggerHtmlWriter extends AbstractHtmlBodyWriter<LoggerConfig> {
 
     @Override
     public void body() {
-        indent().href("&lt", Loggers.base(getUriInfo())).nl();
+        append(href("&lt", Loggers.base(getUriInfo()))).append("\n");
         if (isNew()) {
             append("<p>Enter the name of a new logger to configure</p>\n");
-            form().action(Loggers.base(getUriInfo())) //
+            form().id("main") //
+                    .action(Loggers.base(getUriInfo())) //
                     .input("Category", "category") //
-                    .closing(new LogLevelSelectForm(getTarget().getLevel(), this)) //
-                    .submit("Add") //
+                    .enclosing(new LogLevelSelect(getTarget().getLevel())) //
+                    .close();
+            buttonGroup().justified() //
+                    .button().size(L).style(primary).form("main").type("submit").label("Add").close() //
                     .close();
         } else {
-            form().action(Loggers.path(getUriInfo(), getTarget())) //
-                    .closing(new LogLevelSelectForm(getTarget().getLevel(), this).autoSubmit()) //
+            form().id("main") //
+                    .action(Loggers.path(getUriInfo(), getTarget())) //
+                    .enclosing(new LogLevelSelect(getTarget().getLevel()).autoSubmit()) //
                     .noscriptSubmit("Update") //
                     .close();
-            delete();
+            form().id("delete") //
+                    .action(Loggers.path(getUriInfo(), getTarget())) //
+                    .hiddenInput("action", "delete") //
+                    .close();
+            buttonGroup() //
+                    .button().size(S).style(danger).form("delete").type("submit").icon("remove").close() //
+                    .close();
         }
-    }
-
-    private void delete() {
-        form().action(Loggers.path(getUriInfo(), getTarget())) //
-                .hiddenInput("action", "delete") //
-                .submit("Delete", danger) //
-                .close();
     }
 }

@@ -13,8 +13,8 @@ import com.github.t1.deployer.model.DataSourceConfig;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataSourceHtmlWriterTest extends AbstractHtmlWriterTest<DataSourceConfig> {
-    {
-        super.writer = new DataSourceHtmlWriter();
+    public DataSourceHtmlWriterTest() {
+        super(new DataSourceHtmlWriter());
     }
 
     @Test
@@ -34,6 +34,4 @@ public class DataSourceHtmlWriterTest extends AbstractHtmlWriterTest<DataSourceC
 
         assertEquals(readFile(), entity);
     }
-
-    // TODO group buttons
 }

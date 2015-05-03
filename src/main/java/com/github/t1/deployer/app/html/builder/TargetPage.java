@@ -2,22 +2,22 @@ package com.github.t1.deployer.app.html.builder;
 
 import lombok.*;
 
-public abstract class TargetHtmlBuilder<T> extends HtmlBuilder {
+public abstract class TargetPage<T> extends Page {
     @Getter
     @Setter
     private T target;
 
     /** @deprecated just required by weld */
     @Deprecated
-    public TargetHtmlBuilder() {
+    public TargetPage() {
         this.target = null;
     }
 
-    public TargetHtmlBuilder(T target) {
+    public TargetPage(T target) {
         this.target = target;
     }
 
-    public TargetHtmlBuilder(BaseBuilder container, T target) {
+    public TargetPage(HtmlBuilder container, T target) {
         super(container);
         this.target = target;
     }

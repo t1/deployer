@@ -2,25 +2,32 @@ package com.github.t1.deployer.app.html.builder;
 
 import java.util.*;
 
-public class TagBuilder extends BaseBuilder {
+public class Tag extends HtmlBuilder {
     private final String tagName;
     private Map<String, String> attributes;
     private boolean headerClosed = false;
 
-    public TagBuilder(String tagName) {
+    public Tag(String tagName) {
         super(); // explicitly no container
         this.tagName = tagName;
     }
 
-    public TagBuilder attribute(String name, Object value) {
+    public String attribute(String name) {
+        return (attributes == null) ? null : attributes.get(name);
+    }
+
+    public Tag attribute(String name, Object value) {
         if (attributes == null)
             attributes = new LinkedHashMap<>();
         attributes.put(name, value == null ? null : value.toString());
         return this;
     }
 
-    public TagBuilder classes(String... strings) {
+    public Tag classes(String... strings) {
         StringBuilder out = new StringBuilder();
+        String existingClasses = attribute("class");
+        if (existingClasses != null)
+            out.append(existingClasses);
         for (String string : strings) {
             if (out.length() > 0)
                 out.append(" ");
@@ -30,22 +37,22 @@ public class TagBuilder extends BaseBuilder {
         return this;
     }
 
-    public TagBuilder name(String name) {
+    public Tag name(String name) {
         return attribute("name", name);
     }
 
-    public TagBuilder id(String id) {
+    public Tag id(String id) {
         return attribute("id", id);
     }
 
     @Override
-    public BaseBuilder close() {
+    public HtmlBuilder close() {
         closeHeader();
         rawAppend("/>");
-        return this;
+        return super.close();
     }
 
-    public Object body(Object body) {
+    public Tag enclosing(Object body) {
         closeHeader();
         rawAppend(">");
         append(body);
@@ -65,5 +72,10 @@ public class TagBuilder extends BaseBuilder {
                     rawAppend("=\"").append(entry.getValue()).append("\"");
             }
         }
+    }
+
+    public String header() {
+        closeHeader();
+        return toString() + ">";
     }
 }

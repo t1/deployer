@@ -30,28 +30,24 @@
 
       <table>
         <tr><td><a href="http://localhost:8080/deployer/data-sources/bar">bar</a></td><td>
-          <form method="POST" action="http://localhost:8080/deployer/data-sources/bar">
+          <form id="delete-0" method="POST" action="http://localhost:8080/deployer/data-sources/bar">
             <input type="hidden" name="action" value="delete"/>
-            <div class="btn-group btn-group-justified" role="group">
-              <div class="btn-group" role="group">
-                <button class="btn btn-lg btn-danger btn-block" type="submit">
-                  <span class="glyphicon glyphicon-remove"></span>
-                </button>
-              </div>
-            </div>
           </form>
+          <div role="group" class="btn-group">
+            <button class="btn btn-block btn-xs btn-danger" form="delete-0" type="submit">
+              <span class="glyphicon glyphicon-remove"/>
+            </button>
+          </div>
         </td></tr>
         <tr><td><a href="http://localhost:8080/deployer/data-sources/foo">foo</a></td><td>
-          <form method="POST" action="http://localhost:8080/deployer/data-sources/foo">
+          <form id="delete-1" method="POST" action="http://localhost:8080/deployer/data-sources/foo">
             <input type="hidden" name="action" value="delete"/>
-            <div class="btn-group btn-group-justified" role="group">
-              <div class="btn-group" role="group">
-                <button class="btn btn-lg btn-danger btn-block" type="submit">
-                  <span class="glyphicon glyphicon-remove"></span>
-                </button>
-              </div>
-            </div>
           </form>
+          <div role="group" class="btn-group">
+            <button class="btn btn-block btn-xs btn-danger" form="delete-1" type="submit">
+              <span class="glyphicon glyphicon-remove"/>
+            </button>
+          </div>
         </td></tr>
         <tr><td colspan='2'><a href="http://localhost:8080/deployer/data-sources/!">+</a></td></tr>
       </table>

@@ -13,8 +13,8 @@ import com.github.t1.deployer.model.DataSourceConfig;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataSourcesListHtmlWriterTest extends AbstractHtmlWriterTest<List<DataSourceConfig>> {
-    {
-        super.writer = new DataSourcesListHtmlWriter();
+    public DataSourcesListHtmlWriterTest() {
+        super(new DataSourcesListHtmlWriter());
     }
 
     @Test

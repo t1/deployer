@@ -18,7 +18,7 @@ import com.github.t1.deployer.app.html.builder.*;
 
 @Slf4j
 @Produces(TEXT_HTML)
-public abstract class AbstractHtmlBodyWriter<T> extends TargetHtmlBuilder<T> implements MessageBodyWriter<T> {
+public abstract class AbstractHtmlBodyWriter<T> extends TargetPage<T> implements MessageBodyWriter<T> {
     private final Class<T> type;
     private final Navigation activeNavigation;
 
@@ -32,7 +32,7 @@ public abstract class AbstractHtmlBodyWriter<T> extends TargetHtmlBuilder<T> imp
         this.activeNavigation = activeNavigation;
     }
 
-    public AbstractHtmlBodyWriter(BaseBuilder container, Navigation activeNavigation, Class<T> type, T target) {
+    public AbstractHtmlBodyWriter(HtmlBuilder container, Navigation activeNavigation, Class<T> type, T target) {
         super(container, target);
         this.type = type;
         this.activeNavigation = activeNavigation;
@@ -76,11 +76,11 @@ public abstract class AbstractHtmlBodyWriter<T> extends TargetHtmlBuilder<T> imp
     @Override
     public void navigation() {
         for (Navigation navigation : Navigation.values()) {
-            TagBuilder li = li();
+            Tag li = li();
             if (navigation == activeNavigation)
                 li.classes("active");
             URI uri = navigation.href(uriInfo);
-            li.body(href(uri).body(navigation.title()));
+            li.enclosing(href(uri).enclosing(navigation.title()));
             append(li).append("\n");
         }
     }

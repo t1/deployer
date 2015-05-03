@@ -14,8 +14,8 @@ import com.github.t1.deployer.model.LoggerConfig;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoggerListHtmlWriterTest extends AbstractHtmlWriterTest<List<LoggerConfig>> {
-    {
-        super.writer = new LoggerListHtmlWriter();
+    public LoggerListHtmlWriterTest() {
+        super(new LoggerListHtmlWriter());
     }
 
     @Test

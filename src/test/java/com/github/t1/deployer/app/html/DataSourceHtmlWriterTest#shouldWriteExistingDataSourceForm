@@ -29,27 +29,25 @@
       <h1>foo</h1>
 
       <a href="http://localhost:8080/deployer/data-sources">&lt</a>
-      <form method="POST" action="http://localhost:8080/deployer/data-sources/foo">
+      <form id="delete" method="POST" action="http://localhost:8080/deployer/data-sources/foo">
         <input type="hidden" name="action" value="delete"/>
-        <div class="btn-group btn-group-justified" role="group">
-          <div class="btn-group" role="group">
-            <button class="btn btn-lg btn-danger btn-block" type="submit">
-              <span class="glyphicon glyphicon-remove"></span>
-            </button>
-          </div>
-        </div>
       </form>
-      <form method="POST" action="http://localhost:8080/deployer/data-sources/foo">
+      <div role="group" class="btn-group">
+        <button class="btn btn-block btn-sm btn-danger" form="delete" type="submit">
+          <span class="glyphicon glyphicon-remove"/>
+        </button>
+      </div>
+      <form id="main" method="POST" action="http://localhost:8080/deployer/data-sources/foo">
         <label for="name">Name</label>
         <input class="form-control" name="name" id="name" value="foo" required/>
         <label for="uri">URI</label>
         <input class="form-control" name="uri" id="uri" value="foo-uri" required/>
-        <div class="btn-group btn-group-justified" role="group">
-          <div class="btn-group" role="group">
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Update</button>
-          </div>
-        </div>
       </form>
+      <div role="group" class="btn-group btn-group-justified">
+        <div role="group" class="btn-group">
+          <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Update</button>
+        </div>
+      </div>
 
       <script src="http://localhost:8080/deployer/jquery/jquery.js"/>
       <script src="http://localhost:8080/deployer/bootstrap/js/bootstrap.js"/>

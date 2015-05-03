@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
+import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.model.DataSourceConfig.*;
 
@@ -31,20 +32,27 @@ public class DataSourceHtmlWriter extends AbstractHtmlBodyWriter<DataSourceConfi
 
     @Override
     public void body() {
-        indent().href("&lt", DataSources.base(getUriInfo())).nl();
+        append(href("&lt", DataSources.base(getUriInfo()))).append("\n");
 
-        if (isNew())
+        if (isNew()) {
             append("<p>Enter the name of a new data source to configure</p>\n");
-        else
-            form().action(DataSources.path(getUriInfo(), getTarget())) //
+        } else {
+            form().id("delete") //
+                    .action(DataSources.path(getUriInfo(), getTarget())) //
                     .hiddenInput("action", "delete") //
-                    .submitIcon("remove", danger) //
                     .close();
+            buttonGroup() //
+                    .button().size(S).style(danger).form("delete").type("submit").icon("remove").close() //
+                    .close();
+        }
 
-        form().action(isNew() ? DataSources.base(getUriInfo()) : DataSources.path(getUriInfo(), getTarget())) //
+        form().id("main") //
+                .action(isNew() ? DataSources.base(getUriInfo()) : DataSources.path(getUriInfo(), getTarget())) //
                 .input("Name", "name", isNew() ? null : getTarget().getName()) //
                 .input("URI", "uri", getTarget().getUri()) //
-                .submit(isNew() ? "Add" : "Update") //
+                .close();
+        buttonGroup().justified() //
+                .button().size(L).style(primary).form("main").type("submit").label(isNew() ? "Add" : "Update").close() //
                 .close();
     }
 }

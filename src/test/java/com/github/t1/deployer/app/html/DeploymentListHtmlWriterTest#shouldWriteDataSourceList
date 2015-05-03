@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add Data-Source</title>
+    <title>Deployments</title>
 
     <link href="http://localhost:8080/deployer/bootstrap/css/bootstrap.css" rel="stylesheet"/>
     <link href="http://localhost:8080/deployer/webapp/css/style.css" rel="stylesheet"/>
@@ -17,30 +17,23 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
+            <li class="active"><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
             <li><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
-            <li class="active"><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
+            <li><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
           </ul>
         </div>
       </div>
     </nav>
 
     <div class="jumbotron">
-      <h1>Add Data-Source</h1>
+      <h1>Deployments</h1>
 
-      <a href="http://localhost:8080/deployer/data-sources">&lt</a>
-      <p>Enter the name of a new data source to configure</p>
-      <form id="main" method="POST" action="http://localhost:8080/deployer/data-sources">
-        <label for="name">Name</label>
-        <input class="form-control" name="name" id="name" required/>
-        <label for="uri">URI</label>
-        <input class="form-control" name="uri" id="uri" required/>
-      </form>
-      <div role="group" class="btn-group btn-group-justified">
-        <div role="group" class="btn-group">
-          <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Add</button>
-        </div>
-      </div>
+          <table>
+              <tr>      <td><a href="http://localhost:8080/deployer/deployments;context-root=barx">barx</a></td>      <td>bar</td>      <td title="SHA-1: DDEEFF">null</td>      </tr>
+              <tr>      <td><a href="http://localhost:8080/deployer/deployments;context-root=foox">foox</a></td>      <td>foo</td>      <td title="SHA-1: AABBCC">null</td>      </tr>
+          <tr><td colspan='3'><a href="http://localhost:8080/deployer/deployments/!">+</a></td></tr>
+          </table>
+      <br/><br/>
 
       <script src="http://localhost:8080/deployer/jquery/jquery.js"/>
       <script src="http://localhost:8080/deployer/bootstrap/js/bootstrap.js"/>

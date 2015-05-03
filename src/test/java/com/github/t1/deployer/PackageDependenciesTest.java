@@ -11,7 +11,7 @@ import org.junit.*;
 import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.app.file.DeploymentListFile;
 import com.github.t1.deployer.app.html.Index;
-import com.github.t1.deployer.app.html.builder.HtmlBuilder;
+import com.github.t1.deployer.app.html.builder.Page;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
@@ -55,7 +55,7 @@ public class PackageDependenciesTest {
     private void setupDependencies() {
         Package app = packageOf(Deployments.class);
         Package html = packageOf(Index.class);
-        Package builder = packageOf(HtmlBuilder.class);
+        Package builder = packageOf(Page.class);
         Package file = packageOf(DeploymentListFile.class);
         Package container = packageOf(LoggerContainer.class);
         Package model = packageOf(Deployment.class);

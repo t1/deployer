@@ -1,99 +1,114 @@
 package com.github.t1.deployer.app.html.builder;
 
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class HtmlBuilder extends BaseBuilder {
-    private static final String MIN = ""; // ".min";
+public abstract class HtmlBuilder {
+    private final HtmlBuilder container;
 
-    public HtmlBuilder() {}
+    private final StringBuilder out;
+    private AtomicInteger indent;
 
-    public HtmlBuilder(BaseBuilder container) {
-        super(container);
+    /** Constructor for single-line (i.e. non-indented), stand-alone components, e.g. normal anchor tags */
+    public HtmlBuilder() {
+        this.container = null;
+        this.out = new StringBuilder();
+        this.indent = new AtomicInteger();
     }
 
-    public void html() {
-        append("<!DOCTYPE html>\n");
-        append("<html>\n"); // lang="en"
-        in();
-        head();
-        append("<body class=\"container\">\n");
-        in();
-        navBar();
-        append("<div class=\"jumbotron\">\n");
-        in();
-        append("<h1>").append(bodyTitle()).append("</h1>\n");
-        nl();
-        body();
-        nl();
-        append(script("jquery/jquery" + MIN + ".js")).append("\n");
-        append(script("bootstrap/js/bootstrap" + MIN + ".js")).append("\n");
-        out();
-        append("</div>\n");
-        out();
-        append("</body>\n");
-        out();
-        append("</html>\n");
+    /** Constructor for components directly contained in some other component */
+    public HtmlBuilder(HtmlBuilder container) {
+        this.container = container;
+        this.indent = container.indent;
+        this.out = container.out;
     }
 
-    public void head() {
-        append("<head>\n");
-        in();
-        append("<meta charset=\"utf-8\">\n");
-        append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n");
-        append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-        append("<title>").append(headerTitle()).append("</title>\n");
-        nl();
-        append(stylesheet("bootstrap/css/bootstrap" + MIN + ".css")).append("\n");
-        append(stylesheet("webapp/css/style.css")).append("\n");
-        out();
-        append("</head>\n");
+    public void resetOutput() {
+        this.out.setLength(0);
     }
 
-    public void navBar() {
-        append("<nav class=\"navbar navbar-default\">\n");
-        in();
-        append("<div class=\"container-fluid\">\n");
-        in();
-        append("<div class=\"navbar-header\">\n");
-        append("  <a class=\"navbar-brand\" href=\"#\">Deployer</a>\n");
-        append("</div>\n");
-        append("<div id=\"navbar\" class=\"navbar-collapse collapse\">\n");
-        in();
-        append("<ul class=\"nav navbar-nav navbar-right\">\n");
-        in();
-        navigation();
-        out();
-        append("</ul>\n");
-        out();
-        append("</div>\n");
-        out();
-        append("</div>\n");
-        out();
-        append("</nav>\n");
-        nl();
+    public HtmlBuilder indent(AtomicInteger indent) {
+        this.indent = indent;
+        return this;
     }
 
-    public abstract void navigation();
-
-    public String headerTitle() {
-        return title();
+    public AtomicInteger indent() {
+        return indent;
     }
 
-    public String bodyTitle() {
-        return title();
+    public HtmlBuilder nl() {
+        out.append("\n");
+        return this;
     }
 
-    public abstract String title();
-
-    public abstract void body();
-
-    public abstract URI base(String path);
-
-    private String stylesheet(String path) {
-        return "<link href=\"" + base(path) + "\" rel=\"stylesheet\"/>";
+    public StringBuilder append(Object value) {
+        ws(indent.get());
+        rawAppend(value);
+        return out;
     }
 
-    private String script(String path) {
-        return "<script src=\"" + base(path) + "\"/>";
+    public StringBuilder rawAppend(Object value) {
+        return out.append(value);
+    }
+
+    public HtmlBuilder in() {
+        indent.getAndAdd(2);
+        return this;
+    }
+
+    public HtmlBuilder out() {
+        indent.getAndAdd(-2);
+        return this;
+    }
+
+    public HtmlBuilder ws(int n) {
+        for (int i = 0; i < n; i++)
+            out.append(" ");
+        return this;
+    }
+
+    public Tag href(URI href) {
+        return new Tag("a").attribute("href", href);
+    }
+
+    public Tag href(String label, URI href) {
+        return href(href).enclosing(label);
+    }
+
+    public Form form() {
+        return new Form(this);
+    }
+
+    public Button button() {
+        return new Button(this);
+    }
+
+    public ButtonGroup buttonGroup() {
+        return new ButtonGroup(this);
+    }
+
+    public Tag div() {
+        return new Tag("div");
+    }
+
+    public Tag span() {
+        return new Tag("span");
+    }
+
+    public Tag li() {
+        return tag("li");
+    }
+
+    public Tag tag(String name) {
+        return new Tag(name);
+    }
+
+    public HtmlBuilder close() {
+        return (container == null) ? this : container;
+    }
+
+    @Override
+    public String toString() {
+        return out.toString();
     }
 }

@@ -16,11 +16,15 @@ import org.mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-public class AbstractHtmlWriterTest<T> {
+public abstract class AbstractHtmlWriterTest<T> {
     @InjectMocks
     MessageBodyWriter<T> writer;
     @Mock
     UriInfo uriInfo;
+
+    public AbstractHtmlWriterTest(MessageBodyWriter<T> writer) {
+        this.writer = writer;
+    }
 
     @Before
     public void setup() {
