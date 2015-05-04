@@ -2,6 +2,7 @@ package com.github.t1.deployer.app.html.builder;
 
 public class ButtonGroup extends HtmlBuilder {
     private boolean justified = false;
+    private boolean started = false;
 
     public ButtonGroup(HtmlBuilder container) {
         super(container);
@@ -14,16 +15,25 @@ public class ButtonGroup extends HtmlBuilder {
 
     @Override
     public Button button() {
+        if (started) {
+            closeButtonDiv();
+        } else {
+            started = true;
+            if (justified) {
+                appenButtonGroupDiv("btn-group-justified");
+            } else {
+                appenButtonGroupDiv();
+            }
+        }
+
+        // justified buttons need to be enclosed again: http://getbootstrap.com/components/#btn-groups-justified
         if (justified)
             appenButtonGroupDiv();
-        // justified buttons need to be enclosed again: http://getbootstrap.com/components/#btn-groups-justified
-        append("<div role=\"group\" class=\"btn-group\">\n");
-        in();
         return super.button();
     }
 
-    private void appenButtonGroupDiv() {
-        Tag tag = div().attribute("role", "group").classes("btn-group").classes("btn-group-justified");
+    private void appenButtonGroupDiv(String... classes) {
+        Tag tag = div().attribute("role", "group").classes("btn-group").classes(classes);
         append(tag.header()).append("\n");
         in();
     }
@@ -32,7 +42,11 @@ public class ButtonGroup extends HtmlBuilder {
     public HtmlBuilder close() {
         if (justified)
             out().append("</div>\n");
-        out().append("</div>\n");
+        closeButtonDiv();
         return super.close();
+    }
+
+    private void closeButtonDiv() {
+        out().append("</div>\n");
     }
 }

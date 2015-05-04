@@ -32,11 +32,6 @@
       <form id="delete" method="POST" action="http://localhost:8080/deployer/data-sources/foo">
         <input type="hidden" name="action" value="delete"/>
       </form>
-      <div role="group" class="btn-group">
-        <button class="btn btn-block btn-sm btn-danger" form="delete" type="submit">
-          <span class="glyphicon glyphicon-remove"/>
-        </button>
-      </div>
       <form id="main" method="POST" action="http://localhost:8080/deployer/data-sources/foo">
         <label for="name">Name</label>
         <input class="form-control" name="name" id="name" value="foo" required/>
@@ -45,7 +40,12 @@
       </form>
       <div role="group" class="btn-group btn-group-justified">
         <div role="group" class="btn-group">
-          <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Update</button>
+          <button class="btn btn-block btn-primary" form="main" type="submit">Update</button>
+        </div>
+        <div role="group" class="btn-group">
+          <button class="btn btn-block btn-danger" form="delete" type="submit">
+            <span class="glyphicon glyphicon-remove"/>
+          </button>
         </div>
       </div>
 

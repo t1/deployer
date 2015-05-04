@@ -1,13 +1,13 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.Navigation.*;
-import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.model.DataSourceConfig.*;
 
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.DataSources;
+import com.github.t1.deployer.app.html.builder.ButtonGroup;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
@@ -41,9 +41,6 @@ public class DataSourceHtmlWriter extends AbstractHtmlBodyWriter<DataSourceConfi
                     .action(DataSources.path(getUriInfo(), getTarget())) //
                     .hiddenInput("action", "delete") //
                     .close();
-            buttonGroup() //
-                    .button().size(S).style(danger).form("delete").type("submit").icon("remove").close() //
-                    .close();
         }
 
         form().id("main") //
@@ -51,8 +48,10 @@ public class DataSourceHtmlWriter extends AbstractHtmlBodyWriter<DataSourceConfi
                 .input("Name", "name", isNew() ? null : getTarget().getName()) //
                 .input("URI", "uri", getTarget().getUri()) //
                 .close();
-        buttonGroup().justified() //
-                .button().size(L).style(primary).form("main").type("submit").label(isNew() ? "Add" : "Update").close() //
-                .close();
+        ButtonGroup buttons = buttonGroup().justified();
+        buttons.button().style(primary).form("main").type("submit").label(isNew() ? "Add" : "Update").close();
+        if (!isNew())
+            buttons.button().style(danger).form("delete").type("submit").icon("remove").close();
+        buttons.close();
     }
 }
