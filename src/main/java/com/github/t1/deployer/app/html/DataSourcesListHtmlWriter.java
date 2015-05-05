@@ -8,6 +8,7 @@ import static java.util.Collections.*;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.DataSources;
+import com.github.t1.deployer.app.html.builder.Tag;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
@@ -18,24 +19,26 @@ public class DataSourcesListHtmlWriter extends AbstractListHtmlBodyWriter<DataSo
 
     @Override
     public void body() {
-        append("<table>\n");
+        Tag listGroup = listGroup();
+        append(listGroup.header()).append("\n");
         in();
         sort(getTarget());
         int i = 0;
         for (DataSourceConfig dataSource : getTarget()) {
-            append("<tr><td>") //
-                    .append(href(dataSource.getName(), DataSources.path(getUriInfo(), dataSource))) //
-                    .append("</td><td>\n");
+            append("<li class=\"list-group-item\">\n");
             in();
+            append(href(dataSource.getName(), DataSources.path(getUriInfo(), dataSource))).append("\n");
             buttons(dataSource, i++);
             out();
-            append("</td></tr>\n");
+            append("</li>\n");
         }
-        append("<tr><td colspan='2'>") //
-                .append(href("+", DataSources.newDataSource(getUriInfo()))) //
-                .append("</td></tr>\n");
+        append("<li class=\"list-group-item\">\n");
+        in();
+        append(href("+", DataSources.newDataSource(getUriInfo()))).append("\n");
         out();
-        append("</table>\n");
+        append("</li>\n");
+        out();
+        append("</ul>\n");
     }
 
     private void buttons(DataSourceConfig dataSource, int i) {

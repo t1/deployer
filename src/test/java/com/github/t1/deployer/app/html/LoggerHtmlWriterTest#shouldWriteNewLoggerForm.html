@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Logger: foo</title>
+    <title>Add Logger</title>
 
     <link href="http://localhost:8080/deployer/bootstrap/css/bootstrap.css" rel="stylesheet"/>
     <link href="http://localhost:8080/deployer/webapp/css/style.css" rel="stylesheet"/>
   </head>
-  <body class="container">
-    <nav class="navbar navbar-default">
+  <body class="container" style="padding-top: 90px">
+    <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
           <a class="navbar-brand" href="#">Deployer</a>
@@ -26,11 +26,14 @@
     </nav>
 
     <div class="jumbotron">
-      <h1>foo</h1>
+      <h1>Add Logger</h1>
 
       <a href="http://localhost:8080/deployer/loggers">&lt</a>
-      <form id="main" method="POST" action="http://localhost:8080/deployer/loggers/foo">
-        <select name="level" onchange="this.form.submit()">
+      <p>Enter the name of a new logger to configure</p>
+      <form id="main" method="POST" action="http://localhost:8080/deployer/loggers">
+        <label for="category">Category</label>
+        <input class="form-control" name="category" id="category" required/>
+        <select name="level">
           <option>ALL</option>
           <option>TRACE</option>
           <option>DEBUG</option>
@@ -39,17 +42,11 @@
           <option>ERROR</option>
           <option>OFF</option>
         </select>
-        <noscript>
-          <input type="submit" value="Update">
-        </noscript>
       </form>
-      <form id="delete" method="POST" action="http://localhost:8080/deployer/loggers/foo">
-        <input type="hidden" name="action" value="delete"/>
-      </form>
-      <div role="group" class="btn-group">
-        <button class="btn btn-block btn-sm btn-danger" form="delete" type="submit">
-          <span class="glyphicon glyphicon-remove"/>
-        </button>
+      <div role="group" class="btn-group btn-group-justified">
+        <div role="group" class="btn-group">
+          <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Add</button>
+        </div>
       </div>
 
       <script src="http://localhost:8080/deployer/jquery/jquery.js"/>

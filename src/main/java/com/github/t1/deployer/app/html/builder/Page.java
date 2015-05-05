@@ -16,7 +16,7 @@ public abstract class Page extends HtmlBuilder {
         append("<html>\n"); // lang="en"
         in();
         head();
-        append("<body class=\"container\">\n");
+        append("<body class=\"container\" style=\"padding-top: 90px\">\n");
         in();
         navBar();
         append("<div class=\"jumbotron\">\n");
@@ -50,7 +50,7 @@ public abstract class Page extends HtmlBuilder {
     }
 
     public void navBar() {
-        append("<nav class=\"navbar navbar-default\">\n");
+        append("<nav class=\"navbar navbar-default navbar-fixed-top\">\n");
         in();
         append("<div class=\"container-fluid\">\n");
         in();

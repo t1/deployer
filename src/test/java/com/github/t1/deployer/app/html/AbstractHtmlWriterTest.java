@@ -45,7 +45,7 @@ public abstract class AbstractHtmlWriterTest<T> {
     protected String readFile() throws IOException, URISyntaxException {
         StackTraceElement caller = new RuntimeException().getStackTrace()[1];
         assertEquals(getClass().getName(), caller.getClassName());
-        String fileName = getClass().getSimpleName() + "#" + caller.getMethodName();
+        String fileName = getClass().getSimpleName() + "#" + caller.getMethodName() + ".html";
         URL resource = getClass().getResource(fileName);
         if (resource == null)
             throw new AssertionError("test file not found: " + fileName);

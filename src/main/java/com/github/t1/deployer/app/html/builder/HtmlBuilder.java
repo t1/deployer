@@ -95,6 +95,10 @@ public abstract class HtmlBuilder {
         return new Tag("span");
     }
 
+    public Tag listGroup() {
+        return new Tag("ul").classes("list-group");
+    }
+
     public Tag li() {
         return tag("li");
     }
