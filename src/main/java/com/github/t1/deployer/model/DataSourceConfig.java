@@ -5,7 +5,7 @@ import static lombok.AccessLevel.*;
 import java.net.URI;
 
 import lombok.*;
-import lombok.experimental.*;
+import lombok.experimental.Accessors;
 
 /**
  * The model we use is aligned but not equal to the javax.annotation.sql.DataSourceDefinition; the JBoss CLI data-source

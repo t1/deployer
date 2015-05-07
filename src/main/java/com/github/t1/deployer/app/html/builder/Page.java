@@ -24,11 +24,11 @@ public abstract class Page extends HtmlBuilder {
         append("<h1>").append(bodyTitle()).append("</h1>\n");
         nl();
         body();
+        out();
+        append("</div>\n");
         nl();
         append(script("jquery/jquery" + MIN + ".js")).append("\n");
         append(script("bootstrap/js/bootstrap" + MIN + ".js")).append("\n");
-        out();
-        append("</div>\n");
         out();
         append("</body>\n");
         out();

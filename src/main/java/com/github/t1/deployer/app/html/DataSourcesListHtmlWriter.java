@@ -1,53 +1,115 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.html.Navigation.*;
-import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
-import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
+import static com.github.t1.deployer.app.html.DeployerPage.*;
+import static com.github.t1.deployer.app.html.NavigationHref.*;
+import static com.github.t1.deployer.app.html.builder2.Components.*;
+import static com.github.t1.deployer.app.html.builder2.Compound.*;
+import static com.github.t1.deployer.app.html.builder2.HtmlList.*;
+import static com.github.t1.deployer.app.html.builder2.Static.*;
+import static com.github.t1.deployer.app.html.builder2.Tag.*;
+import static com.github.t1.deployer.app.html.builder2.Tags.*;
 import static java.util.Collections.*;
 
-import javax.ws.rs.ext.Provider;
+import java.io.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.List;
+
+import javax.ws.rs.core.*;
+import javax.ws.rs.ext.*;
 
 import com.github.t1.deployer.app.DataSources;
-import com.github.t1.deployer.app.html.builder.Tag;
+import com.github.t1.deployer.app.html.builder2.*;
+import com.github.t1.deployer.app.html.builder2.HtmlList.HtmlListBuilder;
+import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
-public class DataSourcesListHtmlWriter extends AbstractListHtmlBodyWriter<DataSourceConfig> {
-    public DataSourcesListHtmlWriter() {
-        super(DataSourceConfig.class, DATA_SOURCES);
+public class DataSourcesListHtmlWriter implements MessageBodyWriter<List<DataSourceConfig>> {
+    private static final Static ADD_DATA_SOURCE = text("+");
+
+    public static final DeployerPage PAGE = deployerPage() //
+            .title(text("Data-Sources")) //
+            .body(new Component() {
+                @Override
+                public void writeTo(BuildContext out) {
+                    HtmlListBuilder ul = listGroup();
+
+                    List<DataSourceConfig> dataSources = out.getTarget();
+                    sort(dataSources);
+                    int i = 0;
+                    for (DataSourceConfig dataSource : dataSources) {
+                        ul.item(dataSourceItem(dataSource, i++));
+                    }
+                    ul.item(addDataSourceItem());
+
+                    ul.build().writeTo(out);
+                }
+
+                private Compound dataSourceItem(DataSourceConfig dataSource, int i) {
+                    UriInfo uriInfo = URI_INFO.get();
+                    Static uri = text(DataSources.path(uriInfo, dataSource));
+                    String formId = "delete-" + i;
+                    return compound() //
+                            .component(link(uri).body(text(dataSource.getName())).build()) //
+                            .component(deleteForm(uri, formId).build()) //
+                            .component(buttonGroup() //
+                                    .body(iconButton(formId, "remove")) //
+                                    .build()) //
+                            .build();
+                }
+
+                private TagBuilder deleteForm(Static uri, String formId) {
+                    return tag("form") //
+                            .id(formId) //
+                            .a("method", "POST") //
+                            .a("action", uri) //
+                            .body(tag("input").multiline() //
+                                    .a("type", "hidden") //
+                                    .a("name", "action") //
+                                    .a("value", "delete") //
+                                    .build());
+                }
+
+                private Tag addDataSourceItem() {
+                    return link(text(DataSources.newDataSource(URI_INFO.get()))).body(ADD_DATA_SOURCE).multiline()
+                            .build();
+                }
+            }) //
+            .build();
+
+    @Context
+    UriInfo uriInfo;
+
+    @Override
+    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return List.class.isAssignableFrom(type) //
+                && genericType instanceof ParameterizedType //
+                && ((ParameterizedType) genericType).getActualTypeArguments().length == 1 //
+                && ((ParameterizedType) genericType).getActualTypeArguments()[0] instanceof Class //
+                && DataSourceConfig.class.isAssignableFrom((Class<?>) //
+                        ((ParameterizedType) genericType).getActualTypeArguments()[0]);
     }
 
     @Override
-    public void body() {
-        Tag listGroup = listGroup();
-        append(listGroup.header()).append("\n");
-        in();
-        sort(getTarget());
-        int i = 0;
-        for (DataSourceConfig dataSource : getTarget()) {
-            append("<li class=\"list-group-item\">\n");
-            in();
-            append(href(dataSource.getName(), DataSources.path(getUriInfo(), dataSource))).append("\n");
-            buttons(dataSource, i++);
-            out();
-            append("</li>\n");
-        }
-        append("<li class=\"list-group-item\">\n");
-        in();
-        append(href("+", DataSources.newDataSource(getUriInfo()))).append("\n");
-        out();
-        append("</li>\n");
-        out();
-        append("</ul>\n");
+    public long getSize(List<DataSourceConfig> t, Class<?> type, Type genericType, Annotation[] annotations,
+            MediaType mediaType) {
+        return -1;
     }
 
-    private void buttons(DataSourceConfig dataSource, int i) {
-        form().id("delete-" + i) //
-                .action(DataSources.path(getUriInfo(), dataSource)) //
-                .hiddenInput("action", "delete") //
-                .close();
-        buttonGroup() //
-                .button().size(XS).style(danger).form("delete-" + i).type("submit").icon("remove").close() //
-                .close();
+    @Override
+    public void writeTo(List<DataSourceConfig> t, Class<?> type, Type genericType, Annotation[] annotations,
+            MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
+            throws IOException {
+        OutputStreamWriter writer = new OutputStreamWriter(entityStream);
+        try {
+            NavigationHref.URI_INFO.set(uriInfo);
+
+            PAGE.write(t).to(writer);
+
+            writer.flush();
+        } finally {
+            NavigationHref.URI_INFO.remove();
+        }
     }
 }
