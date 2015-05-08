@@ -31,19 +31,20 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                 public void writeTo(BuildContext out) {
                     HtmlListBuilder ul = listGroup();
 
-                    List<DataSourceConfig> dataSources = out.getTarget();
+                    @SuppressWarnings("unchecked")
+                    List<DataSourceConfig> dataSources = out.get(List.class);
                     sort(dataSources);
                     int i = 0;
+                    UriInfo uriInfo = out.get(UriInfo.class);
                     for (DataSourceConfig dataSource : dataSources) {
-                        ul.item(dataSourceItem(dataSource, i++));
+                        ul.item(dataSourceItem(dataSource, uriInfo, i++));
                     }
-                    ul.item(addDataSourceItem());
+                    ul.item(addDataSourceItem(uriInfo));
 
                     ul.build().writeTo(out);
                 }
 
-                private Compound dataSourceItem(DataSourceConfig dataSource, int i) {
-                    UriInfo uriInfo = URI_INFO.get();
+                private Compound dataSourceItem(DataSourceConfig dataSource, UriInfo uriInfo, int i) {
                     Static uri = text(DataSources.path(uriInfo, dataSource));
                     String formId = "delete-" + i;
                     return compound() //
@@ -67,9 +68,8 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                                     .build());
                 }
 
-                private Tag addDataSourceItem() {
-                    return link(text(DataSources.newDataSource(URI_INFO.get()))).body(ADD_DATA_SOURCE).multiline()
-                            .build();
+                private Tag addDataSourceItem(UriInfo uriInfo) {
+                    return link(text(DataSources.newDataSource(uriInfo))).body(ADD_DATA_SOURCE).multiline().build();
                 }
             }) //
             .build();

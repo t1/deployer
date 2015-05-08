@@ -1,8 +1,8 @@
 package com.github.t1.deployer.app.html.builder2;
 
 public abstract class Component {
-    public BuildContext write(Object target) {
-        return new BuildContext(this, target);
+    public BuildContext write(Object... targets) {
+        return new BuildContext(this, targets);
     }
 
     public abstract void writeTo(BuildContext out);

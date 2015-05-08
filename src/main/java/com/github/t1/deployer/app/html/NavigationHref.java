@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.html.builder2.TextHtmlMessageBodyWriter.*;
+import javax.ws.rs.core.UriInfo;
+
 import lombok.*;
 
 import com.github.t1.deployer.app.html.builder2.*;
@@ -12,6 +13,6 @@ public class NavigationHref extends Component {
 
     @Override
     public void writeTo(BuildContext out) {
-        out.append(navigation.href(URI_INFO.get()));
+        out.append(navigation.href(out.get(UriInfo.class)));
     }
 }

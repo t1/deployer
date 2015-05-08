@@ -1,20 +1,28 @@
 package com.github.t1.deployer.app.html.builder2;
 
 import java.io.*;
+import java.util.*;
+import java.util.Map.Entry;
 
 import lombok.*;
 
-@RequiredArgsConstructor
 public class BuildContext {
     private static final String SPACES = "                                                                          "
             + "                                                                                                     ";
 
     @NonNull
     private final Component component;
-    private final Object target;
+    private final Map<Class<?>, Object> targets = new LinkedHashMap<>();
 
     private Writer out;
     private int indent;
+
+    public BuildContext(Component component, Object... targets) {
+        this.component = component;
+        for (Object target : targets) {
+            this.targets.put(target.getClass(), target);
+        }
+    }
 
     public void to(Writer out) {
         this.out = out;
@@ -59,8 +67,10 @@ public class BuildContext {
         return this;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T getTarget() {
-        return (T) target;
+    public <T> T get(Class<T> type) {
+        for (Entry<Class<?>, Object> entry : targets.entrySet())
+            if (type.isAssignableFrom(entry.getKey()))
+                return type.cast(entry.getValue());
+        throw new IllegalStateException("no target for " + type);
     }
 }

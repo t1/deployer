@@ -8,6 +8,7 @@ import static com.github.t1.deployer.app.html.builder2.Tag.*;
 import static com.github.t1.deployer.app.html.builder2.Tags.*;
 import static com.github.t1.deployer.model.DataSourceConfig.*;
 
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.DataSources;
@@ -21,20 +22,20 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
             .title(new Component() {
                 @Override
                 public void writeTo(BuildContext out) {
-                    DataSourceConfig target = out.getTarget();
+                    DataSourceConfig target = out.get(DataSourceConfig.class);
                     text(title(target)).writeInlineTo(out);
                 }
             }) //
             .body(link(new Component() {
                 @Override
                 public void writeTo(BuildContext out) {
-                    text(DataSources.base(URI_INFO.get())).writeInlineTo(out);
+                    text(DataSources.base(out.get(UriInfo.class))).writeInlineTo(out);
                 }
             }).body(text("&lt;")).build()) //
             .body(new Component() {
                 @Override
                 public void writeTo(BuildContext out) {
-                    DataSourceConfig target = out.getTarget();
+                    DataSourceConfig target = out.get(DataSourceConfig.class);
                     if (isNew(target))
                         newDataSourceForm().writeTo(out);
                     else

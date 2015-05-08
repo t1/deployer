@@ -13,8 +13,6 @@ import javax.ws.rs.ext.*;
 @Provider
 @Produces(TEXT_HTML)
 public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<T> {
-    public static final ThreadLocal<UriInfo> URI_INFO = new ThreadLocal<>();
-
     @Context
     UriInfo uriInfo;
 
@@ -36,18 +34,11 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
     }
 
     @Override
-    public void writeTo(T t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+    public void writeTo(T target, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(entityStream);
-        try {
-            URI_INFO.set(uriInfo);
-
-            component().write(t).to(writer);
-
-            writer.flush();
-        } finally {
-            URI_INFO.remove();
-        }
+        component().write(target, uriInfo).to(writer);
+        writer.flush();
     }
 
     protected abstract Component component();
