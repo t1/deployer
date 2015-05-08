@@ -2,11 +2,20 @@ package com.github.t1.deployer.app.html.builder2;
 
 import static com.github.t1.deployer.app.html.builder2.Tag.*;
 
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
 
 public class Tags {
+    public static abstract class AppendingComponent<T> extends Component {
+        @Override
+        public void writeTo(BuildContext out) {
+            out.append(contentFrom(out));
+        }
+
+        protected abstract T contentFrom(BuildContext out);
+    }
+
     public static TagBuilder div() {
         return tag("div");
     }
@@ -24,10 +33,10 @@ public class Tags {
     }
 
     public static Component baseUri(final String href) {
-        return new Component() {
+        return new AppendingComponent<UriBuilder>() {
             @Override
-            public void writeTo(BuildContext out) {
-                out.append(out.get(UriInfo.class).getBaseUriBuilder().path(href));
+            protected UriBuilder contentFrom(BuildContext out) {
+                return out.get(UriInfo.class).getBaseUriBuilder().path(href);
             }
         };
     }

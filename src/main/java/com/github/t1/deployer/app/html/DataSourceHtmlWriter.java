@@ -10,11 +10,14 @@ import static com.github.t1.deployer.app.html.builder2.Tag.*;
 import static com.github.t1.deployer.app.html.builder2.Tags.*;
 import static com.github.t1.deployer.model.DataSourceConfig.*;
 
+import java.net.URI;
+
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.DataSources;
 import com.github.t1.deployer.app.html.builder2.*;
+import com.github.t1.deployer.app.html.builder2.Tags.AppendingComponent;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
@@ -77,16 +80,16 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                 , //
                 tag("form").id("main").a("method", "POST") //
                         .a("action", dataSourceLink()) //
-                        .body(input("name").label("Name").value(new Component() {
+                        .body(input("name").label("Name").value(new AppendingComponent<String>() {
                             @Override
-                            public void writeTo(BuildContext out) {
-                                out.append(out.get(DataSourceConfig.class).getName());
+                            protected String contentFrom(BuildContext out) {
+                                return out.get(DataSourceConfig.class).getName();
                             }
                         }).build()) //
-                        .body(input("uri").label("URI").value(new Component() {
+                        .body(input("uri").label("URI").value(new AppendingComponent<URI>() {
                             @Override
-                            public void writeTo(BuildContext out) {
-                                out.append(out.get(DataSourceConfig.class).getUri());
+                            protected URI contentFrom(BuildContext out) {
+                                return out.get(DataSourceConfig.class).getUri();
                             }
                         }).build()) //
                         .build() //
@@ -107,10 +110,10 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     }
 
     private static Component dataSourceLink() {
-        return new Component() {
+        return new AppendingComponent<URI>() {
             @Override
-            public void writeTo(BuildContext out) {
-                out.append(DataSources.path(out.get(UriInfo.class), out.get(DataSourceConfig.class)));
+            protected URI contentFrom(BuildContext out) {
+                return DataSources.path(out.get(UriInfo.class), out.get(DataSourceConfig.class));
             }
         };
     }

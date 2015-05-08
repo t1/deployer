@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder2.*;
+import com.github.t1.deployer.app.html.builder2.Tags.AppendingComponent;
 
 @RequiredArgsConstructor
 public enum Navigation {
@@ -38,10 +39,10 @@ public enum Navigation {
     public abstract URI href(UriInfo uriInfo);
 
     public Component link() {
-        return new Component() {
+        return new AppendingComponent<URI>() {
             @Override
-            public void writeTo(BuildContext out) {
-                out.append(href(out.get(UriInfo.class)));
+            protected URI contentFrom(BuildContext out) {
+                return href(out.get(UriInfo.class));
             }
         };
     }

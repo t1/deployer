@@ -26,7 +26,7 @@ public class DeployerPage extends Component {
             NavBarBuilder navbar = navBar().brand("Deployer");
             for (final Navigation navigation : Navigation.values()) {
                 navbar.item() //
-                        .href(new NavigationHref(navigation)) //
+                        .href(navigation.link()) //
                         .title(text(navigation.title())) //
                         .classes(new Component() {
                             @Override
