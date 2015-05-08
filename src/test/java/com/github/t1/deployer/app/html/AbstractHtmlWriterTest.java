@@ -1,9 +1,11 @@
 package com.github.t1.deployer.app.html;
 
+import static javax.ws.rs.core.MediaType.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.net.*;
 import java.nio.file.*;
 
@@ -37,8 +39,11 @@ public abstract class AbstractHtmlWriterTest<T> {
     }
 
     protected String write(T target) throws IOException {
+        Type generic = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        assertTrue(writer.isWriteable(target.getClass(), generic, null, TEXT_HTML_TYPE));
+
         ByteArrayOutputStream entityStream = new ByteArrayOutputStream();
-        writer.writeTo(target, getClass(), getClass(), null, null, null, entityStream);
+        writer.writeTo(target, target.getClass(), generic, null, null, null, entityStream);
         return new String(entityStream.toByteArray());
     }
 

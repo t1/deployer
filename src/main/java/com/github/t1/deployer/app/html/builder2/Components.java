@@ -11,14 +11,14 @@ public class Components {
         return div().a("role", "group").classes("btn-group");
     }
 
-    public static Tag iconButton(String formId, String icon) {
+    public static TagBuilder iconButton(String formId, String icon, String... classes) {
         return tag("button").multiline() //
-                .classes("btn", "btn-block", "btn-xs", "btn-danger") //
+                .classes("btn", "btn-block").classes(classes) //
                 .a("form", formId) //
                 .a("type", "submit") //
                 .body(tag("span").multiline() //
                         .classes("glyphicon", "glyphicon-" + icon) //
                         .build()) //
-                .build();
+        ;
     }
 }
