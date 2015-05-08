@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.DeployerPage.*;
+import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.app.html.builder2.Components.*;
 import static com.github.t1.deployer.app.html.builder2.Compound.*;
 import static com.github.t1.deployer.app.html.builder2.HtmlList.*;
@@ -73,6 +74,11 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                 }
             }) //
             .build();
+
+    @Override
+    protected void prepare(BuildContext buildContext) {
+        buildContext.put(DATA_SOURCES);
+    }
 
     @Override
     protected Component component() {

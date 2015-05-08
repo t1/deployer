@@ -37,9 +37,13 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
     public void writeTo(T target, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(entityStream);
-        component().write(target, uriInfo).to(writer);
+        BuildContext buildContext = component().write(target, uriInfo);
+        prepare(buildContext);
+        buildContext.to(writer);
         writer.flush();
     }
+
+    protected void prepare(@SuppressWarnings("unused") BuildContext buildContext) {}
 
     protected abstract Component component();
 }

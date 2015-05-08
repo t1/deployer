@@ -20,7 +20,7 @@ public class BuildContext {
     public BuildContext(Component component, Object... targets) {
         this.component = component;
         for (Object target : targets) {
-            this.targets.put(target.getClass(), target);
+            put(target);
         }
     }
 
@@ -65,6 +65,10 @@ public class BuildContext {
     public BuildContext out() {
         --indent;
         return this;
+    }
+
+    public void put(Object target) {
+        this.targets.put(target.getClass(), target);
     }
 
     public <T> T get(Class<T> type) {

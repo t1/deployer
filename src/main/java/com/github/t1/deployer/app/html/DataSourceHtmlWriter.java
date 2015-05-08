@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.DeployerPage.*;
+import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.app.html.builder2.Components.*;
 import static com.github.t1.deployer.app.html.builder2.Compound.*;
 import static com.github.t1.deployer.app.html.builder2.Static.*;
@@ -49,7 +50,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                 tag("p").body(text("Enter the name of a new data source to configure")).build() //
                 , //
                 tag("form").id("main").a("method", "POST") //
-                        .a("action", "http://localhost:8080/deployer/data-sources") // FIXME
+                        .a("action", DATA_SOURCES.link()) //
                         .body(tag("label").a("for", "name").body(text("Name")).build()) //
                         .body(input("name").build()) //
                         .body(tag("label").a("for", "uri").body(text("URI")).build()) //
@@ -70,18 +71,28 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     private static Component existingDataSourceForm() {
         return compound( //
                 tag("form").id("delete").a("method", "POST") //
-                        .a("action", "http://localhost:8080/deployer/data-sources/foo") // FIXME
+                        .a("action", dataSourceLink()) //
                         .body(tag("input").multiline() //
                                 .a("type", "hidden").a("name", "action").a("value", "delete") //
                                 .build()) //
                         .build() //
                 , //
                 tag("form").id("main").a("method", "POST") //
-                        .a("action", "http://localhost:8080/deployer/data-sources/foo") // FIXME
+                        .a("action", dataSourceLink()) //
                         .body(tag("label").a("for", "name").body(text("Name")).build()) //
-                        .body(input("name").a("value", "foo").build()) // FIXME
+                        .body(input("name").a("value", new Component() {
+                            @Override
+                            public void writeTo(BuildContext out) {
+                                out.append(out.get(DataSourceConfig.class).getName());
+                            }
+                        }).build()) //
                         .body(tag("label").a("for", "uri").body(text("URI")).build()) //
-                        .body(input("uri").a("value", "foo-uri").build()) // FIXME
+                        .body(input("uri").a("value", new Component() {
+                            @Override
+                            public void writeTo(BuildContext out) {
+                                out.append(out.get(DataSourceConfig.class).getUri());
+                            }
+                        }).build()) //
                         .build() //
                 , //
                 buttonGroup().classes("btn-group-justified") //
@@ -99,6 +110,15 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
         ).build();
     }
 
+    private static Component dataSourceLink() {
+        return new Component() {
+            @Override
+            public void writeTo(BuildContext out) {
+                out.append(DataSources.path(out.get(UriInfo.class), out.get(DataSourceConfig.class)));
+            }
+        };
+    }
+
     private static TagBuilder input(String idAndName) {
         return tag("input").classes("form-control").a("name", idAndName).id(idAndName).a("required");
     }
@@ -113,6 +133,11 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
 
     public static String title(DataSourceConfig target) {
         return isNew(target) ? "Add Data-Source" : target.getName();
+    }
+
+    @Override
+    protected void prepare(BuildContext buildContext) {
+        buildContext.put(DATA_SOURCES);
     }
 
     @Override

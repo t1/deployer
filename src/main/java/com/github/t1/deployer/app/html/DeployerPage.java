@@ -31,7 +31,7 @@ public class DeployerPage extends Component {
                         .classes(new Component() {
                             @Override
                             public void writeTo(BuildContext out) {
-                                if (navigation == Navigation.DATA_SOURCES) // FIXME
+                                if (navigation == out.get(Navigation.class))
                                     out.append("active");
                             }
                         }) //

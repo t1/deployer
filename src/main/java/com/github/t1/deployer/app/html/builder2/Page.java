@@ -28,16 +28,16 @@ public class Page extends Component {
                 );
 
         private final List<Component> styleSheets = asList( //
-                styleSheet("http://localhost:8080/deployer/bootstrap/css/bootstrap.css"), // FIXME
-                styleSheet("http://localhost:8080/deployer/webapp/css/style.css") // FIXME
+                styleSheet("bootstrap/css/bootstrap.css"), //
+                styleSheet("webapp/css/style.css") //
                 );
 
         private Component title;
         private final CompoundBuilder body = compound("\n");
         private final CompoundBuilder scripts = compound( //
                 nl(), //
-                tag("script").a("src", "http://localhost:8080/deployer/jquery/jquery.js").build(), // FIXME
-                tag("script").a("src", "http://localhost:8080/deployer/bootstrap/js/bootstrap.js").build() // FIXME
+                script("jquery/jquery.js"), //
+                script("bootstrap/js/bootstrap.js") //
                 );
 
         public PageBuilder title(Component title) {
