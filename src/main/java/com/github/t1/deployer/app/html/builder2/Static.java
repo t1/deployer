@@ -25,4 +25,9 @@ public class Static extends Component {
     public boolean isMultiLine() {
         return text.contains("\n");
     }
+
+    @Override
+    public String toString() {
+        return "'" + text + "'";
+    }
 }

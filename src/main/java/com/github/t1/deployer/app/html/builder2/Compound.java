@@ -67,4 +67,19 @@ public class Compound extends Component {
         return false;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder out = new StringBuilder();
+        out.append("[");
+        boolean first = true;
+        for (Component component : components) {
+            if (first)
+                first = false;
+            else
+                out.append(delimiter);
+            out.append(component);
+        }
+        out.append("]");
+        return out.toString();
+    }
 }

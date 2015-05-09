@@ -151,4 +151,40 @@ public class Tag extends Component {
     public boolean isMultiLine() {
         return multiline;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder out = new StringBuilder();
+        appendHeader(out);
+        appendAttributes(out);
+        appendBody(out);
+        return out.toString();
+    }
+
+    private void appendHeader(StringBuilder out) {
+        out.append(name);
+
+        if (multiline)
+            out.append(":multiline");
+    }
+
+    private void appendAttributes(StringBuilder out) {
+        out.append("[");
+        boolean first = true;
+        for (Attribute attribute : attributes) {
+            if (first)
+                first = false;
+            else
+                out.append(",");
+            out.append(attribute.getKey()).append(":").append(attribute.getValue());
+        }
+        out.append("]");
+    }
+
+    private void appendBody(StringBuilder out) {
+        out.append("{");
+        if (body != null)
+            out.append(body);
+        out.append("}");
+    }
 }
