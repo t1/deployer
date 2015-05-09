@@ -2,7 +2,9 @@ package com.github.t1.deployer.app.html.builder2;
 
 import static com.github.t1.deployer.app.html.builder2.Tag.*;
 
-import javax.ws.rs.core.*;
+import java.net.URI;
+
+import javax.ws.rs.core.UriInfo;
 
 import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
 
@@ -33,10 +35,10 @@ public class Tags {
     }
 
     public static Component baseUri(final String href) {
-        return new AppendingComponent<UriBuilder>() {
+        return new AppendingComponent<URI>() {
             @Override
-            protected UriBuilder contentFrom(BuildContext out) {
-                return out.get(UriInfo.class).getBaseUriBuilder().path(href);
+            protected URI contentFrom(BuildContext out) {
+                return out.get(UriInfo.class).getBaseUriBuilder().path(href).build();
             }
         };
     }

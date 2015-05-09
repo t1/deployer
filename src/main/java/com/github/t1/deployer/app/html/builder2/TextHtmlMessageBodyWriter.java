@@ -8,9 +8,8 @@ import java.lang.reflect.*;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
-import javax.ws.rs.ext.*;
+import javax.ws.rs.ext.MessageBodyWriter;
 
-@Provider
 @Produces(TEXT_HTML)
 public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<T> {
     @Context

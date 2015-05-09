@@ -8,9 +8,7 @@ import java.util.List;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.ext.Provider;
 
-@Provider
 @Produces(TEXT_HTML)
 public abstract class TextHtmlListMessageBodyWriter<T> extends TextHtmlMessageBodyWriter<List<T>> {
     /** Looks terrible, but it's actually not that bad: we just check if that genericType matches List<T> */
