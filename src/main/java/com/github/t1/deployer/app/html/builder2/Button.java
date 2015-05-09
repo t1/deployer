@@ -8,7 +8,7 @@ import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public class Button extends DelegateComponent<Tag> {
+public class Button extends DelegateComponent {
     public static ButtonBuilder button() {
         return new ButtonBuilder();
     }
@@ -43,7 +43,8 @@ public class Button extends DelegateComponent<Tag> {
         }
 
         public ButtonBuilder size(SizeVariation size) {
-            tag.classes("btn" + size.suffix);
+            if (!size.suffix.isEmpty())
+                tag.classes("btn" + size.suffix);
             return this;
         }
 

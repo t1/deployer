@@ -69,6 +69,10 @@ public class Tag extends Component {
         }
 
         public TagBuilder id(String id) {
+            return id(text(id));
+        }
+
+        public TagBuilder id(Component id) {
             return a("id", id);
         }
 

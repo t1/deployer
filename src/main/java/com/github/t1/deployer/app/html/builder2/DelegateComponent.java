@@ -6,9 +6,9 @@ import lombok.experimental.NonFinal;
 @Value
 @NonFinal
 @EqualsAndHashCode(callSuper = true)
-public abstract class DelegateComponent<T extends Component> extends Component {
+public abstract class DelegateComponent extends Component {
 
-    T component;
+    Component component;
 
     @Override
     public void writeTo(BuildContext out) {

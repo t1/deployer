@@ -1,10 +1,12 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.DeployerComponents.*;
 import static com.github.t1.deployer.app.html.DeployerPage.*;
 import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.app.html.builder2.Button.*;
 import static com.github.t1.deployer.app.html.builder2.ButtonGroup.*;
 import static com.github.t1.deployer.app.html.builder2.Compound.*;
+import static com.github.t1.deployer.app.html.builder2.Form.*;
 import static com.github.t1.deployer.app.html.builder2.Input.*;
 import static com.github.t1.deployer.app.html.builder2.Static.*;
 import static com.github.t1.deployer.app.html.builder2.StyleVariation.*;
@@ -24,6 +26,8 @@ import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
 public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceConfig> {
+    private static final String MAIN_FORM_ID = "main";
+
     private static final AppendingComponent<URI> DATA_SOURCE_LINK = new AppendingComponent<URI>() {
         @Override
         protected URI contentFrom(BuildContext out) {
@@ -32,15 +36,9 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     };
 
     private static final Compound EXISTING_DATA_SOURCE_FORM = compound( //
-            tag("form").id("delete").a("method", "POST") //
-                    .a("action", DATA_SOURCE_LINK) //
-                    .body(tag("input").multiline() //
-                            .a("type", "hidden").a("name", "action").a("value", "delete") //
-                            .build()) //
-                    .build() //
-            , //
-            tag("form").id("main").a("method", "POST") //
-                    .a("action", DATA_SOURCE_LINK) //
+            deleteForm(DATA_SOURCE_LINK, "delete"), //
+            form(MAIN_FORM_ID) //
+                    .action(DATA_SOURCE_LINK) //
                     .body(input("name").label("Name").value(new AppendingComponent<String>() {
                         @Override
                         protected String contentFrom(BuildContext out) {
@@ -56,14 +54,8 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                     .build() //
             , //
             buttonGroup().justified() //
-                    .button(buttonGroup() //
-                            .button(button().style(primary) //
-                                    .forForm("main") //
-                                    .body(text("Update")) //
-                                    .build()).build()) //
-                    .button(buttonGroup() //
-                            .button(button().icon("remove").style(danger).forForm("delete").build()) //
-                            .build()) //
+                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Update")).build()) //
+                    .button(remove("delete")) //
                     .build()
 
     ).build();
@@ -71,20 +63,15 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     private static final Compound NEW_DATA_SOURCE_FORM = compound( //
             tag("p").body(text("Enter the name of a new data source to configure")).build() //
             , //
-            tag("form").id("main").a("method", "POST") //
-                    .a("action", DATA_SOURCES.link()) //
+            form(MAIN_FORM_ID) //
+                    .action(DATA_SOURCES.link()) //
                     .body(input("name").label("Name").build()) //
                     .body(input("uri").label("URI").build()) //
                     .build() //
             , //
             buttonGroup().justified() //
-                    .button(buttonGroup() //
-                            .button(button().style(primary) //
-                                    .forForm("main") //
-                                    .body(text("Add")) //
-                                    .build()) //
-                            .build() //
-                    ).build() //
+                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
+                    .build() //
             ).build();
 
     private static final DeployerPage PAGE = deployerPage() //
@@ -123,7 +110,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(DATA_SOURCES);
+        buildContext.put(Navigation.DATA_SOURCES);
     }
 
     @Override

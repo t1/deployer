@@ -30,10 +30,10 @@
       <h1>foo</h1>
 
       <a href="http://localhost:8080/deployer/data-sources">&lt;</a>
-      <form id="delete" method="POST" action="http://localhost:8080/deployer/data-sources/foo">
+      <form method="POST" id="delete" action="http://localhost:8080/deployer/data-sources/foo">
         <input type="hidden" name="action" value="delete"/>
       </form>
-      <form id="main" method="POST" action="http://localhost:8080/deployer/data-sources/foo">
+      <form method="POST" id="main" action="http://localhost:8080/deployer/data-sources/foo">
         <label for="name">Name</label>
         <input class="form-control" name="name" id="name" required value="foo"/>
         <label for="uri">URI</label>

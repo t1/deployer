@@ -1,15 +1,12 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.DeployerComponents.*;
 import static com.github.t1.deployer.app.html.DeployerPage.*;
-import static com.github.t1.deployer.app.html.Navigation.*;
-import static com.github.t1.deployer.app.html.builder2.Button.*;
 import static com.github.t1.deployer.app.html.builder2.ButtonGroup.*;
 import static com.github.t1.deployer.app.html.builder2.Compound.*;
 import static com.github.t1.deployer.app.html.builder2.HtmlList.*;
 import static com.github.t1.deployer.app.html.builder2.SizeVariation.*;
 import static com.github.t1.deployer.app.html.builder2.Static.*;
-import static com.github.t1.deployer.app.html.builder2.StyleVariation.*;
-import static com.github.t1.deployer.app.html.builder2.Tag.*;
 import static com.github.t1.deployer.app.html.builder2.Tags.*;
 import static java.util.Collections.*;
 
@@ -21,13 +18,10 @@ import javax.ws.rs.ext.Provider;
 import com.github.t1.deployer.app.DataSources;
 import com.github.t1.deployer.app.html.builder2.*;
 import com.github.t1.deployer.app.html.builder2.HtmlList.HtmlListBuilder;
-import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
 public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<DataSourceConfig> {
-    private static final Static ADD_DATA_SOURCE = text("+");
-
     private static final DeployerPage PAGE = deployerPage() //
             .title(text("Data-Sources")) //
             .body(new Component() {
@@ -53,23 +47,9 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                     String formId = "delete-" + i;
                     return compound() //
                             .component(link(uri).body(text(dataSource.getName())).build()) //
-                            .component(deleteForm(uri, formId).build()) //
-                            .component(buttonGroup() //
-                                    .button(button().icon("remove").size(XS).style(danger).forForm(formId).build()) //
-                                    .build()) //
+                            .component(deleteForm(uri, formId)) //
+                            .component(buttonGroup().button(remove(formId, XS)).build()) //
                             .build();
-                }
-
-                private TagBuilder deleteForm(Static uri, String formId) {
-                    return tag("form") //
-                            .id(formId) //
-                            .a("method", "POST") //
-                            .a("action", uri) //
-                            .body(tag("input").multiline() //
-                                    .a("type", "hidden") //
-                                    .a("name", "action") //
-                                    .a("value", "delete") //
-                                    .build());
                 }
 
                 private Tag addDataSourceItem(UriInfo uriInfo) {
@@ -80,7 +60,7 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(DATA_SOURCES);
+        buildContext.put(Navigation.DATA_SOURCES);
     }
 
     @Override
