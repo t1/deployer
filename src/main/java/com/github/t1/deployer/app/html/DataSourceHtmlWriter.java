@@ -2,10 +2,12 @@ package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.DeployerPage.*;
 import static com.github.t1.deployer.app.html.Navigation.*;
-import static com.github.t1.deployer.app.html.builder2.Components.*;
+import static com.github.t1.deployer.app.html.builder2.Button.*;
+import static com.github.t1.deployer.app.html.builder2.ButtonGroup.*;
 import static com.github.t1.deployer.app.html.builder2.Compound.*;
 import static com.github.t1.deployer.app.html.builder2.Input.*;
 import static com.github.t1.deployer.app.html.builder2.Static.*;
+import static com.github.t1.deployer.app.html.builder2.StyleVariation.*;
 import static com.github.t1.deployer.app.html.builder2.Tag.*;
 import static com.github.t1.deployer.app.html.builder2.Tags.*;
 import static com.github.t1.deployer.model.DataSourceConfig.*;
@@ -22,6 +24,69 @@ import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
 public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceConfig> {
+    private static final AppendingComponent<URI> DATA_SOURCE_LINK = new AppendingComponent<URI>() {
+        @Override
+        protected URI contentFrom(BuildContext out) {
+            return DataSources.path(out.get(UriInfo.class), out.get(DataSourceConfig.class));
+        }
+    };
+
+    private static final Compound EXISTING_DATA_SOURCE_FORM = compound( //
+            tag("form").id("delete").a("method", "POST") //
+                    .a("action", DATA_SOURCE_LINK) //
+                    .body(tag("input").multiline() //
+                            .a("type", "hidden").a("name", "action").a("value", "delete") //
+                            .build()) //
+                    .build() //
+            , //
+            tag("form").id("main").a("method", "POST") //
+                    .a("action", DATA_SOURCE_LINK) //
+                    .body(input("name").label("Name").value(new AppendingComponent<String>() {
+                        @Override
+                        protected String contentFrom(BuildContext out) {
+                            return out.get(DataSourceConfig.class).getName();
+                        }
+                    }).build()) //
+                    .body(input("uri").label("URI").value(new AppendingComponent<URI>() {
+                        @Override
+                        protected URI contentFrom(BuildContext out) {
+                            return out.get(DataSourceConfig.class).getUri();
+                        }
+                    }).build()) //
+                    .build() //
+            , //
+            buttonGroup().justified() //
+                    .button(buttonGroup() //
+                            .button(button().style(primary) //
+                                    .forForm("main") //
+                                    .body(text("Update")) //
+                                    .build()).build()) //
+                    .button(buttonGroup() //
+                            .button(button().icon("remove").style(danger).forForm("delete").build()) //
+                            .build()) //
+                    .build()
+
+    ).build();
+
+    private static final Compound NEW_DATA_SOURCE_FORM = compound( //
+            tag("p").body(text("Enter the name of a new data source to configure")).build() //
+            , //
+            tag("form").id("main").a("method", "POST") //
+                    .a("action", DATA_SOURCES.link()) //
+                    .body(input("name").label("Name").build()) //
+                    .body(input("uri").label("URI").build()) //
+                    .build() //
+            , //
+            buttonGroup().justified() //
+                    .button(buttonGroup() //
+                            .button(button().style(primary) //
+                                    .forForm("main") //
+                                    .body(text("Add")) //
+                                    .build()) //
+                            .build() //
+                    ).build() //
+            ).build();
+
     private static final DeployerPage PAGE = deployerPage() //
             .title(new Component() {
                 @Override
@@ -41,82 +106,12 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                 public void writeTo(BuildContext out) {
                     DataSourceConfig target = out.get(DataSourceConfig.class);
                     if (isNew(target))
-                        newDataSourceForm().writeTo(out);
+                        NEW_DATA_SOURCE_FORM.writeTo(out);
                     else
-                        existingDataSourceForm().writeTo(out);
+                        EXISTING_DATA_SOURCE_FORM.writeTo(out);
                 }
             }) //
             .build();
-
-    private static Component newDataSourceForm() {
-        return compound( //
-                tag("p").body(text("Enter the name of a new data source to configure")).build() //
-                , //
-                tag("form").id("main").a("method", "POST") //
-                        .a("action", DATA_SOURCES.link()) //
-                        .body(input("name").label("Name").build()) //
-                        .body(input("uri").label("URI").build()) //
-                        .build() //
-                , //
-                buttonGroup().classes("btn-group-justified") //
-                        .body(buttonGroup() //
-                                .body(tag("button").multiline().classes("btn", "btn-block", "btn-primary") //
-                                        .a("form", "main").a("type", "submit") //
-                                        .body(text("Add")) //
-                                        .build()) //
-                                .build() //
-                        ).build() //
-        ).build();
-    }
-
-    private static Component existingDataSourceForm() {
-        return compound( //
-                tag("form").id("delete").a("method", "POST") //
-                        .a("action", dataSourceLink()) //
-                        .body(tag("input").multiline() //
-                                .a("type", "hidden").a("name", "action").a("value", "delete") //
-                                .build()) //
-                        .build() //
-                , //
-                tag("form").id("main").a("method", "POST") //
-                        .a("action", dataSourceLink()) //
-                        .body(input("name").label("Name").value(new AppendingComponent<String>() {
-                            @Override
-                            protected String contentFrom(BuildContext out) {
-                                return out.get(DataSourceConfig.class).getName();
-                            }
-                        }).build()) //
-                        .body(input("uri").label("URI").value(new AppendingComponent<URI>() {
-                            @Override
-                            protected URI contentFrom(BuildContext out) {
-                                return out.get(DataSourceConfig.class).getUri();
-                            }
-                        }).build()) //
-                        .build() //
-                , //
-                buttonGroup().classes("btn-group-justified") //
-                        .body(buttonGroup() //
-                                .body(tag("button").multiline() //
-                                        .classes("btn", "btn-block", "btn-primary") //
-                                        .a("form", "main").a("type", "submit") //
-                                        .body(text("Update")) //
-                                        .build()).build()) //
-                        .body(buttonGroup() //
-                                .body(iconButton("delete", "remove", "btn-danger").build()) //
-                                .build()) //
-                        .build()
-
-        ).build();
-    }
-
-    private static Component dataSourceLink() {
-        return new AppendingComponent<URI>() {
-            @Override
-            protected URI contentFrom(BuildContext out) {
-                return DataSources.path(out.get(UriInfo.class), out.get(DataSourceConfig.class));
-            }
-        };
-    }
 
     private static boolean isNew(DataSourceConfig target) {
         return NEW_DATA_SOURCE.equals(target.getName());

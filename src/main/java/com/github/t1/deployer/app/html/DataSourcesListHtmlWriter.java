@@ -2,10 +2,13 @@ package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.DeployerPage.*;
 import static com.github.t1.deployer.app.html.Navigation.*;
-import static com.github.t1.deployer.app.html.builder2.Components.*;
+import static com.github.t1.deployer.app.html.builder2.Button.*;
+import static com.github.t1.deployer.app.html.builder2.ButtonGroup.*;
 import static com.github.t1.deployer.app.html.builder2.Compound.*;
 import static com.github.t1.deployer.app.html.builder2.HtmlList.*;
+import static com.github.t1.deployer.app.html.builder2.SizeVariation.*;
 import static com.github.t1.deployer.app.html.builder2.Static.*;
+import static com.github.t1.deployer.app.html.builder2.StyleVariation.*;
 import static com.github.t1.deployer.app.html.builder2.Tag.*;
 import static com.github.t1.deployer.app.html.builder2.Tags.*;
 import static java.util.Collections.*;
@@ -52,7 +55,7 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                             .component(link(uri).body(text(dataSource.getName())).build()) //
                             .component(deleteForm(uri, formId).build()) //
                             .component(buttonGroup() //
-                                    .body(iconButton(formId, "remove", "btn-xs", "btn-danger").build()) //
+                                    .button(button().icon("remove").size(XS).style(danger).forForm(formId).build()) //
                                     .build()) //
                             .build();
                 }
