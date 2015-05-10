@@ -18,6 +18,10 @@ public class Tags {
         protected abstract T contentFrom(BuildContext out);
     }
 
+    public static TagBuilder span() {
+        return tag("span");
+    }
+
     public static TagBuilder div() {
         return tag("div");
     }

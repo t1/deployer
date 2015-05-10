@@ -31,26 +31,30 @@
 
       <ul class="list-group">
         <li class="list-group-item">
-          <a href="http://localhost:8080/deployer/data-sources/bar">bar</a>
-          <form method="POST" id="delete-0" action="http://localhost:8080/deployer/data-sources/bar">
-            <input type="hidden" name="action" value="delete"/>
-          </form>
-          <div role="group" class="btn-group">
-            <button class="btn btn-block btn-xs btn-danger" form="delete-0" type="submit">
-              <span class="glyphicon glyphicon-remove"/>
-            </button>
-          </div>
+          <span><a href="http://localhost:8080/deployer/data-sources/bar">bar</a></span>
+          <span style="float: right">
+            <form method="POST" id="delete-0" action="http://localhost:8080/deployer/data-sources/bar">
+              <input type="hidden" name="action" value="delete"/>
+            </form>
+            <div role="group" class="btn-group">
+              <button class="btn btn-block btn-xs btn-danger" form="delete-0" type="submit">
+                <span class="glyphicon glyphicon-remove"/>
+              </button>
+            </div>
+          </span>
         </li>
         <li class="list-group-item">
-          <a href="http://localhost:8080/deployer/data-sources/foo">foo</a>
-          <form method="POST" id="delete-1" action="http://localhost:8080/deployer/data-sources/foo">
-            <input type="hidden" name="action" value="delete"/>
-          </form>
-          <div role="group" class="btn-group">
-            <button class="btn btn-block btn-xs btn-danger" form="delete-1" type="submit">
-              <span class="glyphicon glyphicon-remove"/>
-            </button>
-          </div>
+          <span><a href="http://localhost:8080/deployer/data-sources/foo">foo</a></span>
+          <span style="float: right">
+            <form method="POST" id="delete-1" action="http://localhost:8080/deployer/data-sources/foo">
+              <input type="hidden" name="action" value="delete"/>
+            </form>
+            <div role="group" class="btn-group">
+              <button class="btn btn-block btn-xs btn-danger" form="delete-1" type="submit">
+                <span class="glyphicon glyphicon-remove"/>
+              </button>
+            </div>
+          </span>
         </li>
         <li class="list-group-item">
           <a href="http://localhost:8080/deployer/data-sources/!">+</a>

@@ -45,11 +45,13 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                 private Compound dataSourceItem(DataSourceConfig dataSource, UriInfo uriInfo, int i) {
                     Static uri = text(DataSources.path(uriInfo, dataSource));
                     String formId = "delete-" + i;
-                    return compound() //
-                            .component(link(uri).body(text(dataSource.getName())).build()) //
-                            .component(deleteForm(uri, formId)) //
-                            .component(buttonGroup().button(remove(formId, XS)).build()) //
-                            .build();
+                    return compound( //
+                            span().body(link(uri).body(text(dataSource.getName())).build()).build(), //
+                            span().a("style", "float: right") //
+                                    .body(deleteForm(uri, formId)) //
+                                    .body(buttonGroup().button(remove(formId, XS)).build()) //
+                                    .build() //
+                    ).build();
                 }
 
                 private Tag addDataSourceItem(UriInfo uriInfo) {
