@@ -87,21 +87,25 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
-        List<ChecksumSearchResultItem> results = authenticated( //
-                artifactory //
-                        .path("api/search/checksum") //
-                        .query("sha1", checkSum.hexString()) //
-                        .header("X-Result-Detail", "info") //
-                ) //
-                .get(ChecksumSearchResult.class) //
-                        .getResults();
-        if (results.size() == 0)
-            return null;
-        if (results.size() > 1)
-            throw new RuntimeException("checksum not unique in repository: " + checkSum);
-        ChecksumSearchResultItem result = results.get(0);
-        log.debug("got {}", result);
-        return result;
+        try {
+            List<ChecksumSearchResultItem> results = authenticated( //
+                    artifactory //
+                            .path("api/search/checksum") //
+                            .query("sha1", checkSum.hexString()) //
+                            .header("X-Result-Detail", "info") //
+                    ) //
+                    .get(ChecksumSearchResult.class) //
+                            .getResults();
+            if (results.size() == 0)
+                return null;
+            if (results.size() > 1)
+                throw new RuntimeException("checksum not unique in repository: " + checkSum);
+            ChecksumSearchResultItem result = results.get(0);
+            log.debug("got {}", result);
+            return result;
+        } catch (RuntimeException e) {
+            throw new RuntimeException("can't search by checksum " + checkSum, e);
+        }
     }
 
     private RestRequest authenticated(RestRequest request) {
