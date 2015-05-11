@@ -10,6 +10,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.MessageBodyWriter;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Produces(TEXT_HTML)
 public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<T> {
     @Context
@@ -35,11 +38,16 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
     @Override
     public void writeTo(T target, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
-        OutputStreamWriter writer = new OutputStreamWriter(entityStream);
-        BuildContext buildContext = component().write(target, uriInfo);
-        prepare(buildContext);
-        buildContext.to(writer);
-        writer.flush();
+        try {
+            OutputStreamWriter writer = new OutputStreamWriter(entityStream);
+            BuildContext buildContext = component().write(target, uriInfo);
+            prepare(buildContext);
+            buildContext.to(writer);
+            writer.flush();
+        } catch (Exception e) {
+            log.error("failed to write " + genericType + " as " + mediaType, e);
+            throw e;
+        }
     }
 
     protected void prepare(@SuppressWarnings("unused") BuildContext buildContext) {}

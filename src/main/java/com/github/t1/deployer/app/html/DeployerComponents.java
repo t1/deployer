@@ -21,6 +21,6 @@ public class DeployerComponents {
     }
 
     public static Component deleteForm(Component action, String id) {
-        return form(id).action(action).body(hiddenInput("delete")).build();
+        return form(id).action(action).body(hiddenAction("delete")).build();
     }
 }

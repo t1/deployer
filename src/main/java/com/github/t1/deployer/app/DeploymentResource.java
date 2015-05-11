@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.deployer.tools.WebException.*;
 import static com.github.t1.log.LogLevel.*;
 
@@ -31,25 +32,31 @@ public class DeploymentResource {
     private List<Deployment> availableVersions;
 
     @Logged(level = OFF)
-    DeploymentResource deployment(Deployment deployment) {
+    public DeploymentResource deployment(Deployment deployment) {
         this.deployment = deployment;
         return this;
     }
 
-    Deployment deployment() {
+    @Logged(level = OFF)
+    public Deployment deployment() {
         return deployment;
     }
 
+    @Logged(level = OFF)
+    public boolean isNew() {
+        return getName() == null || NEW_DEPLOYMENT_NAME.equals(getName().getValue());
+    }
+
     @GET
-    public Deployment self() {
-        return deployment;
+    public DeploymentResource self() {
+        return this;
     }
 
     @POST
     public Response post(@Context UriInfo uriInfo, //
             @FormParam("action") String action, //
             @FormParam("contextRoot") ContextRoot contextRoot, //
-            @FormParam("checkSum") CheckSum checkSum //
+            @FormParam("checksum") CheckSum checkSum //
     ) {
         switch (action) {
             case "deploy":

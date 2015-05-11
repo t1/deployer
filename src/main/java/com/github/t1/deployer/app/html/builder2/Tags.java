@@ -46,4 +46,8 @@ public class Tags {
             }
         };
     }
+
+    public static TagBuilder header(int level) {
+        return tag("h" + level);
+    }
 }

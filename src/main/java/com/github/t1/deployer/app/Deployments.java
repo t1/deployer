@@ -22,7 +22,6 @@ public class Deployments {
     public static final String CONTEXT_ROOT = "context-root";
 
     private static final Version UNKNOWN_VERSION = new Version("unknown");
-    static final String NEW_DEPLOYMENT_NAME = "!";
 
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(Deployments.class);
@@ -76,8 +75,8 @@ public class Deployments {
 
     @GET
     @Path(NEW_DEPLOYMENT_NAME)
-    public Deployment newDeployment() {
-        return NULL_DEPLOYMENT;
+    public DeploymentResource newDeployment() {
+        return deploymentResource(NULL_DEPLOYMENT);
     }
 
     @Path("")

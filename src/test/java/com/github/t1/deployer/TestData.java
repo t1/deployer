@@ -114,7 +114,7 @@ public class TestData {
 
     public static Form deploymentForm(String action, ContextRoot contextRoot, Version version) {
         return new Form("action", action) //
-                .param("checkSum", fakeChecksumFor(contextRoot, version).toString()) //
+                .param("checksum", fakeChecksumFor(contextRoot, version).toString()) //
                 .param("contextRoot", contextRoot.getValue());
     }
 

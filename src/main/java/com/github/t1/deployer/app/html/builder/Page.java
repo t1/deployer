@@ -16,7 +16,7 @@ public abstract class Page extends HtmlBuilder {
         append("<html>\n"); // lang="en"
         in();
         head();
-        append("<body class=\"container\" style=\"padding-top: 90px\">\n");
+        append("<body class=\"container-fluid\" style=\"padding-top: 70px\">\n");
         in();
         navBar();
         append("<div class=\"jumbotron\">\n");

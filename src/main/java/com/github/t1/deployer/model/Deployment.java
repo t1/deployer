@@ -12,6 +12,7 @@ import lombok.*;
 @XmlRootElement
 @XmlAccessorType(FIELD)
 public class Deployment implements Comparable<Deployment> {
+    public static final String NEW_DEPLOYMENT_NAME = "!";
     public static final Deployment NULL_DEPLOYMENT = new Deployment(null, null, null);
 
     private final DeploymentName name;

@@ -70,7 +70,7 @@ public class Page extends Component {
         }
 
         private Component body() {
-            return tag("body").classes("container").style("padding-top: 90px") //
+            return tag("body").classes("container-fluid").style("padding-top: 70px") //
                     .body(this.body.build()) //
                     .body(this.scripts.build()) //
                     .build();

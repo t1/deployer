@@ -10,12 +10,16 @@ import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class Input extends DelegateComponent {
-    public static Input hiddenInput(String action) {
+    public static Input hiddenAction(String action) {
         return hiddenInput().action(action).build();
     }
 
     public static InputBuilder hiddenInput() {
         return new InputBuilder().type("hidden");
+    }
+
+    public static Input hiddenInput(String name, String value) {
+        return new InputBuilder().type("hidden").name(name).value(value).build();
     }
 
     public static InputBuilder input(String idAndName) {
@@ -61,6 +65,15 @@ public class Input extends DelegateComponent {
 
         public InputBuilder label(Component label) {
             label().body(label);
+            return this;
+        }
+
+        public InputBuilder name(String name) {
+            return name(text(name));
+        }
+
+        public InputBuilder name(Component name) {
+            input.a("name", name);
             return this;
         }
 

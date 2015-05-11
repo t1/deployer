@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.TestData.*;
-import static com.github.t1.deployer.app.Deployments.*;
+import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -33,6 +33,7 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.*;
+import com.github.t1.rest.RestResource;
 
 @Log
 public class DeploymentsIT {
@@ -165,12 +166,12 @@ public class DeploymentsIT {
     public void shouldGetDeploymentByContextRoot() {
         given(FOO, BAR);
 
-        Response response = deploymentsWebTarget(FOO) //
-                .request(APPLICATION_JSON_TYPE) //
+        Deployment deployment = new RestResource(deployer.baseUri()) //
+                .path("deployments") //
+                .matrix("context-root", FOO) //
+                .accept(Deployment.class) //
                 .get();
 
-        assertStatus(OK, response);
-        Deployment deployment = response.readEntity(Deployment.class);
         assertDeployment(FOO, deployment);
     }
 
@@ -238,7 +239,7 @@ public class DeploymentsIT {
 
         Response response = deploymentsWebTarget().request() //
                 .post(Entity.form(new Form("action", "deploy") //
-                        .param("checkSum", fakeChecksumFor(FOO, CURRENT_FOO_VERSION).toString()) //
+                        .param("checksum", fakeChecksumFor(FOO, CURRENT_FOO_VERSION).toString()) //
                         ));
 
         assertStatus(OK, response); // redirected

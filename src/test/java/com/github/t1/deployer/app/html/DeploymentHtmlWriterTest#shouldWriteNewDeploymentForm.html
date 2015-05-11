@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
     <title>Add Deployment</title>
 
     <link href="http://localhost:8080/deployer/bootstrap/css/bootstrap.css" rel="stylesheet"/>
     <link href="http://localhost:8080/deployer/webapp/css/style.css" rel="stylesheet"/>
   </head>
-  <body class="container" style="padding-top: 90px">
+  <body class="container-fluid" style="padding-top: 70px">
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
@@ -18,8 +19,8 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
             <li class="active"><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
-            <li><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
-            <li><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
+            <li class=""><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
+            <li class=""><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
           </ul>
         </div>
       </div>
@@ -28,11 +29,12 @@
     <div class="jumbotron">
       <h1>Add Deployment</h1>
 
+      <a href="http://localhost:8080/deployer/deployments/*">&lt;</a>
       <p>Enter the checksum of a new artifact to deploy</p>
-      <form id="main" method="POST" action="http://localhost:8080/deployer/deployments">
+      <form method="POST" id="main" action="http://localhost:8080/deployer/deployments">
         <input type="hidden" name="action" value="deploy"/>
-        <label for="checkSum">Checksum</label>
-        <input class="form-control" name="checkSum" id="checkSum" required/>
+        <label for="checksum">Checksum</label>
+        <input class="form-control" name="checksum" id="checksum" required/>
       </form>
       <div role="group" class="btn-group">
         <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Deploy</button>

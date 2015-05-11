@@ -9,6 +9,10 @@ public class Static extends Component {
         return text("\n");
     }
 
+    public static Static textOr(Object text, String nullValue) {
+        return new Static((text == null) ? nullValue : text.toString());
+    }
+
     public static Static text(Object text) {
         return new Static(text.toString());
     }

@@ -31,7 +31,7 @@ public class BuildContext {
 
     @SneakyThrows(IOException.class)
     public BuildContext append(Object object) {
-        out.append(object.toString());
+        out.append(object.toString()); // FIXME escape html
         return this;
     }
 
