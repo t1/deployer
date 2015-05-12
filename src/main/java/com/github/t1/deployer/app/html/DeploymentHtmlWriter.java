@@ -27,6 +27,13 @@ import com.github.t1.deployer.model.*;
 
 @Provider
 public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentResource> {
+    private static final Tag DEPLOYMENTS_LINK = link(new AppendingComponent<URI>() {
+        @Override
+        protected URI contentFrom(BuildContext out) {
+            return Deployments.pathAll(out.get(UriInfo.class));
+        }
+    }).body(text("&lt;")).build();
+
     private static final Compound AVAILABLE_VERSIONS = //
             compound( //
                     header(2).body(text("Available Versions")).build(), //
@@ -139,7 +146,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                     .build() //
             ).build();
 
-    private static final DeployerPage PAGE = deployerPage() //
+    private static final DeployerPage PAGE = jumbotronPage() //
             .title(new Component() {
                 @Override
                 public void writeTo(BuildContext out) {
@@ -147,12 +154,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                     text(target.isNew() ? "Add Deployment" : target.getName().getValue()).writeInlineTo(out);
                 }
             }) //
-            .body(link(new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    text(Deployments.pathAll(out.get(UriInfo.class))).writeInlineTo(out);
-                }
-            }).body(text("&lt;")).build()) //
+            .body(DEPLOYMENTS_LINK) //
             .body(new Component() {
                 @Override
                 public void writeTo(BuildContext out) {

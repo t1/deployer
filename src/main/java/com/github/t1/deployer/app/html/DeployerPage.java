@@ -14,13 +14,18 @@ import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class DeployerPage extends Component {
-    public static DeployerPageBuilder deployerPage() {
-        return new DeployerPageBuilder();
+    public static DeployerPageBuilder panelPage() {
+        return new DeployerPageBuilder().panel();
+    }
+
+    public static DeployerPageBuilder jumbotronPage() {
+        return new DeployerPageBuilder().jumbotron();
     }
 
     public static class DeployerPageBuilder {
         private final Page.PageBuilder page = page();
-        private final TagBuilder body = div().classes("jumbotron");
+        private final TagBuilder body = div();
+        private TagBuilder titleTag = null;
 
         private NavBar navigation() {
             NavBarBuilder navbar = navBar().brand("Deployer");
@@ -40,9 +45,24 @@ public class DeployerPage extends Component {
             return navbar.build();
         }
 
+        public DeployerPageBuilder panel() {
+            body.classes("panel", "panel-default");
+            titleTag = div().classes("panel-heading");
+            return this;
+        }
+
+        public DeployerPageBuilder jumbotron() {
+            body.classes("jumbotron");
+            return this;
+        }
+
         public DeployerPageBuilder title(Component title) {
+            // TODO this needs refactoring
             page.title(title);
-            body.body(tag("h1").body(title).build()).body(nl());
+            Tag titleTag = tag("h1").body(title).build();
+            if (this.titleTag != null)
+                titleTag = this.titleTag.body(titleTag).build();
+            body.body(titleTag).body(nl());
             return this;
         }
 

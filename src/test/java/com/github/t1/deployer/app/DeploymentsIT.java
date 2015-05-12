@@ -119,8 +119,7 @@ public class DeploymentsIT {
     };
 
     private WebTarget deploymentsWebTarget(ContextRoot contextRoot) {
-        return deploymentsWebTarget() //
-                .matrixParam("context-root", contextRoot);
+        return deploymentsWebTarget().matrixParam("context-root", contextRoot);
     }
 
     private WebTarget deploymentsWebTarget() {
@@ -134,6 +133,23 @@ public class DeploymentsIT {
         // URI baseUri = URI.create("http://localhost:8080/deployer/");
         return ClientBuilder.newClient().target(baseUri);
     }
+
+    private RestResource deploymentsRestResource(ContextRoot contextRoot) {
+        return deploymentsRestResource().matrix("context-root", contextRoot);
+    }
+
+    private RestResource deploymentsRestResource() {
+        return deployerRestResource() //
+                // .register(new LoggingFilter(log, false)) //
+                .path("deployments");
+    }
+
+    private RestResource deployerRestResource() {
+        URI baseUri = deployer.baseUri();
+        // URI baseUri = URI.create("http://localhost:8080/deployer/");
+        return new RestResource(baseUri);
+    }
+
 
     private void given(ContextRoot... contextRoots) {
         givenDeployments(repository, contextRoots);
@@ -166,9 +182,7 @@ public class DeploymentsIT {
     public void shouldGetDeploymentByContextRoot() {
         given(FOO, BAR);
 
-        Deployment deployment = new RestResource(deployer.baseUri()) //
-                .path("deployments") //
-                .matrix("context-root", FOO) //
+        Deployment deployment = deploymentsRestResource(FOO) //
                 .accept(Deployment.class) //
                 .get();
 
@@ -177,7 +191,7 @@ public class DeploymentsIT {
 
     @Test
     @Ignore("sub resources after matrix params don't seem to work in Dropwizard")
-    public void shouldGetAvailableVersion() {
+    public void shouldGetAvailableVersions() {
         given(FOO, BAR);
 
         Response response = deploymentsWebTarget(FOO) //
@@ -274,7 +288,7 @@ public class DeploymentsIT {
     @Test
     public void shouldGetDeploymentsForm() {
         Response response = deployer() //
-                .path("deployments/" + NEW_DEPLOYMENT_NAME) //
+                .path("deployments").path(NEW_DEPLOYMENT_NAME) //
                 .request(TEXT_HTML) //
                 .get();
 

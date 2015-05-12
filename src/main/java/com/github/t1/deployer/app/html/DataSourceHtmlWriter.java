@@ -28,6 +28,13 @@ import com.github.t1.deployer.model.DataSourceConfig;
 public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceConfig> {
     private static final String MAIN_FORM_ID = "main";
 
+    private static final Tag DATA_SOURCES_LINK = link(new AppendingComponent<URI>() {
+        @Override
+        protected URI contentFrom(BuildContext out) {
+            return DataSources.base(out.get(UriInfo.class));
+        }
+    }).body(text("&lt;")).build();
+
     private static final AppendingComponent<URI> DATA_SOURCE_LINK = new AppendingComponent<URI>() {
         @Override
         protected URI contentFrom(BuildContext out) {
@@ -74,7 +81,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                     .build() //
             ).build();
 
-    private static final DeployerPage PAGE = deployerPage() //
+    private static final DeployerPage PAGE = jumbotronPage() //
             .title(new Component() {
                 @Override
                 public void writeTo(BuildContext out) {
@@ -82,12 +89,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                     text(title(target)).writeInlineTo(out);
                 }
             }) //
-            .body(link(new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    text(DataSources.base(out.get(UriInfo.class))).writeInlineTo(out);
-                }
-            }).body(text("&lt;")).build()) //
+            .body(DATA_SOURCES_LINK) //
             .body(new Component() {
                 @Override
                 public void writeTo(BuildContext out) {

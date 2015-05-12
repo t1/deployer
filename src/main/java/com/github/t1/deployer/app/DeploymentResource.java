@@ -20,7 +20,7 @@ import com.github.t1.log.Logged;
 
 @Logged(level = INFO)
 @RequiredArgsConstructor
-public class DeploymentResource {
+public class DeploymentResource implements Comparable<DeploymentResource> {
     @Inject
     DeploymentContainer container;
     @Inject
@@ -181,6 +181,12 @@ public class DeploymentResource {
         if (availableVersions == null)
             availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
         return availableVersions;
+    }
+
+    @Override
+    @Logged(level = OFF)
+    public int compareTo(DeploymentResource that) {
+        return this.deployment().compareTo(that.deployment());
     }
 
     @Override

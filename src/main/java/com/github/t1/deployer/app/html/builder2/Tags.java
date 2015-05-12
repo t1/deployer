@@ -30,6 +30,10 @@ public class Tags {
         return tag("a").a("href", component);
     }
 
+    public static TagBuilder link(URI uri) {
+        return tag("a").a("href", uri.toString());
+    }
+
     public static Component styleSheet(String href) {
         return tag("link").a("href", baseUri(href)).a("rel", "stylesheet").build();
     }

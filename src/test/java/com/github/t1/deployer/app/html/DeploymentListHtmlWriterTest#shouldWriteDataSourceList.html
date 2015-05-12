@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
     <title>Deployments</title>
 
     <link href="http://localhost:8080/deployer/bootstrap/css/bootstrap.css" rel="stylesheet"/>
@@ -18,22 +19,31 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
             <li class="active"><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
-            <li><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
-            <li><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
+            <li class=""><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
+            <li class=""><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
           </ul>
         </div>
       </div>
     </nav>
 
-    <div class="jumbotron">
-      <h1>Deployments</h1>
+    <div class="panel panel-default">
+      <div class="panel-heading"><h1>Deployments</h1></div>
 
-          <table>
-              <tr>      <td><a href="http://localhost:8080/deployer/deployments;context-root=barx">barx</a></td>      <td>bar</td>      <td title="SHA-1: DDEEFF">null</td>      </tr>
-              <tr>      <td><a href="http://localhost:8080/deployer/deployments;context-root=foox">foox</a></td>      <td>foo</td>      <td title="SHA-1: AABBCC">null</td>      </tr>
-          <tr><td colspan='3'><a href="http://localhost:8080/deployer/deployments/!">+</a></td></tr>
-          </table>
-      <br/><br/>
+      <table class="table">
+        <tr>
+          <td><a href="http://localhost:8080/deployer/deployments;context-root=barx">barx</a></td>
+          <td>bar</td>
+          <td title="SHA-1: DDEEFF">1.0</td>
+        </tr>
+        <tr>
+          <td><a href="http://localhost:8080/deployer/deployments;context-root=foox">foox</a></td>
+          <td>foo</td>
+          <td title="SHA-1: AABBCC">2.3.1</td>
+        </tr>
+        <tr>
+          <td colspan="3"><a href="http://localhost:8080/deployer/deployments/!">+</a></td>
+        </tr>
+      </table>
     </div>
 
     <script src="http://localhost:8080/deployer/jquery/jquery.js"/>

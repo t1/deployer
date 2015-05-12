@@ -17,11 +17,17 @@ public class DeploymentListHtmlWriterTest extends AbstractHtmlWriterTest<List<De
         super(new DeploymentListHtmlWriter());
     }
 
+    private Deployment deployment(String name, String root, String checksum, String version) {
+        return new Deployment(new DeploymentName(name), new ContextRoot(root), CheckSum.ofHexString(checksum),
+                new Version(version));
+    }
+
     @Test
     public void shouldWriteDataSourceList() throws Exception {
         List<Deployment> deployments = asList( //
-                new Deployment(new DeploymentName("foo"), new ContextRoot("foox"), CheckSum.ofHexString("aabbcc")), //
-                new Deployment(new DeploymentName("bar"), new ContextRoot("barx"), CheckSum.ofHexString("ddeeff")));
+                deployment("foo", "foox", "aabbcc", "2.3.1"), //
+                deployment("bar", "barx", "ddeeff", "1.0") //
+                );
 
         String entity = write(deployments);
 

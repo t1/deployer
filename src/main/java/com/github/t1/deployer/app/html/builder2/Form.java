@@ -2,6 +2,9 @@ package com.github.t1.deployer.app.html.builder2;
 
 import static com.github.t1.deployer.app.html.builder2.Static.*;
 import static com.github.t1.deployer.app.html.builder2.Tag.*;
+
+import java.net.URI;
+
 import lombok.*;
 
 import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
@@ -22,6 +25,11 @@ public class Form extends DelegateComponent {
 
         public FormBuilder id(Component id) {
             tag.id(id);
+            return this;
+        }
+
+        public FormBuilder action(URI action) {
+            tag.a("action", action.toString());
             return this;
         }
 

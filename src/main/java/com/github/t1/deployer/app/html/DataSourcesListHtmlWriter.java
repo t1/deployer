@@ -10,6 +10,7 @@ import static com.github.t1.deployer.app.html.builder2.Static.*;
 import static com.github.t1.deployer.app.html.builder2.Tags.*;
 import static java.util.Collections.*;
 
+import java.net.URI;
 import java.util.List;
 
 import javax.ws.rs.core.UriInfo;
@@ -22,7 +23,7 @@ import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
 public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<DataSourceConfig> {
-    private static final DeployerPage PAGE = deployerPage() //
+    private static final DeployerPage PAGE = jumbotronPage() //
             .title(text("Data-Sources")) //
             .body(new Component() {
                 @Override
@@ -43,7 +44,7 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                 }
 
                 private Compound dataSourceItem(DataSourceConfig dataSource, UriInfo uriInfo, int i) {
-                    Static uri = text(DataSources.path(uriInfo, dataSource));
+                    URI uri = DataSources.path(uriInfo, dataSource);
                     String formId = "delete-" + i;
                     return compound( //
                             span().body(link(uri).body(text(dataSource.getName())).build()).build(), //
@@ -55,7 +56,7 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                 }
 
                 private Tag addDataSourceItem(UriInfo uriInfo) {
-                    return link(text(DataSources.newDataSource(uriInfo))).body(ADD_DATA_SOURCE).multiline().build();
+                    return link(DataSources.newDataSource(uriInfo)).body(ADD_DATA_SOURCE).multiline().build();
                 }
             }) //
             .build();

@@ -2,6 +2,7 @@ package com.github.t1.deployer.repository;
 
 import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
@@ -71,16 +72,21 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        expectedException.expectMessage("expected status 200 OK but got 500 Internal Server Error");
-
-        repository().getByChecksum(FAILING_CHECKSUM);
+        try {
+            repository().getByChecksum(FAILING_CHECKSUM);
+        } catch (RuntimeException e) {
+            assertThat(e.getCause().getMessage(),
+                    containsString("expected status 200 OK but got 500 Internal Server Error"));
+        }
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
-        expectedException.expectMessage("checksum not unique");
-
-        repository().getByChecksum(AMBIGUOUS_CHECKSUM);
+        try {
+            repository().getByChecksum(AMBIGUOUS_CHECKSUM);
+        } catch (RuntimeException e) {
+            assertThat(e.getCause().getMessage(), containsString("checksum not unique"));
+        }
     }
 
     @Test
