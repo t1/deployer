@@ -26,4 +26,8 @@ public class DataSourceConfig implements Comparable<DataSourceConfig> {
     public int compareTo(DataSourceConfig that) {
         return this.name.compareToIgnoreCase(that.name);
     }
+
+    public boolean isNew() {
+        return NEW_DATA_SOURCE.equals(name);
+    }
 }

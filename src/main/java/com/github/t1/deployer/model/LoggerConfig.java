@@ -19,4 +19,8 @@ public class LoggerConfig implements Comparable<LoggerConfig> {
     public int compareTo(LoggerConfig that) {
         return this.category.compareToIgnoreCase(that.category);
     }
+
+    public boolean isNew() {
+        return NEW_LOGGER.equals(category);
+    }
 }

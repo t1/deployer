@@ -22,9 +22,14 @@ public class Input extends DelegateComponent {
         return new InputBuilder().type("hidden").name(name).value(value).build();
     }
 
-    public static InputBuilder input(String idAndName) {
+    public static InputBuilder input() {
         InputBuilder builder = new InputBuilder();
         builder.input.classes("form-control");
+        return builder;
+    }
+
+    public static InputBuilder input(String idAndName) {
+        InputBuilder builder = input();
         builder.idAndName(idAndName);
         return builder;
     }

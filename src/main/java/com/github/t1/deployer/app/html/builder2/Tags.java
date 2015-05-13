@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app.html.builder2;
 
+import static com.github.t1.deployer.app.html.builder2.Static.*;
 import static com.github.t1.deployer.app.html.builder2.Tag.*;
 
 import java.net.URI;
@@ -24,6 +25,14 @@ public class Tags {
 
     public static TagBuilder div() {
         return tag("div");
+    }
+
+    public static Tag p(String text) {
+        return tag("p").body(text(text)).build();
+    }
+
+    public static Tag noscript(Component body) {
+        return tag("noscript").body(body).build();
     }
 
     public static TagBuilder link(Component component) {

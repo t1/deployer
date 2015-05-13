@@ -12,7 +12,6 @@ import static com.github.t1.deployer.app.html.builder2.Static.*;
 import static com.github.t1.deployer.app.html.builder2.StyleVariation.*;
 import static com.github.t1.deployer.app.html.builder2.Tag.*;
 import static com.github.t1.deployer.app.html.builder2.Tags.*;
-import static com.github.t1.deployer.model.DataSourceConfig.*;
 
 import java.net.URI;
 
@@ -82,11 +81,11 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
             ).build();
 
     private static final DeployerPage PAGE = jumbotronPage() //
-            .title(new Component() {
+            .title(new AppendingComponent<String>() {
                 @Override
-                public void writeTo(BuildContext out) {
+                protected String contentFrom(BuildContext out) {
                     DataSourceConfig target = out.get(DataSourceConfig.class);
-                    text(title(target)).writeInlineTo(out);
+                    return title(target);
                 }
             }) //
             .body(DATA_SOURCES_LINK) //
@@ -94,20 +93,14 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                 @Override
                 public void writeTo(BuildContext out) {
                     DataSourceConfig target = out.get(DataSourceConfig.class);
-                    if (isNew(target))
-                        NEW_DATA_SOURCE_FORM.writeTo(out);
-                    else
-                        EXISTING_DATA_SOURCE_FORM.writeTo(out);
+                    Compound body = target.isNew() ? NEW_DATA_SOURCE_FORM : EXISTING_DATA_SOURCE_FORM;
+                    body.writeTo(out);
                 }
             }) //
             .build();
 
-    private static boolean isNew(DataSourceConfig target) {
-        return NEW_DATA_SOURCE.equals(target.getName());
-    }
-
     public static String title(DataSourceConfig target) {
-        return isNew(target) ? "Add Data-Source" : target.getName();
+        return target.isNew() ? "Add Data-Source" : target.getName();
     }
 
     @Override
