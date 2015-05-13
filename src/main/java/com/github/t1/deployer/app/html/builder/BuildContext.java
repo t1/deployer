@@ -1,4 +1,4 @@
-package com.github.t1.deployer.app.html.builder2;
+package com.github.t1.deployer.app.html.builder;
 
 import java.io.*;
 import java.util.*;
@@ -70,6 +70,8 @@ public class BuildContext {
     public void put(Object target) {
         this.targets.put(target.getClass(), target);
     }
+
+    // TODO get generic type, e.g. for List<T>
 
     public <T> T get(Class<T> type) {
         for (Entry<Class<?>, Object> entry : targets.entrySet())

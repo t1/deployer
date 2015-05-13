@@ -1,4 +1,4 @@
-package com.github.t1.deployer.app.html.builder2;
+package com.github.t1.deployer.app.html.builder;
 
 public abstract class Component {
     public BuildContext write(Object... targets) {

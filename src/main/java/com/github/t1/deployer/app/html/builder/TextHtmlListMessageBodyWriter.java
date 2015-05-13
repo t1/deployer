@@ -1,4 +1,4 @@
-package com.github.t1.deployer.app.html.builder2;
+package com.github.t1.deployer.app.html.builder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;

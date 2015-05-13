@@ -2,12 +2,12 @@ package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.DeployerComponents.*;
 import static com.github.t1.deployer.app.html.DeployerPage.*;
-import static com.github.t1.deployer.app.html.builder2.ButtonGroup.*;
-import static com.github.t1.deployer.app.html.builder2.Compound.*;
-import static com.github.t1.deployer.app.html.builder2.HtmlList.*;
-import static com.github.t1.deployer.app.html.builder2.SizeVariation.*;
-import static com.github.t1.deployer.app.html.builder2.Static.*;
-import static com.github.t1.deployer.app.html.builder2.Tags.*;
+import static com.github.t1.deployer.app.html.builder.ButtonGroup.*;
+import static com.github.t1.deployer.app.html.builder.Compound.*;
+import static com.github.t1.deployer.app.html.builder.HtmlList.*;
+import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
 import static java.util.Collections.*;
 
 import java.net.URI;
@@ -17,8 +17,8 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.DataSources;
-import com.github.t1.deployer.app.html.builder2.*;
-import com.github.t1.deployer.app.html.builder2.HtmlList.HtmlListBuilder;
+import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.HtmlList.HtmlListBuilder;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider

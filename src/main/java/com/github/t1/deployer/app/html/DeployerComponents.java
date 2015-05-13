@@ -1,15 +1,15 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.html.builder2.Button.*;
-import static com.github.t1.deployer.app.html.builder2.Form.*;
-import static com.github.t1.deployer.app.html.builder2.Input.*;
-import static com.github.t1.deployer.app.html.builder2.SizeVariation.*;
-import static com.github.t1.deployer.app.html.builder2.Static.*;
-import static com.github.t1.deployer.app.html.builder2.StyleVariation.*;
+import static com.github.t1.deployer.app.html.builder.Button.*;
+import static com.github.t1.deployer.app.html.builder.Form.*;
+import static com.github.t1.deployer.app.html.builder.Input.*;
+import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 
 import java.net.URI;
 
-import com.github.t1.deployer.app.html.builder2.*;
+import com.github.t1.deployer.app.html.builder.*;
 
 public class DeployerComponents {
     public static final Component ADD_DATA_SOURCE = text("+");

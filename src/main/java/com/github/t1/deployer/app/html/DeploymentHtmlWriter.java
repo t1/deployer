@@ -1,17 +1,17 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.DeployerPage.*;
-import static com.github.t1.deployer.app.html.builder2.Button.*;
-import static com.github.t1.deployer.app.html.builder2.ButtonGroup.*;
-import static com.github.t1.deployer.app.html.builder2.Compound.*;
-import static com.github.t1.deployer.app.html.builder2.DescriptionList.*;
-import static com.github.t1.deployer.app.html.builder2.Form.*;
-import static com.github.t1.deployer.app.html.builder2.Input.*;
-import static com.github.t1.deployer.app.html.builder2.SizeVariation.*;
-import static com.github.t1.deployer.app.html.builder2.Static.*;
-import static com.github.t1.deployer.app.html.builder2.StyleVariation.*;
-import static com.github.t1.deployer.app.html.builder2.Tag.*;
-import static com.github.t1.deployer.app.html.builder2.Tags.*;
+import static com.github.t1.deployer.app.html.builder.Button.*;
+import static com.github.t1.deployer.app.html.builder.ButtonGroup.*;
+import static com.github.t1.deployer.app.html.builder.Compound.*;
+import static com.github.t1.deployer.app.html.builder.DescriptionList.*;
+import static com.github.t1.deployer.app.html.builder.Form.*;
+import static com.github.t1.deployer.app.html.builder.Input.*;
+import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
+import static com.github.t1.deployer.app.html.builder.Tag.*;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.net.URI;
 
@@ -19,10 +19,10 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.*;
-import com.github.t1.deployer.app.html.builder2.*;
-import com.github.t1.deployer.app.html.builder2.DescriptionList.DescriptionListBuilder;
-import com.github.t1.deployer.app.html.builder2.Form.FormBuilder;
-import com.github.t1.deployer.app.html.builder2.Tags.AppendingComponent;
+import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.DescriptionList.DescriptionListBuilder;
+import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
+import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 
 @Provider

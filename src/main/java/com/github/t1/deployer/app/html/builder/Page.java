@@ -1,99 +1,92 @@
 package com.github.t1.deployer.app.html.builder;
 
-import java.net.URI;
+import static com.github.t1.deployer.app.html.builder.Compound.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.Tag.*;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
+import static java.util.Arrays.*;
 
-public abstract class Page extends HtmlBuilder {
-    private static final String MIN = ""; // ".min";
+import java.util.List;
 
-    public Page() {}
+import lombok.*;
 
-    public Page(HtmlBuilder container) {
-        super(container);
+import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
+import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+
+@Value
+@EqualsAndHashCode(callSuper = true)
+public class Page extends Component {
+    public static PageBuilder page() {
+        return new PageBuilder();
     }
 
-    public void html() {
-        append("<!DOCTYPE html>\n");
-        append("<html>\n"); // lang="en"
-        in();
-        head();
-        append("<body class=\"container-fluid\" style=\"padding-top: 70px\">\n");
-        in();
-        navBar();
-        append("<div class=\"jumbotron\">\n");
-        in();
-        append("<h1>").append(bodyTitle()).append("</h1>\n");
-        nl();
-        body();
-        out();
-        append("</div>\n");
-        nl();
-        append(script("jquery/jquery" + MIN + ".js")).append("\n");
-        append(script("bootstrap/js/bootstrap" + MIN + ".js")).append("\n");
-        out();
-        append("</body>\n");
-        out();
-        append("</html>\n");
+    public static class PageBuilder {
+        private final List<Tag> metas = asList( //
+                tag("meta").a("charset", "utf-8").build(), //
+                tag("meta").a("http-equiv", "X-UA-Compatible").a("content", "IE=edge").build(), //
+                tag("meta").a("name", "viewport").a("content", "width=device-width, initial-scale=1").build() //
+                );
+
+        private final List<Component> styleSheets = asList( //
+                styleSheet("bootstrap/css/bootstrap.css"), //
+                styleSheet("webapp/css/style.css") //
+                );
+
+        private Component title;
+        private final CompoundBuilder body = compound("\n");
+        private final CompoundBuilder scripts = compound( //
+                nl(), //
+                script("jquery/jquery.js"), //
+                script("bootstrap/js/bootstrap.js") //
+                );
+
+        public PageBuilder title(Component title) {
+            this.title = title;
+            return this;
+        }
+
+        public PageBuilder body(Component body) {
+            this.body.component(body);
+            return this;
+        }
+
+        public Page build() {
+            return new Page(tag("html") //
+                    .body(head()) //
+                    .body(body()) //
+                    .build());
+        }
+
+        private Component head() {
+            TagBuilder head = tag("head");
+            for (Tag meta : metas)
+                head.body(meta);
+            if (title != null)
+                head.body(nl()).body(tag("title").body(title).build());
+            head.body(nl());
+            for (Component styleSheet : styleSheets)
+                head.body(styleSheet);
+            return head.build();
+        }
+
+        private Component body() {
+            return tag("body").classes("container-fluid").style("padding-top: 70px") //
+                    .body(this.body.build()) //
+                    .body(this.scripts.build()) //
+                    .build();
+        }
     }
 
-    public void head() {
-        append("<head>\n");
-        in();
-        append("<meta charset=\"utf-8\">\n");
-        append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n");
-        append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-        append("<title>").append(headerTitle()).append("</title>\n");
-        nl();
-        append(stylesheet("bootstrap/css/bootstrap" + MIN + ".css")).append("\n");
-        append(stylesheet("webapp/css/style.css")).append("\n");
-        out();
-        append("</head>\n");
+    Component html;
+
+    @Override
+    public void writeTo(BuildContext out) {
+        out.println("<!DOCTYPE html>");
+        html.writeTo(out);
     }
 
-    public void navBar() {
-        append("<nav class=\"navbar navbar-default navbar-fixed-top\">\n");
-        in();
-        append("<div class=\"container-fluid\">\n");
-        in();
-        append("<div class=\"navbar-header\">\n");
-        append("  <a class=\"navbar-brand\" href=\"#\">Deployer</a>\n");
-        append("</div>\n");
-        append("<div id=\"navbar\" class=\"navbar-collapse collapse\">\n");
-        in();
-        append("<ul class=\"nav navbar-nav navbar-right\">\n");
-        in();
-        navigation();
-        out();
-        append("</ul>\n");
-        out();
-        append("</div>\n");
-        out();
-        append("</div>\n");
-        out();
-        append("</nav>\n");
-        nl();
-    }
-
-    public abstract void navigation();
-
-    public String headerTitle() {
-        return title();
-    }
-
-    public String bodyTitle() {
-        return title();
-    }
-
-    public abstract String title();
-
-    public abstract void body();
-
-    public abstract URI base(String path);
-
-    private String stylesheet(String path) {
-        return "<link href=\"" + base(path) + "\" rel=\"stylesheet\"/>";
-    }
-
-    private String script(String path) {
-        return "<script src=\"" + base(path) + "\"/>";
+    @Override
+    public boolean isMultiLine() {
+        return true;
     }
 }

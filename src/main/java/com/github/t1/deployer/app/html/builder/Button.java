@@ -1,44 +1,64 @@
 package com.github.t1.deployer.app.html.builder;
 
-public class Button extends HtmlBuilder {
-    private final Tag tag = new Tag("button").classes("btn", "btn-block");
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.Tag.*;
+import lombok.*;
 
-    public Button(HtmlBuilder container) {
-        super(container);
+import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+
+@Value
+@EqualsAndHashCode(callSuper = true)
+public class Button extends DelegateComponent {
+    public static ButtonBuilder button() {
+        return new ButtonBuilder();
     }
 
-    public Button form(String formId) {
-        tag.attribute("form", formId);
-        return this;
+    public static class ButtonBuilder {
+        private final TagBuilder tag = tag("button").multiline().classes("btn", "btn-block");
+
+        public ButtonBuilder justified() {
+            tag.classes("btn-group-justified");
+            return this;
+        }
+
+        public ButtonBuilder icon(String icon, String... classes) {
+            body(tag("span").multiline() //
+                    .classes("glyphicon", "glyphicon-" + icon).classes(classes) //
+                    .build());
+            return this;
+        }
+
+        public ButtonBuilder body(Component body) {
+            tag.body(body);
+            return this;
+        }
+
+        public ButtonBuilder forForm(String formId) {
+            return forForm(text(formId));
+        }
+
+        public ButtonBuilder forForm(Component formId) {
+            tag.a("form", formId).a("type", "submit");
+            return this;
+        }
+
+        public ButtonBuilder size(SizeVariation size) {
+            if (!size.suffix.isEmpty())
+                tag.classes("btn" + size.suffix);
+            return this;
+        }
+
+        public ButtonBuilder style(StyleVariation style) {
+            tag.classes("btn-" + style);
+            return this;
+        }
+
+        public Button build() {
+            return new Button(tag.build());
+        }
     }
 
-    public Button type(String type) {
-        tag.attribute("type", type);
-        return this;
-    }
-
-    public Button size(SizeVariation size) {
-        tag.classes("btn" + size.suffix);
-        return this;
-    }
-
-    public Button style(StyleVariation style) {
-        tag.classes("btn-" + style);
-        return this;
-    }
-
-    public Button icon(String name) {
-        append(tag.header()).append("\n");
-        in();
-        append(span().classes("glyphicon", "glyphicon-" + name).close()).append("\n");
-        out();
-        append("</button>\n");
-        return this;
-    }
-
-    public Button label(String label) {
-        tag.enclosing(label);
-        append(tag).append("\n");
-        return this;
+    private Button(Tag component) {
+        super(component);
     }
 }

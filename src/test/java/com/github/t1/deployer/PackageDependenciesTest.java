@@ -55,7 +55,6 @@ public class PackageDependenciesTest {
         Package app = packageOf(Deployments.class);
         Package html = packageOf(Index.class);
         Package builder = packageOf(com.github.t1.deployer.app.html.builder.Page.class);
-        Package builder2 = packageOf(com.github.t1.deployer.app.html.builder2.Page.class);
         Package file = packageOf(DeploymentListFile.class);
         Package container = packageOf(LoggerContainer.class);
         Package model = packageOf(Deployment.class);
@@ -65,7 +64,7 @@ public class PackageDependenciesTest {
         Package credentials = packageOf(org.apache.http.auth.Credentials.class);
 
         app.dependsUpon(model, container, repository, tools, file);
-        html.dependsUpon(model, app, builder, builder2); // app for resource paths
+        html.dependsUpon(model, app, builder); // app for resource paths
         file.dependsUpon(model, repository, container, tools);
 
         container.dependsUpon(

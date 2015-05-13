@@ -1,9 +1,9 @@
-package com.github.t1.deployer.app.html.builder2;
+package com.github.t1.deployer.app.html.builder;
 
-import static com.github.t1.deployer.app.html.builder2.Tag.*;
+import static com.github.t1.deployer.app.html.builder.Tag.*;
 import lombok.*;
 
-import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
+import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 @Value
 @EqualsAndHashCode(callSuper = true)

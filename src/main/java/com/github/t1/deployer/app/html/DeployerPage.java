@@ -1,15 +1,15 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.html.builder2.NavBar.*;
-import static com.github.t1.deployer.app.html.builder2.Page.*;
-import static com.github.t1.deployer.app.html.builder2.Static.*;
-import static com.github.t1.deployer.app.html.builder2.Tag.*;
-import static com.github.t1.deployer.app.html.builder2.Tags.*;
+import static com.github.t1.deployer.app.html.builder.NavBar.*;
+import static com.github.t1.deployer.app.html.builder.Page.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.Tag.*;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
 import lombok.*;
 
-import com.github.t1.deployer.app.html.builder2.*;
-import com.github.t1.deployer.app.html.builder2.NavBar.NavBarBuilder;
-import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
+import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder;
+import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 @Value
 @EqualsAndHashCode(callSuper = true)

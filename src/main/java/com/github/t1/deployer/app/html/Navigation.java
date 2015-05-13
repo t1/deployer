@@ -8,8 +8,8 @@ import lombok.*;
 import lombok.experimental.Accessors;
 
 import com.github.t1.deployer.app.*;
-import com.github.t1.deployer.app.html.builder2.*;
-import com.github.t1.deployer.app.html.builder2.Tags.AppendingComponent;
+import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 
 @RequiredArgsConstructor
 public enum Navigation {

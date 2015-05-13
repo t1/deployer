@@ -1,81 +1,194 @@
 package com.github.t1.deployer.app.html.builder;
 
+import static com.github.t1.deployer.app.html.builder.Compound.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+
 import java.util.*;
 
-public class Tag extends HtmlBuilder {
-    private final String tagName;
-    private Map<String, String> attributes;
-    private boolean headerClosed = false;
+import lombok.*;
 
-    public Tag(String tagName) {
-        super(); // explicitly no container
-        this.tagName = tagName;
+import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
+
+@Value
+@Builder(builderMethodName = "tag")
+@EqualsAndHashCode(callSuper = true)
+public class Tag extends Component {
+    private static final Component NO_VALUE = tag(UUID.randomUUID().toString()).build();
+
+    public static TagBuilder tag(String name) {
+        return new TagBuilder().name(name);
     }
 
-    public String attribute(String name) {
-        return (attributes == null) ? null : attributes.get(name);
-    }
+    @Value
+    @EqualsAndHashCode(callSuper = true)
+    public static class Attribute extends Component {
+        String key;
+        Component value;
 
-    public Tag attribute(String name, Object value) {
-        if (attributes == null)
-            attributes = new LinkedHashMap<>();
-        attributes.put(name, value == null ? null : value.toString());
-        return this;
-    }
-
-    public Tag classes(String... strings) {
-        StringBuilder out = new StringBuilder();
-        String existingClasses = attribute("class");
-        if (existingClasses != null)
-            out.append(existingClasses);
-        for (String string : strings) {
-            if (out.length() > 0)
-                out.append(" ");
-            out.append(string);
+        @Override
+        public void writeInlineTo(BuildContext out) {
+            out.append(" ").append(key);
+            if (value != NO_VALUE) {
+                out.append("=\"");
+                value.writeInlineTo(out);
+                out.append("\"");
+            }
         }
-        attribute("class", out.toString());
-        return this;
+
+        @Override
+        public void writeTo(BuildContext out) {
+            writeInlineTo(out);
+        }
+
+        @Override
+        public boolean isMultiLine() {
+            return false;
+        }
     }
 
-    public Tag name(String name) {
-        return attribute("name", name);
+    public static class TagBuilder {
+        private String bodyDelimiter = "";
+        private boolean multiline;
+
+        public TagBuilder bodyDelimiter(String bodyDelimiter) {
+            this.bodyDelimiter = bodyDelimiter;
+            return this;
+        }
+
+        public TagBuilder a(String key, String value) {
+            return a(key, text(value));
+        }
+
+        public TagBuilder a(String key) {
+            return a(key, NO_VALUE);
+        }
+
+        public TagBuilder a(String key, Component value) {
+            attribute(new Attribute(key, value));
+            return this;
+        }
+
+        public TagBuilder id(String id) {
+            return id(text(id));
+        }
+
+        public TagBuilder id(Component id) {
+            return a("id", id);
+        }
+
+        public TagBuilder classes(String... classes) {
+            for (String klass : classes) {
+                classes(text(klass));
+            }
+            return this;
+        }
+
+        public TagBuilder classes(Component... classes) {
+            CompoundBuilder compound = compound(" ");
+            if (attributes != null) {
+                for (Iterator<Attribute> iter = attributes.iterator(); iter.hasNext();) {
+                    Attribute attribute = iter.next();
+                    if (attribute.getKey().equals("class")) {
+                        iter.remove();
+                        compound.component(attribute.getValue());
+                    }
+                }
+            }
+            compound.component(classes);
+            a("class", compound.build());
+            return this;
+        }
+
+        public TagBuilder style(String style) {
+            return a("style", style);
+        }
+
+        public TagBuilder body(Component body) {
+            if (this.body == null)
+                this.body = body;
+            else
+                this.body = compound(bodyDelimiter).component(this.body).component(body).build();
+            this.multiline = this.multiline || this.body.isMultiLine();
+            return this;
+        }
+
+        public TagBuilder multiline() {
+            this.multiline = true;
+            return this;
+        }
     }
 
-    public Tag id(String id) {
-        return attribute("id", id);
+    @NonNull
+    String name;
+    @Singular
+    List<Attribute> attributes;
+    Component body;
+    Boolean multiline;
+
+    @Override
+    public void writeTo(BuildContext out) {
+        out.print("");
+        writeInlineTo(out);
+        out.appendln();
     }
 
     @Override
-    public HtmlBuilder close() {
-        closeHeader();
-        rawAppend("/>");
-        return super.close();
-    }
-
-    public Tag enclosing(Object body) {
-        closeHeader();
-        rawAppend(">");
-        append(body);
-        rawAppend("</").append(tagName).append(">");
-        return this;
-    }
-
-    private void closeHeader() {
-        if (headerClosed)
-            return;
-        headerClosed = true;
-        super.append("<").append(tagName);
-        if (attributes != null && !attributes.isEmpty()) {
-            for (Map.Entry<String, String> entry : attributes.entrySet()) {
-                rawAppend(" ").append(entry.getKey());
-                if (entry.getValue() != null)
-                    rawAppend("=\"").append(entry.getValue()).append("\"");
-            }
+    public void writeInlineTo(BuildContext out) {
+        out.append("<").append(name);
+        if (attributes != null)
+            for (Attribute attribute : attributes)
+                attribute.writeInlineTo(out);
+        if (body == null) {
+            out.append("/>");
+        } else if (body.isMultiLine()) {
+            out.appendln(">").in();
+            body.writeTo(out);
+            out.out().print("</").append(name).append(">");
+        } else {
+            out.append(">");
+            body.writeInlineTo(out);
+            out.append("</").append(name).append(">");
         }
     }
 
-    public String header() {
-        closeHeader();
-        return toString() + ">";
+    @Override
+    public boolean isMultiLine() {
+        return multiline;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder out = new StringBuilder();
+        appendHeader(out);
+        appendAttributes(out);
+        appendBody(out);
+        return out.toString();
+    }
+
+    private void appendHeader(StringBuilder out) {
+        out.append(name);
+
+        if (multiline)
+            out.append(":multiline");
+    }
+
+    private void appendAttributes(StringBuilder out) {
+        out.append("[");
+        boolean first = true;
+        for (Attribute attribute : attributes) {
+            if (first)
+                first = false;
+            else
+                out.append(",");
+            out.append(attribute.getKey()).append(":").append(attribute.getValue());
+        }
+        out.append("]");
+    }
+
+    private void appendBody(StringBuilder out) {
+        out.append("{");
+        if (body != null)
+            out.append(body);
+        out.append("}");
     }
 }

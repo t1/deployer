@@ -1,52 +1,38 @@
 package com.github.t1.deployer.app.html.builder;
 
-public class ButtonGroup extends HtmlBuilder {
-    private boolean justified = false;
-    private boolean started = false;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
+import lombok.*;
 
-    public ButtonGroup(HtmlBuilder container) {
-        super(container);
+import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+
+@Value
+@EqualsAndHashCode(callSuper = true)
+public class ButtonGroup extends DelegateComponent {
+    public static ButtonGroupBuilder buttonGroup() {
+        return new ButtonGroupBuilder();
     }
 
-    public ButtonGroup justified() {
-        this.justified = true;
-        return this;
-    }
+    public static class ButtonGroupBuilder {
+        private boolean wrapButtons = false;
+        private final TagBuilder tag = div().multiline().a("role", "group").classes("btn-group");
 
-    @Override
-    public Button button() {
-        if (started) {
-            closeButtonDiv();
-        } else {
-            started = true;
-            if (justified) {
-                appenButtonGroupDiv("btn-group-justified");
-            } else {
-                appenButtonGroupDiv();
-            }
+        public ButtonGroupBuilder justified() {
+            wrapButtons = true;
+            tag.classes("btn-group-justified");
+            return this;
         }
 
-        // justified buttons need to be enclosed again: http://getbootstrap.com/components/#btn-groups-justified
-        if (justified)
-            appenButtonGroupDiv();
-        return super.button();
+        public ButtonGroupBuilder button(Button button) {
+            tag.body((wrapButtons) ? buttonGroup().button(button).build() : button);
+            return this;
+        }
+
+        public ButtonGroup build() {
+            return new ButtonGroup(tag.build());
+        }
     }
 
-    private void appenButtonGroupDiv(String... classes) {
-        Tag tag = div().attribute("role", "group").classes("btn-group").classes(classes);
-        append(tag.header()).append("\n");
-        in();
-    }
-
-    @Override
-    public HtmlBuilder close() {
-        if (justified)
-            out().append("</div>\n");
-        closeButtonDiv();
-        return super.close();
-    }
-
-    private void closeButtonDiv() {
-        out().append("</div>\n");
+    private ButtonGroup(Tag component) {
+        super(component);
     }
 }

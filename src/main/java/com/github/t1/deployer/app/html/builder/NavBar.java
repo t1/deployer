@@ -1,17 +1,17 @@
-package com.github.t1.deployer.app.html.builder2;
+package com.github.t1.deployer.app.html.builder;
 
-import static com.github.t1.deployer.app.html.builder2.HtmlList.*;
-import static com.github.t1.deployer.app.html.builder2.Static.*;
-import static com.github.t1.deployer.app.html.builder2.Tag.*;
-import static com.github.t1.deployer.app.html.builder2.Tags.*;
+import static com.github.t1.deployer.app.html.builder.HtmlList.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.Tag.*;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
 import static java.util.Arrays.*;
 
 import java.util.*;
 
 import lombok.*;
 
-import com.github.t1.deployer.app.html.builder2.HtmlList.HtmlListBuilder;
-import com.github.t1.deployer.app.html.builder2.Tag.TagBuilder;
+import com.github.t1.deployer.app.html.builder.HtmlList.HtmlListBuilder;
+import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 @Value
 @EqualsAndHashCode(callSuper = true)

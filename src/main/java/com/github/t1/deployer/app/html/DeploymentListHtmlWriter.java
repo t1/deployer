@@ -1,9 +1,9 @@
 package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.app.html.DeployerPage.*;
-import static com.github.t1.deployer.app.html.builder2.Static.*;
-import static com.github.t1.deployer.app.html.builder2.Table.*;
-import static com.github.t1.deployer.app.html.builder2.Tags.*;
+import static com.github.t1.deployer.app.html.builder.Static.*;
+import static com.github.t1.deployer.app.html.builder.Table.*;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.net.URI;
 import java.util.*;
@@ -12,10 +12,9 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.Deployments;
-import com.github.t1.deployer.app.html.builder2.*;
-import com.github.t1.deployer.app.html.builder2.Table.Cell;
-import com.github.t1.deployer.app.html.builder2.Table.TableBuilder;
-import com.github.t1.deployer.app.html.builder2.Tags.AppendingComponent;
+import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Table.*;
+import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 
 @Provider
