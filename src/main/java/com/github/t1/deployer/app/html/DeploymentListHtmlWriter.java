@@ -13,7 +13,8 @@ import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.app.html.builder.*;
-import com.github.t1.deployer.app.html.builder.Table.*;
+import com.github.t1.deployer.app.html.builder.Table.Cell;
+import com.github.t1.deployer.app.html.builder.Table.TableBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 

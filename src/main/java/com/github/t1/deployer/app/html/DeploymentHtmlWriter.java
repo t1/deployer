@@ -10,7 +10,7 @@ import static com.github.t1.deployer.app.html.builder.Input.*;
 import static com.github.t1.deployer.app.html.builder.SizeVariation.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
-import static com.github.t1.deployer.app.html.builder.Tag.*;
+import static com.github.t1.deployer.app.html.builder.Table.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.net.URI;
@@ -19,60 +19,67 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.*;
+import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.DescriptionList.DescriptionListBuilder;
 import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
+import com.github.t1.deployer.app.html.builder.Table.TableBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 
 @Provider
 public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentResource> {
-    private static final Tag DEPLOYMENTS_LINK = link(new AppendingComponent<URI>() {
-        @Override
-        protected URI contentFrom(BuildContext out) {
-            return Deployments.pathAll(out.get(UriInfo.class));
-        }
-    }).body(text("&lt;")).build();
+    private static DeployerPageBuilder page() {
+        return panelPage() //
+                .title(new AppendingComponent<String>() {
+                    @Override
+                    protected String contentFrom(BuildContext out) {
+                        DeploymentResource target = out.get(DeploymentResource.class);
+                        return target.isNew() ? "Add Deployment" : target.getName().getValue();
+                    }
+                }) //
+                .backLink(new AppendingComponent<URI>() {
+                    @Override
+                    protected URI contentFrom(BuildContext out) {
+                        return Deployments.pathAll(out.get(UriInfo.class));
+                    }
+                });
+    }
 
-    private static final Compound AVAILABLE_VERSIONS = //
-            compound( //
-                    header(2).body(text("Available Versions")).build(), //
-                    new Component() {
-                        @Override
-                        public void writeTo(BuildContext out) {
-                            UriInfo uriInfo = out.get(UriInfo.class);
-                            Version currentVersion = out.get(DeploymentResource.class).getVersion();
-                            DescriptionListBuilder list = descriptionList().horizontal();
-                            int i = 0;
-                            for (Deployment deployment : out.get(DeploymentResource.class).getAvailableVersions()) {
-                                if (i > 0)
-                                    list.nl();
-                                boolean isCurrent = deployment.getVersion().equals(currentVersion);
-                                list //
-                                .title(deployment.getVersion().getVersion()).style("padding-bottom: 10px") //
-                                        .description(redeployButton("redeploy-" + i++, deployment, uriInfo, isCurrent)) //
-                                        .build();
-                            }
-                            list.build().writeTo(out);
-                        }
+    private static final Component AVAILABLE_VERSIONS = //
+            new Component() {
+                @Override
+                public void writeTo(BuildContext out) {
+                    UriInfo uriInfo = out.get(UriInfo.class);
+                    Version currentVersion = out.get(DeploymentResource.class).getVersion();
+                    TableBuilder table = table();
+                    int i = 0;
+                    for (Deployment deployment : out.get(DeploymentResource.class).getAvailableVersions()) {
+                        boolean isCurrent = deployment.getVersion().equals(currentVersion);
+                        table.row( //
+                                cell().body(text(deployment.getVersion().getVersion())).build(), //
+                                cell().body(redeployButton("redeploy-" + i++, deployment, uriInfo, isCurrent)).build() //
+                        );
+                    }
+                    table.build().writeTo(out);
+                }
 
-                        private Component redeployButton(String id, Deployment deployment, UriInfo uriInfo,
-                                boolean isCurrent) {
-                            FormBuilder form = form(id);
-                            form.action(text(Deployments.path(uriInfo, deployment.getContextRoot())));
-                            form.body(hiddenInput("contextRoot", deployment.getContextRoot().getValue()));
-                            form.body(hiddenInput("checksum", deployment.getCheckSum().hexString()));
-                            form.body(hiddenAction("redeploy"));
+                private Component redeployButton(String id, Deployment deployment, UriInfo uriInfo, boolean isCurrent) {
+                    FormBuilder form = form(id);
+                    form.action(text(Deployments.path(uriInfo, deployment.getContextRoot())));
+                    form.body(hiddenInput("contextRoot", deployment.getContextRoot().getValue()));
+                    form.body(hiddenInput("checksum", deployment.getCheckSum().hexString()));
+                    form.body(hiddenAction("redeploy"));
 
-                            Static deployLabel = text(isCurrent ? "Redeploy" : "Deploy");
-                            return compound( //
-                                    form.build(), //
-                                    buttonGroup().button( //
-                                            button().size(XS).style(primary).forForm(id).body(deployLabel).build()) //
-                                            .build() //
-                            ).build();
-                        }
-                    }).build();
+                    Static deployLabel = text(isCurrent ? "Redeploy" : "Deploy");
+                    return compound( //
+                            form.build(), //
+                            buttonGroup().button( //
+                                    button().size(XS).style(primary).forForm(id).body(deployLabel).build()) //
+                                    .build() //
+                    ).build();
+                }
+            };
 
     private static final Component DEPLOYMENT_INFO = new Component() {
         @Override
@@ -101,9 +108,9 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
         }
     };
 
-    private static Component deployingActionComponent(String formId, String action, String title) {
-        return div().body(compound( //
-                form(formId).action(DEPLOYMENT_LINK) //
+    private static Component undeploy() {
+        return div().a("style", "float: right").body(compound( //
+                form("undeploy").action(DEPLOYMENT_LINK) //
                         .body(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
                             @Override
                             protected ContextRoot contentFrom(BuildContext out) {
@@ -116,21 +123,22 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                                 return out.get(DeploymentResource.class).getCheckSum();
                             }
                         }).build()) //
-                        .body(hiddenAction(action)) //
+                        .body(hiddenAction("undeploy")) //
                         .build(), //
                 buttonGroup().button( //
-                        button().size(S).style(danger).forForm(formId).body(text(title)).build() //
+                        button().size(S).style(danger).forForm("undeploy").body(text("Undeploy")).build() //
                         ).build() //
                 ).build()).build();
     }
 
-    private static final Compound EXISTING_DEPLOYMENT_FORM = compound("\n", //
-            DEPLOYMENT_INFO, //
-            deployingActionComponent("undeploy", "undeploy", "Undeploy"), //
-            AVAILABLE_VERSIONS).build();
+    private static final DeployerPage EXISTING_DEPLOYMENT_FORM = page() //
+            .panelBody(compound("\n", undeploy(), DEPLOYMENT_INFO).build()) //
+            .body(nl()) //
+            .body(AVAILABLE_VERSIONS) //
+            .build();
 
-    private static final Compound NEW_DEPLOYMENT_FORM = compound( //
-            tag("p").body(text("Enter the checksum of a new artifact to deploy")).build(), //
+    private static final DeployerPage NEW_DEPLOYMENT_FORM = page().panelBody(compound( //
+            p("Enter the checksum of a new artifact to deploy"), //
             form(MAIN_FORM_ID) //
                     .action(new AppendingComponent<URI>() {
                         @Override
@@ -139,33 +147,12 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                         }
                     }) //
                     .body(hiddenAction("deploy")) //
-                    .body(input("checksum").label("Checksum").build()) //
+                    .body(input("checksum").placeholder("Checksum").build()) //
                     .build(), //
             buttonGroup() //
-                    .button(button().size(L).style(primary).forForm(MAIN_FORM_ID).body(text("Deploy")).build()) //
+                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Deploy")).build()) //
                     .build() //
-            ).build();
-
-    private static final DeployerPage PAGE = jumbotronPage() //
-            .title(new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    DeploymentResource target = out.get(DeploymentResource.class);
-                    text(target.isNew() ? "Add Deployment" : target.getName().getValue()).writeInlineTo(out);
-                }
-            }) //
-            .body(DEPLOYMENTS_LINK) //
-            .body(new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    DeploymentResource target = out.get(DeploymentResource.class);
-                    if (target.isNew())
-                        NEW_DEPLOYMENT_FORM.writeTo(out);
-                    else
-                        EXISTING_DEPLOYMENT_FORM.writeTo(out);
-                }
-            }) //
-            .build();
+            ).build()).build();
 
     @Override
     protected void prepare(BuildContext buildContext) {
@@ -174,6 +161,17 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
 
     @Override
     protected Component component() {
-        return PAGE;
+        return new Component() {
+            @Override
+            public void writeTo(BuildContext out) {
+                DeploymentResource target = out.get(DeploymentResource.class);
+                Component page;
+                if (target.isNew())
+                    page = NEW_DEPLOYMENT_FORM;
+                else
+                    page = EXISTING_DEPLOYMENT_FORM;
+                page.writeTo(out);
+            }
+        };
     }
 }

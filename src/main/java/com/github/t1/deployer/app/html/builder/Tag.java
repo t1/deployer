@@ -13,8 +13,6 @@ import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 @Builder(builderMethodName = "tag")
 @EqualsAndHashCode(callSuper = true)
 public class Tag extends Component {
-    private static final Component NO_VALUE = tag(UUID.randomUUID().toString()).build();
-
     public static TagBuilder tag(String name) {
         return new TagBuilder().name(name);
     }
@@ -28,7 +26,7 @@ public class Tag extends Component {
         @Override
         public void writeInlineTo(BuildContext out) {
             out.append(" ").append(key);
-            if (value != NO_VALUE) {
+            if (value != null) {
                 out.append("=\"");
                 value.writeInlineTo(out);
                 out.append("\"");
@@ -60,7 +58,7 @@ public class Tag extends Component {
         }
 
         public TagBuilder a(String key) {
-            return a(key, NO_VALUE);
+            return a(key, (Component) null);
         }
 
         public TagBuilder a(String key, Component value) {

@@ -37,17 +37,11 @@ public class Input extends DelegateComponent {
     public static class InputBuilder {
         private TagBuilder label;
         private final TagBuilder input = tag("input").multiline();
+        private String idAndName;
 
         public InputBuilder idAndName(String idAndName) {
-            input.a("name", idAndName).id(idAndName).a("required");
-            label().a("for", idAndName);
+            this.idAndName = idAndName;
             return this;
-        }
-
-        private TagBuilder label() {
-            if (label == null)
-                label = tag("label");
-            return label;
         }
 
         public InputBuilder type(String type) {
@@ -69,7 +63,7 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder label(Component label) {
-            label().body(label);
+            this.label = tag("label").body(label);
             return this;
         }
 
@@ -79,6 +73,11 @@ public class Input extends DelegateComponent {
 
         public InputBuilder name(Component name) {
             input.a("name", name);
+            return this;
+        }
+
+        public InputBuilder placeholder(String placeholder) {
+            input.a("placeholder", placeholder);
             return this;
         }
 
@@ -92,8 +91,12 @@ public class Input extends DelegateComponent {
         }
 
         public Input build() {
+            if (idAndName != null)
+                input.a("name", idAndName).id(idAndName).a("required");
             if (label == null)
                 return new Input(input.build());
+            if (idAndName != null)
+                label.a("for", idAndName);
             return new Input(compound(label.build(), input.build()).build());
         }
     }

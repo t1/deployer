@@ -26,62 +26,67 @@
       </div>
     </nav>
 
-    <div class="jumbotron">
-      <h1>foo</h1>
-
-      <a href="http://localhost:8080/deployer/deployments/*">&lt;</a>
-      <dl class="dl-horizontal">
-        <dt>Name</dt>
-        <dd>foo</dd>
-
-        <dt>Context-Root</dt>
-        <dd>foox</dd>
-
-        <dt>Version</dt>
-        <dd>2.0</dd>
-
-        <dt>CheckSum</dt>
-        <dd>AABBCC</dd>
-      </dl>
-
-      <div>
-        <form method="POST" id="undeploy" action="http://localhost:8080/deployer/deployments;context-root=foox">
-          <input type="hidden" name="contextRoot" value="foox"/>
-          <input type="hidden" name="checksum" value="AABBCC"/>
-          <input type="hidden" name="action" value="undeploy"/>
-        </form>
-        <div role="group" class="btn-group">
-          <button class="btn btn-block btn-sm btn-danger" form="undeploy" type="submit">Undeploy</button>
-        </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a href="http://localhost:8080/deployer/deployments/*" class="glyphicon glyphicon-menu-left"></a>
+        <h1>foo</h1>
       </div>
 
-      <h2>Available Versions</h2>
-
-      <dl class="dl-horizontal">
-        <dt style="padding-bottom: 10px">1.0</dt>
-        <dd>
-          <form method="POST" id="redeploy-0" action="http://localhost:8080/deployer/deployments;context-root=foox">
+      <div class="panel-body">
+        <div style="float: right">
+          <form method="POST" id="undeploy" action="http://localhost:8080/deployer/deployments;context-root=foox">
             <input type="hidden" name="contextRoot" value="foox"/>
-            <input type="hidden" name="checksum" value="FACE0000723C2C2081E2AA4154545F0D17B46C3E"/>
-            <input type="hidden" name="action" value="redeploy"/>
+            <input type="hidden" name="checksum" value="AABBCC"/>
+            <input type="hidden" name="action" value="undeploy"/>
           </form>
           <div role="group" class="btn-group">
-            <button class="btn btn-block btn-xs btn-primary" form="redeploy-0" type="submit">Deploy</button>
+            <button class="btn btn-block btn-sm btn-danger" form="undeploy" type="submit">Undeploy</button>
           </div>
-        </dd>
+        </div>
 
-        <dt style="padding-bottom: 10px">2.0</dt>
-        <dd>
-          <form method="POST" id="redeploy-1" action="http://localhost:8080/deployer/deployments;context-root=foox">
-            <input type="hidden" name="contextRoot" value="foox"/>
-            <input type="hidden" name="checksum" value="FACE00006A07A48D123262BD5ADB9E0816E42F97"/>
-            <input type="hidden" name="action" value="redeploy"/>
-          </form>
-          <div role="group" class="btn-group">
-            <button class="btn btn-block btn-xs btn-primary" form="redeploy-1" type="submit">Redeploy</button>
-          </div>
-        </dd>
-      </dl>
+        <dl class="dl-horizontal">
+          <dt>Name</dt>
+          <dd>foo</dd>
+
+          <dt>Context-Root</dt>
+          <dd>foox</dd>
+
+          <dt>Version</dt>
+          <dd>2.0</dd>
+
+          <dt>CheckSum</dt>
+          <dd>AABBCC</dd>
+        </dl>
+      </div>
+
+      <table class="table">
+        <tr>
+          <td>1.0</td>
+          <td>
+            <form method="POST" id="redeploy-0" action="http://localhost:8080/deployer/deployments;context-root=foox">
+              <input type="hidden" name="contextRoot" value="foox"/>
+              <input type="hidden" name="checksum" value="FACE0000723C2C2081E2AA4154545F0D17B46C3E"/>
+              <input type="hidden" name="action" value="redeploy"/>
+            </form>
+            <div role="group" class="btn-group">
+              <button class="btn btn-block btn-xs btn-primary" form="redeploy-0" type="submit">Deploy</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>2.0</td>
+          <td>
+            <form method="POST" id="redeploy-1" action="http://localhost:8080/deployer/deployments;context-root=foox">
+              <input type="hidden" name="contextRoot" value="foox"/>
+              <input type="hidden" name="checksum" value="FACE00006A07A48D123262BD5ADB9E0816E42F97"/>
+              <input type="hidden" name="action" value="redeploy"/>
+            </form>
+            <div role="group" class="btn-group">
+              <button class="btn btn-block btn-xs btn-primary" form="redeploy-1" type="submit">Redeploy</button>
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <script src="http://localhost:8080/deployer/jquery/jquery.js"/>

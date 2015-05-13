@@ -10,7 +10,6 @@ import static com.github.t1.deployer.app.html.builder.Form.*;
 import static com.github.t1.deployer.app.html.builder.Input.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
-import static com.github.t1.deployer.app.html.builder.Tag.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.net.URI;
@@ -67,7 +66,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     ).build();
 
     private static final Compound NEW_DATA_SOURCE_FORM = compound( //
-            tag("p").body(text("Enter the name of a new data source to configure")).build() //
+            p("Enter the name of a new data source to configure") //
             , //
             form(MAIN_FORM_ID) //
                     .action(DATA_SOURCES.link()) //

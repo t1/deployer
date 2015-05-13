@@ -26,18 +26,21 @@
       </div>
     </nav>
 
-    <div class="jumbotron">
-      <h1>Add Deployment</h1>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a href="http://localhost:8080/deployer/deployments/*" class="glyphicon glyphicon-menu-left"></a>
+        <h1>Add Deployment</h1>
+      </div>
 
-      <a href="http://localhost:8080/deployer/deployments/*">&lt;</a>
-      <p>Enter the checksum of a new artifact to deploy</p>
-      <form method="POST" id="main" action="http://localhost:8080/deployer/deployments">
-        <input type="hidden" name="action" value="deploy"/>
-        <label for="checksum">Checksum</label>
-        <input class="form-control" name="checksum" id="checksum" required/>
-      </form>
-      <div role="group" class="btn-group">
-        <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Deploy</button>
+      <div class="panel-body">
+        <p>Enter the checksum of a new artifact to deploy</p>
+        <form method="POST" id="main" action="http://localhost:8080/deployer/deployments">
+          <input type="hidden" name="action" value="deploy"/>
+          <input class="form-control" placeholder="Checksum" name="checksum" id="checksum" required/>
+        </form>
+        <div role="group" class="btn-group">
+          <button class="btn btn-block btn-primary" form="main" type="submit">Deploy</button>
+        </div>
       </div>
     </div>
 
