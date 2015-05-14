@@ -23,7 +23,7 @@ public class DeploymentListHtmlWriterTest extends AbstractHtmlWriterTest<List<De
     }
 
     @Test
-    public void shouldWriteDataSourceList() throws Exception {
+    public void shouldWriteDeploymentList() throws Exception {
         List<Deployment> deployments = asList( //
                 deployment("foo", "foox", "aabbcc", "2.3.1"), //
                 deployment("bar", "barx", "ddeeff", "1.0") //

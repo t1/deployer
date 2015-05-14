@@ -57,7 +57,7 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
         }
 
         private Form levelForm(LogLevel level, URI action) {
-            return form().action(action).body(levelSelect(level)).build();
+            return form().action(action).body(levelSelect(level)).nogroup().build();
         }
 
         private Component deleteButton(int i, URI action) {

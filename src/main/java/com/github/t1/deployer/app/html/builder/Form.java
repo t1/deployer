@@ -26,6 +26,7 @@ public class Form extends DelegateComponent {
 
     public static class FormBuilder {
         private final TagBuilder tag = tag("form").a("method", "POST");
+        private boolean group;
 
         public FormBuilder id(Component id) {
             tag.id(id);
@@ -42,12 +43,32 @@ public class Form extends DelegateComponent {
             return this;
         }
 
+        public FormBuilder body(Input input) {
+            if (!input.isHidden())
+                group = true;
+            tag.body(input);
+            return this;
+        }
+
         public FormBuilder body(Component component) {
+            group = true;
             tag.body(component);
             return this;
         }
 
+        public FormBuilder group() {
+            group = true;
+            return this;
+        }
+
+        public FormBuilder nogroup() {
+            group = false;
+            return this;
+        }
+
         public Form build() {
+            if (group)
+                tag.classes("form-group");
             return new Form(tag.build());
         }
     }

@@ -114,7 +114,7 @@ public class DeploymentsIT {
 
         @Override
         protected void finished(Description description) {
-            log.info("starting: " + description.getMethodName());
+            log.info("finishing: " + description.getMethodName());
         }
     };
 

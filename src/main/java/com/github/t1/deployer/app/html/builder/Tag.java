@@ -20,12 +20,12 @@ public class Tag extends Component {
     @Value
     @EqualsAndHashCode(callSuper = true)
     public static class Attribute extends Component {
-        String key;
+        String name;
         Component value;
 
         @Override
         public void writeInlineTo(BuildContext out) {
-            out.append(" ").append(key);
+            out.append(" ").append(name);
             if (value != null) {
                 out.append("=\"");
                 value.writeInlineTo(out);
@@ -86,7 +86,7 @@ public class Tag extends Component {
             if (attributes != null) {
                 for (Iterator<Attribute> iter = attributes.iterator(); iter.hasNext();) {
                     Attribute attribute = iter.next();
-                    if (attribute.getKey().equals("class")) {
+                    if (attribute.getName().equals("class")) {
                         iter.remove();
                         compound.component(attribute.getValue());
                     }
@@ -154,6 +154,13 @@ public class Tag extends Component {
         return multiline;
     }
 
+    public Component getAttribute(String name) {
+        for (Attribute attribute : attributes)
+            if (name.equals(attribute.getName()))
+                return attribute.getValue();
+        return null;
+    }
+
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
@@ -178,7 +185,7 @@ public class Tag extends Component {
                 first = false;
             else
                 out.append(",");
-            out.append(attribute.getKey()).append(":").append(attribute.getValue());
+            out.append(attribute.getName()).append(":").append(attribute.getValue());
         }
         out.append("]");
     }

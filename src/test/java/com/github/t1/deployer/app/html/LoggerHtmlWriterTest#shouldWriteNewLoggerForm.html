@@ -14,7 +14,7 @@
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
-          <a class="navbar-brand" href="#">Deployer</a>
+          <a class="navbar-brand">Deployer</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
@@ -31,7 +31,7 @@
 
       <div class="panel-body">
         <p>Enter the name of a new logger to configure</p>
-        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers">
+        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers" class="form-group">
           <label for="category">Category</label>
           <input class="form-control" name="category" id="category" required/>
           <select name="level">

@@ -60,7 +60,7 @@ public class NavBar extends Component {
         }
 
         public NavBarBuilder brand(String brand) {
-            header.body(tag("a").multiline().classes("navbar-brand").a("href", "#").body(text(brand)).build());
+            header.body(tag("a").multiline().classes("navbar-brand").body(text(brand)).build());
             return this;
         }
 
