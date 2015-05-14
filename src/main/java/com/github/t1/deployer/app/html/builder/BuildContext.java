@@ -8,6 +8,7 @@ import lombok.*;
 
 public class BuildContext {
     private static final String SPACES = "                                                                          "
+            + "                                                                                                     "
             + "                                                                                                     ";
 
     @NonNull

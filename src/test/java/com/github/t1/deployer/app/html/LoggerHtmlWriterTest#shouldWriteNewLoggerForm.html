@@ -26,27 +26,28 @@
       </div>
     </nav>
 
-    <div class="jumbotron">
-      <h1>Add Logger</h1>
+    <div class="panel panel-default">
+      <div class="panel-heading"><h1>Add Logger</h1></div>
 
-      <a href="http://localhost:8080/deployer/loggers">&lt;</a>
-      <p>Enter the name of a new logger to configure</p>
-      <form method="POST" id="main" action="http://localhost:8080/deployer/loggers">
-        <label for="category">Category</label>
-        <input class="form-control" name="category" id="category" required/>
-        <select name="level">
-          <option>ALL</option>
-          <option>TRACE</option>
-          <option selected>DEBUG</option>
-          <option>INFO</option>
-          <option>WARN</option>
-          <option>ERROR</option>
-          <option>OFF</option>
-        </select>
-      </form>
-      <div role="group" class="btn-group btn-group-justified">
-        <div role="group" class="btn-group">
-          <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Add</button>
+      <div class="panel-body">
+        <p>Enter the name of a new logger to configure</p>
+        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers">
+          <label for="category">Category</label>
+          <input class="form-control" name="category" id="category" required/>
+          <select name="level">
+            <option>ALL</option>
+            <option>TRACE</option>
+            <option selected>DEBUG</option>
+            <option>INFO</option>
+            <option>WARN</option>
+            <option>ERROR</option>
+            <option>OFF</option>
+          </select>
+        </form>
+        <div role="group" class="btn-group btn-group-justified">
+          <div role="group" class="btn-group">
+            <button class="btn btn-block btn-lg btn-primary" form="main" type="submit">Add</button>
+          </div>
         </div>
       </div>
     </div>

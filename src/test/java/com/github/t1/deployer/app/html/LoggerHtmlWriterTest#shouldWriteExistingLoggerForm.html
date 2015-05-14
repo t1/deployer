@@ -26,31 +26,40 @@
       </div>
     </nav>
 
-    <div class="jumbotron">
-      <h1>Logger: foo</h1>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a href="http://localhost:8080/deployer/loggers" class="glyphicon glyphicon-menu-left"></a>
+        <h1>Logger: foo</h1>
+      </div>
 
-      <a href="http://localhost:8080/deployer/loggers">&lt;</a>
-      <form method="POST" id="main" action="http://localhost:8080/deployer/loggers/foo">
-        <select name="level" onchange="this.form.submit()">
-          <option>ALL</option>
-          <option>TRACE</option>
-          <option>DEBUG</option>
-          <option selected>INFO</option>
-          <option>WARN</option>
-          <option>ERROR</option>
-          <option>OFF</option>
-        </select>
-        <noscript>
-          <input class="form-control" type="submit" value="Update"/>
-        </noscript>
-      </form>
-      <form method="POST" id="delete" action="http://localhost:8080/deployer/loggers/foo">
-        <input type="hidden" name="action" value="delete"/>
-      </form>
-      <div role="group" class="btn-group">
-        <button class="btn btn-block btn-sm btn-danger" form="delete" type="submit">
-          <span class="glyphicon glyphicon-remove"/>
-        </button>
+      <div class="panel-body">
+        <div style="float: right">
+          <form method="POST" id="delete" action="http://localhost:8080/deployer/loggers/foo">
+            <input type="hidden" name="action" value="delete"/>
+          </form>
+          <div role="group" class="btn-group">
+            <button class="btn btn-block btn-sm btn-danger" form="delete" type="submit">
+              <span class="glyphicon glyphicon-remove"/>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers/foo">
+          <select name="level" onchange="this.form.submit()">
+            <option>ALL</option>
+            <option>TRACE</option>
+            <option>DEBUG</option>
+            <option selected>INFO</option>
+            <option>WARN</option>
+            <option>ERROR</option>
+            <option>OFF</option>
+          </select>
+          <noscript>
+            <input class="form-control" type="submit" value="Update"/>
+          </noscript>
+        </form>
       </div>
     </div>
 

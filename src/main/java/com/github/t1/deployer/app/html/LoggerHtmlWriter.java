@@ -37,16 +37,34 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
     };
 
     private static final Component existingLogger(UriInfo uriInfo, LoggerConfig logger) {
-        return compound( //
-                form(MAIN_FORM_ID).action(Loggers.path(uriInfo, logger)) //
+        return panelPage() //
+                .title(new AppendingComponent<String>() {
+                    @Override
+                    protected String contentFrom(BuildContext out) {
+                        LoggerConfig logger = out.get(LoggerConfig.class);
+                        return "Logger: " + logger.getCategory();
+                    }
+                }) //
+                .backLink(new AppendingComponent<URI>() {
+                    @Override
+                    protected URI contentFrom(BuildContext out) {
+                        return Loggers.base(out.get(UriInfo.class));
+                    }
+                }) //
+                .panelBody(div().style("float: right") //
+                        .body(form("delete").action(Loggers.path(uriInfo, logger)) //
+                                .body(hiddenAction("delete")) //
+                                .build()) //
+                        .body(buttonGroup() //
+                                .button(remove("delete", S)) //
+                                .build()) //
+                        .build()) //
+                .body(nl()) //
+                .panelBody(form(MAIN_FORM_ID).action(Loggers.path(uriInfo, logger)) //
                         .body(levelSelect(logger.getLevel())) //
-                        .build(), //
-                form("delete").action(Loggers.path(uriInfo, logger)) //
-                        .body(hiddenAction("delete")) //
-                        .build(), //
-                buttonGroup() //
-                        .button(remove("delete", S)) //
-                        .build()).build();
+                        .build() //
+                ) //
+                .build();
     }
 
     public static Component levelSelect(LogLevel selectedLevel) {
@@ -66,38 +84,18 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
         return select;
     }
 
-    private static final Component NEW_LOGGER = compound( //
-            p("Enter the name of a new logger to configure"), //
-            form(MAIN_FORM_ID).action(LOGGERS) //
-                    .body(input("category").label("Category").build()) //
-                    .body(levelSelectBuilder(DEBUG).build()) //
-                    .build(), //
-            buttonGroup().justified() //
-                    .button(button().size(L).style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
-                    .build() //
-            ).build();
-
-    private static final Component LOGGER_TITLE = new AppendingComponent<String>() {
-        @Override
-        protected String contentFrom(BuildContext out) {
-            LoggerConfig logger = out.get(LoggerConfig.class);
-            return logger.isNew() ? "Add Logger" : "Logger: " + logger.getCategory();
-        }
-    };
-
-    private static final Component PAGE = jumbotronPage() //
-            .title(LOGGER_TITLE) //
-            .body(link(LOGGERS).body(text("&lt;")).build()) //
-            .body(new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    UriInfo uriInfo = out.get(UriInfo.class);
-                    LoggerConfig logger = out.get(LoggerConfig.class);
-                    Component body = logger.isNew() ? NEW_LOGGER : existingLogger(uriInfo, logger);
-                    body.writeTo(out);
-                }
-            }) //
-            .build();
+    private static final Component NEW_LOGGER = panelPage() //
+            .title(text("Add Logger")) //
+            .panelBody(compound( //
+                    p("Enter the name of a new logger to configure"), //
+                    form(MAIN_FORM_ID).action(LOGGERS) //
+                            .body(input("category").label("Category").build()) //
+                            .body(levelSelectBuilder(DEBUG).build()) //
+                            .build(), //
+                    buttonGroup().justified() //
+                            .button(button().size(L).style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
+                            .build() //
+                    ).build()).build();
 
     @Override
     protected void prepare(BuildContext buildContext) {
@@ -106,6 +104,18 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
 
     @Override
     protected Component component() {
-        return PAGE;
+        return new Component() {
+            @Override
+            public void writeTo(BuildContext out) {
+                LoggerConfig target = out.get(LoggerConfig.class);
+                UriInfo uriInfo = out.get(UriInfo.class);
+                Component page;
+                if (target.isNew())
+                    page = NEW_LOGGER;
+                else
+                    page = existingLogger(uriInfo, target);
+                page.writeTo(out);
+            }
+        };
     }
 }
