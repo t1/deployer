@@ -26,11 +26,23 @@ public class DeployerPage extends Component {
             }
 
             @Override
-            public Component heading(Component backLink, Component title) {
+            public Component heading(Component backLink, final Component title) {
                 TagBuilder heading = div().classes("panel-heading");
-                if (backLink != null)
-                    heading.body(link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text("")).build());
-                return heading.body(super.heading(backLink, title)).build();
+                if (backLink == null) {
+                    heading.body(tag("h1").body(title).build());
+                } else {
+                    Tag back = link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text("")).build();
+                    heading.body(tag("h1").body(back).body(new Component() {
+                        @Override
+                        public void writeTo(BuildContext out) {
+                            out.print("");
+                            title.writeTo(out);
+                            out.appendln();
+                        }
+                    }).build());
+                }
+
+                return heading.build();
             }
 
             @Override

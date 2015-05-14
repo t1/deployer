@@ -18,6 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.DataSources;
+import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.DataSourceConfig;
@@ -25,13 +26,6 @@ import com.github.t1.deployer.model.DataSourceConfig;
 @Provider
 public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceConfig> {
     private static final String MAIN_FORM_ID = "main";
-
-    private static final Tag DATA_SOURCES_LINK = link(new AppendingComponent<URI>() {
-        @Override
-        protected URI contentFrom(BuildContext out) {
-            return DataSources.base(out.get(UriInfo.class));
-        }
-    }).body(text("&lt;")).build();
 
     private static final AppendingComponent<URI> DATA_SOURCE_LINK = new AppendingComponent<URI>() {
         @Override
@@ -79,24 +73,22 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                     .build() //
             ).build();
 
-    private static final DeployerPage PAGE = jumbotronPage() //
-            .title(new AppendingComponent<String>() {
-                @Override
-                protected String contentFrom(BuildContext out) {
-                    DataSourceConfig target = out.get(DataSourceConfig.class);
-                    return title(target);
-                }
-            }) //
-            .body(DATA_SOURCES_LINK) //
-            .body(new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    DataSourceConfig target = out.get(DataSourceConfig.class);
-                    Compound body = target.isNew() ? NEW_DATA_SOURCE_FORM : EXISTING_DATA_SOURCE_FORM;
-                    body.writeTo(out);
-                }
-            }) //
-            .build();
+    private static final DeployerPageBuilder page() {
+        return panelPage() //
+                .title(new AppendingComponent<String>() {
+                    @Override
+                    protected String contentFrom(BuildContext out) {
+                        DataSourceConfig target = out.get(DataSourceConfig.class);
+                        return title(target);
+                    }
+                }) //
+                .backLink(new AppendingComponent<URI>() {
+                    @Override
+                    protected URI contentFrom(BuildContext out) {
+                        return DataSources.base(out.get(UriInfo.class));
+                    }
+                });
+    }
 
     public static String title(DataSourceConfig target) {
         return target.isNew() ? "Add Data-Source" : target.getName();
@@ -109,6 +101,15 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
 
     @Override
     protected Component component() {
-        return PAGE;
+        return new Component() {
+            @Override
+            public void writeTo(BuildContext out) {
+                DeployerPageBuilder page = page();
+                DataSourceConfig target = out.get(DataSourceConfig.class);
+                Compound body = target.isNew() ? NEW_DATA_SOURCE_FORM : EXISTING_DATA_SOURCE_FORM;
+                page.panelBody(body);
+                page.build().writeTo(out);
+            }
+        };
     }
 }

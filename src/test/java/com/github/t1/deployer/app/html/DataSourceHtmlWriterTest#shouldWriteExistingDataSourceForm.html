@@ -26,27 +26,33 @@
       </div>
     </nav>
 
-    <div class="jumbotron">
-      <h1>foo</h1>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h1>
+          <a href="http://localhost:8080/deployer/data-sources" class="glyphicon glyphicon-menu-left"></a>
+          foo
+        </h1>
+      </div>
 
-      <a href="http://localhost:8080/deployer/data-sources">&lt;</a>
-      <form method="POST" id="delete" action="http://localhost:8080/deployer/data-sources/foo">
-        <input type="hidden" name="action" value="delete"/>
-      </form>
-      <form method="POST" id="main" action="http://localhost:8080/deployer/data-sources/foo">
-        <label for="name">Name</label>
-        <input class="form-control" value="foo" name="name" id="name" required/>
-        <label for="uri">URI</label>
-        <input class="form-control" value="foo-uri" name="uri" id="uri" required/>
-      </form>
-      <div role="group" class="btn-group btn-group-justified">
-        <div role="group" class="btn-group">
-          <button class="btn btn-block btn-primary" form="main" type="submit">Update</button>
-        </div>
-        <div role="group" class="btn-group">
-          <button class="btn btn-block btn-danger" form="delete" type="submit">
-            <span class="glyphicon glyphicon-remove"/>
-          </button>
+      <div class="panel-body">
+        <form method="POST" id="delete" action="http://localhost:8080/deployer/data-sources/foo">
+          <input type="hidden" name="action" value="delete"/>
+        </form>
+        <form method="POST" id="main" action="http://localhost:8080/deployer/data-sources/foo">
+          <label for="name">Name</label>
+          <input class="form-control" value="foo" name="name" id="name" required/>
+          <label for="uri">URI</label>
+          <input class="form-control" value="foo-uri" name="uri" id="uri" required/>
+        </form>
+        <div role="group" class="btn-group btn-group-justified">
+          <div role="group" class="btn-group">
+            <button class="btn btn-block btn-primary" form="main" type="submit">Update</button>
+          </div>
+          <div role="group" class="btn-group">
+            <button class="btn btn-block btn-danger" form="delete" type="submit">
+              <span class="glyphicon glyphicon-remove"/>
+            </button>
+          </div>
         </div>
       </div>
     </div>

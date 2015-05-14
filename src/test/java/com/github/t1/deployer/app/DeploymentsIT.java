@@ -277,6 +277,7 @@ public class DeploymentsIT {
     public void shouldPostUndeploy() {
         given(FOO, BAR);
 
+        // RestResource resource = deploymentsRestResource(FOO).post();
         Response response = deploymentsWebTarget(FOO) //
                 .request() //
                 .post(Entity.form(deploymentForm("undeploy", FOO, NEWEST_FOO_VERSION)));

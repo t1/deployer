@@ -23,7 +23,7 @@ import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
 public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<DataSourceConfig> {
-    private static final DeployerPage PAGE = jumbotronPage() //
+    private static final DeployerPage PAGE = panelPage() //
             .title(text("Data-Sources")) //
             .body(new Component() {
                 @Override

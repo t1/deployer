@@ -93,7 +93,7 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
                             .body(levelSelectBuilder(DEBUG).build()) //
                             .build(), //
                     buttonGroup().justified() //
-                            .button(button().size(L).style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
+                            .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
                             .build() //
                     ).build()).build();
 

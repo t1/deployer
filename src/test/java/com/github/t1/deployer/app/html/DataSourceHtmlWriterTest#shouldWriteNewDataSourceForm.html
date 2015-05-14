@@ -26,20 +26,26 @@
       </div>
     </nav>
 
-    <div class="jumbotron">
-      <h1>Add Data-Source</h1>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h1>
+          <a href="http://localhost:8080/deployer/data-sources" class="glyphicon glyphicon-menu-left"></a>
+          Add Data-Source
+        </h1>
+      </div>
 
-      <a href="http://localhost:8080/deployer/data-sources">&lt;</a>
-      <p>Enter the name of a new data source to configure</p>
-      <form method="POST" id="main" action="http://localhost:8080/deployer/data-sources">
-        <label for="name">Name</label>
-        <input class="form-control" name="name" id="name" required/>
-        <label for="uri">URI</label>
-        <input class="form-control" name="uri" id="uri" required/>
-      </form>
-      <div role="group" class="btn-group btn-group-justified">
-        <div role="group" class="btn-group">
-          <button class="btn btn-block btn-primary" form="main" type="submit">Add</button>
+      <div class="panel-body">
+        <p>Enter the name of a new data source to configure</p>
+        <form method="POST" id="main" action="http://localhost:8080/deployer/data-sources">
+          <label for="name">Name</label>
+          <input class="form-control" name="name" id="name" required/>
+          <label for="uri">URI</label>
+          <input class="form-control" name="uri" id="uri" required/>
+        </form>
+        <div role="group" class="btn-group btn-group-justified">
+          <div role="group" class="btn-group">
+            <button class="btn btn-block btn-primary" form="main" type="submit">Add</button>
+          </div>
         </div>
       </div>
     </div>
