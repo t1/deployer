@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.html.DeployerComponents.*;
 import static com.github.t1.deployer.app.html.DeployerPage.*;
 import static com.github.t1.deployer.app.html.builder.Button.*;
 import static com.github.t1.deployer.app.html.builder.ButtonGroup.*;
@@ -53,10 +52,10 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
                 }) //
                 .panelBody(div().style("float: right") //
                         .body(form("delete").action(Loggers.path(uriInfo, logger)) //
-                                .body(hiddenAction("delete")) //
+                                .input(hiddenAction("delete")) //
                                 .build()) //
                         .body(buttonGroup() //
-                                .button(remove("delete", S)) //
+                                .button(button().size(S).style(danger).forForm("delete").body(text("Delete")).build()) //
                                 .build()) //
                         .build()) //
                 .body(nl()) //
@@ -87,12 +86,12 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
     private static final Component NEW_LOGGER = panelPage() //
             .title(text("Add Logger")) //
             .panelBody(compound( //
-                    p("Enter the name of a new logger to configure"), //
+                    p("Enter the category of a new logger to configure"), //
                     form(MAIN_FORM_ID).action(LOGGERS) //
-                            .body(input("category").label("Category").required().build()) //
-                            .body(levelSelectBuilder(DEBUG).build()) //
+                            .input(input("category").placeholder("Category").required().build()) //
+                            .body(div().classes("form-group").body(levelSelectBuilder(DEBUG).build()).build()) //
                             .build(), //
-                    buttonGroup().justified() //
+                    buttonGroup() //
                             .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
                             .build() //
                     ).build()).build();

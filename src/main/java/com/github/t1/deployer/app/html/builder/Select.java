@@ -46,7 +46,7 @@ public class Select extends DelegateComponent {
     }
 
     public static class SelectBuilder {
-        private final TagBuilder tag = tag("select").multiline();
+        private final TagBuilder tag = tag("select").classes("form-control", "input-sm").multiline();
 
         public SelectBuilder name(String name) {
             tag.a("name", name);

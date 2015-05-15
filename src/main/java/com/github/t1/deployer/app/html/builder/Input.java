@@ -1,8 +1,8 @@
 package com.github.t1.deployer.app.html.builder;
 
-import static com.github.t1.deployer.app.html.builder.Compound.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
+import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.lang.reflect.Field;
 
@@ -40,10 +40,16 @@ public class Input extends DelegateComponent {
 
     public static class InputBuilder {
         private TagBuilder label;
-        private final TagBuilder input = tag("input").multiline();
+        private final TagBuilder input = tag("input").a("type", new AppendingComponent<String>() {
+            @Override
+            protected String contentFrom(BuildContext out) {
+                return type;
+            }
+        }).multiline();
         private String idAndName;
-        private String type;
+        private String type = "text";
         private boolean required;
+        private boolean horizontal;
 
         public InputBuilder idAndName(String idAndName) {
             this.idAndName = idAndName;
@@ -51,7 +57,6 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder type(String type) {
-            input.a("type", type);
             this.type = type;
             return this;
         }
@@ -70,7 +75,7 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder label(Component label) {
-            this.label = tag("label").body(label);
+            this.label = tag("label").classes("control-label").body(label);
             return this;
         }
 
@@ -122,16 +127,28 @@ public class Input extends DelegateComponent {
             return this;
         }
 
+        public InputBuilder horizontal() {
+            this.horizontal = true;
+            return this;
+        }
+
         public Input build() {
             if (idAndName != null)
                 input.a("name", idAndName).id(idAndName);
             if (required)
                 input.a("required");
             if (label == null)
-                return new Input(input.build(), type);
+                return new Input("hidden".equals(type) //
+                        ? input.build() //
+                        : div().classes("form-group").body(input.build()).build(), type);
             if (idAndName != null)
                 label.a("for", idAndName);
-            return new Input(compound(label.build(), input.build()).build(), type);
+            TagBuilder input = this.input;
+            if (horizontal) {
+                label.classes("col-sm-1");
+                input = div().classes("col-sm-11").body(input.build());
+            }
+            return new Input(div().classes("form-group").body(label.build()).body(input.build()).build(), type);
         }
     }
 

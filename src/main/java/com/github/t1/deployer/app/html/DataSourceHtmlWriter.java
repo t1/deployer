@@ -20,20 +20,21 @@ import javax.ws.rs.ext.Provider;
 import com.github.t1.deployer.app.DataSources;
 import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
 import com.github.t1.deployer.app.html.builder.Input.InputBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
 public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceConfig> {
-    private static final Compound fields(boolean withValues) {
-        return compound(fieldInput(withValues, "name", "Name").required().build(), //
-                fieldInput(withValues, "jndiName", "JNDI-Name").required().build(), //
-                fieldInput(withValues, "driver", "Driver").required().build(), //
-                fieldInput(withValues, "uri", "URI").required().build(), //
-                fieldInput(withValues, "user", "User-Name").build(), //
-                fieldInput(withValues, "password", "Password").build()) //
-                .build();
+    private static FormBuilder withFields(boolean withValues, FormBuilder form) {
+        form.input(fieldInput(withValues, "name", "Name").required());
+        form.input(fieldInput(withValues, "jndiName", "JNDI-Name").required());
+        form.input(fieldInput(withValues, "driver", "Driver").required());
+        form.input(fieldInput(withValues, "uri", "URI").required());
+        form.input(fieldInput(withValues, "user", "User-Name"));
+        form.input(fieldInput(withValues, "password", "Password").type("password"));
+        return form;
     }
 
     private static final String MAIN_FORM_ID = "main";
@@ -51,7 +52,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
 
     private static final Compound EXISTING_DATA_SOURCE_FORM = compound( //
             deleteForm(DATA_SOURCE_LINK, "delete"), //
-            form(MAIN_FORM_ID).action(DATA_SOURCE_LINK).body(fields(true)).build(), //
+            withFields(true, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCE_LINK)).build(), //
             buttonGroup().justified() //
                     .button(submitButton("Update")) //
                     .button(remove("delete")) //
@@ -61,13 +62,8 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     private static final Compound NEW_DATA_SOURCE_FORM = //
             compound( //
                     p("Enter the name of a new data source to configure"), //
-                    form(MAIN_FORM_ID) //
-                            .action(DATA_SOURCES.link()) //
-                            .body(fields(false)) //
-                            .build(), //
-                    buttonGroup().justified() //
-                            .button(submitButton("Add")) //
-                            .build() //
+                    withFields(false, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCES.link())).build(), //
+                    buttonGroup().justified().button(submitButton("Add")).build() //
             ).build();
 
     private static final DeployerPageBuilder page() {

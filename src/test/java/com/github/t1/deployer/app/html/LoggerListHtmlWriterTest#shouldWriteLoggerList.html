@@ -34,7 +34,7 @@
           <td><a href="http://localhost:8080/deployer/loggers/bar">bar</a></td>
           <td>
             <form method="POST" action="http://localhost:8080/deployer/loggers/bar">
-              <select name="level" onchange="this.form.submit()">
+              <select class="form-control input-sm" name="level" onchange="this.form.submit()">
                 <option>ALL</option>
                 <option>TRACE</option>
                 <option selected>DEBUG</option>
@@ -44,7 +44,9 @@
                 <option>OFF</option>
               </select>
               <noscript>
-                <input class="form-control" type="submit" value="Update"/>
+                <div class="form-group">
+                  <input type="submit" class="form-control" value="Update"/>
+                </div>
               </noscript>
             </form>
           </td>
@@ -63,7 +65,7 @@
           <td><a href="http://localhost:8080/deployer/loggers/foo">foo</a></td>
           <td>
             <form method="POST" action="http://localhost:8080/deployer/loggers/foo">
-              <select name="level" onchange="this.form.submit()">
+              <select class="form-control input-sm" name="level" onchange="this.form.submit()">
                 <option>ALL</option>
                 <option>TRACE</option>
                 <option>DEBUG</option>
@@ -73,7 +75,9 @@
                 <option>OFF</option>
               </select>
               <noscript>
-                <input class="form-control" type="submit" value="Update"/>
+                <div class="form-group">
+                  <input type="submit" class="form-control" value="Update"/>
+                </div>
               </noscript>
             </form>
           </td>

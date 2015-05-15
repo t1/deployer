@@ -7,6 +7,7 @@ import java.net.URI;
 
 import lombok.*;
 
+import com.github.t1.deployer.app.html.builder.Input.InputBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 @Value
@@ -26,10 +27,16 @@ public class Form extends DelegateComponent {
 
     public static class FormBuilder {
         private final TagBuilder tag = tag("form").a("method", "POST");
-        private boolean group;
+        private boolean horizontal;
 
         public FormBuilder id(Component id) {
             tag.id(id);
+            return this;
+        }
+
+        public FormBuilder horizontal() {
+            this.horizontal = true;
+            tag.classes("form-horizontal");
             return this;
         }
 
@@ -43,32 +50,24 @@ public class Form extends DelegateComponent {
             return this;
         }
 
-        public FormBuilder body(Input input) {
-            if (!input.isHidden())
-                group = true;
+        public FormBuilder input(InputBuilder input) {
+            if (horizontal)
+                input.horizontal();
+            tag.body(input.build());
+            return this;
+        }
+
+        public FormBuilder input(Input input) {
             tag.body(input);
             return this;
         }
 
         public FormBuilder body(Component component) {
-            group = true;
             tag.body(component);
             return this;
         }
 
-        public FormBuilder group() {
-            group = true;
-            return this;
-        }
-
-        public FormBuilder nogroup() {
-            group = false;
-            return this;
-        }
-
         public Form build() {
-            if (group)
-                tag.classes("form-group");
             return new Form(tag.build());
         }
     }

@@ -36,9 +36,11 @@
 
       <div class="panel-body">
         <p>Enter the checksum of a new artifact to deploy</p>
-        <form method="POST" id="main" action="http://localhost:8080/deployer/deployments" class="form-group">
+        <form method="POST" id="main" action="http://localhost:8080/deployer/deployments">
           <input type="hidden" name="action" value="deploy"/>
-          <input class="form-control" placeholder="Checksum" name="checksum" id="checksum" required/>
+          <div class="form-group">
+            <input type="text" class="form-control" placeholder="Checksum" name="checksum" id="checksum" required/>
+          </div>
         </form>
         <div role="group" class="btn-group">
           <button class="btn btn-block btn-primary" form="main" type="submit">Deploy</button>

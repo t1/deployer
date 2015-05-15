@@ -30,24 +30,25 @@
       <div class="panel-heading"><h1>Add Logger</h1></div>
 
       <div class="panel-body">
-        <p>Enter the name of a new logger to configure</p>
-        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers" class="form-group">
-          <label for="category">Category</label>
-          <input class="form-control" name="category" id="category" required/>
-          <select name="level">
-            <option>ALL</option>
-            <option>TRACE</option>
-            <option selected>DEBUG</option>
-            <option>INFO</option>
-            <option>WARN</option>
-            <option>ERROR</option>
-            <option>OFF</option>
-          </select>
-        </form>
-        <div role="group" class="btn-group btn-group-justified">
-          <div role="group" class="btn-group">
-            <button class="btn btn-block btn-primary" form="main" type="submit">Add</button>
+        <p>Enter the category of a new logger to configure</p>
+        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers">
+          <div class="form-group">
+            <input type="text" class="form-control" placeholder="Category" name="category" id="category" required/>
           </div>
+          <div class="form-group">
+            <select class="form-control input-sm" name="level">
+              <option>ALL</option>
+              <option>TRACE</option>
+              <option selected>DEBUG</option>
+              <option>INFO</option>
+              <option>WARN</option>
+              <option>ERROR</option>
+              <option>OFF</option>
+            </select>
+          </div>
+        </form>
+        <div role="group" class="btn-group">
+          <button class="btn btn-block btn-primary" form="main" type="submit">Add</button>
         </div>
       </div>
     </div>

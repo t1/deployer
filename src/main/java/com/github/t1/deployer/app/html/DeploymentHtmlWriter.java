@@ -67,9 +67,9 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                 private Component redeployButton(String id, Deployment deployment, UriInfo uriInfo, boolean isCurrent) {
                     FormBuilder form = form(id);
                     form.action(text(Deployments.path(uriInfo, deployment.getContextRoot())));
-                    form.body(hiddenInput("contextRoot", deployment.getContextRoot().getValue()));
-                    form.body(hiddenInput("checksum", deployment.getCheckSum().hexString()));
-                    form.body(hiddenAction("redeploy"));
+                    form.input(hiddenInput("contextRoot", deployment.getContextRoot().getValue()));
+                    form.input(hiddenInput("checksum", deployment.getCheckSum().hexString()));
+                    form.input(hiddenAction("redeploy"));
 
                     Static deployLabel = text(isCurrent ? "Redeploy" : "Deploy");
                     return compound( //
@@ -111,19 +111,19 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
     private static Component undeploy() {
         return div().a("style", "float: right").body(compound( //
                 form("undeploy").action(DEPLOYMENT_LINK) //
-                        .body(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
+                        .input(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
                             @Override
                             protected ContextRoot contentFrom(BuildContext out) {
                                 return out.get(DeploymentResource.class).getContextRoot();
                             }
                         }).build()) //
-                        .body(hiddenInput().name("checksum").value(new AppendingComponent<CheckSum>() {
+                        .input(hiddenInput().name("checksum").value(new AppendingComponent<CheckSum>() {
                             @Override
                             protected CheckSum contentFrom(BuildContext out) {
                                 return out.get(DeploymentResource.class).getCheckSum();
                             }
                         }).build()) //
-                        .body(hiddenAction("undeploy")) //
+                        .input(hiddenAction("undeploy")) //
                         .build(), //
                 buttonGroup().button( //
                         button().size(S).style(danger).forForm("undeploy").body(text("Undeploy")).build() //

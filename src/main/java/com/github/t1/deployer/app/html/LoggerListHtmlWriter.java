@@ -57,13 +57,13 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
         }
 
         private Form levelForm(LogLevel level, URI action) {
-            return form().action(action).body(levelSelect(level)).nogroup().build();
+            return form().action(action).body(levelSelect(level)).build();
         }
 
         private Component deleteButton(int i, URI action) {
             String formId = "delete-" + i;
             return compound( //
-                    form(formId).action(action).body(hiddenAction("delete")).build(), //
+                    form(formId).action(action).input(hiddenAction("delete")).build(), //
                     buttonGroup().button(remove(formId, XS)).build() //
             ).build();
         }

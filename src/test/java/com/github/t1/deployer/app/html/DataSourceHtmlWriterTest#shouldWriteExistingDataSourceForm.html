@@ -38,19 +38,43 @@
         <form method="POST" id="delete" action="http://localhost:8080/deployer/data-sources/foo">
           <input type="hidden" name="action" value="delete"/>
         </form>
-        <form method="POST" id="main" action="http://localhost:8080/deployer/data-sources/foo" class="form-group">
-          <label for="name">Name</label>
-          <input class="form-control" value="foo" name="name" id="name" required/>
-          <label for="jndiName">JNDI-Name</label>
-          <input class="form-control" value="jndi:/foo" name="jndiName" id="jndiName" required/>
-          <label for="driver">Driver</label>
-          <input class="form-control" value="postgres" name="driver" id="driver" required/>
-          <label for="uri">URI</label>
-          <input class="form-control" value="foo-uri" name="uri" id="uri" required/>
-          <label for="user">User-Name</label>
-          <input class="form-control" value="foo-user" name="user" id="user"/>
-          <label for="password">Password</label>
-          <input class="form-control" value="foo-pwd" name="password" id="password"/>
+        <form method="POST" id="main" class="form-horizontal" action="http://localhost:8080/deployer/data-sources/foo">
+          <div class="form-group">
+            <label for="name" class="control-label col-sm-1">Name</label>
+            <div class="col-sm-11">
+              <input type="text" class="form-control" value="foo" name="name" id="name" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="jndiName" class="control-label col-sm-1">JNDI-Name</label>
+            <div class="col-sm-11">
+              <input type="text" class="form-control" value="jndi:/foo" name="jndiName" id="jndiName" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="driver" class="control-label col-sm-1">Driver</label>
+            <div class="col-sm-11">
+              <input type="text" class="form-control" value="postgres" name="driver" id="driver" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="uri" class="control-label col-sm-1">URI</label>
+            <div class="col-sm-11">
+              <input type="text" class="form-control" value="foo-uri" name="uri" id="uri" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="user" class="control-label col-sm-1">User-Name</label>
+            <div class="col-sm-11">
+              <input type="text" class="form-control" value="foo-user" name="user" id="user"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password" class="control-label col-sm-1">Password</label>
+            <div class="col-sm-11">
+              <input type="password" class="form-control" value="foo-pwd" name="password" id="password"/>
+            </div>
+          </div>
         </form>
         <div role="group" class="btn-group btn-group-justified">
           <div role="group" class="btn-group">

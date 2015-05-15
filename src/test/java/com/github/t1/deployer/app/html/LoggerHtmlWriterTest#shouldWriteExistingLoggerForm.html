@@ -40,16 +40,14 @@
             <input type="hidden" name="action" value="delete"/>
           </form>
           <div role="group" class="btn-group">
-            <button class="btn btn-block btn-sm btn-danger" form="delete" type="submit">
-              <span class="glyphicon glyphicon-remove"/>
-            </button>
+            <button class="btn btn-block btn-sm btn-danger" form="delete" type="submit">Delete</button>
           </div>
         </div>
       </div>
 
       <div class="panel-body">
-        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers/foo" class="form-group">
-          <select name="level" onchange="this.form.submit()">
+        <form method="POST" id="main" action="http://localhost:8080/deployer/loggers/foo">
+          <select class="form-control input-sm" name="level" onchange="this.form.submit()">
             <option>ALL</option>
             <option>TRACE</option>
             <option>DEBUG</option>
@@ -59,7 +57,9 @@
             <option>OFF</option>
           </select>
           <noscript>
-            <input class="form-control" type="submit" value="Update"/>
+            <div class="form-group">
+              <input type="submit" class="form-control" value="Update"/>
+            </div>
           </noscript>
         </form>
       </div>
