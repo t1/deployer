@@ -89,7 +89,7 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
             .panelBody(compound( //
                     p("Enter the name of a new logger to configure"), //
                     form(MAIN_FORM_ID).action(LOGGERS) //
-                            .body(input("category").label("Category").build()) //
+                            .body(input("category").label("Category").required().build()) //
                             .body(levelSelectBuilder(DEBUG).build()) //
                             .build(), //
                     buttonGroup().justified() //

@@ -28,7 +28,14 @@ public class DataSourceHtmlWriterTest extends AbstractHtmlWriterTest<DataSourceC
 
     @Test
     public void shouldWriteExistingDataSourceForm() throws Exception {
-        DataSourceConfig dataSource = DataSourceConfig.builder().name("foo").uri(URI.create("foo-uri")).build();
+        DataSourceConfig dataSource = DataSourceConfig.builder() //
+                .name("foo") //
+                .jndiName("jndi:/foo") //
+                .driver("postgres") //
+                .uri(URI.create("foo-uri")) //
+                .user("foo-user") //
+                .password("foo-pwd") //
+                .build();
 
         String entity = write(dataSource);
 

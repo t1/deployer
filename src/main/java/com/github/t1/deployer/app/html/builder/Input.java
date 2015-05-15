@@ -3,9 +3,13 @@ package com.github.t1.deployer.app.html.builder;
 import static com.github.t1.deployer.app.html.builder.Compound.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
+
+import java.lang.reflect.Field;
+
 import lombok.*;
 
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -39,6 +43,7 @@ public class Input extends DelegateComponent {
         private final TagBuilder input = tag("input").multiline();
         private String idAndName;
         private String type;
+        private boolean required;
 
         public InputBuilder idAndName(String idAndName) {
             this.idAndName = idAndName;
@@ -83,6 +88,26 @@ public class Input extends DelegateComponent {
             return this;
         }
 
+        public InputBuilder fieldValue(final Class<?> type, final String fieldName) {
+            value(new AppendingComponent<String>() {
+                @Override
+                protected String contentFrom(BuildContext out) {
+                    try {
+                        final Field field = type.getDeclaredField(fieldName);
+                        field.setAccessible(true);
+                        Object target = out.get(type);
+                        if (target == null)
+                            return "";
+                        Object value = field.get(target);
+                        return (value == null) ? "" : value.toString();
+                    } catch (ReflectiveOperationException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            return this;
+        }
+
         public InputBuilder value(String value) {
             return value(text(value));
         }
@@ -92,9 +117,16 @@ public class Input extends DelegateComponent {
             return this;
         }
 
+        public InputBuilder required() {
+            required = true;
+            return this;
+        }
+
         public Input build() {
             if (idAndName != null)
-                input.a("name", idAndName).id(idAndName).a("required");
+                input.a("name", idAndName).id(idAndName);
+            if (required)
+                input.a("required");
             if (label == null)
                 return new Input(input.build(), type);
             if (idAndName != null)

@@ -42,9 +42,15 @@ public class DataSourceContainer extends AbstractContainer {
         return node;
     }
 
-    private DataSourceConfig toDataSource(String name, ModelNode cliDataSource) {
-        URI uri = URI.create(cliDataSource.get("connection-url").asString());
-        return DataSourceConfig.builder().name(name).uri(uri).build();
+    private DataSourceConfig toDataSource(String name, ModelNode node) {
+        return DataSourceConfig.builder() //
+                .name(name) //
+                .jndiName(node.get("jndi-name").asString()) //
+                .driver(node.get("driver-name").asString()) //
+                .uri(URI.create(node.get("connection-url").asString())) //
+                .user(node.get("user-name").asString()) //
+                .password(node.get("password").asString()) //
+                .build();
     }
 
     public boolean hasDataSource(String dataSourceName) {

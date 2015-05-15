@@ -20,11 +20,22 @@ import javax.ws.rs.ext.Provider;
 import com.github.t1.deployer.app.DataSources;
 import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Input.InputBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
 public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceConfig> {
+    private static final Compound fields(boolean withValues) {
+        return compound(fieldInput(withValues, "name", "Name").required().build(), //
+                fieldInput(withValues, "jndiName", "JNDI-Name").required().build(), //
+                fieldInput(withValues, "driver", "Driver").required().build(), //
+                fieldInput(withValues, "uri", "URI").required().build(), //
+                fieldInput(withValues, "user", "User-Name").build(), //
+                fieldInput(withValues, "password", "Password").build()) //
+                .build();
+    }
+
     private static final String MAIN_FORM_ID = "main";
 
     private static final AppendingComponent<URI> DATA_SOURCE_LINK = new AppendingComponent<URI>() {
@@ -34,43 +45,29 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
         }
     };
 
+    private static Button submitButton(String label) {
+        return button().style(primary).forForm(MAIN_FORM_ID).body(text(label)).build();
+    }
+
     private static final Compound EXISTING_DATA_SOURCE_FORM = compound( //
             deleteForm(DATA_SOURCE_LINK, "delete"), //
-            form(MAIN_FORM_ID) //
-                    .action(DATA_SOURCE_LINK) //
-                    .body(input("name").label("Name").value(new AppendingComponent<String>() {
-                        @Override
-                        protected String contentFrom(BuildContext out) {
-                            return out.get(DataSourceConfig.class).getName();
-                        }
-                    }).build()) //
-                    .body(input("uri").label("URI").value(new AppendingComponent<URI>() {
-                        @Override
-                        protected URI contentFrom(BuildContext out) {
-                            return out.get(DataSourceConfig.class).getUri();
-                        }
-                    }).build()) //
-                    .build() //
-            , //
+            form(MAIN_FORM_ID).action(DATA_SOURCE_LINK).body(fields(true)).build(), //
             buttonGroup().justified() //
-                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Update")).build()) //
+                    .button(submitButton("Update")) //
                     .button(remove("delete")) //
-                    .build()
+                    .build()) //
+            .build();
 
-    ).build();
-
-    private static final Compound NEW_DATA_SOURCE_FORM = compound( //
-            p("Enter the name of a new data source to configure") //
-            , //
-            form(MAIN_FORM_ID) //
-                    .action(DATA_SOURCES.link()) //
-                    .body(input("name").label("Name").build()) //
-                    .body(input("uri").label("URI").build()) //
-                    .build() //
-            , //
-            buttonGroup().justified() //
-                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
-                    .build() //
+    private static final Compound NEW_DATA_SOURCE_FORM = //
+            compound( //
+                    p("Enter the name of a new data source to configure"), //
+                    form(MAIN_FORM_ID) //
+                            .action(DATA_SOURCES.link()) //
+                            .body(fields(false)) //
+                            .build(), //
+                    buttonGroup().justified() //
+                            .button(submitButton("Add")) //
+                            .build() //
             ).build();
 
     private static final DeployerPageBuilder page() {
@@ -88,6 +85,13 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
                         return DataSources.base(out.get(UriInfo.class));
                     }
                 });
+    }
+
+    private static InputBuilder fieldInput(boolean withValue, String name, String title) {
+        InputBuilder input = input(name).label(title);
+        if (withValue)
+            input.fieldValue(DataSourceConfig.class, name);
+        return input;
     }
 
     public static String title(DataSourceConfig target) {

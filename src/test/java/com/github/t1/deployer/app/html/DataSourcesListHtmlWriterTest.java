@@ -20,8 +20,8 @@ public class DataSourcesListHtmlWriterTest extends AbstractHtmlWriterTest<List<D
     @Test
     public void shouldWriteDataSourceList() throws Exception {
         List<DataSourceConfig> dataSources = asList( //
-                DataSourceConfig.builder().name("foo").build(), //
-                DataSourceConfig.builder().name("bar").build());
+                DataSourceConfig.builder().name("foo").driver("h2").jndiName("jndi:/foo").build(), //
+                DataSourceConfig.builder().name("bar").driver("postgresql").jndiName("jndi:/bar").build());
 
         String entity = write(dataSources);
 
