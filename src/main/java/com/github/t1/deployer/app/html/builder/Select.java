@@ -21,7 +21,7 @@ public class Select extends DelegateComponent {
     @Value
     @EqualsAndHashCode(callSuper = true)
     public static class Option extends DelegateComponent {
-        public static class OptionBuilder {
+        public static class OptionBuilder extends ComponentBuilder {
             private final TagBuilder tag = tag("option");
 
             public OptionBuilder selected(boolean selected) {
@@ -35,6 +35,7 @@ public class Select extends DelegateComponent {
                 return this;
             }
 
+            @Override
             public Option build() {
                 return new Option(tag.build());
             }
@@ -45,7 +46,7 @@ public class Select extends DelegateComponent {
         }
     }
 
-    public static class SelectBuilder {
+    public static class SelectBuilder extends ComponentBuilder {
         private final TagBuilder tag = tag("select").classes("form-control", "input-sm").multiline();
 
         public SelectBuilder name(String name) {
@@ -63,11 +64,16 @@ public class Select extends DelegateComponent {
             return this;
         }
 
+        public SelectBuilder option(OptionBuilder option) {
+            return option(option.build());
+        }
+
         public SelectBuilder option(Option option) {
             tag.body(option);
             return this;
         }
 
+        @Override
         public Select build() {
             return new Select(tag.build());
         }

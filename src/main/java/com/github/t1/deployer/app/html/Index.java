@@ -7,7 +7,7 @@ import com.github.t1.deployer.app.Deployments;
 
 @Path("/")
 public class Index {
-    private static final int FOUND = 302;
+    private static final int FOUND = 302; // not in JAX-RS 1.1
 
     @GET
     public Response getAllDeploymentsAsHtml(@Context UriInfo uriInfo) {

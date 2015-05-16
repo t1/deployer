@@ -21,6 +21,7 @@ import javax.ws.rs.ext.Provider;
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.DescriptionList.DescriptionListBuilder;
 import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
 import com.github.t1.deployer.app.html.builder.Table.TableBuilder;
@@ -57,14 +58,15 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                     for (Deployment deployment : out.get(DeploymentResource.class).getAvailableVersions()) {
                         boolean isCurrent = deployment.getVersion().equals(currentVersion);
                         table.row( //
-                                cell().body(text(deployment.getVersion().getVersion())).build(), //
-                                cell().body(redeployButton("redeploy-" + i++, deployment, uriInfo, isCurrent)).build() //
+                                cell().body(text(deployment.getVersion().getVersion())), //
+                                cell().body(redeployButton("redeploy-" + i++, deployment, uriInfo, isCurrent)) //
                         );
                     }
                     table.build().writeTo(out);
                 }
 
-                private Component redeployButton(String id, Deployment deployment, UriInfo uriInfo, boolean isCurrent) {
+                private CompoundBuilder redeployButton(String id, Deployment deployment, UriInfo uriInfo,
+                        boolean isCurrent) {
                     FormBuilder form = form(id);
                     form.action(text(Deployments.path(uriInfo, deployment.getContextRoot())));
                     form.input(hiddenInput("contextRoot", deployment.getContextRoot().getValue()));
@@ -73,11 +75,10 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
 
                     Static deployLabel = text(isCurrent ? "Redeploy" : "Deploy");
                     return compound( //
-                            form.build(), //
+                            form, //
                             buttonGroup().button( //
-                                    button().size(XS).style(primary).forForm(id).body(deployLabel).build()) //
-                                    .build() //
-                    ).build();
+                                    button().size(XS).style(primary).forForm(id).body(deployLabel)) //
+                    );
                 }
             };
 
@@ -108,31 +109,29 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
         }
     };
 
-    private static Component undeploy() {
-        return div().a("style", "float: right").body(compound( //
-                form("undeploy").action(DEPLOYMENT_LINK) //
-                        .input(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
-                            @Override
-                            protected ContextRoot contentFrom(BuildContext out) {
-                                return out.get(DeploymentResource.class).getContextRoot();
-                            }
-                        }).build()) //
-                        .input(hiddenInput().name("checksum").value(new AppendingComponent<CheckSum>() {
-                            @Override
-                            protected CheckSum contentFrom(BuildContext out) {
-                                return out.get(DeploymentResource.class).getCheckSum();
-                            }
-                        }).build()) //
-                        .input(hiddenAction("undeploy")) //
-                        .build(), //
-                buttonGroup().button( //
-                        button().size(S).style(danger).forForm("undeploy").body(text("Undeploy")).build() //
-                        ).build() //
-                ).build()).build();
-    }
+    private static Component UNDEPLOY = div().a("style", "float: right").body(compound( //
+            form("undeploy").action(DEPLOYMENT_LINK) //
+                    .input(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
+                        @Override
+                        protected ContextRoot contentFrom(BuildContext out) {
+                            return out.get(DeploymentResource.class).getContextRoot();
+                        }
+                    })) //
+                    .input(hiddenInput().name("checksum").value(new AppendingComponent<CheckSum>() {
+                        @Override
+                        protected CheckSum contentFrom(BuildContext out) {
+                            return out.get(DeploymentResource.class).getCheckSum();
+                        }
+                    })) //
+                    .input(hiddenAction("undeploy")) //
+            , //
+            buttonGroup().button( //
+                    button().size(S).style(danger).forForm("undeploy").body(text("Undeploy")) //
+                    ) //
+            )).build();
 
     private static final DeployerPage EXISTING_DEPLOYMENT_FORM = page() //
-            .panelBody(compound("\n", undeploy(), DEPLOYMENT_INFO).build()) //
+            .panelBody(compound("\n", UNDEPLOY, DEPLOYMENT_INFO)) //
             .body(nl()) //
             .body(AVAILABLE_VERSIONS) //
             .build();
@@ -147,12 +146,10 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                         }
                     }) //
                     .body(hiddenAction("deploy")) //
-                    .body(input("checksum").placeholder("Checksum").required().build()) //
-                    .build(), //
+                    .body(input("checksum").placeholder("Checksum").required()), //
             buttonGroup() //
-                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Deploy")).build()) //
-                    .build() //
-            ).build()).build();
+                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Deploy"))) //
+            )).build();
 
     @Override
     protected void prepare(BuildContext buildContext) {

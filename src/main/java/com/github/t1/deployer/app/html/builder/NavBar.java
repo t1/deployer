@@ -20,7 +20,7 @@ public class NavBar extends Component {
         return new NavBarBuilder();
     }
 
-    public static class NavBarBuilder {
+    public static class NavBarBuilder extends ComponentBuilder {
         public class NavBarItemBuilder {
             private final TagBuilder tag = tag("a");
             private final List<Component> classes = new ArrayList<>();
@@ -68,6 +68,7 @@ public class NavBar extends Component {
             return new NavBarItemBuilder();
         }
 
+        @Override
         public NavBar build() {
             tag.body(container //
                     .body(header.build()) //

@@ -18,7 +18,9 @@ import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.DataSources;
 import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.HtmlList.HtmlListBuilder;
+import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 import com.github.t1.deployer.model.DataSourceConfig;
 
 @Provider
@@ -43,20 +45,19 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                     ul.build().writeTo(out);
                 }
 
-                private Compound dataSourceItem(DataSourceConfig dataSource, UriInfo uriInfo, int i) {
+                private CompoundBuilder dataSourceItem(DataSourceConfig dataSource, UriInfo uriInfo, int i) {
                     URI uri = DataSources.path(uriInfo, dataSource);
                     String formId = "delete-" + i;
                     return compound( //
-                            span().body(link(uri).body(text(dataSource.getName())).build()).build(), //
+                            span().body(link(uri).body(text(dataSource.getName()))), //
                             span().a("style", "float: right") //
                                     .body(deleteForm(uri, formId)) //
-                                    .body(buttonGroup().button(remove(formId, XS)).build()) //
-                                    .build() //
-                    ).build();
+                                    .body(buttonGroup().button(remove(formId, XS))) //
+                    );
                 }
 
-                private Tag addDataSourceItem(UriInfo uriInfo) {
-                    return link(DataSources.newDataSource(uriInfo)).body(ADD_DATA_SOURCE).multiline().build();
+                private TagBuilder addDataSourceItem(UriInfo uriInfo) {
+                    return link(DataSources.newDataSource(uriInfo)).body(ADD_DATA_SOURCE).multiline();
                 }
             }) //
             .build();

@@ -25,6 +25,15 @@ public class Table extends DelegateComponent {
             return this;
         }
 
+        public TableBuilder row(CellBuilder... cells) {
+            TagBuilder row = tag("tr");
+            for (CellBuilder cell : cells) {
+                row.body(cell);
+            }
+            tag.body(row.build());
+            return this;
+        }
+
         public TableBuilder row(Cell... cells) {
             TagBuilder row = tag("tr");
             for (Cell cell : cells) {
@@ -42,12 +51,16 @@ public class Table extends DelegateComponent {
     @Value
     @EqualsAndHashCode(callSuper = true)
     public static class Cell extends DelegateComponent {
-        public static class CellBuilder {
+        public static class CellBuilder extends ComponentBuilder {
             private final TagBuilder tag = tag("td").multiline();
 
             public CellBuilder id(String id) {
                 tag.id(id);
                 return this;
+            }
+
+            public CellBuilder body(ComponentBuilder body) {
+                return body(body.build());
             }
 
             public CellBuilder body(Component body) {
@@ -65,6 +78,7 @@ public class Table extends DelegateComponent {
                 return this;
             }
 
+            @Override
             public Cell build() {
                 return new Cell(tag.build());
             }

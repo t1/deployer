@@ -20,6 +20,7 @@ import javax.ws.rs.ext.Provider;
 import com.github.t1.deployer.app.DataSources;
 import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Button.ButtonBuilder;
 import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
 import com.github.t1.deployer.app.html.builder.Input.InputBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
@@ -46,24 +47,24 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
         }
     };
 
-    private static Button submitButton(String label) {
-        return button().style(primary).forForm(MAIN_FORM_ID).body(text(label)).build();
+    private static ButtonBuilder submitButton(String label) {
+        return button().style(primary).forForm(MAIN_FORM_ID).body(text(label));
     }
 
     private static final Compound EXISTING_DATA_SOURCE_FORM = compound( //
             deleteForm(DATA_SOURCE_LINK, "delete"), //
-            withFields(true, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCE_LINK)).build(), //
+            withFields(true, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCE_LINK)), //
             buttonGroup().justified() //
                     .button(submitButton("Update")) //
                     .button(remove("delete")) //
-                    .build()) //
+            ) //
             .build();
 
     private static final Compound NEW_DATA_SOURCE_FORM = //
             compound( //
                     p("Enter the name of a new data source to configure"), //
-                    withFields(false, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCES.link())).build(), //
-                    buttonGroup().justified().button(submitButton("Add")).build() //
+                    withFields(false, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCES.link())), //
+                    buttonGroup().justified().button(submitButton("Add")) //
             ).build();
 
     private static final DeployerPageBuilder page() {

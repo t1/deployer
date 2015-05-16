@@ -7,6 +7,7 @@ import java.net.URI;
 
 import javax.ws.rs.core.UriInfo;
 
+import com.github.t1.deployer.app.html.builder.Component.ComponentBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 public class Tags {
@@ -27,12 +28,16 @@ public class Tags {
         return tag("div");
     }
 
-    public static Tag p(String text) {
-        return tag("p").body(text(text)).build();
+    public static TagBuilder p(String text) {
+        return tag("p").body(text(text));
     }
 
-    public static Tag noscript(Component body) {
-        return tag("noscript").body(body).build();
+    public static TagBuilder noscript(ComponentBuilder body) {
+        return noscript(body.build());
+    }
+
+    public static TagBuilder noscript(Component body) {
+        return tag("noscript").body(body);
     }
 
     public static TagBuilder link(Component component) {

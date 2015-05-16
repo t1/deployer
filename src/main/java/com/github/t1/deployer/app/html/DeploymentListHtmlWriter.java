@@ -25,7 +25,7 @@ public class DeploymentListHtmlWriter extends TextHtmlListMessageBodyWriter<Depl
         protected URI contentFrom(BuildContext out) {
             return Deployments.newDeployment(out.get(UriInfo.class));
         }
-    }).body(text("+")).build()).build();
+    }).body(text("+"))).build();
 
     private static final Component TABLE = new Component() {
         @Override
@@ -40,9 +40,9 @@ public class DeploymentListHtmlWriter extends TextHtmlListMessageBodyWriter<Depl
                 URI uri = Deployments.path(uriInfo, contextRoot);
                 String checksum = "SHA-1: " + deployment.getCheckSum();
                 table.row( //
-                        cell().body(link(uri).body(text(contextRoot)).build()).build(), //
-                        cell().body(text(deployment.getName())).build(), //
-                        cell().title(checksum).body(textOr(deployment.getVersion(), "unknown")).build() //
+                        cell().body(link(uri).body(text(contextRoot))), //
+                        cell().body(text(deployment.getName())), //
+                        cell().title(checksum).body(textOr(deployment.getVersion(), "unknown")) //
                 );
             }
             table.row(ADD_DEPLOYMENT_ROW);

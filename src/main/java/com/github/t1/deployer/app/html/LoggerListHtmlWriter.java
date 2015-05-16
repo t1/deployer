@@ -20,6 +20,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.Loggers;
 import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
 import com.github.t1.deployer.app.html.builder.Table.Cell;
 import com.github.t1.deployer.app.html.builder.Table.TableBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
@@ -33,7 +34,7 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
         protected URI contentFrom(BuildContext out) {
             return Loggers.newLogger(out.get(UriInfo.class));
         }
-    }).body(text("+")).build()).build();
+    }).body(text("+"))).build();
 
     private static final Component TABLE = new Component() {
         @Override
@@ -47,25 +48,25 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
             for (LoggerConfig logger : loggers) {
                 URI action = Loggers.path(uriInfo, logger);
                 table.row( //
-                        cell().body(link(action).body(text(logger.getCategory())).build()).build(), //
-                        cell().body(levelForm(logger.getLevel(), action)).build(), //
-                        cell().body(deleteButton(i++, action)).build() //
+                        cell().body(link(action).body(text(logger.getCategory()))), //
+                        cell().body(levelForm(logger.getLevel(), action)), //
+                        cell().body(deleteButton(i++, action)) //
                 );
             }
             table.row(ADD_LOGGER_ROW);
             table.build().writeTo(out);
         }
 
-        private Form levelForm(LogLevel level, URI action) {
-            return form().action(action).body(levelSelect(level)).build();
+        private FormBuilder levelForm(LogLevel level, URI action) {
+            return form().action(action).body(levelSelect(level));
         }
 
-        private Component deleteButton(int i, URI action) {
+        private ComponentBuilder deleteButton(int i, URI action) {
             String formId = "delete-" + i;
             return compound( //
-                    form(formId).action(action).input(hiddenAction("delete")).build(), //
-                    buttonGroup().button(remove(formId, XS)).build() //
-            ).build();
+                    form(formId).action(action).input(hiddenAction("delete")), //
+                    buttonGroup().button(remove(formId, XS)) //
+            );
         }
     };
 

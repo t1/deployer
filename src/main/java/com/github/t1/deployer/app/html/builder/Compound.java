@@ -9,6 +9,18 @@ import lombok.*;
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class Compound extends Component {
+    public static CompoundBuilder compound(ComponentBuilder... components) {
+        return compound("", components);
+    }
+
+    public static CompoundBuilder compound(String delimiter, ComponentBuilder... components) {
+        return new CompoundBuilder(delimiter).component(components);
+    }
+
+    public static CompoundBuilder compound(String delimiter) {
+        return new CompoundBuilder(delimiter);
+    }
+
     public static CompoundBuilder compound(Component... components) {
         return compound("", components);
     }
@@ -18,9 +30,15 @@ public class Compound extends Component {
     }
 
     @RequiredArgsConstructor
-    public static class CompoundBuilder {
+    public static class CompoundBuilder extends ComponentBuilder {
         private final String delimiter;
         private final List<Component> components = new ArrayList<>();
+
+        public CompoundBuilder component(ComponentBuilder... components) {
+            for (ComponentBuilder component : components)
+                component(component.build());
+            return this;
+        }
 
         public CompoundBuilder component(Component... components) {
             for (Component component : components)
@@ -37,6 +55,7 @@ public class Compound extends Component {
             return this;
         }
 
+        @Override
         public Compound build() {
             return new Compound(delimiter, unmodifiableList(components));
         }

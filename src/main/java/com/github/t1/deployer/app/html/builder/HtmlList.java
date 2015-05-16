@@ -50,6 +50,10 @@ public class HtmlList extends Component {
             return this;
         }
 
+        public HtmlListBuilder item(ComponentBuilder component) {
+            return this.item(component.build());
+        }
+
         public HtmlListBuilder item(Component component) {
             return li(component, text("list-group-item"));
         }

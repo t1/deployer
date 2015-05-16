@@ -26,12 +26,12 @@ public class DeployerPage extends Component {
             }
 
             @Override
-            public Component heading(Component backLink, final Component title) {
+            public TagBuilder heading(Component backLink, final Component title) {
                 TagBuilder heading = div().classes("panel-heading");
                 if (backLink == null) {
-                    heading.body(tag("h1").body(title).build());
+                    heading.body(tag("h1").body(title));
                 } else {
-                    Tag back = link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text("")).build();
+                    TagBuilder back = link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text(""));
                     heading.body(tag("h1").body(back).body(new Component() {
                         @Override
                         public void writeTo(BuildContext out) {
@@ -39,10 +39,10 @@ public class DeployerPage extends Component {
                             title.writeTo(out);
                             out.appendln();
                         }
-                    }).build());
+                    }));
                 }
 
-                return heading.build();
+                return heading;
             }
 
             @Override
@@ -59,8 +59,8 @@ public class DeployerPage extends Component {
 
         public abstract TagBuilder pageTag();
 
-        public Component heading(@SuppressWarnings("unused") Component backLink, Component title) {
-            return tag("h1").body(title).build();
+        public TagBuilder heading(@SuppressWarnings("unused") Component backLink, Component title) {
+            return tag("h1").body(title);
         }
 
         public Component panelBody(Component body) {
@@ -76,7 +76,7 @@ public class DeployerPage extends Component {
         return new DeployerPageBuilder().style(jumbotron);
     }
 
-    public static class DeployerPageBuilder {
+    public static class DeployerPageBuilder extends ComponentBuilder {
         private PageStyle pageStyle;
         private Component backLink;
         private Component title;
@@ -97,6 +97,10 @@ public class DeployerPage extends Component {
             return this;
         }
 
+        public DeployerPageBuilder panelBody(ComponentBuilder body) {
+            return panelBody(body.build());
+        }
+
         public DeployerPageBuilder panelBody(Component body) {
             this.bodyComponents.add(pageStyle.panelBody(body));
             return this;
@@ -107,6 +111,7 @@ public class DeployerPage extends Component {
             return this;
         }
 
+        @Override
         public DeployerPage build() {
             Page.PageBuilder page = page().body(navigation()).body(nl());
 
@@ -122,12 +127,12 @@ public class DeployerPage extends Component {
             for (Component body : bodyComponents) {
                 bodyTag.body(body);
             }
-            page.body(bodyTag.build());
+            page.body(bodyTag);
 
             return new DeployerPage(page.build());
         }
 
-        private NavBar navigation() {
+        private NavBarBuilder navigation() {
             NavBarBuilder navbar = navBar().brand("Deployer");
             for (final Navigation navigation : Navigation.values()) {
                 navbar.item() //
@@ -142,7 +147,7 @@ public class DeployerPage extends Component {
                         }) //
                         .build();
             }
-            return navbar.build();
+            return navbar;
         }
     }
 

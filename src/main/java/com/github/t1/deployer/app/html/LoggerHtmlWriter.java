@@ -20,6 +20,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.Loggers;
 import com.github.t1.deployer.app.html.builder.*;
+import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.Select.SelectBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.LoggerConfig;
@@ -35,7 +36,7 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
         }
     };
 
-    private static final Component existingLogger(UriInfo uriInfo, LoggerConfig logger) {
+    private static final DeployerPage existingLogger(UriInfo uriInfo, LoggerConfig logger) {
         return panelPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
@@ -52,25 +53,21 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
                 }) //
                 .panelBody(div().style("float: right") //
                         .body(form("delete").action(Loggers.path(uriInfo, logger)) //
-                                .input(hiddenAction("delete")) //
-                                .build()) //
+                                .input(hiddenAction("delete"))) //
                         .body(buttonGroup() //
-                                .button(button().size(S).style(danger).forForm("delete").body(text("Delete")).build()) //
-                                .build()) //
-                        .build()) //
+                                .button(button().size(S).style(danger).forForm("delete").body(text("Delete"))) //
+                        )) //
                 .body(nl()) //
                 .panelBody(form(MAIN_FORM_ID).action(Loggers.path(uriInfo, logger)) //
                         .body(levelSelect(logger.getLevel())) //
-                        .build() //
-                ) //
-                .build();
+                ).build();
     }
 
-    public static Component levelSelect(LogLevel selectedLevel) {
+    public static CompoundBuilder levelSelect(LogLevel selectedLevel) {
         return compound( //
-                levelSelectBuilder(selectedLevel).autosubmit().build(), //
-                noscript(input().type("submit").value("Update").build()) //
-        ).build();
+                levelSelectBuilder(selectedLevel).autosubmit(), //
+                noscript(input().type("submit").value("Update")) //
+        );
     }
 
     private static SelectBuilder levelSelectBuilder(LogLevel selectedLevel) {
@@ -78,23 +75,23 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
         for (LogLevel logLevel : LogLevel.values()) {
             if (logLevel == _DERIVED_)
                 continue;
-            select.option(option().selected(logLevel == selectedLevel).body(logLevel.name()).build());
+            select.option(option().selected(logLevel == selectedLevel).body(logLevel.name()));
         }
         return select;
     }
 
     private static final Component NEW_LOGGER = panelPage() //
             .title(text("Add Logger")) //
-            .panelBody(compound( //
-                    p("Enter the category of a new logger to configure"), //
-                    form(MAIN_FORM_ID).action(LOGGERS) //
-                            .input(input("category").placeholder("Category").required().build()) //
-                            .body(div().classes("form-group").body(levelSelectBuilder(DEBUG).build()).build()) //
-                            .build(), //
-                    buttonGroup() //
-                            .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add")).build()) //
-                            .build() //
-                    ).build()).build();
+            .panelBody( //
+                    compound( //
+                            p("Enter the category of a new logger to configure"), //
+                            form(MAIN_FORM_ID).action(LOGGERS) //
+                                    .input(input("category").placeholder("Category").required()) //
+                                    .body(div().classes("form-group").body(levelSelectBuilder(DEBUG))), //
+                            buttonGroup() //
+                                    .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add"))) //
+                    )) //
+            .build();
 
     @Override
     protected void prepare(BuildContext buildContext) {

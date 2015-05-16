@@ -3,6 +3,7 @@ package com.github.t1.deployer.app.html.builder;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 import lombok.*;
 
+import com.github.t1.deployer.app.html.builder.Button.ButtonBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 @Value
@@ -12,7 +13,7 @@ public class ButtonGroup extends DelegateComponent {
         return new ButtonGroupBuilder();
     }
 
-    public static class ButtonGroupBuilder {
+    public static class ButtonGroupBuilder extends ComponentBuilder {
         private boolean wrapButtons = false;
         private final TagBuilder tag = div().multiline().a("role", "group").classes("btn-group");
 
@@ -22,11 +23,16 @@ public class ButtonGroup extends DelegateComponent {
             return this;
         }
 
+        public ButtonGroupBuilder button(ButtonBuilder button) {
+            return button(button.build());
+        }
+
         public ButtonGroupBuilder button(Button button) {
             tag.body((wrapButtons) ? buttonGroup().button(button).build() : button);
             return this;
         }
 
+        @Override
         public ButtonGroup build() {
             return new ButtonGroup(tag.build());
         }

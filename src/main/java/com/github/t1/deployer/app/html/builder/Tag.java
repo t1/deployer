@@ -44,7 +44,7 @@ public class Tag extends Component {
         }
     }
 
-    public static class TagBuilder {
+    public static class TagBuilder extends ComponentBuilder {
         private String bodyDelimiter = "";
         private boolean multiline;
 
@@ -101,11 +101,15 @@ public class Tag extends Component {
             return a("style", style);
         }
 
+        public TagBuilder body(ComponentBuilder body) {
+            return this.body(body.build());
+        }
+
         public TagBuilder body(Component body) {
             if (this.body == null)
                 this.body = body;
             else
-                this.body = compound(bodyDelimiter).component(this.body).component(body).build();
+                this.body = compound(bodyDelimiter, this.body, body).build();
             this.multiline = this.multiline || this.body.isMultiLine();
             return this;
         }

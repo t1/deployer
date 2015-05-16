@@ -45,6 +45,10 @@ public class Page extends Component {
             return this;
         }
 
+        public PageBuilder body(ComponentBuilder body) {
+            return body(body.build());
+        }
+
         public PageBuilder body(Component body) {
             this.body.component(body);
             return this;

@@ -38,7 +38,7 @@ public class Input extends DelegateComponent {
         return builder;
     }
 
-    public static class InputBuilder {
+    public static class InputBuilder extends ComponentBuilder {
         private TagBuilder label;
         private final TagBuilder input = tag("input").a("type", new AppendingComponent<String>() {
             @Override
@@ -132,6 +132,7 @@ public class Input extends DelegateComponent {
             return this;
         }
 
+        @Override
         public Input build() {
             if (idAndName != null)
                 input.a("name", idAndName).id(idAndName);

@@ -25,7 +25,7 @@ public class Form extends DelegateComponent {
         return new FormBuilder();
     }
 
-    public static class FormBuilder {
+    public static class FormBuilder extends ComponentBuilder {
         private final TagBuilder tag = tag("form").a("method", "POST");
         private boolean horizontal;
 
@@ -62,11 +62,16 @@ public class Form extends DelegateComponent {
             return this;
         }
 
+        public FormBuilder body(ComponentBuilder component) {
+            return this.body(component.build());
+        }
+
         public FormBuilder body(Component component) {
             tag.body(component);
             return this;
         }
 
+        @Override
         public Form build() {
             return new Form(tag.build());
         }
