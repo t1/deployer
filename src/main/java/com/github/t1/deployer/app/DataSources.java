@@ -41,8 +41,6 @@ public class DataSources {
     DataSourceContainer container;
     @Inject
     Instance<DataSourceResource> dataSourceResources;
-    @Context
-    UriInfo uriInfo;
 
     @GET
     public List<DataSourceConfig> getAllDataSources() {

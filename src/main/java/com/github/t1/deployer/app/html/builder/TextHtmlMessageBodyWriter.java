@@ -38,6 +38,9 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
     @Override
     public void writeTo(T target, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
+        httpHeaders.add("X-Frame-Options", "DENY");
+        httpHeaders.add("X-XSS-Protection", "1; mode=block");
+        httpHeaders.add("X-Content-Type-Options", "nosniff");
         try {
             OutputStreamWriter writer = new OutputStreamWriter(entityStream);
             BuildContext buildContext = component().write(target, uriInfo);

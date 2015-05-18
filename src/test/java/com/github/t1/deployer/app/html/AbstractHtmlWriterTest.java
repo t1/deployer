@@ -42,8 +42,15 @@ public abstract class AbstractHtmlWriterTest<T> {
         Type generic = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
         assertTrue(writer.isWriteable(target.getClass(), generic, null, TEXT_HTML_TYPE));
 
+        MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
         ByteArrayOutputStream entityStream = new ByteArrayOutputStream();
-        writer.writeTo(target, target.getClass(), generic, null, null, null, entityStream);
+
+        writer.writeTo(target, target.getClass(), generic, null, null, headers, entityStream);
+
+        assertEquals("[DENY]", headers.get("X-Frame-Options").toString());
+        assertEquals("[1; mode=block]", headers.get("X-XSS-Protection").toString());
+        assertEquals("[nosniff]", headers.get("X-Content-Type-Options").toString());
+
         return new String(entityStream.toByteArray());
     }
 

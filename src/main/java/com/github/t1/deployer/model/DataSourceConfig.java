@@ -8,7 +8,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 
 /**
- * see also javax.annotation.sql.DataSourceDefinition
+ * @see javax.annotation.sql.DataSourceDefinition
  */
 @Data
 @Builder

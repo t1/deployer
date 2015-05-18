@@ -1,5 +1,7 @@
 package com.github.t1.deployer.tools;
 
+import static com.github.t1.log.LogLevel.*;
+
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.*;
@@ -20,7 +22,7 @@ import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
 
 @Slf4j
-@Logged
+@Logged(level = TRACE)
 @ApplicationScoped
 public class Config implements Serializable {
     private static final String MBEAN_PREFIX = "jboss.as:socket-binding-group=standard-sockets,socket-binding=";
@@ -42,7 +44,7 @@ public class Config implements Serializable {
     ModelControllerClient produceModelControllerClient() throws IOException {
         int boundPort = getBoundPort();
         URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:" + boundPort);
-        log.debug("JBoss AS admin: {}", uri);
+        log.trace("JBoss AS admin: {}", uri);
         assert "http-remoting".equals(uri.getScheme());
         InetAddress host = InetAddress.getByName(uri.getHost());
         int port = uri.getPort();
@@ -67,7 +69,7 @@ public class Config implements Serializable {
                 return null;
             }
             Object value = server.getAttribute(objectName, "boundPort");
-            log.debug("got MBean {} boundPort: {}", objectName, value);
+            log.trace("got MBean {} boundPort: {}", objectName, value);
             return (Integer) value;
         } catch (JMException e) {
             log.error("could not get boundPort from " + objectName, e);
