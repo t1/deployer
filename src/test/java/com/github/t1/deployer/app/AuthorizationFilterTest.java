@@ -21,7 +21,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import com.github.t1.deployer.tools.User;
+import com.github.t1.deployer.tools.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorizationFilterTest {

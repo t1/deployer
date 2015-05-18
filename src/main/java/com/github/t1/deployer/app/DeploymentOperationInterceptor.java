@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app;
 
-import static com.github.t1.deployer.app.AuthorizationFilter.*;
 import static javax.interceptor.Interceptor.Priority.*;
 
 import javax.annotation.Priority;
@@ -12,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.github.t1.deployer.app.file.DeploymentListFile;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Deployment;
-import com.github.t1.deployer.tools.User;
+import com.github.t1.deployer.tools.*;
 
 /**
  * Cross cutting concerns for updating the deployment status in a container:
@@ -41,7 +40,7 @@ public class DeploymentOperationInterceptor {
         log.debug("intercept {} of {} by {}", operation, deployment, user.getName());
         if (!user.hasPrivilege(operation)) {
             audit.deny(operation, deployment.getContextRoot(), deployment.getVersion());
-            throw unauthorized(user + " is not allowed to perform " + operation + " on " + deployment);
+            throw new UnauthorizedException(user, operation, deployment);
         }
         audit.allow(operation, deployment.getContextRoot(), deployment.getVersion());
         Object result = context.proceed();

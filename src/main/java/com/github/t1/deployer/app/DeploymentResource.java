@@ -60,7 +60,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     ) {
         switch (action) {
             case "deploy":
-                if (contextRoot != null || deployment.getContextRoot() != null)
+                if (contextRoot != null || getContextRoot() != null)
                     throw badRequest("context root to deploy must be null, not " + contextRoot + " and "
                             + getContextRoot());
                 Deployment newDeployment = deploy(checkSum);

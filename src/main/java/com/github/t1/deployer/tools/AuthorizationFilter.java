@@ -1,4 +1,4 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.tools;
 
 import static java.nio.file.Files.*;
 import static javax.ws.rs.core.MediaType.*;
@@ -18,23 +18,14 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 
-import com.github.t1.deployer.tools.User;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @WebFilter("/*")
 public class AuthorizationFilter implements Filter {
     public static final String REALM = "ManagementRealm";
 
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-
-    public static Exception unauthorized(String message) {
-        Response response = Response //
-                .status(UNAUTHORIZED) //
-                .header("WWW-Authenticate", "Basic realm=\"" + REALM + "\"") //
-                .entity(message) //
-                .type(TEXT_PLAIN) //
-                .build();
-        return new WebApplicationException(response);
-    }
 
     @Override
     public void init(FilterConfig filterConfig) {}
@@ -75,6 +66,7 @@ public class AuthorizationFilter implements Filter {
         String actual = crypted(userName, REALM, password);
         if (!expected.equalsIgnoreCase(actual))
             throw webException(UNAUTHORIZED, "hash mismatch");
+        log.debug("successfully authorized {}", userName);
         User.setCurrent(new User(userName).withPrivilege("deploy", "undeploy", "redeploy"));
     }
 
