@@ -14,7 +14,7 @@ public class Button extends DelegateComponent {
     }
 
     public static class ButtonBuilder {
-        private final TagBuilder tag = tag("button").multiline().classes("btn", "btn-block");
+        private final TagBuilder tag = tag("button").multiline().classes("btn");
 
         public ButtonBuilder justified() {
             tag.classes("btn-group-justified");

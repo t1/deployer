@@ -54,9 +54,9 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     private static final Compound EXISTING_DATA_SOURCE_FORM = compound( //
             deleteForm(DATA_SOURCE_LINK, "delete"), //
             withFields(true, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCE_LINK)), //
-            buttonGroup().justified() //
+            buttonGroup() //
                     .button(submitButton("Update")) //
-                    .button(remove("delete")) //
+                    .button(button().style(danger).forForm("delete").body(text("Delete"))) //
             ) //
             .build();
 
@@ -64,7 +64,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
             compound( //
                     p("Enter the name of a new data source to configure"), //
                     withFields(false, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCES.link())), //
-                    buttonGroup().justified().button(submitButton("Add")) //
+                    buttonGroup().button(submitButton("Add")) //
             ).build();
 
     private static final DeployerPageBuilder page() {
