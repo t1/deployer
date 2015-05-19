@@ -4,19 +4,24 @@ import static com.github.t1.log.LogLevel.*;
 
 import java.net.*;
 
-import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.tools.User;
 import com.github.t1.log.*;
 
+@Slf4j
 @SuppressWarnings("unused")
 public class Audit {
     private static final String LOG_LINE = ";{user};{client-ip};{operation};{contextRoot};{version};{host}";
 
-    @SneakyThrows(UnknownHostException.class)
     private static InetAddress getLocalHost() {
-        return InetAddress.getLocalHost();
+        try {
+            return InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            log.warn("can't get local host", e);
+            return InetAddress.getLoopbackAddress();
+        }
     }
 
     @LogContext
