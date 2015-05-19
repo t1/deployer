@@ -6,10 +6,15 @@ import javax.xml.bind.annotation.*;
 
 import lombok.*;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+
 @Value
 @AllArgsConstructor
 @XmlAccessorType(NONE)
+@JsonSerialize(using = ToStringSerializer.class)
 public class Version {
+    @NonNull
     @XmlValue
     private String version;
 

@@ -11,9 +11,13 @@ import javax.xml.bind.annotation.*;
 
 import lombok.*;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+
 @Value
 @XmlAccessorType(NONE)
 @RequiredArgsConstructor
+@JsonSerialize(using = ToStringSerializer.class)
 public class CheckSum {
     public static CheckSum of(byte[] bytes) {
         return new CheckSum(bytes);
@@ -58,6 +62,7 @@ public class CheckSum {
         return of(hash.digest(bytes));
     }
 
+    @NonNull
     @XmlValue
     @XmlSchemaType(name = "hexBinary")
     private final byte[] bytes;
