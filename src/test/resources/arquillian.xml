@@ -2,24 +2,11 @@
     xsi:schemaLocation="
             http://jboss.org/schema/arquillian
             http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
-
-    <container qualifier="jboss-7.1-managed">
+    <container qualifier="proxy" default="true">
         <configuration>
-            <property name="jbossHome">target/jboss-as-7.1</property>
-        </configuration>
-    </container>
-
-    <container qualifier="jboss-8.1-embedded" default="true">
-        <configuration>
-            <property name="jbossHome">target/wildfly-8.1.0.Final</property>
-            <property name="modulePath">target/wildfly-8.1.0.Final/modules</property>
-            <property name="java.util.logging.manager">org.jboss.logmanager.LogManager</property>
-        </configuration>
-    </container>
-
-    <container qualifier="jboss-8.1-managed">
-        <configuration>
-            <property name="jbossHome">target/wildfly-8.1</property>
+            <!-- <property name="target">wildfly:8.0.0.Final:managed</property> -->
+            <property name="target">wildfly:9.0.0.CR1:embedded</property>
+            <property name="serverConfig">standalone-full.xml</property>
         </configuration>
     </container>
 </arquillian>

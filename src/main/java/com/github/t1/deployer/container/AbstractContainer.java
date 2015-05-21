@@ -4,7 +4,6 @@ import static com.github.t1.log.LogLevel.*;
 
 import java.io.IOException;
 
-import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 import lombok.SneakyThrows;
@@ -17,7 +16,6 @@ import com.github.t1.log.Logged;
 
 @Slf4j
 @Logged(level = INFO)
-@Stateless
 abstract class AbstractContainer {
     private static final OperationMessageHandler LOGGING = new OperationMessageHandler() {
         @Override

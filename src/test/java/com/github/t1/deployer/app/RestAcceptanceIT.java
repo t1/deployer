@@ -15,7 +15,7 @@ import com.github.t1.rest.RestResource;
 
 @Ignore
 @RunWith(Arquillian.class)
-public class ArquillianIT {
+public class RestAcceptanceIT {
     @Deployment
     public static WebArchive createDeployment() {
         File file = new File("target/deployer.war");
