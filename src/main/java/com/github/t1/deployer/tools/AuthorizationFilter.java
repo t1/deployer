@@ -40,6 +40,7 @@ public class AuthorizationFilter implements Filter {
         try {
             chain.doFilter(request, response);
         } finally {
+            log.debug("clear current user (was {})", User.getCurrent());
             User.setCurrent(null);
         }
     }
@@ -47,6 +48,7 @@ public class AuthorizationFilter implements Filter {
     private void authorize(HttpServletRequest request) {
         String authorization = request.getHeader("authorization");
         if (authorization != null) {
+            log.debug("authorize for {}", request.getRequestURI());
             String[] split = authorization.split(" ", 2);
             if (split.length == 2 && "basic".equalsIgnoreCase(split[0])) {
                 basicAuth(split[1]);

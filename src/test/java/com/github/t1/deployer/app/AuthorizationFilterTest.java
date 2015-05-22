@@ -147,5 +147,6 @@ public class AuthorizationFilterTest {
 
         assertEquals("foo", user.getName());
         assertEquals(ALL_PRIVILEGES, user.getPrivileges());
+        assertEquals(User.ANONYMOUS, User.getCurrent());
     }
 }
