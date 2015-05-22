@@ -65,7 +65,7 @@ public class PackageDependenciesTest {
 
         app.dependsUpon(model, container, repository, tools, file);
         html.dependsUpon(model, app, builder); // app for resource paths
-        file.dependsUpon(model, repository, container, tools);
+        file.dependsUpon(model, repository, container);
 
         container.dependsUpon(
                 model,

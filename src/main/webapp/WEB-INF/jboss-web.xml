@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-web xmlns="http://www.jboss.org/j2ee/schema/jboss-web_7_2.xsd">
+    <security-domain>deployer</security-domain>
+</jboss-web>

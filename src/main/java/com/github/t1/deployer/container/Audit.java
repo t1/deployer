@@ -7,13 +7,12 @@ import java.net.*;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.tools.User;
 import com.github.t1.log.*;
 
 @Slf4j
 @SuppressWarnings("unused")
 public class Audit {
-    private static final String LOG_LINE = ";{user};{client-ip};{operation};{contextRoot};{version};{host}";
+    private static final String LOG_LINE = ";{client-ip};{operation};{contextRoot};{version};{host}";
 
     private static InetAddress getLocalHost() {
         try {
@@ -24,8 +23,8 @@ public class Audit {
         }
     }
 
-    @LogContext
-    User user = User.getCurrent();
+    // @LogContext
+    // User user = User.getCurrent();
 
     @LogContext
     String host = getLocalHost().getHostName();

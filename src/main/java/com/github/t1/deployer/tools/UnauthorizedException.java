@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 public class UnauthorizedException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    private final User user;
+    private final String user;
     private final String operation;
     private final Object target;
 
