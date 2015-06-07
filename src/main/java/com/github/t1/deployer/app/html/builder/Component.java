@@ -5,10 +5,6 @@ public abstract class Component {
         public abstract Component build();
     }
 
-    public BuildContext write(Object... targets) {
-        return new BuildContext(this, targets);
-    }
-
     public abstract void writeTo(BuildContext out);
 
     public void writeInlineTo(BuildContext out) {

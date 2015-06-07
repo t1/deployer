@@ -5,7 +5,9 @@ import static javax.ws.rs.core.MediaType.*;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.security.Principal;
 
+import javax.inject.Inject;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.MessageBodyWriter;
@@ -17,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<T> {
     @Context
     UriInfo uriInfo;
+    @Inject
+    Principal principal;
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -43,9 +47,12 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
         httpHeaders.add("X-Content-Type-Options", "nosniff");
         try {
             OutputStreamWriter writer = new OutputStreamWriter(entityStream);
-            BuildContext buildContext = component().write(target, uriInfo);
-            prepare(buildContext);
-            buildContext.to(writer);
+            BuildContext context = new BuildContext(component());
+            context.put(target).put(uriInfo);
+            if (principal != null)
+                context.put(principal);
+            prepare(context);
+            context.to(writer);
             writer.flush();
         } catch (Exception e) {
             log.error("failed to write " + genericType + " as " + mediaType, e);

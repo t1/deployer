@@ -68,4 +68,8 @@ public class Tags {
     public static TagBuilder header(int level) {
         return tag("h" + level);
     }
+
+    public static TagBuilder footer() {
+        return tag("footer");
+    }
 }

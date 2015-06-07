@@ -8,6 +8,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.nio.file.*;
+import java.security.Principal;
 
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.MessageBodyWriter;
@@ -23,6 +24,8 @@ public abstract class AbstractHtmlWriterTest<T> {
     MessageBodyWriter<T> writer;
     @Mock
     UriInfo uriInfo;
+    @Mock
+    Principal principal;
 
     public AbstractHtmlWriterTest(MessageBodyWriter<T> writer) {
         this.writer = writer;
@@ -36,6 +39,7 @@ public abstract class AbstractHtmlWriterTest<T> {
                 return new JerseyUriBuilder().uri("http://localhost:8080/deployer");
             }
         });
+        when(principal.getName()).thenReturn("Joe Doe");
     }
 
     protected String write(T target) throws IOException {

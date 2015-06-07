@@ -12,6 +12,7 @@ import static org.mockito.Mockito.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.List;
 
 import javax.ws.rs.client.*;
@@ -41,6 +42,7 @@ public class DeploymentsIT {
     private static Repository repository = mock(Repository.class);
     private static Audit audit = mock(Audit.class);
     private static DeploymentListFile deploymentListFile = mock(DeploymentListFile.class);
+    private static Principal principal = mock(Principal.class);
 
     private static DeploymentContainer interceptedContainer = InterceptorMock.intercept(container).with(interceptor());
 
@@ -48,6 +50,7 @@ public class DeploymentsIT {
         DeploymentOperationInterceptor interceptor = new DeploymentOperationInterceptor();
         interceptor.audit = audit;
         interceptor.deploymentsList = deploymentListFile;
+        interceptor.principal = principal;
         return interceptor;
     }
 
@@ -62,6 +65,7 @@ public class DeploymentsIT {
                     bind(repository).to(Repository.class);
                     bind(interceptedContainer).to(DeploymentContainer.class);
                     bind(audit).to(Audit.class);
+                    bind(principal).to(Principal.class);
 
                     final UriInfo uriInfo = mock(UriInfo.class);
                     bindUriBuilder(uriInfo);
@@ -96,7 +100,8 @@ public class DeploymentsIT {
 
     @Before
     public void before() {
-        reset(container, repository, audit);
+        reset(container, repository, audit, principal);
+        when(principal.getName()).thenReturn("Joe Doe");
     }
 
     @After

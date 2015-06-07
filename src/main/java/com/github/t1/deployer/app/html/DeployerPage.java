@@ -1,11 +1,13 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.builder.Compound.*;
 import static com.github.t1.deployer.app.html.builder.NavBar.*;
 import static com.github.t1.deployer.app.html.builder.Page.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 
+import java.security.Principal;
 import java.util.*;
 
 import lombok.*;
@@ -22,17 +24,17 @@ public class DeployerPage extends Component {
     }
 
     public static class DeployerPageBuilder extends ComponentBuilder {
-        private Component backLink;
         private Component title;
+        private Component backLink;
         private final List<Component> bodyComponents = new ArrayList<>();
-
-        public DeployerPageBuilder backLink(Component backLink) {
-            this.backLink = backLink;
-            return this;
-        }
 
         public DeployerPageBuilder title(Component title) {
             this.title = title;
+            return this;
+        }
+
+        public DeployerPageBuilder backLink(Component backLink) {
+            this.backLink = backLink;
             return this;
         }
 
@@ -59,14 +61,14 @@ public class DeployerPage extends Component {
 
             TagBuilder bodyTag = div().classes("panel", "panel-default");
 
-            if (title != null) {
+            if (title != null)
                 bodyTag.body(heading(backLink, title)).body(nl());
-            }
 
-            for (Component body : bodyComponents) {
+            for (Component body : bodyComponents)
                 bodyTag.body(body);
-            }
             page.body(bodyTag);
+
+            page.body(pageFooter());
 
             return new DeployerPage(page.build());
         }
@@ -106,6 +108,21 @@ public class DeployerPage extends Component {
                         .build();
             }
             return navbar;
+        }
+
+        private Component pageFooter() {
+            return new Component() {
+                @Override
+                public void writeTo(BuildContext out) {
+                    Principal principal = out.get(Principal.class);
+                    if (principal != null)
+                        compound( //
+                                nl(), //
+                                footer().classes("text-muted", "pull-right") //
+                                        .body(text("Principal: " + principal.getName())).build() //
+                        ).build().writeTo(out);
+                }
+            };
         }
     }
 

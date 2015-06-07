@@ -18,11 +18,8 @@ public class BuildContext {
     private Writer out;
     private int indent;
 
-    public BuildContext(Component component, Object... targets) {
+    public BuildContext(Component component) {
         this.component = component;
-        for (Object target : targets) {
-            put(target);
-        }
     }
 
     public void to(Writer out) {
@@ -68,8 +65,9 @@ public class BuildContext {
         return this;
     }
 
-    public void put(Object target) {
+    public BuildContext put(Object target) {
         this.targets.put(target.getClass(), target);
+        return this;
     }
 
     // TODO get generic type, e.g. for List<T>
