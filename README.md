@@ -35,3 +35,10 @@ To redirect the audit log to a separate file, issue these JBoss CLI commands:
 /subsystem=logging/periodic-rotating-file-handler=AUDIT:add(file={path=audit.log,relative-to=jboss.server.log.dir}, suffix=.yyyy-MM-dd, autoflush=true, formatter=%d{HH:mm:ss,SSS};%s%n)
 /subsystem=logging/logger=com.github.t1.deployer.container.Audit:add(level=ALL,handlers=[AUDIT])
 ```
+
+
+## Security
+
+/subsystem=security/security-domain=deployer:add(cache-type=default)
+/subsystem=security/security-domain=deployer/authentication=classic:add()
+/subsystem=security/security-domain=deployer/authentication=classic/login-module=local:add(code="RealmUsersRoles", flag=required, module-options={"usersProperties" => "jboss.server.config.dir/mgmt-users.properties", "rolesProperties" => "jboss.server.config.dir/mgmt-roles.properties", "realm" => "ManagementRealm"}

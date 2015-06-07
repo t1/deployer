@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.User;
 
 @Slf4j
 @Startup
@@ -105,7 +104,7 @@ public class DeploymentListFile {
     private void updateFromList() {
         log.info("deployment list file has changed");
         try {
-            User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
+            // User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
 
             Map<ContextRoot, Version> expected = read();
             for (Deployment actual : deployments()) {
@@ -120,7 +119,7 @@ public class DeploymentListFile {
                 }
             }
         } finally {
-            User.setCurrent(null);
+            // User.setCurrent(null);
         }
     }
 

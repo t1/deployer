@@ -45,8 +45,6 @@ public class DeploymentsIT {
     private static DeploymentContainer interceptedContainer = InterceptorMock.intercept(container).with(interceptor());
 
     private static DeploymentOperationInterceptor interceptor() {
-        User.setCurrent(new User("the-prince").withPrivilege("deploy", "redeploy", "undeploy"));
-
         DeploymentOperationInterceptor interceptor = new DeploymentOperationInterceptor();
         interceptor.audit = audit;
         interceptor.deploymentsList = deploymentListFile;
@@ -71,6 +69,7 @@ public class DeploymentsIT {
                     bind(new FactoryInstance<>(new Factory<DeploymentResource>() {
                         @Override
                         public DeploymentResource provide() {
+                            // User.setCurrent(new User("the-prince").withPrivilege("deploy", "redeploy", "undeploy"));
                             DeploymentResource result = new DeploymentResource();
                             result.container = interceptedContainer;
                             result.repository = repository;

@@ -12,7 +12,7 @@ public class UnauthorizedExceptionMapper implements ExceptionMapper<Unauthorized
     public Response toResponse(UnauthorizedException exception) {
         return Response //
                 .status(UNAUTHORIZED) //
-                .header("WWW-Authenticate", "Basic realm=\"" + AuthorizationFilter.REALM + "\"") //
+                .header("WWW-Authenticate", "Basic realm=\"ManagementRealm\"") //
                 .entity(exception.getMessage()) //
                 .type(TEXT_PLAIN) //
                 .build();

@@ -31,18 +31,18 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     private Deployment deployment;
     private List<Deployment> availableVersions;
 
-    @Logged(level = OFF)
+    @Logged(level = DEBUG)
     public DeploymentResource deployment(Deployment deployment) {
         this.deployment = deployment;
         return this;
     }
 
-    @Logged(level = OFF)
+    @Logged(level = DEBUG)
     public Deployment deployment() {
         return deployment;
     }
 
-    @Logged(level = OFF)
+    @Logged(level = DEBUG)
     public boolean isNew() {
         return getName() == null || NEW_DEPLOYMENT_NAME.equals(getName().getValue());
     }
@@ -184,13 +184,13 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     }
 
     @Override
-    @Logged(level = OFF)
+    @Logged(level = DEBUG)
     public int compareTo(DeploymentResource that) {
         return this.deployment().compareTo(that.deployment());
     }
 
     @Override
-    @Logged(level = OFF)
+    @Logged(level = DEBUG)
     public String toString() {
         return "Resource:" + deployment + "[" + availableVersions + "]";
     }
