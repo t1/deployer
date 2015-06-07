@@ -5,15 +5,21 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 
-import org.jboss.arquillian.container.test.api.Deployment;
+import javax.ws.rs.core.UriInfo;
+
+import org.jboss.arquillian.container.test.api.*;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.*;
+import org.junit.runner.RunWith;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 @Ignore
-// @RunWith(Arquillian.class)
+@RunAsClient
+@RunWith(Arquillian.class)
 public class HtmlAcceptanceIT {
     @Deployment
     public static WebArchive createDeployment() {
@@ -37,10 +43,10 @@ public class HtmlAcceptanceIT {
     }
 
     @Test
-    public void shouldRedirectIndexToDeployments() {
-        driver.get("http://localhost:8080/deployer");
+    public void shouldRedirectIndexToDeployments(@ArquillianResource UriInfo uri) {
+        driver.get(uri.toString());
 
-        assertEquals("http://localhost:8080/deployer/deployments/*", driver.getCurrentUrl());
+        assertEquals(uri + "/deployments/*", driver.getCurrentUrl());
         assertEquals("Deployments", driver.getTitle());
     }
 }
