@@ -31,7 +31,7 @@ import com.github.t1.deployer.model.*;
 @Provider
 public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentResource> {
     private static DeployerPageBuilder page() {
-        return panelPage() //
+        return deployerPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
                     protected String contentFrom(BuildContext out) {

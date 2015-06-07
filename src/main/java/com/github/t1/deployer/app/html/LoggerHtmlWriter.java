@@ -37,7 +37,7 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
     };
 
     private static final DeployerPage existingLogger(UriInfo uriInfo, LoggerConfig logger) {
-        return panelPage() //
+        return deployerPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
                     protected String contentFrom(BuildContext out) {
@@ -80,7 +80,7 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
         return select;
     }
 
-    private static final Component NEW_LOGGER = panelPage() //
+    private static final Component NEW_LOGGER = deployerPage() //
             .title(text("Add Logger")) //
             .panelBody( //
                     compound( //

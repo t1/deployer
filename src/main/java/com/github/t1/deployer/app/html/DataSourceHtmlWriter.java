@@ -68,7 +68,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
             ).build();
 
     private static final DeployerPageBuilder page() {
-        return panelPage() //
+        return deployerPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
                     protected String contentFrom(BuildContext out) {

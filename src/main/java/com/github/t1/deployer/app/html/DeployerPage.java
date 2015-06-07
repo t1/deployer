@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.app.html.DeployerPage.PageStyle.*;
 import static com.github.t1.deployer.app.html.builder.NavBar.*;
 import static com.github.t1.deployer.app.html.builder.Page.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
@@ -18,74 +17,14 @@ import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class DeployerPage extends Component {
-    public enum PageStyle {
-        panel {
-            @Override
-            public TagBuilder pageTag() {
-                return div().classes("panel", "panel-default");
-            }
-
-            @Override
-            public TagBuilder heading(Component backLink, final Component title) {
-                TagBuilder heading = div().classes("panel-heading");
-                if (backLink == null) {
-                    heading.body(tag("h1").body(title));
-                } else {
-                    TagBuilder back = link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text(""));
-                    heading.body(tag("h1").body(back).body(new Component() {
-                        @Override
-                        public void writeTo(BuildContext out) {
-                            out.print("");
-                            title.writeTo(out);
-                            out.appendln();
-                        }
-                    }));
-                }
-
-                return heading;
-            }
-
-            @Override
-            public Component panelBody(Component body) {
-                return div().classes("panel-body").body(body).build();
-            }
-        },
-        jumbotron {
-            @Override
-            public TagBuilder pageTag() {
-                return div().classes("jumbotron");
-            }
-        };
-
-        public abstract TagBuilder pageTag();
-
-        public TagBuilder heading(@SuppressWarnings("unused") Component backLink, Component title) {
-            return tag("h1").body(title);
-        }
-
-        public Component panelBody(Component body) {
-            return body;
-        }
-    }
-
-    public static DeployerPageBuilder panelPage() {
-        return new DeployerPageBuilder().style(panel);
-    }
-
-    public static DeployerPageBuilder jumbotronPage() {
-        return new DeployerPageBuilder().style(jumbotron);
+    public static DeployerPageBuilder deployerPage() {
+        return new DeployerPageBuilder();
     }
 
     public static class DeployerPageBuilder extends ComponentBuilder {
-        private PageStyle pageStyle;
         private Component backLink;
         private Component title;
         private final List<Component> bodyComponents = new ArrayList<>();
-
-        public DeployerPageBuilder style(PageStyle style) {
-            pageStyle = style;
-            return this;
-        }
 
         public DeployerPageBuilder backLink(Component backLink) {
             this.backLink = backLink;
@@ -102,7 +41,7 @@ public class DeployerPage extends Component {
         }
 
         public DeployerPageBuilder panelBody(Component body) {
-            this.bodyComponents.add(pageStyle.panelBody(body));
+            this.bodyComponents.add(div().classes("panel-body").body(body).build());
             return this;
         }
 
@@ -118,10 +57,10 @@ public class DeployerPage extends Component {
             if (title != null)
                 page.title(title);
 
-            TagBuilder bodyTag = pageStyle.pageTag();
+            TagBuilder bodyTag = div().classes("panel", "panel-default");
 
             if (title != null) {
-                bodyTag.body(pageStyle.heading(backLink, title)).body(nl());
+                bodyTag.body(heading(backLink, title)).body(nl());
             }
 
             for (Component body : bodyComponents) {
@@ -130,6 +69,25 @@ public class DeployerPage extends Component {
             page.body(bodyTag);
 
             return new DeployerPage(page.build());
+        }
+
+        public TagBuilder heading(Component backLink, final Component title) {
+            TagBuilder h1 = tag("h1");
+            if (backLink == null) {
+                h1.body(title);
+            } else {
+                TagBuilder back = link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text(""));
+                h1.body(back).body(new Component() {
+                    @Override
+                    public void writeTo(BuildContext out) {
+                        out.print("");
+                        title.writeTo(out);
+                        out.appendln();
+                    }
+                });
+            }
+
+            return div().classes("panel-heading").body(h1);
         }
 
         private NavBarBuilder navigation() {

@@ -70,7 +70,7 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
         }
     };
 
-    private static final DeployerPage PAGE = panelPage() //
+    private static final DeployerPage PAGE = deployerPage() //
             .title(text("Loggers")) //
             .body(TABLE) //
             .build();

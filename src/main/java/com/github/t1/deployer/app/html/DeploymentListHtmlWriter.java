@@ -50,7 +50,7 @@ public class DeploymentListHtmlWriter extends TextHtmlListMessageBodyWriter<Depl
         }
     };
 
-    private static final DeployerPage PAGE = panelPage() //
+    private static final DeployerPage PAGE = deployerPage() //
             .title(text("Deployments")) //
             .body(TABLE) //
             .build();
