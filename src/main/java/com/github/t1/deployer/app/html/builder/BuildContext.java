@@ -22,14 +22,20 @@ public class BuildContext {
         this.component = component;
     }
 
-    public void to(Writer out) {
+    public BuildContext writeTo(Writer out) {
         this.out = out;
         component.writeTo(this);
+        return this;
+    }
+
+    public BuildContext append(Object object) {
+        appendRaw(object.toString());
+        return this;
     }
 
     @SneakyThrows(IOException.class)
-    public BuildContext append(Object object) {
-        out.append(object.toString()); // FIXME escape html
+    public BuildContext appendRaw(String string) {
+        out.append(string); // FIXME escape html
         return this;
     }
 

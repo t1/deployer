@@ -56,14 +56,14 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
         httpHeaders.add("X-XSS-Protection", "1; mode=block");
         httpHeaders.add("X-Content-Type-Options", "nosniff");
         try {
-            OutputStreamWriter writer = new OutputStreamWriter(entityStream);
+            OutputStreamWriter out = new OutputStreamWriter(entityStream);
             BuildContext context = new BuildContext(component());
             context.put(target).put(uriInfo);
             if (principal != null)
                 context.put(principal);
             prepare(context);
-            context.to(writer);
-            writer.flush();
+            context.writeTo(out);
+            out.flush();
         } catch (Exception e) {
             log.error("failed to write " + genericType + " as " + mediaType, e);
             throw e;
