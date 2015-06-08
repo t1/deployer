@@ -3,6 +3,9 @@ package com.github.t1.deployer.container;
 import static com.github.t1.log.LogLevel.*;
 
 import java.net.*;
+import java.security.Principal;
+
+import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,7 +15,7 @@ import com.github.t1.log.*;
 @Slf4j
 @SuppressWarnings("unused")
 public class Audit {
-    private static final String LOG_LINE = ";{client-ip};{operation};{contextRoot};{version};{host}";
+    private static final String LOG_LINE = ";{principal};{client-ip};{operation};{contextRoot};{version};{host}";
 
     private static InetAddress getLocalHost() {
         try {
@@ -23,8 +26,9 @@ public class Audit {
         }
     }
 
-    // @LogContext
-    // User user = User.getCurrent();
+    @Inject
+    @LogContext
+    Principal principal;
 
     @LogContext
     String host = getLocalHost().getHostName();

@@ -101,7 +101,7 @@ public class DeploymentsIT {
     @Before
     public void before() {
         reset(container, repository, audit, principal);
-        when(principal.getName()).thenReturn("Joe Doe");
+        when(principal.getName()).thenReturn("jbossadmin");
     }
 
     @After

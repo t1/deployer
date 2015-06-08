@@ -40,7 +40,7 @@ public class DeploymentOperationInterceptor {
         Deployment deployment = (Deployment) context.getParameters()[0];
         String operation = context.getMethod().getName();
         log.debug("intercept {} of {} by {}", operation, deployment, principal.getName());
-        if (!principal.getName().equals("jbossadmin")) {
+        if (!principal.getName().equals("jbossadmin")) { // FIXME
             audit.deny(operation, deployment.getContextRoot(), deployment.getVersion());
             throw new UnauthorizedException(principal.getName(), operation, deployment);
         }
