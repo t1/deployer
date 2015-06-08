@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.github.t1.deployer.app.file.DeploymentListFile;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Deployment;
-import com.github.t1.deployer.tools.UnauthorizedException;
 
 /**
  * Cross cutting concerns for updating the deployment status in a container:
@@ -40,10 +39,6 @@ public class DeploymentOperationInterceptor {
         Deployment deployment = (Deployment) context.getParameters()[0];
         String operation = context.getMethod().getName();
         log.debug("intercept {} of {} by {}", operation, deployment, principal.getName());
-        if (!principal.getName().equals("jbossadmin")) { // FIXME
-            audit.deny(operation, deployment.getContextRoot(), deployment.getVersion());
-            throw new UnauthorizedException(principal.getName(), operation, deployment);
-        }
         audit.allow(operation, deployment.getContextRoot(), deployment.getVersion());
         Object result = context.proceed();
         deploymentsList.writeDeploymentsList();

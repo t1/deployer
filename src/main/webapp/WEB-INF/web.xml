@@ -8,4 +8,19 @@
         <servlet-name>javax.ws.rs.core.Application</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
+    <login-config>
+        <auth-method>BASIC</auth-method>
+    </login-config>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>deployer</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>deployer</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <security-role>
+        <role-name>deployer</role-name>
+    </security-role>
 </web-app>

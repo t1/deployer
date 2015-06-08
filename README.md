@@ -39,6 +39,27 @@ To redirect the audit log to a separate file, issue these JBoss CLI commands:
 
 ## Security
 
-/subsystem=security/security-domain=deployer:add(cache-type=default)
-/subsystem=security/security-domain=deployer/authentication=classic:add()
-/subsystem=security/security-domain=deployer/authentication=classic/login-module=local:add(code="RealmUsersRoles", flag=required, module-options={"usersProperties" => "jboss.server.config.dir/mgmt-users.properties", "rolesProperties" => "jboss.server.config.dir/mgmt-roles.properties", "realm" => "ManagementRealm"}
+### default
+
+By default, you can simply configure an application user with the `bin/add-user.sh` command in your JBoss. The realm is `ApplicationRealm` and the user must be added to the `deployer` group.
+
+### management
+
+If you want to use management users instead, you'll have to:
+
+1. configure a security-domain:
+
+	```
+	/subsystem=security/security-domain=deployer:add(cache-type=default)
+	/subsystem=security/security-domain=deployer/authentication=classic:add()
+	/subsystem=security/security-domain=deployer/authentication=classic/login-module=local:add(code="RealmUsersRoles", 	flag=required, module-options={"usersProperties" => "${jboss.server.config.dir}/mgmt-users.properties", "rolesProperties" => "${jboss.server.config.dir}/mgmt-roles.properties", "realm" => "ManagementRealm"}
+	```
+
+1. create an overlay for a `jboss-web.xml` that includes:
+
+	```
+	<?xml version="1.0" encoding="UTF-8"?>
+	<jboss-web xmlns="http://www.jboss.org/j2ee/schema/jboss-web_7_2.xsd">
+	    <security-domain>deployer</security-domain>
+	</jboss-web>
+	```
