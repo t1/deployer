@@ -6,6 +6,8 @@ import javax.xml.bind.annotation.*;
 
 import lombok.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
@@ -37,5 +39,15 @@ public class Deployment implements Comparable<Deployment> {
     @Override
     public int compareTo(Deployment that) {
         return this.name.getValue().compareToIgnoreCase(that.name.getValue());
+    }
+
+    @JsonIgnore
+    public boolean isNew() {
+        return NEW_DEPLOYMENT_NAME.equals(name);
+    }
+
+    @Override
+    public String toString() {
+        return name + "(" + contextRoot + ")";
     }
 }

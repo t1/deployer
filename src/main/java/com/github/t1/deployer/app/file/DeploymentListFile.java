@@ -115,7 +115,8 @@ public class DeploymentListFile {
                 } else if (expectedVersion.equals(actual.getVersion())) {
                     // already the expected version
                 } else {
-                    redeploy(repository.getChecksumForVersion(actual, expectedVersion));
+                    CheckSum checksum = repository.getChecksumForVersion(actual, expectedVersion);
+                    redeploy(repository.getByChecksum(checksum));
                 }
             }
         } finally {

@@ -14,6 +14,8 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 @XmlAccessorType(NONE)
 @JsonSerialize(using = ToStringSerializer.class)
 public class Version {
+    public static final Version UNKNOWN = new Version("unknown");
+
     @NonNull
     @XmlValue
     private String version;

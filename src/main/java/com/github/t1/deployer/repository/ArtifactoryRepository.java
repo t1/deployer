@@ -169,13 +169,13 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override
-    public List<Deployment> availableVersionsFor(CheckSum checkSum) {
+    public Map<Version, CheckSum> availableVersionsFor(CheckSum checkSum) {
         ChecksumSearchResultItem deployment = searchByChecksum(checkSum);
         if (deployment == null)
-            return emptyList();
+            return emptyMap();
         URI uri = deployment.getUri();
         uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
-        return deploymentsIn(fileNameWithoutVersion(deployment.getUri()), uri);
+        return versionsIn(fileNameWithoutVersion(deployment.getUri()), uri);
     }
 
     private String versionsFolder(URI uri) {
@@ -184,28 +184,28 @@ public class ArtifactoryRepository extends Repository {
         return path.subpath(0, length - 2).toString();
     }
 
-    private List<Deployment> deploymentsIn(String fileName, URI uri) {
+    private Map<Version, CheckSum> versionsIn(String fileName, URI uri) {
         // TODO we assume the path of files anyways... so we could reduce the number of requests and not recurse fully
         log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
         FolderInfo folderInfo = authenticated(new RestResource(uri).request()).get(FolderInfo.class);
         log.trace("got {}", folderInfo);
-        return deploymentsIn(fileName, folderInfo);
+        return versionsIn(fileName, folderInfo);
     }
 
-    private List<Deployment> deploymentsIn(String fileName, FolderInfo folderInfo) {
+    private Map<Version, CheckSum> versionsIn(String fileName, FolderInfo folderInfo) {
         URI root = folderInfo.getUri();
-        List<Deployment> result = new ArrayList<>();
+        Map<Version, CheckSum> result = new LinkedHashMap<>();
         for (FileInfo child : folderInfo.getChildren()) {
             URI uri = UriBuilder.fromUri(root).path(child.getUri().toString()).build();
             if (child.isFolder()) {
-                result.addAll(deploymentsIn(fileName, uri));
+                result.putAll(versionsIn(fileName, uri));
             } else {
                 log.trace("get deployment in {} (fileName: {})", uri, fileName);
                 Deployment deployment = deploymentIn(uri);
                 if (deployment.getName().getValue().equals(fileName)) {
-                    result.add(deployment);
+                    result.put(deployment.getVersion(), deployment.getCheckSum());
                 }
             }
         }

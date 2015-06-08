@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.xml.bind.JAXB;
 
@@ -60,11 +61,13 @@ public class DeploymentsTest {
         Deployment deployment;
 
         public void availableVersions(String... versions) {
-            List<Deployment> list = new ArrayList<>();
-            for (String version : versions) {
-                list.add(deploymentFor(deployment.getContextRoot(), new Version(version)));
+            Map<Version, CheckSum> map = new LinkedHashMap<>();
+            for (String versionString : versions) {
+                Version version = new Version(versionString);
+                CheckSum checkSum = fakeChecksumFor(deployment.getContextRoot(), version);
+                map.put(version, checkSum);
             }
-            when(repository.availableVersionsFor(deployment.getCheckSum())).thenReturn(list);
+            when(repository.availableVersionsFor(deployment.getCheckSum())).thenReturn(map);
         }
     }
 
@@ -85,6 +88,17 @@ public class DeploymentsTest {
                 + "    <checkSum>" + fakeChecksumFor(contextRoot).base64() + "</checkSum>\n" //
                 + "    <version>" + fakeVersionFor(contextRoot) + "</version>\n" //
                 + "</deployment>\n";
+    }
+
+    private void assertVersions(ContextRoot contextRoot, Map<Version, CheckSum> actual, String... versions) {
+        assertEquals(versions.length, actual.size());
+        int i = 0;
+        for (Entry<Version, CheckSum> entry : actual.entrySet()) {
+            Version expected = new Version(versions[i]);
+            assertEquals("version#" + i, expected, entry.getKey());
+            assertEquals("checkSum#" + i, fakeChecksumFor(contextRoot, expected), entry.getValue());
+            i++;
+        }
     }
 
     // TODO test JSON marshalling
@@ -149,23 +163,16 @@ public class DeploymentsTest {
         DeploymentResource deployment = deployments.deploymentSubResourceByContextRoot(FOO);
 
         assertEquals("1.3.1", deployment.getVersion().toString());
-        assertEquals(1, deployment.getAvailableVersions().size());
-        assertEquals("1.3.1", deployment.getAvailableVersions().get(0).getVersion().toString());
+        assertVersions(deployment.getContextRoot(), deployment.getAvailableVersions(), "1.3.1");
     }
 
     @Test
     public void shouldGetDeploymentVersions() {
-        givenDeployment(FOO).availableVersions("1.3.2", "1.3.1", "1.3.0", "1.2.8-SNAPSHOT", "1.2.7", "1.2.6");
+        String[] versions = { "1.2.6", "1.2.7", "1.2.8-SNAPSHOT", "1.3.0", "1.3.1", "1.3.2" };
+        givenDeployment(FOO).availableVersions(versions);
 
         DeploymentResource deployment = deployments.deploymentSubResourceByContextRoot(FOO);
 
-        assertEquals("1.3.1", deployment.getVersion().toString());
-        assertEquals(6, deployment.getAvailableVersions().size());
-        assertEquals("1.3.2", deployment.getAvailableVersions().get(0).getVersion().toString());
-        assertEquals("1.3.1", deployment.getAvailableVersions().get(1).getVersion().toString());
-        assertEquals("1.3.0", deployment.getAvailableVersions().get(2).getVersion().toString());
-        assertEquals("1.2.8-SNAPSHOT", deployment.getAvailableVersions().get(3).getVersion().toString());
-        assertEquals("1.2.7", deployment.getAvailableVersions().get(4).getVersion().toString());
-        assertEquals("1.2.6", deployment.getAvailableVersions().get(5).getVersion().toString());
+        assertVersions(FOO, deployment.getAvailableVersions(), versions);
     }
 }

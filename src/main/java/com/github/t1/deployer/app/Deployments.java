@@ -21,8 +21,6 @@ import com.github.t1.log.Logged;
 public class Deployments {
     public static final String CONTEXT_ROOT = "context-root";
 
-    private static final Version UNKNOWN_VERSION = new Version("unknown");
-
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(Deployments.class);
     }
@@ -70,7 +68,7 @@ public class Deployments {
     private void loadVersion(Deployment deployment) {
         CheckSum checkSum = deployment.getCheckSum();
         Deployment byChecksum = (checkSum == null) ? null : repository.getByChecksum(checkSum);
-        deployment.setVersion((byChecksum == null) ? UNKNOWN_VERSION : byChecksum.getVersion());
+        deployment.setVersion((byChecksum == null) ? Version.UNKNOWN : byChecksum.getVersion());
     }
 
     @GET

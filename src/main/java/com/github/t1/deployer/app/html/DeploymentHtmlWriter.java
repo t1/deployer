@@ -14,6 +14,7 @@ import static com.github.t1.deployer.app.html.builder.Table.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.net.URI;
+import java.util.Map.Entry;
 
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
@@ -52,25 +53,28 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                 @Override
                 public void writeTo(BuildContext out) {
                     UriInfo uriInfo = out.get(UriInfo.class);
-                    Version currentVersion = out.get(DeploymentResource.class).getVersion();
+                    DeploymentResource deployment = out.get(DeploymentResource.class);
+                    Version currentVersion = deployment.getVersion();
                     TableBuilder table = table();
                     int i = 0;
-                    for (Deployment deployment : out.get(DeploymentResource.class).getAvailableVersions()) {
-                        boolean isCurrent = deployment.getVersion().equals(currentVersion);
+                    for (Entry<Version, CheckSum> entry : deployment.getAvailableVersions().entrySet()) {
+                        boolean isCurrent = entry.getKey().equals(currentVersion);
                         table.row( //
-                                cell().body(text(deployment.getVersion().getVersion())), //
-                                cell().body(redeployButton("redeploy-" + i++, deployment, uriInfo, isCurrent)) //
+                                cell().body(text(entry.getKey().getVersion())), //
+                                cell().body(redeployButton("redeploy-" + i++, //
+                                        deployment.getContextRoot(), entry.getValue(), //
+                                        uriInfo, isCurrent)) //
                         );
                     }
                     table.build().writeTo(out);
                 }
 
-                private CompoundBuilder redeployButton(String id, Deployment deployment, UriInfo uriInfo,
-                        boolean isCurrent) {
+                private CompoundBuilder redeployButton(String id, ContextRoot contextRoot, CheckSum checkSum,
+                        UriInfo uriInfo, boolean isCurrent) {
                     FormBuilder form = form(id);
-                    form.action(text(Deployments.path(uriInfo, deployment.getContextRoot())));
-                    form.input(hiddenInput("contextRoot", deployment.getContextRoot().getValue()));
-                    form.input(hiddenInput("checksum", deployment.getCheckSum().hexString()));
+                    form.action(text(Deployments.path(uriInfo, contextRoot)));
+                    form.input(hiddenInput("contextRoot", contextRoot.getValue()));
+                    form.input(hiddenInput("checksum", checkSum.hexString()));
                     form.input(hiddenAction("redeploy"));
 
                     Static deployLabel = text(isCurrent ? "Redeploy" : "Deploy");

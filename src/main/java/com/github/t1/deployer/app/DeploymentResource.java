@@ -6,20 +6,20 @@ import static com.github.t1.log.LogLevel.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import lombok.RequiredArgsConstructor;
-
+import com.fasterxml.jackson.annotation.*;
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 
 @Logged(level = INFO)
-@RequiredArgsConstructor
+@JsonPropertyOrder({ "name", "contextRoot", "checkSum", "version", "availableVersions" })
 public class DeploymentResource implements Comparable<DeploymentResource> {
     @Inject
     DeploymentContainer container;
@@ -29,7 +29,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     UriInfo uriInfo;
 
     private Deployment deployment;
-    private List<Deployment> availableVersions;
+    private Map<Version, CheckSum> availableVersions;
 
     @Logged(level = DEBUG)
     public DeploymentResource deployment(Deployment deployment) {
@@ -42,6 +42,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
         return deployment;
     }
 
+    @JsonIgnore
     @Logged(level = DEBUG)
     public boolean isNew() {
         return getName() == null || NEW_DEPLOYMENT_NAME.equals(getName().getValue());
@@ -160,9 +161,9 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     public Response putVersion(Version newVersion) {
         if (!container.hasDeploymentWith(getContextRoot()))
             throw badRequest("no context root: " + getContextRoot());
-        for (Deployment available : getAvailableVersions()) {
-            if (available.getVersion().equals(newVersion)) {
-                redeploy(available.getCheckSum());
+        for (Entry<Version, CheckSum> available : getAvailableVersions().entrySet()) {
+            if (available.getKey().equals(newVersion)) {
+                redeploy(available.getValue());
                 return Response.noContent().build();
             }
         }
@@ -177,7 +178,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
 
     @GET
     @Path("/available-versions")
-    public List<Deployment> getAvailableVersions() {
+    public Map<Version, CheckSum> getAvailableVersions() {
         if (availableVersions == null)
             availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
         return availableVersions;
