@@ -2,9 +2,6 @@ package com.github.t1.deployer.repository;
 
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 import javax.ws.rs.core.UriBuilder;
 
 import com.github.t1.deployer.model.*;
@@ -33,9 +30,8 @@ public class ArtifactoryRepositoryTestClient {
 
         try {
             // Deployment deployment = repo.getByChecksum(CHECKSUM);
-            Map<Version, CheckSum> versions = repo.availableVersionsFor(CHECKSUM);
-            for (Entry<Version, CheckSum> deployment : versions.entrySet()) {
-                System.out.println("-> " + deployment.getKey());
+            for (VersionInfo version : repo.availableVersionsFor(CHECKSUM)) {
+                System.out.println("-> " + version);
             }
         } finally {
             dropwizard.stop();

@@ -8,8 +8,7 @@ import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.io.*;
 import java.net.URI;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.List;
 
 import lombok.SneakyThrows;
 
@@ -58,11 +57,11 @@ public class RepositoryIT {
 
     @Test
     public void shouldGetAvailableVersions() {
-        Map<Version, CheckSum> versions = repository().availableVersionsFor(fakeChecksumFor(FOO));
+        List<VersionInfo> versions = repository().availableVersionsFor(fakeChecksumFor(FOO));
 
-        assertEquals(FOO_VERSIONS, new ArrayList<>(versions.keySet()));
-        for (Entry<Version, CheckSum> entry : versions.entrySet()) {
-            assertEquals(fakeChecksumFor(FOO, entry.getKey()), entry.getValue());
+        assertEquals(FOO_VERSIONS.size(), versions.size());
+        for (VersionInfo entry : versions) {
+            assertEquals(fakeChecksumFor(FOO, entry.getVersion()), entry.getCheckSum());
         }
     }
 

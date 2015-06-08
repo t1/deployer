@@ -11,6 +11,8 @@ import java.util.*;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 
+import lombok.Value;
+
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -19,6 +21,22 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 
 public class TestData {
+    @Value
+    public static class OngoingDeploymentStub {
+        Repository repository;
+        Deployment deployment;
+
+        public void availableVersions(String... versions) {
+            List<VersionInfo> list = new ArrayList<>();
+            for (String versionString : versions) {
+                Version version = new Version(versionString);
+                CheckSum checkSum = fakeChecksumFor(deployment.getContextRoot(), version);
+                list.add(new VersionInfo(version, checkSum));
+            }
+            when(repository.availableVersionsFor(deployment.getCheckSum())).thenReturn(list);
+        }
+    }
+
     public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
         Deployment deployment =
                 new Deployment(nameFor(contextRoot), contextRoot, fakeChecksumFor(contextRoot, version));

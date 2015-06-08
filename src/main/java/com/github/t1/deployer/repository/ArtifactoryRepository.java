@@ -169,10 +169,10 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override
-    public Map<Version, CheckSum> availableVersionsFor(CheckSum checkSum) {
+    public List<VersionInfo> availableVersionsFor(CheckSum checkSum) {
         ChecksumSearchResultItem deployment = searchByChecksum(checkSum);
         if (deployment == null)
-            return emptyMap();
+            return emptyList();
         URI uri = deployment.getUri();
         uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
         return versionsIn(fileNameWithoutVersion(deployment.getUri()), uri);
@@ -184,7 +184,7 @@ public class ArtifactoryRepository extends Repository {
         return path.subpath(0, length - 2).toString();
     }
 
-    private Map<Version, CheckSum> versionsIn(String fileName, URI uri) {
+    private List<VersionInfo> versionsIn(String fileName, URI uri) {
         // TODO we assume the path of files anyways... so we could reduce the number of requests and not recurse fully
         log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
@@ -194,18 +194,18 @@ public class ArtifactoryRepository extends Repository {
         return versionsIn(fileName, folderInfo);
     }
 
-    private Map<Version, CheckSum> versionsIn(String fileName, FolderInfo folderInfo) {
+    private List<VersionInfo> versionsIn(String fileName, FolderInfo folderInfo) {
         URI root = folderInfo.getUri();
-        Map<Version, CheckSum> result = new LinkedHashMap<>();
+        List<VersionInfo> result = new ArrayList<>();
         for (FileInfo child : folderInfo.getChildren()) {
             URI uri = UriBuilder.fromUri(root).path(child.getUri().toString()).build();
             if (child.isFolder()) {
-                result.putAll(versionsIn(fileName, uri));
+                result.addAll(versionsIn(fileName, uri));
             } else {
                 log.trace("get deployment in {} (fileName: {})", uri, fileName);
                 Deployment deployment = deploymentIn(uri);
                 if (deployment.getName().getValue().equals(fileName)) {
-                    result.put(deployment.getVersion(), deployment.getCheckSum());
+                    result.add(new VersionInfo(deployment.getVersion(), deployment.getCheckSum()));
                 }
             }
         }

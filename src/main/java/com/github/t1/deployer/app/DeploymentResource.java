@@ -6,11 +6,11 @@ import static com.github.t1.log.LogLevel.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.Map.Entry;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import javax.xml.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.*;
 import com.github.t1.deployer.container.DeploymentContainer;
@@ -19,6 +19,9 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 
 @Logged(level = INFO)
+@XmlRootElement(name = "deployment")
+@XmlAccessorType(XmlAccessType.NONE)
+@XmlType(propOrder = { "name", "contextRoot", "checkSum", "version", "availableVersions" })
 @JsonPropertyOrder({ "name", "contextRoot", "checkSum", "version", "availableVersions" })
 public class DeploymentResource implements Comparable<DeploymentResource> {
     @Inject
@@ -29,7 +32,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     UriInfo uriInfo;
 
     private Deployment deployment;
-    private Map<Version, CheckSum> availableVersions;
+    private List<VersionInfo> availableVersions;
 
     @Logged(level = DEBUG)
     public DeploymentResource deployment(Deployment deployment) {
@@ -140,18 +143,21 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
 
     @GET
     @Path("name")
+    @XmlElement
     public DeploymentName getName() {
         return deployment.getName();
     }
 
     @GET
     @Path("context-root")
+    @XmlElement
     public ContextRoot getContextRoot() {
         return deployment.getContextRoot();
     }
 
     @GET
     @Path("version")
+    @XmlElement
     public Version getVersion() {
         return deployment.getVersion();
     }
@@ -161,9 +167,9 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     public Response putVersion(Version newVersion) {
         if (!container.hasDeploymentWith(getContextRoot()))
             throw badRequest("no context root: " + getContextRoot());
-        for (Entry<Version, CheckSum> available : getAvailableVersions().entrySet()) {
-            if (available.getKey().equals(newVersion)) {
-                redeploy(available.getValue());
+        for (VersionInfo available : getAvailableVersions()) {
+            if (available.getVersion().equals(newVersion)) {
+                redeploy(available.getCheckSum());
                 return Response.noContent().build();
             }
         }
@@ -172,13 +178,16 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
 
     @GET
     @Path("checksum")
+    @XmlElement
     public CheckSum getCheckSum() {
         return deployment.getCheckSum();
     }
 
     @GET
     @Path("/available-versions")
-    public Map<Version, CheckSum> getAvailableVersions() {
+    @XmlElement(name = "availableVersion")
+    @XmlElementWrapper
+    public List<VersionInfo> getAvailableVersions() {
         if (availableVersions == null)
             availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
         return availableVersions;
@@ -193,6 +202,6 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     @Override
     @Logged(level = DEBUG)
     public String toString() {
-        return "Resource:" + deployment + "[" + availableVersions + "]";
+        return "Resource:" + deployment + ((availableVersions == null) ? "" : availableVersions);
     }
 }

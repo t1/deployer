@@ -24,7 +24,17 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return getType().isAssignableFrom(type);
+        boolean textHtml = isTextHtml(mediaType);
+        Class<?> writerType = getType();
+        boolean assignable = writerType.isAssignableFrom(type);
+        log.debug("isWriteable: type {}, genericType {}, mediaType {}, writerType {} -> html: {}, assignable: {}",
+                type, genericType, mediaType, writerType, textHtml, assignable);
+        return textHtml && assignable;
+    }
+
+    private boolean isTextHtml(MediaType mediaType) {
+        return (TEXT_HTML_TYPE.isCompatible(mediaType) || APPLICATION_XHTML_XML_TYPE.isCompatible(mediaType))
+                && !WILDCARD_TYPE.equals(mediaType);
     }
 
     protected Class<?> getType() {

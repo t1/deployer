@@ -14,7 +14,6 @@ import static com.github.t1.deployer.app.html.builder.Table.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.net.URI;
-import java.util.Map.Entry;
 
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
@@ -57,12 +56,12 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                     Version currentVersion = deployment.getVersion();
                     TableBuilder table = table();
                     int i = 0;
-                    for (Entry<Version, CheckSum> entry : deployment.getAvailableVersions().entrySet()) {
-                        boolean isCurrent = entry.getKey().equals(currentVersion);
+                    for (VersionInfo entry : deployment.getAvailableVersions()) {
+                        boolean isCurrent = entry.getVersion().equals(currentVersion);
                         table.row( //
-                                cell().body(text(entry.getKey().getVersion())), //
+                                cell().body(text(entry.getVersion().getVersion())), //
                                 cell().body(redeployButton("redeploy-" + i++, //
-                                        deployment.getContextRoot(), entry.getValue(), //
+                                        deployment.getContextRoot(), entry.getCheckSum(), //
                                         uriInfo, isCurrent)) //
                         );
                     }
