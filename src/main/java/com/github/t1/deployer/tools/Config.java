@@ -25,8 +25,6 @@ import com.github.t1.log.Logged;
 @Logged(level = TRACE)
 @ApplicationScoped
 public class Config implements Serializable {
-    private static final String MBEAN_PREFIX = "jboss.as:socket-binding-group=standard-sockets,socket-binding=";
-
     private static final long serialVersionUID = 1L;
 
     private static final String ARTIFACTORY_URI_PROPERTY = "deployer.artifactory.uri";
@@ -36,6 +34,20 @@ public class Config implements Serializable {
     private static final Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
             .toAbsolutePath();
 
+    private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding=";
+    private static final ObjectName MANAGEMENT_HTTP = objectName(SOCKET_BINDING + "management-http");
+    private static final ObjectName MANAGEMENT_NATIVE = objectName(SOCKET_BINDING + "management-native");
+
+    private static final ObjectName JBOSS_MANAGEMENT = objectName("jboss.as:management-root=server");
+
+    private static ObjectName objectName(String name) {
+        try {
+            return new ObjectName(name);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private Properties properties;
 
     private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
@@ -43,26 +55,38 @@ public class Config implements Serializable {
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
         int boundPort = getBoundPort();
-        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, "http-remoting://localhost:" + boundPort);
-        log.trace("JBoss AS admin: {}", uri);
-        assert "http-remoting".equals(uri.getScheme());
+        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, defaultScheme() + "://localhost:" + boundPort);
+        log.debug("JBoss AS admin: {}", uri);
         InetAddress host = InetAddress.getByName(uri.getHost());
         int port = uri.getPort();
-        log.info("create client to JBoss AS on {}:{}", host, port);
-        return ModelControllerClient.Factory.create(host, port);
+        log.info("create client to JBoss AS: {}{}:{}", uri.getScheme(), host, port);
+        return ModelControllerClient.Factory.create(uri.getScheme(), host, port);
+    }
+
+    private String defaultScheme() {
+        return getJbossVersion().startsWith("7.") ? "remote" : "http-remoting";
+    }
+
+    private String getJbossVersion() {
+        try {
+            Object jbossVersion = server.getAttribute(JBOSS_MANAGEMENT, "releaseVersion");
+            log.debug("found JBoss version {}", jbossVersion);
+            return jbossVersion.toString();
+        } catch (JMException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private int getBoundPort() {
-        Integer value = getBoundPort("management-native");
+        Integer value = getBoundPort(MANAGEMENT_NATIVE);
         if (value == null)
-            value = getBoundPort("management-http");
+            value = getBoundPort(MANAGEMENT_HTTP);
         if (value == null)
             value = 9990;
         return value;
     }
 
-    private Integer getBoundPort(String name) {
-        ObjectName objectName = objectName(name);
+    private Integer getBoundPort(ObjectName objectName) {
         try {
             if (!server.isRegistered(objectName)) {
                 log.debug("MBean {} is not registered", objectName);
@@ -74,14 +98,6 @@ public class Config implements Serializable {
         } catch (JMException e) {
             log.error("could not get boundPort from " + objectName, e);
             return null;
-        }
-    }
-
-    private ObjectName objectName(String name) {
-        try {
-            return new ObjectName(MBEAN_PREFIX + name);
-        } catch (MalformedObjectNameException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -97,10 +113,17 @@ public class Config implements Serializable {
 
     private URI getUriProperty(String propertyName, String defaultUri) {
         String value = properties().getProperty(propertyName);
-        if (value == null)
+        if (value != null) {
+            log.debug("use property from config file {}: {}", propertyName, value);
+        } else {
             value = System.getProperty(propertyName);
-        if (value == null)
-            value = defaultUri;
+            if (value != null) {
+                log.debug("use system property {}: {}", propertyName, value);
+            } else {
+                value = defaultUri;
+                log.debug("use default property {}: {}", propertyName, value);
+            }
+        }
         return URI.create(value);
     }
 

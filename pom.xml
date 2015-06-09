@@ -164,7 +164,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
-            <version>1.0.0.Alpha19</version>
+            <version>1.0.0.CR5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
