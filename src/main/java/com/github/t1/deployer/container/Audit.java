@@ -21,7 +21,7 @@ public class Audit {
         try {
             return InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
-            log.warn("can't get local host", e);
+            log.warn("use loopback address, as getting local host failed: {}", e.getMessage());
             return InetAddress.getLoopbackAddress();
         }
     }
