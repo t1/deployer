@@ -52,29 +52,21 @@ public class Config implements Serializable {
 
     private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 
+    public static InetAddress getLocalHost() {
+        try {
+            return InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            log.warn("use loopback address, as getting local host failed: {}", e.getMessage());
+            return InetAddress.getLoopbackAddress();
+        }
+    }
+
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
-        int boundPort = getBoundPort();
-        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, defaultScheme() + "://localhost:" + boundPort);
-        log.debug("JBoss AS admin: {}", uri);
-        InetAddress host = InetAddress.getByName(uri.getHost());
-        int port = uri.getPort();
-        log.info("create client to JBoss AS: {}{}:{}", uri.getScheme(), host, port);
-        return ModelControllerClient.Factory.create(uri.getScheme(), host, port);
-    }
-
-    private String defaultScheme() {
-        return getJbossVersion().startsWith("7.") ? "remote" : "http-remoting";
-    }
-
-    private String getJbossVersion() {
-        try {
-            Object jbossVersion = server.getAttribute(JBOSS_MANAGEMENT, "releaseVersion");
-            log.debug("found JBoss version {}", jbossVersion);
-            return jbossVersion.toString();
-        } catch (JMException e) {
-            throw new RuntimeException(e);
-        }
+        String defaultUri = defaultScheme() + "://" + getLocalHost().getHostName() + ":" + getBoundPort();
+        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, defaultUri);
+        log.info("connect to JBoss AS on: {}", uri);
+        return createModelControllerClient(uri);
     }
 
     private int getBoundPort() {
@@ -99,6 +91,27 @@ public class Config implements Serializable {
             log.error("could not get boundPort from " + objectName, e);
             return null;
         }
+    }
+
+    private String defaultScheme() {
+        return getJbossVersion().startsWith("7.") ? "remote" : "http-remoting";
+    }
+
+    private String getJbossVersion() {
+        try {
+            Object jbossVersion = server.getAttribute(JBOSS_MANAGEMENT, "releaseVersion");
+            log.debug("found JBoss version {}", jbossVersion);
+            return jbossVersion.toString();
+        } catch (JMException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ModelControllerClient createModelControllerClient(URI uri) throws UnknownHostException {
+        InetAddress host = InetAddress.getByName(uri.getHost());
+        int port = uri.getPort();
+        log.debug("create ModelControllerClient {}://{}:{}", uri.getScheme(), host, port);
+        return ModelControllerClient.Factory.create(uri.getScheme(), host, port);
     }
 
     void closeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {

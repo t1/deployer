@@ -1,8 +1,8 @@
 package com.github.t1.deployer.container;
 
+import static com.github.t1.deployer.tools.Config.*;
 import static com.github.t1.log.LogLevel.*;
 
-import java.net.*;
 import java.security.Principal;
 
 import javax.inject.Inject;
@@ -16,15 +16,6 @@ import com.github.t1.log.*;
 @SuppressWarnings("unused")
 public class Audit {
     private static final String LOG_LINE = ";{principal};{client-ip};{operation};{contextRoot};{version};{host}";
-
-    private static InetAddress getLocalHost() {
-        try {
-            return InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            log.warn("use loopback address, as getting local host failed: {}", e.getMessage());
-            return InetAddress.getLoopbackAddress();
-        }
-    }
 
     @Inject
     @LogContext
