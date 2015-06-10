@@ -180,9 +180,18 @@ public class DeploymentContainer extends AbstractContainer {
     private Deployment toDeployment(ModelNode cliDeployment) {
         DeploymentName name = new DeploymentName(cliDeployment.get("name").asString());
         ContextRoot contextRoot = getContextRoot(cliDeployment);
-        CheckSum hash = CheckSum.of(cliDeployment.get("content").get(0).get("hash").asBytes());
+        CheckSum hash = CheckSum.of(hash(cliDeployment));
         log.debug("{} -> {} -> {}", name, contextRoot, hash);
         return new Deployment(name, contextRoot, hash);
+    }
+
+    private byte[] hash(ModelNode cliDeployment) {
+        try {
+            return cliDeployment.get("content").get(0).get("hash").asBytes();
+        } catch (RuntimeException e) {
+            log.error("failed to get hash for {}", cliDeployment.get("name"));
+            return new byte[0];
+        }
     }
 
     private ContextRoot getContextRoot(ModelNode cliDeployment) {

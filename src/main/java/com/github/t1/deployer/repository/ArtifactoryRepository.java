@@ -104,7 +104,8 @@ public class ArtifactoryRepository extends Repository {
             log.debug("got {}", result);
             return result;
         } catch (RuntimeException e) {
-            throw new RuntimeException("can't search by checksum " + checkSum, e);
+            log.error("can't search by checksum " + checkSum + " in " + baseUri, e);
+            return null;
         }
     }
 
