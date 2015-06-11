@@ -48,13 +48,19 @@ public class ArtifactoryRepository extends Repository {
     @Artifactory
     Credentials credentials;
 
-    RestResource artifactory;
+    private RestResource artifactory;
+    private EntityRequest<ChecksumSearchResult> searchByChecksum;
 
     @PostConstruct
     void init() {
         UriTemplate template = UriScheme.of(baseUri).authority(baseUri.getAuthority()).path(baseUri.getPath());
-        RestResource resource = new RestResource(template);
-        this.artifactory = resource;
+        this.artifactory = new RestResource(template);
+        this.searchByChecksum = authenticated( //
+                artifactory //
+                        .path("api/search/checksum") //
+                        .query("sha1", "{checkSum}") //
+                        .header("X-Result-Detail", "info") //
+                ).accept(ChecksumSearchResult.class);
     }
 
     /**
@@ -88,14 +94,9 @@ public class ArtifactoryRepository extends Repository {
 
     private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
         try {
-            List<ChecksumSearchResultItem> results = authenticated( //
-                    artifactory //
-                            .path("api/search/checksum") //
-                            .query("sha1", checkSum.hexString()) //
-                            .header("X-Result-Detail", "info") //
-                    ) //
-                    .get(ChecksumSearchResult.class) //
-                            .getResults();
+            log.debug("searchByChecksum({})", checkSum);
+            List<ChecksumSearchResultItem> results = searchByChecksum.with("checkSum", checkSum.hexString()) //
+                    .get().getResults();
             if (results.size() == 0)
                 return null;
             if (results.size() > 1)
@@ -104,7 +105,7 @@ public class ArtifactoryRepository extends Repository {
             log.debug("got {}", result);
             return result;
         } catch (RuntimeException e) {
-            log.error("can't search by checksum " + checkSum + " in " + baseUri, e);
+            log.error("can't search by checksum [" + checkSum + "] in " + baseUri, e);
             return null;
         }
     }

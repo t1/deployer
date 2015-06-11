@@ -104,7 +104,7 @@ public class DeploymentListFile {
     private void updateFromList() {
         log.info("deployment list file has changed");
         try {
-            // User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
+            // FIXME User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
 
             Map<ContextRoot, Version> expected = read();
             for (Deployment actual : deployments()) {

@@ -91,6 +91,10 @@ public class CheckSum {
         return out.toString();
     }
 
+    public boolean isEmpty() {
+        return bytes.length == 0;
+    }
+
     @Override
     public String toString() {
         return hexString();
