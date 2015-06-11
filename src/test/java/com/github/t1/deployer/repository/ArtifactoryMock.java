@@ -1,6 +1,7 @@
 package com.github.t1.deployer.repository;
 
 import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
+import static com.github.t1.deployer.tools.ErrorResponse.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -22,9 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.github.t1.deployer.model.*;
 
 /**
- * If you don't have a real Artifactory Pro available, move this to src/main/java and configure the endpoint by setting
- * the system property <code>deployer.artifactory.uri</code> to <code>http://localhost:8080/deployer/artifactory</code>
- * 
+ * @see ArtifactoryMockLauncher
  * @see ArtifactoryMockIndexBuilder
  */
 @Slf4j
@@ -142,7 +141,9 @@ public class ArtifactoryMock {
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
     public String searchByChecksum(@QueryParam("sha1") CheckSum checkSum) {
-        log.debug("search by checksum: {}", checkSum);
+        log.info("search by checksum: {}", checkSum);
+        if (checkSum == null)
+            throw badRequest("Required query parameter 'sha1' is missing.");
         return "{\"results\": [" + searchResultsFor(checkSum) + "]}";
     }
 
@@ -215,6 +216,9 @@ public class ArtifactoryMock {
     }
 
     private static ContextRoot fakeContextRootFor(CheckSum checkSum) {
+        if (checkSum.hexString().length() < 6)
+            throw badRequest("checkSum too short. must be at least 6 characters for fake context root: ["
+                    + checkSum.hexString() + "]");
         return new ContextRoot("fake-" + checkSum.hexString().substring(0, 6));
     }
 
