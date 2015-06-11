@@ -75,7 +75,7 @@ public class Config implements Serializable {
         log.trace("socket binding: {}", socketBinding);
         if (socketBinding.startsWith(SOCKET_BINDING_PREFIX))
             socketBinding = socketBinding.substring(SOCKET_BINDING_PREFIX.length());
-        return (socketBinding.equals("native")) ? "remote" : socketBinding;
+        return (socketBinding.equals("native")) ? "remote" : socketBinding + "-remoting";
     }
 
     private ObjectName findManagementInterface() {
