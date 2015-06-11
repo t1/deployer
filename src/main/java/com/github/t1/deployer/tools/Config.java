@@ -22,7 +22,7 @@ import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
 
 @Slf4j
-@Logged(level = TRACE)
+@Logged(level = DEBUG)
 @ApplicationScoped
 public class Config implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -34,11 +34,14 @@ public class Config implements Serializable {
     private static final Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
             .toAbsolutePath();
 
-    private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding=";
-    private static final ObjectName MANAGEMENT_HTTP = objectName(SOCKET_BINDING + "management-http");
-    private static final ObjectName MANAGEMENT_NATIVE = objectName(SOCKET_BINDING + "management-native");
-
-    private static final ObjectName JBOSS_MANAGEMENT = objectName("jboss.as:management-root=server");
+    private static final String SOCKET_BINDING_PREFIX = "management-";
+    private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding="
+            + SOCKET_BINDING_PREFIX;
+    private static final ObjectName[] MANAGEMENT_INTERFACES = { //
+            objectName(SOCKET_BINDING + "native"), //
+                    objectName(SOCKET_BINDING + "https"), //
+                    objectName(SOCKET_BINDING + "http"), //
+            };
 
     private static ObjectName objectName(String name) {
         try {
@@ -52,58 +55,55 @@ public class Config implements Serializable {
 
     private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 
-    public static InetAddress getLocalHost() {
-        try {
-            return InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            log.warn("use loopback address, as getting local host failed: {}", e.getMessage());
-            return InetAddress.getLoopbackAddress();
-        }
-    }
-
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
-        String defaultUri = defaultScheme() + "://" + getLocalHost().getHostName() + ":" + getBoundPort();
-        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, defaultUri);
+        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, defaultUri());
         log.info("connect to JBoss AS on: {}", uri);
         return createModelControllerClient(uri);
     }
 
-    private int getBoundPort() {
-        Integer value = getBoundPort(MANAGEMENT_NATIVE);
-        if (value == null)
-            value = getBoundPort(MANAGEMENT_HTTP);
-        if (value == null)
-            value = 9990;
-        return value;
+    private String defaultUri() {
+        ObjectName managementInterface = findManagementInterface();
+        return boundScheme(managementInterface) //
+                + "://" + getAttribute(managementInterface, "boundAddress", "localhost") //
+                + ":" + getAttribute(managementInterface, "boundPort", "9990");
     }
 
-    private Integer getBoundPort(ObjectName objectName) {
-        try {
-            if (!server.isRegistered(objectName)) {
-                log.debug("MBean {} is not registered", objectName);
-                return null;
+    private String boundScheme(ObjectName managementInterface) {
+        log.trace("management interface: {}", managementInterface.getCanonicalName());
+        String socketBinding = managementInterface.getKeyProperty("socket-binding");
+        log.trace("socket binding: {}", socketBinding);
+        if (socketBinding.startsWith(SOCKET_BINDING_PREFIX))
+            socketBinding = socketBinding.substring(SOCKET_BINDING_PREFIX.length());
+        return (socketBinding.equals("native")) ? "remote" : socketBinding;
+    }
+
+    private ObjectName findManagementInterface() {
+        for (ObjectName objectName : MANAGEMENT_INTERFACES) {
+            if (server.isRegistered(objectName)) {
+                if ("true".equals(getAttribute(objectName, "bound", "false"))) {
+                    log.trace("found registered and bound management interface {}", objectName);
+                    return objectName;
+                } else {
+                    log.trace("management interface {} is not bound", objectName);
+                }
+            } else {
+                log.trace("management interface {} is not registered", objectName);
             }
-            Object value = server.getAttribute(objectName, "boundPort");
-            log.trace("got MBean {} boundPort: {}", objectName, value);
-            return (Integer) value;
-        } catch (JMException e) {
-            log.error("could not get boundPort from " + objectName, e);
-            return null;
         }
+        return null;
     }
 
-    private String defaultScheme() {
-        return getJbossVersion().startsWith("7.") ? "remote" : "http-remoting";
-    }
-
-    private String getJbossVersion() {
+    private String getAttribute(ObjectName objectName, String attributeName, String defaultValue) {
         try {
-            Object jbossVersion = server.getAttribute(JBOSS_MANAGEMENT, "releaseVersion");
-            log.debug("found JBoss version {}", jbossVersion);
-            return jbossVersion.toString();
+            Object value = server.getAttribute(objectName, attributeName);
+            if (value == null)
+                return defaultValue;
+            log.trace("{}#{} = {}", objectName, attributeName, value);
+            return value.toString();
         } catch (JMException e) {
-            throw new RuntimeException(e);
+            log.error("could not get " + attributeName + " from " + objectName, e);
+            return null;
         }
     }
 
