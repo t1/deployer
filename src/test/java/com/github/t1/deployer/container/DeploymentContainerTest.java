@@ -10,6 +10,8 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.util.List;
 
+import javax.ws.rs.WebApplicationException;
+
 import lombok.SneakyThrows;
 
 import org.jboss.as.controller.client.*;
@@ -23,7 +25,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.t1.deployer.TestData;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.WebException;
+import com.github.t1.deployer.tools.ErrorResponse;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeploymentContainerTest {
@@ -108,9 +110,11 @@ public class DeploymentContainerTest {
         try {
             container.getDeploymentWith(new ContextRoot("unknown"));
             fail("WebException expected");
-        } catch (WebException e) {
+        } catch (WebApplicationException e) {
             assertEquals(NOT_FOUND, e.getResponse().getStatusInfo());
-            assertEquals("no deployment with context root [unknown]", e.getResponse().getEntity());
+            ErrorResponse error = (ErrorResponse) e.getResponse().getEntity();
+            assertEquals(NOT_FOUND, error.getStatus());
+            assertEquals("no deployment with context root [unknown]", error.getMessage());
         }
     }
 

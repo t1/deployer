@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
-import static com.github.t1.deployer.tools.WebException.*;
+import static com.github.t1.deployer.tools.ErrorResponse.*;
 import static com.github.t1.log.LogLevel.*;
 
 import java.io.*;
