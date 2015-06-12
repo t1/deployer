@@ -86,7 +86,7 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
                     compound( //
                             p("Enter the category of a new logger to configure"), //
                             form(MAIN_FORM_ID).action(LOGGERS) //
-                                    .input(input("category").placeholder("Category").required()) //
+                                    .input(input("category").placeholder("Category").required().autofocus()) //
                                     .body(div().classes("form-group").body(levelSelectBuilder(DEBUG))), //
                             buttonGroup() //
                                     .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add"))) //

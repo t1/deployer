@@ -48,6 +48,7 @@ public class Input extends DelegateComponent {
         }).multiline();
         private String idAndName;
         private String type = "text";
+        private boolean autofocus;
         private boolean required;
         private boolean horizontal;
 
@@ -122,6 +123,11 @@ public class Input extends DelegateComponent {
             return this;
         }
 
+        public InputBuilder autofocus() {
+            autofocus = true;
+            return this;
+        }
+
         public InputBuilder required() {
             required = true;
             return this;
@@ -138,6 +144,8 @@ public class Input extends DelegateComponent {
                 input.a("name", idAndName).id(idAndName);
             if (required)
                 input.a("required");
+            if (autofocus)
+                input.a("autofocus");
             if (label == null)
                 return new Input("hidden".equals(type) //
                         ? input.build() //

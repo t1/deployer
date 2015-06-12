@@ -29,7 +29,7 @@ import com.github.t1.deployer.model.DataSourceConfig;
 @Provider
 public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceConfig> {
     private static FormBuilder withFields(boolean withValues, FormBuilder form) {
-        form.input(fieldInput(withValues, "name", "Name").required());
+        form.input(fieldInput(withValues, "name", "Name").required().autofocus());
         form.input(fieldInput(withValues, "jndiName", "JNDI-Name").required());
         form.input(fieldInput(withValues, "driver", "Driver").required());
         form.input(fieldInput(withValues, "uri", "URI").required());

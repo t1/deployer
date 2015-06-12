@@ -149,7 +149,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                         }
                     }) //
                     .body(hiddenAction("deploy")) //
-                    .body(input("checksum").placeholder("Checksum").required()), //
+                    .body(input("checksum").placeholder("Checksum").required().autofocus()), //
             buttonGroup() //
                     .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Deploy"))) //
             )).build();
