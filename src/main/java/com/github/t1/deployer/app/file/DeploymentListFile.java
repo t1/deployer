@@ -30,10 +30,6 @@ public class DeploymentListFile {
     private class FileWatcher implements Runnable {
         private FileTime lastModified;
 
-        public FileWatcher() {
-            this.lastModified = lastModified();
-        }
-
         @SneakyThrows(IOException.class)
         private FileTime lastModified() {
             if (!Files.exists(deploymentsList))
@@ -45,8 +41,14 @@ public class DeploymentListFile {
         public void run() {
             try {
                 if (!Objects.equals(lastModified, lastModified())) {
+                    boolean isNew = (lastModified == null);
                     lastModified = lastModified();
-                    updateFromList();
+                    if (isNew) {
+                        // PostConstruct is too early: delay until the starup has completed
+                        writeDeploymentsList();
+                    } else {
+                        updateFromList();
+                    }
                 }
             } catch (RuntimeException e) {
                 e.printStackTrace();
@@ -92,7 +94,7 @@ public class DeploymentListFile {
     @PostConstruct
     void start() {
         log.info("start file watcher");
-        executor.scheduleWithFixedDelay(new FileWatcher(), 0, 1, SECONDS);
+        executor.scheduleWithFixedDelay(new FileWatcher(), 10, 1, SECONDS);
     }
 
     @PreDestroy
