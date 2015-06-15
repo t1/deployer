@@ -55,7 +55,7 @@ public class DeploymentsTest {
         Deployment deployment = deploymentFor(contextRoot);
         installedDeployments.add(deployment);
         when(repository.getByChecksum(fakeChecksumFor(contextRoot))).thenReturn(deploymentFor(contextRoot));
-        when(container.getDeploymentWith(contextRoot)).thenReturn(deployment);
+        when(container.getDeploymentFor(contextRoot)).thenReturn(deployment);
         return new OngoingDeploymentStub(repository, deploymentFor(contextRoot, fakeVersionFor(contextRoot)));
     }
 

@@ -15,8 +15,6 @@ import com.github.t1.log.*;
 @Slf4j
 @SuppressWarnings("unused")
 public class Audit {
-    private static final String LOG_LINE = ";{principal};{client-ip};{operation};{contextRoot};{version};{host}";
-
     private static InetAddress getLocalHost() {
         try {
             return InetAddress.getLocalHost();
@@ -33,9 +31,6 @@ public class Audit {
     @LogContext
     String host = getLocalHost().getHostName();
 
-    @Logged(value = "allow" + LOG_LINE, level = INFO)
+    @Logged(value = "{principal};{client-ip};{operation};{contextRoot};{version};{host}", level = INFO)
     public void allow(String operation, ContextRoot contextRoot, Version version) {}
-
-    @Logged(value = "deny" + LOG_LINE, level = WARN)
-    public void deny(String operation, ContextRoot contextRoot, Version version) {}
 }

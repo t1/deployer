@@ -34,19 +34,19 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     private Deployment deployment;
     private List<VersionInfo> availableVersions;
 
-    @Logged(level = DEBUG)
+    @Logged(level = OFF)
     public DeploymentResource deployment(Deployment deployment) {
         this.deployment = deployment;
         return this;
     }
 
-    @Logged(level = DEBUG)
+    @Logged(level = OFF)
     public Deployment deployment() {
         return deployment;
     }
 
     @JsonIgnore
-    @Logged(level = DEBUG)
+    @Logged(level = TRACE)
     public boolean isNew() {
         return getName() == null || NEW_DEPLOYMENT_NAME.equals(getName().getValue());
     }
@@ -62,6 +62,8 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
             @FormParam("contextRoot") ContextRoot contextRoot, //
             @FormParam("checksum") CheckSum checkSum //
     ) {
+        if (action == null)
+            throw badRequest("action form parameter is missing");
         switch (action) {
             case "deploy":
                 if (contextRoot != null || getContextRoot() != null)
@@ -194,13 +196,13 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     }
 
     @Override
-    @Logged(level = DEBUG)
+    @Logged(level = OFF)
     public int compareTo(DeploymentResource that) {
         return this.deployment().compareTo(that.deployment());
     }
 
     @Override
-    @Logged(level = DEBUG)
+    @Logged(level = OFF)
     public String toString() {
         return "Resource:" + deployment + ((availableVersions == null) ? "" : availableVersions);
     }

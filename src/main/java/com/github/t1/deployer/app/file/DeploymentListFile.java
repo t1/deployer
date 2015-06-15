@@ -106,15 +106,19 @@ public class DeploymentListFile {
         try {
             // FIXME User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
 
-            Map<ContextRoot, Version> expected = read();
+            Map<ContextRoot, Version> expected = readDeploymentsListFile();
             for (Deployment actual : deployments()) {
                 ContextRoot contextRoot = actual.getContextRoot();
                 Version expectedVersion = expected.get(contextRoot);
                 if (expectedVersion == null) {
+                    log.info("expected version of {} is null -> undeploy", contextRoot);
                     container.undeploy(actual);
                 } else if (expectedVersion.equals(actual.getVersion())) {
+                    log.debug("expected version of {} equals actual {} -> skip", contextRoot, expectedVersion);
                     // already the expected version
                 } else {
+                    log.info("version of {} changed from {} to {} -> redeploy", //
+                            contextRoot, actual.getVersion(), expectedVersion);
                     CheckSum checksum = repository.getChecksumForVersion(actual, expectedVersion);
                     redeploy(repository.getByChecksum(checksum));
                 }
@@ -125,7 +129,7 @@ public class DeploymentListFile {
     }
 
     @SneakyThrows(IOException.class)
-    private Map<ContextRoot, Version> read() {
+    private Map<ContextRoot, Version> readDeploymentsListFile() {
         Map<ContextRoot, Version> out = new HashMap<>();
         for (String line : Files.readAllLines(deploymentsList, UTF_8)) {
             if (line.trim().isEmpty() || line.startsWith("#"))
@@ -133,6 +137,7 @@ public class DeploymentListFile {
             DeploymentInfo info = DeploymentInfo.parse(line);
             out.put(info.contextRoot, info.version);
         }
+        log.trace("deployments list: {}", out);
         return out;
     }
 

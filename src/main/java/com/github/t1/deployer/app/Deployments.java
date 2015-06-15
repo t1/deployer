@@ -87,7 +87,7 @@ public class Deployments {
         if (contextRoot == null) {
             deployment = tentativeDeploymentFor(contextRoot);
         } else {
-            deployment = container.getDeploymentWith(contextRoot);
+            deployment = container.getDeploymentFor(contextRoot);
             if (deployment == null) {
                 deployment = tentativeDeploymentFor(contextRoot);
             }

@@ -8,6 +8,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import javax.annotation.security.*;
 import javax.ejb.Stateless;
 
 import lombok.AllArgsConstructor;
@@ -115,6 +116,7 @@ public class DeploymentContainer extends AbstractContainer {
         }
     }
 
+    @PermitAll
     public boolean hasDeploymentWith(ContextRoot contextRoot) {
         for (Deployment deployment : getAllDeployments()) {
             if (deployment.getContextRoot().equals(contextRoot)) {
@@ -124,7 +126,8 @@ public class DeploymentContainer extends AbstractContainer {
         return false;
     }
 
-    public Deployment getDeploymentWith(ContextRoot contextRoot) {
+    @PermitAll
+    public Deployment getDeploymentFor(ContextRoot contextRoot) {
         List<Deployment> all = getAllDeployments();
         Deployment deployment = find(all, contextRoot);
         log.debug("found deployment {}", deployment);
@@ -140,6 +143,7 @@ public class DeploymentContainer extends AbstractContainer {
         throw notFound("no deployment with context root [" + contextRoot + "]");
     }
 
+    @PermitAll
     public Deployment getDeploymentWith(CheckSum checkSum) {
         List<Deployment> all = getAllDeployments();
         Deployment deployment = find(all, checkSum);
@@ -156,6 +160,7 @@ public class DeploymentContainer extends AbstractContainer {
         throw notFound("no deployment with context root [" + checkSum + "]");
     }
 
+    @PermitAll
     public List<Deployment> getAllDeployments() {
         List<Deployment> list = new ArrayList<>();
         for (ModelNode cliDeploymentMatch : readAllDeployments())
@@ -209,16 +214,19 @@ public class DeploymentContainer extends AbstractContainer {
     }
 
     @DeploymentOperation
+    @RolesAllowed("deployer")
     public void deploy(Deployment deployment, InputStream inputStream) {
         new DeployPlan(deployment.getName(), inputStream).execute();
     }
 
     @DeploymentOperation
+    @RolesAllowed("deployer")
     public void redeploy(Deployment deployment, InputStream inputStream) {
         new ReplacePlan(deployment.getName(), inputStream).execute();
     }
 
     @DeploymentOperation
+    @RolesAllowed("deployer")
     public void undeploy(Deployment deployment) {
         new UndeployPlan(deployment.getName()).execute();
     }

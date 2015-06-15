@@ -108,7 +108,7 @@ public class DeploymentContainerTest {
                 .thenReturn(ModelNode.fromString(successCli("[]")));
 
         try {
-            container.getDeploymentWith(new ContextRoot("unknown"));
+            container.getDeploymentFor(new ContextRoot("unknown"));
             fail("WebException expected");
         } catch (WebApplicationException e) {
             assertEquals(NOT_FOUND, e.getResponse().getStatusInfo());
@@ -142,7 +142,7 @@ public class DeploymentContainerTest {
     public void shouldGetOneDeployment() {
         givenDeployments(FOO);
 
-        Deployment deployment = container.getDeploymentWith(FOO);
+        Deployment deployment = container.getDeploymentFor(FOO);
 
         assertDeployment(FOO, NO_VERSION, deployment);
     }
@@ -151,7 +151,7 @@ public class DeploymentContainerTest {
     public void shouldGetOneOfTwoDeployments() {
         givenDeployments(FOO, BAR);
 
-        Deployment deployment = container.getDeploymentWith(FOO);
+        Deployment deployment = container.getDeploymentFor(FOO);
 
         assertDeployment(FOO, NO_VERSION, deployment);
     }
@@ -160,7 +160,7 @@ public class DeploymentContainerTest {
     public void shouldGetTheOtherOfTwoDeployments() {
         givenDeployments(FOO, BAR);
 
-        Deployment deployment = container.getDeploymentWith(BAR);
+        Deployment deployment = container.getDeploymentFor(BAR);
 
         assertDeployment(BAR, NO_VERSION, deployment);
     }

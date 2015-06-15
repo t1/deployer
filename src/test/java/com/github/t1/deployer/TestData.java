@@ -111,7 +111,7 @@ public class TestData {
     public static void givenDeployment(DeploymentContainer container, List<Deployment> deployments,
             Deployment deployment) {
         ContextRoot contextRoot = deployment.getContextRoot();
-        when(container.getDeploymentWith(contextRoot)).thenReturn(deployment);
+        when(container.getDeploymentFor(contextRoot)).thenReturn(deployment);
         when(container.hasDeploymentWith(contextRoot)).thenReturn(true);
         when(container.getDeploymentWith(deployment.getCheckSum())).thenReturn(deployment);
         deployments.add(deployment);

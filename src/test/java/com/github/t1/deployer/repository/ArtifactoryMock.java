@@ -294,11 +294,15 @@ public class ArtifactoryMock {
             Files.walkFileTree(MAVEN_REPOSITORY.resolve(path), EnumSet.noneOf(FileVisitOption.class), 1,
                     new SimpleFileVisitor<java.nio.file.Path>() {
                         @Override
-                        public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
-                            if (Files.isDirectory(file))
-                                out.append(folderChild(file.getFileName().toString()));
-                            else
-                                out.append(fileChild(file.getFileName().toString()));
+                        public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attrs) {
+                            String fileName = path.getFileName().toString();
+                            if (Files.isDirectory(path)) {
+                                String folder = folderChild(fileName);
+                                out.append(folder);
+                            } else {
+                                String file = fileChild(fileName);
+                                out.append(file);
+                            }
                             return FileVisitResult.CONTINUE;
                         }
                     });

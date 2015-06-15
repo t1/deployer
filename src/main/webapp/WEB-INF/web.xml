@@ -16,11 +16,5 @@
             <web-resource-name>deployer</web-resource-name>
             <url-pattern>/*</url-pattern>
         </web-resource-collection>
-        <auth-constraint>
-            <role-name>deployer</role-name>
-        </auth-constraint>
     </security-constraint>
-    <security-role>
-        <role-name>deployer</role-name>
-    </security-role>
 </web-app>
