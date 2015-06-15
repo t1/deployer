@@ -3,9 +3,17 @@ package com.github.t1.deployer.repository;
 import static ch.qos.logback.classic.Level.*;
 import io.dropwizard.*;
 import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.server.SimpleServerFactory;
 import io.dropwizard.setup.Environment;
 
+import org.eclipse.jetty.server.Server;
+import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.console.*;
+import org.jboss.aesh.console.command.*;
+import org.jboss.aesh.console.command.invocation.CommandInvocation;
+import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
+import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.*;
@@ -31,6 +39,8 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
         }
     }
 
+    protected Server jettyServer;
+
     @Override
     public void run(Configuration configuration, Environment environment) {
         SimpleServerFactory serverConfig = new SimpleServerFactory();
@@ -43,17 +53,45 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
         environment.healthChecks().register("dummy", new DummyHealthCheck());
 
         environment.jersey().register(new ArtifactoryMock());
-    }
-
-    public ArtifactoryMockLauncher() {
-        // ArtifactoryMock.FAKES = true;
 
         setLogLevel("org.apache.http.wire", DEBUG);
         setLogLevel("com.github.t1.rest", DEBUG);
         setLogLevel("com.github.t1.deployer", DEBUG);
+
+        environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
+            @Override
+            public void serverStarted(Server server) {
+                jettyServer = server;
+                startConsole();
+            }
+        });
     }
 
     private void setLogLevel(String loggerName, Level level) {
         ((Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
+    }
+
+    private void startConsole() {
+        // TODO report broken example to aesh
+        new AeshConsoleBuilder() //
+                .settings(new SettingsBuilder().ansi(false).create()) //
+                .prompt(new Prompt("> ")) //
+                .commandRegistry(new AeshCommandRegistryBuilder().command(new ExitCommand()).create()) //
+                .create() //
+                .start();
+    }
+
+    @CommandDefinition(name = "exit", description = "quits the service and the console")
+    public class ExitCommand implements Command<CommandInvocation> {
+        @Override
+        public CommandResult execute(CommandInvocation invocation) {
+            try {
+                jettyServer.stop();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            invocation.stop();
+            return CommandResult.SUCCESS;
+        }
     }
 }
