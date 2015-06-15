@@ -14,7 +14,7 @@ public class EJBAccessExceptionMapper implements ExceptionMapper<EJBAccessExcept
         return Response //
                 .status(UNAUTHORIZED) //
                 .header("WWW-Authenticate", "Basic realm=\"Deployer\"") //
-                .entity(new ErrorResponse(UNAUTHORIZED, exception.getMessage())) //
+                .entity(new StatusDetails(UNAUTHORIZED, exception.getMessage())) //
                 .type(APPLICATION_JSON_TYPE) // TODO this prevents JBoss from trying YAML :(
                 .build();
     }

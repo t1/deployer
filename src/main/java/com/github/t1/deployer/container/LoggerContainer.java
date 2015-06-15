@@ -1,6 +1,6 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.deployer.tools.ErrorResponse.*;
+import static com.github.t1.deployer.tools.StatusDetails.*;
 import static com.github.t1.log.LogLevel.*;
 
 import java.util.*;

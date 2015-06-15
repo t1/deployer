@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Value
-public class ErrorResponse {
+public class StatusDetails {
     public static WebApplicationException badRequest(String message) {
         return webException(BAD_REQUEST, message);
     }
@@ -23,14 +23,14 @@ public class ErrorResponse {
     }
 
     public static WebApplicationException webException(Status status, String message) {
-        ErrorResponse error = new ErrorResponse(status, message);
+        StatusDetails error = new StatusDetails(status, message);
         log.info("{}", error);
         return new WebApplicationException(error.toResponse());
     }
 
     UUID id = UUID.randomUUID();
     Status status;
-    String message;
+    String type;
 
     public Response toResponse() {
         return Response.status(status).entity(this).build();
@@ -38,6 +38,6 @@ public class ErrorResponse {
 
     @Override
     public String toString() {
-        return status.getStatusCode() + " " + status.getReasonPhrase() + " [" + getId() + "] " + message;
+        return status.getStatusCode() + " " + status.getReasonPhrase() + " [" + getId() + "] " + type;
     }
 }

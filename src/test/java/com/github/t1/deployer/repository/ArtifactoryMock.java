@@ -1,7 +1,7 @@
 package com.github.t1.deployer.repository;
 
 import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
-import static com.github.t1.deployer.tools.ErrorResponse.*;
+import static com.github.t1.deployer.tools.StatusDetails.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;

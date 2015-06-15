@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.*;
+import javax.ws.rs.core.Response.Status;
 
 import lombok.SneakyThrows;
 
@@ -25,7 +27,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.t1.deployer.TestData;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.ErrorResponse;
+import com.github.t1.deployer.tools.StatusDetails;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeploymentContainerTest {
@@ -55,6 +57,14 @@ public class DeploymentContainerTest {
         node.get("operation").set("read-resource");
         node.get("recursive").set(true);
         return node;
+    }
+
+    public static void assertStatusDetails(Status status, String type, WebApplicationException e) {
+        Response response = e.getResponse();
+        assertEquals(status, response.getStatusInfo());
+        StatusDetails error = (StatusDetails) response.getEntity();
+        assertEquals(status, error.getStatus());
+        assertEquals(type, error.getType());
     }
 
     public static String readDeploymentsCliResult(ContextRoot... contextRoots) {
@@ -111,10 +121,7 @@ public class DeploymentContainerTest {
             container.getDeploymentFor(new ContextRoot("unknown"));
             fail("WebException expected");
         } catch (WebApplicationException e) {
-            assertEquals(NOT_FOUND, e.getResponse().getStatusInfo());
-            ErrorResponse error = (ErrorResponse) e.getResponse().getEntity();
-            assertEquals(NOT_FOUND, error.getStatus());
-            assertEquals("no deployment with context root [unknown]", error.getMessage());
+            assertStatusDetails(NOT_FOUND, "no deployment with context root [unknown]", e);
         }
     }
 
