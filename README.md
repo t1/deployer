@@ -10,6 +10,7 @@ And there's a file `${jboss.server.config.dir}/deployments.properties` that (aft
 
 # TODO
 
+* optional field for deployment name when deploying new artifact
 * deploy new artifacts by searching in artifactory
 * pre-deploy scanner
 	* data source scanner/config
