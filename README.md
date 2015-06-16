@@ -8,18 +8,6 @@ Also supports a REST API, just look at the URIs and request them with content ty
 
 And there's a file `${jboss.server.config.dir}/deployments.properties` that (after the first (re/un/)deploy) contains a list of all deployed applications and their versions. Changing the version in this file will trigger a redeploy; deleting a line triggers an undeploy.
 
-# TODO
-
-* optional field for deployment name when deploying new artifact
-* deploy new artifacts by searching in artifactory
-* pre-deploy scanner
-	* data source scanner/config
-	* queue scanner/config
-	* cdi-config scanner
-* cluster support
-* Puppet support
-* Use MessageBodyReaders from the container (for Jersey, maybe like [this](https://jersey.java.net/documentation/latest/message-body-workers.html#d0e7606)?)
-
 # Configuration
 
 ## Artifactory
