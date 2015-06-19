@@ -107,15 +107,21 @@ public class WebJarsResource {
     }
 
     private String versionOf(String artifact) {
-        URL resource = classLoader().getResource("/META-INF/maven/org.webjars/" + artifact + "/pom.properties");
-        if (resource == null)
+        String path = "/META-INF/maven/org.webjars/" + artifact + "/pom.properties";
+        URL resource = classLoader().getResource(path);
+        if (resource == null) {
+            log.debug("no pom properties found in {}", path);
             return null;
+        }
         try (InputStream is = resource.openStream()) {
             Properties properties = new Properties();
             properties.load(is);
             assert properties.getProperty("artifactId").equals(artifact);
-            return properties.getProperty("version");
+            String version = properties.getProperty("version");
+            log.debug("found version {} for {}", version, path);
+            return version;
         } catch (IOException e) {
+            log.debug("exception while loading {}: {}", path, e);
             return null;
         }
     }
