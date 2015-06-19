@@ -90,8 +90,10 @@ public class WebJarsResource {
 
     private StaticFilesLoader getLoaderFor(String artifact) {
         StaticFilesLoader loader = loaders.get(artifact);
-        if (loader == null)
+        if (loader == null) {
             loader = createLoaderFor(artifact);
+            loaders.put(artifact, loader);
+        }
         return loader;
     }
 
@@ -118,7 +120,7 @@ public class WebJarsResource {
         }
     }
 
-    public ClassLoader classLoader() {
+    private ClassLoader classLoader() {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         if (loader == null)
             loader = getClass().getClassLoader();
