@@ -32,6 +32,7 @@ public class DeploymentContainer extends AbstractContainer {
                 DeploymentPlan plan = buildPlan(deploymentManager.newDeploymentPlan()).build();
 
                 log.debug("start executing {}", getClass().getSimpleName());
+                logDeployPlan(plan);
                 Future<ServerDeploymentPlanResult> future = deploymentManager.execute(plan);
                 log.debug("wait for {}", getClass().getSimpleName());
                 ServerDeploymentPlanResult result = future.get(30, SECONDS);
@@ -44,6 +45,15 @@ public class DeploymentContainer extends AbstractContainer {
         }
 
         protected abstract DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan);
+
+        private void logDeployPlan(DeploymentPlan plan) {
+            if (!log.isTraceEnabled())
+                return;
+            for (DeploymentAction action : plan.getDeploymentActions()) {
+                log.trace("- planned action: {} {} -> {}", action.getType(), action.getDeploymentUnitUniqueName(),
+                        action.getReplacedDeploymentUnitUniqueName());
+            }
+        }
 
         private void checkOutcome(DeploymentPlan plan, ServerDeploymentPlanResult result) {
             boolean failed = false;

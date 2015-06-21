@@ -39,13 +39,13 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     private Deployment deployment;
     private List<VersionInfo> availableVersions;
 
-    @Logged(level = OFF)
+    @Logged(level = TRACE)
     public DeploymentResource deployment(Deployment deployment) {
         this.deployment = deployment;
         return this;
     }
 
-    @Logged(level = OFF)
+    @Logged(level = TRACE)
     public Deployment deployment() {
         return deployment;
     }
@@ -118,7 +118,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
 
     private Deployment deploy(CheckSum checkSum, DeploymentName nameOverride) {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
-        if (nameOverride != null) {
+        if (hasNameOverride(nameOverride)) {
             log.info("overwrite deployment name {} with {}", newDeployment.getName(), nameOverride);
             newDeployment = newDeployment.withName(nameOverride);
         }
@@ -128,6 +128,10 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
             throw new RuntimeException(e);
         }
         return newDeployment;
+    }
+
+    private boolean hasNameOverride(DeploymentName name) {
+        return name != null && name.getValue() != null && !name.getValue().isEmpty();
     }
 
     private void redeploy(CheckSum checkSum) {

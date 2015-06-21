@@ -92,8 +92,7 @@ public class Deployments {
                 deployment = tentativeDeploymentFor(contextRoot);
             }
         }
-        withVersion(deployment);
-        return deploymentResource(deployment);
+        return deploymentResource(withVersion(deployment));
     }
 
     private Deployment tentativeDeploymentFor(ContextRoot contextRoot) {
