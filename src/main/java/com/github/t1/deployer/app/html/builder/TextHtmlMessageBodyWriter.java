@@ -27,7 +27,7 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
         boolean textHtml = isTextHtml(mediaType);
         Class<?> writerType = getType();
         boolean assignable = writerType.isAssignableFrom(type);
-        log.debug("isWriteable: type {}, genericType {}, mediaType {}, writerType {} -> html: {}, assignable: {}",
+        log.trace("isWriteable: type {}, genericType {}, mediaType {}, writerType {} -> html: {}, assignable: {}",
                 type, genericType, mediaType, writerType, textHtml, assignable);
         return textHtml && assignable;
     }

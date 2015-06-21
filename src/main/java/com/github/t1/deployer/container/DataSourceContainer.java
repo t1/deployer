@@ -79,12 +79,6 @@ public class DataSourceContainer extends AbstractContainer {
         }
     }
 
-    private boolean isNotFoundMessage(ModelNode result) {
-        String failureDescription = result.get("failure-description").toString();
-        return failureDescription.contains("JBAS014807: Management resource")
-                && failureDescription.contains("not found");
-    }
-
     public void add(DataSourceConfig dataSource) {
         ModelNode result = execute(addDataSource(dataSource));
         checkOutcome(result);

@@ -47,4 +47,12 @@ public class StatusDetails {
     public String toString() {
         return status.getStatusCode() + " " + status.getReasonPhrase() + " [" + getId() + "] " + type;
     }
+
+    public String toJson() {
+        return "{" //
+                + "\"id\":\"" + id + "\"," //
+                + "\"status\":\"" + status + "\"," //
+                + "\"type\":\"" + type + "\"" //
+                + "}";
+    }
 }

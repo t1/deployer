@@ -44,6 +44,17 @@ abstract class AbstractContainer {
         return result;
     }
 
+    protected boolean isNotFoundMessage(ModelNode result) {
+        String message = result.get("failure-description").toString();
+        boolean jboss7start = message.startsWith("\"JBAS014807: Management resource");
+        boolean jboss8start = message.startsWith("\"WFLYCTL0216: Management resource");
+        boolean notFoundEnd = message.endsWith(" not found\"");
+        boolean isNotFound = (jboss7start || jboss8start) && notFoundEnd;
+        log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]", //
+                jboss7start, jboss8start, notFoundEnd, isNotFound, message);
+        return isNotFound;
+    }
+
     protected void checkOutcome(ModelNode result) {
         String outcome = result.get("outcome").asString();
         if (!"success".equals(outcome)) {
