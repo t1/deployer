@@ -187,7 +187,7 @@ public class DeploymentContainer extends AbstractContainer {
         ContextRoot contextRoot = getContextRoot(cliDeployment);
         CheckSum hash = CheckSum.of(hash(cliDeployment));
         log.debug("{} -> {} -> {}", name, contextRoot, hash);
-        return new Deployment(name, contextRoot, hash);
+        return new Deployment(name, contextRoot, hash, null);
     }
 
     private byte[] hash(ModelNode cliDeployment) {

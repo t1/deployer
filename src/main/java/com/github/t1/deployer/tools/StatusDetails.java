@@ -8,11 +8,12 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 
-import lombok.Value;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Value
+@Data
+@NoArgsConstructor
 public class StatusDetails {
     public static WebApplicationException badRequest(String message) {
         return webException(BAD_REQUEST, message);
@@ -28,9 +29,15 @@ public class StatusDetails {
         return new WebApplicationException(error.toResponse());
     }
 
-    UUID id = UUID.randomUUID();
+    private final UUID id = UUID.randomUUID();
+
     Status status;
     String type;
+
+    public StatusDetails(Status status, String type) {
+        this.status = status;
+        this.type = type;
+    }
 
     public Response toResponse() {
         return Response.status(status).entity(this).build();

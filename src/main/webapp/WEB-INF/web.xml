@@ -17,4 +17,8 @@
             <url-pattern>/*</url-pattern>
         </web-resource-collection>
     </security-constraint>
+    <context-param>
+        <param-name>resteasy.scan</param-name>
+        <param-value>true</param-value>
+    </context-param>
 </web-app>

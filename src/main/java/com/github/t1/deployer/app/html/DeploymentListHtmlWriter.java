@@ -11,7 +11,7 @@ import java.util.*;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import com.github.t1.deployer.app.Deployments;
+import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Table.Cell;
 import com.github.t1.deployer.app.html.builder.Table.TableBuilder;

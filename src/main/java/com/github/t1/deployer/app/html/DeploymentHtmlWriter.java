@@ -112,7 +112,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
         }
     };
 
-    private static Component UNDEPLOY = div().a("style", "float: right").body(compound( //
+    private static Component UNDEPLOY = div().attr("style", "float: right").body(compound( //
             form("undeploy").action(DEPLOYMENT_LINK) //
                     .input(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
                         @Override
@@ -149,7 +149,8 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                         }
                     }) //
                     .body(hiddenAction("deploy")) //
-                    .body(input("checksum").placeholder("Checksum").required().autofocus()), //
+                    .body(input("checksum").placeholder("Checksum").required().autofocus()) //
+                    .body(input("name").placeholder("Deployment Name (optional)")), //
             buttonGroup() //
                     .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Deploy"))) //
             )).build();

@@ -10,7 +10,7 @@ import org.junit.*;
 
 import com.github.t1.deployer.app.Deployments;
 import com.github.t1.deployer.app.file.DeploymentListFile;
-import com.github.t1.deployer.app.html.Index;
+import com.github.t1.deployer.app.html.DeployerPage;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
@@ -53,7 +53,7 @@ public class PackageDependenciesTest {
 
     private void setupDependencies() {
         Package app = packageOf(Deployments.class);
-        Package html = packageOf(Index.class);
+        Package html = packageOf(DeployerPage.class);
         Package builder = packageOf(com.github.t1.deployer.app.html.builder.Page.class);
         Package file = packageOf(DeploymentListFile.class);
         Package container = packageOf(LoggerContainer.class);
@@ -61,9 +61,10 @@ public class PackageDependenciesTest {
         Package repository = packageOf(Repository.class);
         Package tools = packageOf(Config.class);
 
-        Package credentials = packageOf(org.apache.http.auth.Credentials.class);
+        Package httpAuth = packageOf(org.apache.http.auth.Credentials.class);
+        Package swagger = packageOf(io.swagger.jaxrs.config.BeanConfig.class);
 
-        app.dependsUpon(model, container, repository, tools, file);
+        app.dependsUpon(model, container, repository, tools, file, swagger);
         html.dependsUpon(model, app, builder); // app for resource paths
         file.dependsUpon(model, repository, container);
 
@@ -73,7 +74,7 @@ public class PackageDependenciesTest {
                 packageOf(org.jboss.as.controller.client.ModelControllerClient.class),
                 packageOf(org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class),
                 packageOf(org.jboss.dmr.ModelNode.class));
-        repository.dependsUpon(model, credentials, packageOf("com.github.t1.rest"));
+        repository.dependsUpon(model, httpAuth, packageOf("com.github.t1.rest"));
 
         tools.dependsUpon( //
                 packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient

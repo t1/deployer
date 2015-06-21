@@ -53,15 +53,15 @@ public class Tag extends Component {
             return this;
         }
 
-        public TagBuilder a(String key, String value) {
-            return a(key, text(value));
+        public TagBuilder attr(String key, String value) {
+            return attr(key, text(value));
         }
 
-        public TagBuilder a(String key) {
-            return a(key, (Component) null);
+        public TagBuilder attr(String key) {
+            return attr(key, (Component) null);
         }
 
-        public TagBuilder a(String key, Component value) {
+        public TagBuilder attr(String key, Component value) {
             attribute(new Attribute(key, value));
             return this;
         }
@@ -71,7 +71,7 @@ public class Tag extends Component {
         }
 
         public TagBuilder id(Component id) {
-            return a("id", id);
+            return attr("id", id);
         }
 
         public TagBuilder classes(String... classes) {
@@ -93,12 +93,12 @@ public class Tag extends Component {
                 }
             }
             compound.component(classes);
-            a("class", compound.build());
+            attr("class", compound.build());
             return this;
         }
 
         public TagBuilder style(String style) {
-            return a("style", style);
+            return attr("style", style);
         }
 
         public TagBuilder body(ComponentBuilder body) {

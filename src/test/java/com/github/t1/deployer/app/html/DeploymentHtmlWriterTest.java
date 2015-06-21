@@ -45,7 +45,7 @@ public class DeploymentHtmlWriterTest extends AbstractHtmlWriterTest<DeploymentR
 
     @Test
     public void shouldWriteExistingDeploymentForm() throws Exception {
-        given(new Deployment(NAME, CONTEXT_ROOT, CHECK_SUM).version(new Version("2.0")));
+        given(new Deployment(NAME, CONTEXT_ROOT, CHECK_SUM, new Version("2.0")));
 
         String entity = write(resource);
 

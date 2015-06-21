@@ -69,12 +69,12 @@ public class Table extends DelegateComponent {
             }
 
             public CellBuilder title(String title) {
-                tag.a("title", title);
+                tag.attr("title", title);
                 return this;
             }
 
             public CellBuilder colspan(int i) {
-                tag.a("colspan", Integer.toString(i));
+                tag.attr("colspan", Integer.toString(i));
                 return this;
             }
 

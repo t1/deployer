@@ -40,7 +40,7 @@ public class Input extends DelegateComponent {
 
     public static class InputBuilder extends ComponentBuilder {
         private TagBuilder label;
-        private final TagBuilder input = tag("input").a("type", new AppendingComponent<String>() {
+        private final TagBuilder input = tag("input").attr("type", new AppendingComponent<String>() {
             @Override
             protected String contentFrom(BuildContext out) {
                 return type;
@@ -67,7 +67,7 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder action(Component action) {
-            input.a("name", "action").a("value", action);
+            input.attr("name", "action").attr("value", action);
             return this;
         }
 
@@ -85,12 +85,12 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder name(Component name) {
-            input.a("name", name);
+            input.attr("name", name);
             return this;
         }
 
         public InputBuilder placeholder(String placeholder) {
-            input.a("placeholder", placeholder);
+            input.attr("placeholder", placeholder);
             return this;
         }
 
@@ -119,7 +119,7 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder value(Component value) {
-            input.a("value", value);
+            input.attr("value", value);
             return this;
         }
 
@@ -141,17 +141,17 @@ public class Input extends DelegateComponent {
         @Override
         public Input build() {
             if (idAndName != null)
-                input.a("name", idAndName).id(idAndName);
+                input.attr("name", idAndName).id(idAndName);
             if (required)
-                input.a("required");
+                input.attr("required");
             if (autofocus)
-                input.a("autofocus");
+                input.attr("autofocus");
             if (label == null)
                 return new Input("hidden".equals(type) //
                         ? input.build() //
                         : div().classes("form-group").body(input.build()).build(), type);
             if (idAndName != null)
-                label.a("for", idAndName);
+                label.attr("for", idAndName);
             TagBuilder input = this.input;
             if (horizontal) {
                 label.classes("col-sm-1");

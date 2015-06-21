@@ -38,7 +38,7 @@ public class Button extends DelegateComponent {
         }
 
         public ButtonBuilder forForm(Component formId) {
-            tag.a("form", formId).a("type", "submit");
+            tag.attr("form", formId).attr("type", "submit");
             return this;
         }
 

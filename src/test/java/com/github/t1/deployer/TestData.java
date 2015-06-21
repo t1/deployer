@@ -38,10 +38,7 @@ public class TestData {
     }
 
     public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
-        Deployment deployment =
-                new Deployment(nameFor(contextRoot), contextRoot, fakeChecksumFor(contextRoot, version));
-        deployment.setVersion(version);
-        return deployment;
+        return new Deployment(nameFor(contextRoot), contextRoot, fakeChecksumFor(contextRoot, version), version);
     }
 
     public static Deployment deploymentFrom(InputStream inputStream) {
@@ -54,7 +51,7 @@ public class TestData {
         Version version = new Version(parts[1]);
         DeploymentName name = nameFor(contextRoot);
         CheckSum checkSum = fakeChecksumFor(contextRoot, version);
-        return new Deployment(name, contextRoot, checkSum).version(version);
+        return new Deployment(name, contextRoot, checkSum, version);
     }
 
     public static DeploymentName nameFor(ContextRoot contextRoot) {

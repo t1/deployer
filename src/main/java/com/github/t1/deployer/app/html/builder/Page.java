@@ -22,9 +22,9 @@ public class Page extends Component {
 
     public static class PageBuilder {
         private final List<Tag> metas = asList( //
-                tag("meta").a("charset", "utf-8").build(), //
-                tag("meta").a("http-equiv", "X-UA-Compatible").a("content", "IE=edge").build(), //
-                tag("meta").a("name", "viewport").a("content", "width=device-width, initial-scale=1").build() //
+                tag("meta").attr("charset", "utf-8").build(), //
+                tag("meta").attr("http-equiv", "X-UA-Compatible").attr("content", "IE=edge").build(), //
+                tag("meta").attr("name", "viewport").attr("content", "width=device-width, initial-scale=1").build() //
                 );
 
         private final List<Component> styleSheets = asList( //

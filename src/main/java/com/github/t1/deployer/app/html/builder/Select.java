@@ -26,7 +26,7 @@ public class Select extends DelegateComponent {
 
             public OptionBuilder selected(boolean selected) {
                 if (selected)
-                    tag.a("selected");
+                    tag.attr("selected");
                 return this;
             }
 
@@ -50,17 +50,17 @@ public class Select extends DelegateComponent {
         private final TagBuilder tag = tag("select").classes("form-control", "input-sm").multiline();
 
         public SelectBuilder name(String name) {
-            tag.a("name", name);
+            tag.attr("name", name);
             return this;
         }
 
         public SelectBuilder type(String type) {
-            tag.a("type", type);
+            tag.attr("type", type);
             return this;
         }
 
         public SelectBuilder autosubmit() {
-            tag.a("onchange", "this.form.submit()");
+            tag.attr("onchange", "this.form.submit()");
             return this;
         }
 

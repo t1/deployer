@@ -13,6 +13,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <swagger.version>1.5.0</swagger.version>
+        <jackson.version>2.5.1</jackson.version>
     </properties>
 
     <scm>
@@ -113,6 +116,31 @@
                 <artifactId>jersey-common</artifactId>
                 <version>2.17</version>
             </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-joda</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.jaxrs</groupId>
+                <artifactId>jackson-jaxrs-json-provider</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -171,6 +199,11 @@
             <artifactId>httpclient</artifactId>
             <version>4.4.1</version>
         </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-jaxrs</artifactId>
+            <version>1.5.0</version>
+        </dependency>
 
         <!-- "overlay" scope -->
         <dependency>
@@ -186,7 +219,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- compile scope -->
+        <!-- webjars -->
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>bootstrap</artifactId>
@@ -194,16 +227,14 @@
         </dependency>
         <dependency>
             <groupId>org.webjars</groupId>
+            <artifactId>swagger-ui</artifactId>
+            <version>2.1.8-M1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
             <artifactId>jquery</artifactId>
             <version>2.1.4</version>
         </dependency>
-<!--
-  <dependency>
-    <groupId>org.webjars</groupId>
-    <artifactId>backbonejs</artifactId>
-    <version>1.1.2-4</version>
-</dependency>
- -->
 
         <!-- test scope -->
         <dependency>

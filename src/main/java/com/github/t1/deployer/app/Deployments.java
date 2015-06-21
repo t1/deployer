@@ -4,7 +4,7 @@ import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.log.LogLevel.*;
 
 import java.net.URI;
-import java.util.List;
+import java.util.*;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
@@ -58,17 +58,17 @@ public class Deployments {
 
     @javax.enterprise.inject.Produces
     List<Deployment> getAllDeploymentsWithVersions() {
-        List<Deployment> deployments = container.getAllDeployments();
-        for (Deployment deployment : deployments) {
-            loadVersion(deployment);
+        List<Deployment> deployments = new ArrayList<>();
+        for (Deployment deployment : container.getAllDeployments()) {
+            deployments.add(withVersion(deployment));
         }
         return deployments;
     }
 
-    private void loadVersion(Deployment deployment) {
+    private Deployment withVersion(Deployment deployment) {
         CheckSum checkSum = deployment.getCheckSum();
         Deployment byChecksum = isEmpty(checkSum) ? null : repository.getByChecksum(checkSum);
-        deployment.setVersion((byChecksum == null) ? Version.UNKNOWN : byChecksum.getVersion());
+        return deployment.withVersion((byChecksum == null) ? Version.UNKNOWN : byChecksum.getVersion());
     }
 
     private boolean isEmpty(CheckSum checkSum) {
@@ -92,12 +92,12 @@ public class Deployments {
                 deployment = tentativeDeploymentFor(contextRoot);
             }
         }
-        loadVersion(deployment);
+        withVersion(deployment);
         return deploymentResource(deployment);
     }
 
     private Deployment tentativeDeploymentFor(ContextRoot contextRoot) {
-        return new Deployment(null, contextRoot, null);
+        return new Deployment(null, contextRoot, null, null);
     }
 
     private DeploymentResource deploymentResource(Deployment deployment) {

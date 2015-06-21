@@ -16,7 +16,7 @@ import java.util.List;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import com.github.t1.deployer.app.DataSources;
+import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.HtmlList.HtmlListBuilder;
@@ -50,7 +50,7 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                     String formId = "delete-" + i;
                     return compound( //
                             span().body(link(uri).body(text(dataSource.getName()))), //
-                            span().a("style", "float: right") //
+                            span().attr("style", "float: right") //
                                     .body(deleteForm(uri, formId)) //
                                     .body(buttonGroup().button(remove(formId, XS))) //
                     );

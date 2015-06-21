@@ -168,12 +168,10 @@ public class DeploymentListFile {
             ContextRoot contextRoot = deployment.getContextRoot();
             if (UNDEFINED_CONTEXT_ROOT.equals(contextRoot))
                 continue;
-            Deployment withVersion = repository.getByChecksum(deployment.getCheckSum());
-            if (withVersion == null)
+            Deployment versioned = repository.getByChecksum(deployment.getCheckSum());
+            if (versioned == null)
                 continue;
-            Version version = withVersion.getVersion();
-            deployment.setVersion(version);
-            out.add(deployment);
+            out.add(deployment.withVersion(versioned.getVersion()));
         }
         return out;
     }

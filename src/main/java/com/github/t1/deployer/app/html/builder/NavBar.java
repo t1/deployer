@@ -22,26 +22,36 @@ public class NavBar extends Component {
 
     public static class NavBarBuilder extends ComponentBuilder {
         public class NavBarItemBuilder {
-            private final TagBuilder tag = tag("a");
+            private final TagBuilder link = tag("a");
             private final List<Component> classes = new ArrayList<>();
-
-            public NavBarItemBuilder href(Component href) {
-                this.tag.a("href", href);
-                return this;
-            }
-
-            public NavBarItemBuilder title(Component title) {
-                this.tag.body(title);
-                return this;
-            }
 
             public NavBarItemBuilder classes(Component... components) {
                 this.classes.addAll(asList(components));
                 return this;
             }
 
+            public NavBarItemBuilder href(Component href) {
+                this.link.attr("href", href);
+                return this;
+            }
+
+            public NavBarItemBuilder style(String style) {
+                this.link.attr("style", style);
+                return this;
+            }
+
+            public NavBarItemBuilder title(Component title) {
+                this.link.body(title);
+                return this;
+            }
+
+            public NavBarItemBuilder img(String img) {
+                this.link.multiline().body(Tags.img(img));
+                return this;
+            }
+
             public void build() {
-                navbar.li(tag.build(), classArray()).build();
+                navbar.li(link.build(), classArray()).build();
             }
 
             private Component[] classArray() {
@@ -54,8 +64,8 @@ public class NavBar extends Component {
         private final TagBuilder header = div().classes("navbar-header");
         private final HtmlListBuilder navbar = ul().classes("nav", "navbar-nav", "navbar-right");
 
-        public NavBarBuilder attribute(String key, String value) {
-            tag.a(key, value);
+        public NavBarBuilder attr(String key, String value) {
+            tag.attr(key, value);
             return this;
         }
 

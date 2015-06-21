@@ -27,7 +27,7 @@ public class LoginFilter implements Filter {
             throws IOException, ServletException {
         String authType = getAuthType(request);
         if (request.getUserPrincipal() == null && authType != null) {
-            log.info("attempt {} login", authType);
+            log.info("attempt {} login for {} {}", authType, request.getMethod(), request.getRequestURI());
             boolean authenticated = request.authenticate(response);
             if (!authenticated) {
                 log.info("authentication not finished");

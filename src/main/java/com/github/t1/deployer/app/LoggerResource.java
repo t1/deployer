@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.log.LogLevel.*;
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -10,6 +11,7 @@ import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.log.*;
 
+@Api
 @Logged(level = INFO)
 public class LoggerResource {
     private LoggerConfig logger;

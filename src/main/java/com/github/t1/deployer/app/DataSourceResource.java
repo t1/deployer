@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.log.LogLevel.*;
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -10,6 +11,7 @@ import com.github.t1.deployer.container.DataSourceContainer;
 import com.github.t1.deployer.model.DataSourceConfig;
 import com.github.t1.log.Logged;
 
+@Api
 @Logged(level = INFO)
 public class DataSourceResource {
     private DataSourceConfig dataSource;

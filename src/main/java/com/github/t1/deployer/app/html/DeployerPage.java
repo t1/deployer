@@ -12,6 +12,7 @@ import java.util.*;
 
 import lombok.*;
 
+import com.github.t1.deployer.app.Navigation;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
@@ -94,9 +95,14 @@ public class DeployerPage extends Component {
 
         private NavBarBuilder navigation() {
             NavBarBuilder navbar = navBar().brand("Deployer");
+            navbar.item() //
+                    .style("padding: 10px;") //
+                    .href(text("http://localhost:8080/deployer/swagger-ui/index.html?url=/deployer/swagger.json")) // FIXME
+                    .img("http://localhost:8080/deployer/swagger-ui/images/logo_small.png") // FIXME
+                    .build();
             for (final Navigation navigation : Navigation.values()) {
                 navbar.item() //
-                        .href(navigation.link()) //
+                        .href(NavigationLink.link(navigation)) //
                         .title(text(navigation.title())) //
                         .classes(new Component() {
                             @Override

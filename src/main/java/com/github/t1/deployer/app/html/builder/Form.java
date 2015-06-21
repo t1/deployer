@@ -26,7 +26,7 @@ public class Form extends DelegateComponent {
     }
 
     public static class FormBuilder extends ComponentBuilder {
-        private final TagBuilder tag = tag("form").a("method", "POST");
+        private final TagBuilder tag = tag("form").attr("method", "POST");
         private boolean horizontal;
 
         public FormBuilder id(Component id) {
@@ -41,12 +41,12 @@ public class Form extends DelegateComponent {
         }
 
         public FormBuilder action(URI action) {
-            tag.a("action", action.toString());
+            tag.attr("action", action.toString());
             return this;
         }
 
         public FormBuilder action(Component action) {
-            tag.a("action", action);
+            tag.attr("action", action);
             return this;
         }
 

@@ -41,19 +41,19 @@ public class Tags {
     }
 
     public static TagBuilder link(Component component) {
-        return tag("a").a("href", component);
+        return tag("a").attr("href", component);
     }
 
     public static TagBuilder link(URI uri) {
-        return tag("a").a("href", uri.toString());
+        return tag("a").attr("href", uri.toString());
     }
 
     public static Component styleSheet(String href) {
-        return tag("link").a("href", baseUri(href)).a("rel", "stylesheet").build();
+        return tag("link").attr("href", baseUri(href)).attr("rel", "stylesheet").build();
     }
 
     public static Component script(String href) {
-        return tag("script").a("src", baseUri(href)).build();
+        return tag("script").attr("src", baseUri(href)).build();
     }
 
     public static Component baseUri(final String href) {
@@ -71,5 +71,9 @@ public class Tags {
 
     public static TagBuilder footer() {
         return tag("footer");
+    }
+
+    public static TagBuilder img(String src) {
+        return tag("img").attr("src", src);
     }
 }

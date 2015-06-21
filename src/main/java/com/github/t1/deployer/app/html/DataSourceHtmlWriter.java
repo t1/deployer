@@ -1,8 +1,8 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.Navigation.*;
 import static com.github.t1.deployer.app.html.DeployerComponents.*;
 import static com.github.t1.deployer.app.html.DeployerPage.*;
-import static com.github.t1.deployer.app.html.Navigation.*;
 import static com.github.t1.deployer.app.html.builder.Button.*;
 import static com.github.t1.deployer.app.html.builder.ButtonGroup.*;
 import static com.github.t1.deployer.app.html.builder.Compound.*;
@@ -17,7 +17,7 @@ import java.net.URI;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import com.github.t1.deployer.app.DataSources;
+import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Button.ButtonBuilder;
@@ -63,7 +63,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
     private static final Compound NEW_DATA_SOURCE_FORM = //
             compound( //
                     p("Enter the name of a new data source to configure"), //
-                    withFields(false, form(MAIN_FORM_ID).horizontal().action(DATA_SOURCES.link())), //
+                    withFields(false, form(MAIN_FORM_ID).horizontal().action(NavigationLink.link(DATA_SOURCES))), //
                     buttonGroup().button(submitButton("Add")) //
             ).build();
 

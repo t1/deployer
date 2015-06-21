@@ -3,6 +3,7 @@ package com.github.t1.deployer.app;
 import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.deployer.tools.StatusDetails.*;
 import static com.github.t1.log.LogLevel.*;
+import io.swagger.annotations.Api;
 
 import java.io.*;
 import java.util.*;
@@ -12,12 +13,16 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import javax.xml.bind.annotation.*;
 
+import lombok.extern.slf4j.Slf4j;
+
 import com.fasterxml.jackson.annotation.*;
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 
+@Api
+@Slf4j
 @Logged(level = INFO)
 @XmlRootElement(name = "deployment")
 @XmlAccessorType(XmlAccessType.NONE)
@@ -60,6 +65,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     public Response post(@Context UriInfo uriInfo, //
             @FormParam("action") String action, //
             @FormParam("contextRoot") ContextRoot contextRoot, //
+            @FormParam("name") DeploymentName name, //
             @FormParam("checksum") CheckSum checkSum //
     ) {
         if (action == null)
@@ -69,7 +75,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
                 if (contextRoot != null || getContextRoot() != null)
                     throw badRequest("context root to deploy must be null, not " + contextRoot + " and "
                             + getContextRoot());
-                Deployment newDeployment = deploy(checkSum);
+                Deployment newDeployment = deploy(checkSum, name);
                 return Response.seeOther(Deployments.path(uriInfo, newDeployment.getContextRoot())).build();
             case "redeploy":
                 if (getContextRoot() != null)
@@ -96,7 +102,7 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
             redeploy(checkSum);
             return Response.noContent().build();
         } else {
-            deploy(checkSum);
+            deploy(checkSum, entity.getName());
             return created(uriInfo);
         }
     }
@@ -110,8 +116,12 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
             throw badRequest("context roots don't match: " + contextRoot + " is not " + getContextRoot());
     }
 
-    private Deployment deploy(CheckSum checkSum) {
+    private Deployment deploy(CheckSum checkSum, DeploymentName nameOverride) {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
+        if (nameOverride != null) {
+            log.info("overwrite deployment name {} with {}", newDeployment.getName(), nameOverride);
+            newDeployment = newDeployment.withName(nameOverride);
+        }
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
             container.deploy(newDeployment, inputStream);
         } catch (IOException e) {
