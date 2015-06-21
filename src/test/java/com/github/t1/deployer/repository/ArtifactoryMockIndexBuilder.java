@@ -25,7 +25,7 @@ public class ArtifactoryMockIndexBuilder {
     private final class BuildChecksumsFileVisitor extends SimpleFileVisitor<java.nio.file.Path> {
         private final java.nio.file.Path root;
         @Getter
-        private final int count = 0;
+        private int count = 0;
 
         @Override
         public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attrs) {
@@ -33,8 +33,9 @@ public class ArtifactoryMockIndexBuilder {
                 return FileVisitResult.CONTINUE;
             CheckSum checkSum = CheckSum.sha1(path);
             java.nio.file.Path relativePath = root.relativize(path);
-            // System.out.println(relativePath + " (" + count++ + ") -> " + checkSum);
+            // System.out.println(relativePath + " (" + count + ") -> " + checkSum);
             INDEX.put(checkSum, relativePath);
+            ++count;
             return FileVisitResult.CONTINUE;
         }
 
@@ -44,7 +45,7 @@ public class ArtifactoryMockIndexBuilder {
     }
 
     @SneakyThrows(IOException.class)
-    private void run() {
+    public void run() {
         System.out.println("build local maven repository checksum index");
         BuildChecksumsFileVisitor visitor = new BuildChecksumsFileVisitor(MAVEN_REPOSITORY);
         Instant start = Instant.now();

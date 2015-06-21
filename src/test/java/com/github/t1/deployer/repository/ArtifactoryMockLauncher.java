@@ -12,7 +12,7 @@ import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.console.*;
 import org.jboss.aesh.console.command.*;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
-import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
+import org.jboss.aesh.console.command.registry.*;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +76,11 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
         new AeshConsoleBuilder() //
                 .settings(new SettingsBuilder().ansi(false).create()) //
                 .prompt(new Prompt("> ")) //
-                .commandRegistry(new AeshCommandRegistryBuilder().command(new ExitCommand()).create()) //
+                .commandRegistry(new AeshCommandRegistryBuilder() //
+                        .command(new ExitCommand()) //
+                        .command(new IndexCommand()) //
+                        .command(new HelpCommand()) //
+                        .create()) //
                 .create() //
                 .start();
     }
@@ -91,6 +95,27 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
                 throw new RuntimeException(e);
             }
             invocation.stop();
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "index", description = "rebuilds the file ~/.m2/checksum.index")
+    public class IndexCommand implements Command<CommandInvocation> {
+        @Override
+        public CommandResult execute(CommandInvocation invocation) {
+            new ArtifactoryMockIndexBuilder().run();
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "help", description = "shows all available commands")
+    public class HelpCommand implements Command<CommandInvocation> {
+        @Override
+        public CommandResult execute(CommandInvocation invocation) {
+            CommandRegistry registry = invocation.getCommandRegistry();
+            for (String commandName : registry.getAllCommandNames()) {
+                System.out.print(commandName + ": " + invocation.getHelpInfo(commandName).replace("Usage: ", ""));
+            }
             return CommandResult.SUCCESS;
         }
     }
