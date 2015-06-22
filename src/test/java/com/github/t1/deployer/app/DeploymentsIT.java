@@ -293,7 +293,7 @@ public class DeploymentsIT {
     @Test
     public void shouldGetDeploymentsForm() {
         Response response = deployer() //
-                .path("deployments").path(NEW_DEPLOYMENT_NAME) //
+                .path("deployments").path(NEW_DEPLOYMENT_PATH) //
                 .request(TEXT_HTML) //
                 .get();
 

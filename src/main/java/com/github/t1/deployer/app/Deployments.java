@@ -38,7 +38,7 @@ public class Deployments {
     }
 
     public static URI newDeployment(UriInfo uriInfo) {
-        return baseBuilder(uriInfo).path(NEW_DEPLOYMENT_NAME).build();
+        return baseBuilder(uriInfo).path(NEW_DEPLOYMENT_PATH).build();
     }
 
     @Inject
@@ -76,9 +76,9 @@ public class Deployments {
     }
 
     @GET
-    @Path(NEW_DEPLOYMENT_NAME)
-    public DeploymentResource newDeployment() {
-        return deploymentResource(NULL_DEPLOYMENT);
+    @Path(NEW_DEPLOYMENT_PATH)
+    public Deployment newDeployment() {
+        return NEW_DEPLOYMENT;
     }
 
     @Path("")
@@ -96,7 +96,7 @@ public class Deployments {
     }
 
     private Deployment tentativeDeploymentFor(ContextRoot contextRoot) {
-        return new Deployment(null, contextRoot, null, null);
+        return new Deployment(contextRoot);
     }
 
     private DeploymentResource deploymentResource(Deployment deployment) {

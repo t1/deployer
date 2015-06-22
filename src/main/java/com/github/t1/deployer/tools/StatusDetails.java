@@ -4,6 +4,7 @@ import static javax.ws.rs.core.Response.Status.*;
 
 import java.util.UUID;
 
+import javax.ejb.ApplicationException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
@@ -15,18 +16,28 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @NoArgsConstructor
 public class StatusDetails {
-    public static WebApplicationException badRequest(String message) {
+    /** The ClientErrorException requires JAX-RS 2.0 and is not annotated as ApplicationException */
+    @ApplicationException
+    public static class WebException extends WebApplicationException {
+        private static final long serialVersionUID = 1L;
+
+        public WebException(Response response) {
+            super(response);
+        }
+    }
+
+    public static WebException badRequest(String message) {
         return webException(BAD_REQUEST, message);
     }
 
-    public static WebApplicationException notFound(String message) {
+    public static WebException notFound(String message) {
         return webException(NOT_FOUND, message);
     }
 
-    public static WebApplicationException webException(Status status, String message) {
+    public static WebException webException(Status status, String message) {
         StatusDetails error = new StatusDetails(status, message);
         log.info("{}", error);
-        return new WebApplicationException(error.toResponse());
+        return new WebException(error.toResponse());
     }
 
     private final UUID id = UUID.randomUUID();

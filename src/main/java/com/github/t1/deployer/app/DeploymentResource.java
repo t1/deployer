@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app;
 
-import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.deployer.tools.StatusDetails.*;
 import static com.github.t1.log.LogLevel.*;
 import io.swagger.annotations.Api;
@@ -37,7 +36,6 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     UriInfo uriInfo;
 
     private Deployment deployment;
-    private List<VersionInfo> availableVersions;
 
     @Logged(level = TRACE)
     public DeploymentResource deployment(Deployment deployment) {
@@ -45,20 +43,17 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
         return this;
     }
 
+    @GET
     @Logged(level = TRACE)
     public Deployment deployment() {
+        getAvailableVersions();
         return deployment;
     }
 
     @JsonIgnore
     @Logged(level = TRACE)
     public boolean isNew() {
-        return getName() == null || NEW_DEPLOYMENT_NAME.equals(getName().getValue());
-    }
-
-    @GET
-    public DeploymentResource self() {
-        return this;
+        return deployment.isNew();
     }
 
     @POST
@@ -204,9 +199,11 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     @XmlElement(name = "availableVersion")
     @XmlElementWrapper
     public List<VersionInfo> getAvailableVersions() {
-        if (availableVersions == null)
-            availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
-        return availableVersions;
+        if (deployment.getAvailableVersions() == null) {
+            List<VersionInfo> availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
+            deployment = deployment.withAvailableVersions(availableVersions);
+        }
+        return deployment.getAvailableVersions();
     }
 
     @Override
@@ -218,6 +215,6 @@ public class DeploymentResource implements Comparable<DeploymentResource> {
     @Override
     @Logged(level = OFF)
     public String toString() {
-        return "Resource:" + deployment + ((availableVersions == null) ? "" : availableVersions);
+        return "Resource:" + deployment;
     }
 }

@@ -211,7 +211,7 @@ public class DeploymentContainer extends AbstractContainer {
 
     private ContextRoot getContextRoot(ModelNode cliDeployment) {
         ModelNode subsystems = cliDeployment.get("subsystem");
-        // JBoss 8 uses 'undertow' while JBoss 7 uses 'web'
+        // JBoss 8+ uses 'undertow' while JBoss 7 uses 'web'
         ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
         ModelNode contextRoot = web.get("context-root");
         return toContextRoot(contextRoot);

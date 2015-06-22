@@ -29,13 +29,13 @@ import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 
 @Provider
-public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentResource> {
+public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> {
     private static DeployerPageBuilder page() {
         return deployerPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
                     protected String contentFrom(BuildContext out) {
-                        DeploymentResource target = out.get(DeploymentResource.class);
+                        Deployment target = out.get(Deployment.class);
                         return target.isNew() ? "Add Deployment" : target.getName().getValue();
                     }
                 }) //
@@ -52,7 +52,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                 @Override
                 public void writeTo(BuildContext out) {
                     UriInfo uriInfo = out.get(UriInfo.class);
-                    DeploymentResource deployment = out.get(DeploymentResource.class);
+                    Deployment deployment = out.get(Deployment.class);
                     Version currentVersion = deployment.getVersion();
                     TableBuilder table = table();
                     int i = 0;
@@ -88,7 +88,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
     private static final Component DEPLOYMENT_INFO = new Component() {
         @Override
         public void writeTo(BuildContext out) {
-            DeploymentResource deployment = out.get(DeploymentResource.class);
+            Deployment deployment = out.get(Deployment.class);
             DescriptionListBuilder description = descriptionList().horizontal();
 
             description.title("Name").description(text(deployment.getName())).build();
@@ -108,7 +108,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
     private static final AppendingComponent<URI> DEPLOYMENT_LINK = new AppendingComponent<URI>() {
         @Override
         protected URI contentFrom(BuildContext out) {
-            return Deployments.path(out.get(UriInfo.class), out.get(DeploymentResource.class).getContextRoot());
+            return Deployments.path(out.get(UriInfo.class), out.get(Deployment.class).getContextRoot());
         }
     };
 
@@ -117,13 +117,13 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
                     .input(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
                         @Override
                         protected ContextRoot contentFrom(BuildContext out) {
-                            return out.get(DeploymentResource.class).getContextRoot();
+                            return out.get(Deployment.class).getContextRoot();
                         }
                     })) //
                     .input(hiddenInput().name("checksum").value(new AppendingComponent<CheckSum>() {
                         @Override
                         protected CheckSum contentFrom(BuildContext out) {
-                            return out.get(DeploymentResource.class).getCheckSum();
+                            return out.get(Deployment.class).getCheckSum();
                         }
                     })) //
                     .input(hiddenAction("undeploy")) //
@@ -165,7 +165,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<DeploymentRe
         return new Component() {
             @Override
             public void writeTo(BuildContext out) {
-                DeploymentResource target = out.get(DeploymentResource.class);
+                Deployment target = out.get(Deployment.class);
                 Component page;
                 if (target.isNew())
                     page = NEW_DEPLOYMENT_FORM;
