@@ -58,8 +58,8 @@ public class IndexTest {
                 + "\"rel\":\"loggers\"," //
                 + "\"title\":\"Loggers\"" //
                 + "},{" //
-                + "\"uri\":\"/data-sources\"," //
-                + "\"rel\":\"data-sources\"," //
+                + "\"uri\":\"/datasources\"," //
+                + "\"rel\":\"datasources\"," //
                 + "\"title\":\"Data-Sources\"" //
                 + "}]", //
                 json(links));

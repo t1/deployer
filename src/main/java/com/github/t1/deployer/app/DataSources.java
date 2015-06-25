@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.DataSourceConfig.*;
-import static com.github.t1.log.LogLevel.*;
 
 import java.net.URI;
 import java.util.List;
@@ -14,10 +13,9 @@ import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.container.DataSourceContainer;
 import com.github.t1.deployer.model.DataSourceConfig;
-import com.github.t1.log.Logged;
 
-@Logged(level = INFO)
-@Path("/data-sources")
+@Boundary
+@Path("/datasources")
 public class DataSources {
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(DataSources.class);

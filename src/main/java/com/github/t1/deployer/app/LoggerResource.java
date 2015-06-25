@@ -11,8 +11,8 @@ import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.log.*;
 
-@Api
-@Logged(level = INFO)
+@Api(tags = "loggers")
+@Boundary
 public class LoggerResource {
     private LoggerConfig logger;
 

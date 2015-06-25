@@ -20,9 +20,9 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 
-@Api
+@Api(tags = "deployments")
 @Slf4j
-@Logged(level = INFO)
+@Boundary
 @XmlRootElement(name = "deployment")
 @XmlAccessorType(XmlAccessType.NONE)
 @XmlType(propOrder = { "name", "contextRoot", "checkSum", "version", "availableVersions" })

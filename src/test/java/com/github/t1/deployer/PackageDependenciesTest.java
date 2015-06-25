@@ -61,10 +61,12 @@ public class PackageDependenciesTest {
         Package repository = packageOf(Repository.class);
         Package tools = packageOf(Config.class);
 
-        Package httpAuth = packageOf(org.apache.http.auth.Credentials.class);
-        Package swagger = packageOf(io.swagger.jaxrs.config.BeanConfig.class);
-
-        app.dependsUpon(model, container, repository, tools, file, swagger);
+        app.dependsUpon(model, container, repository, tools, file, //
+                packageOf(io.swagger.config.Scanner.class), //
+                packageOf(io.swagger.jaxrs.Reader.class), //
+                packageOf(io.swagger.jaxrs.config.BeanConfig.class), //
+                packageOf(io.swagger.core.filter.SwaggerSpecFilter.class), //
+                packageOf(io.swagger.models.Swagger.class));
         html.dependsUpon(model, app, builder); // app for resource paths
         file.dependsUpon(model, repository, container);
 
@@ -74,7 +76,9 @@ public class PackageDependenciesTest {
                 packageOf(org.jboss.as.controller.client.ModelControllerClient.class),
                 packageOf(org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class),
                 packageOf(org.jboss.dmr.ModelNode.class));
-        repository.dependsUpon(model, httpAuth, packageOf("com.github.t1.rest"));
+        repository.dependsUpon(model, //
+                packageOf(org.apache.http.auth.Credentials.class), //
+                packageOf("com.github.t1.rest"));
 
         tools.dependsUpon( //
                 packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient

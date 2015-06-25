@@ -19,11 +19,11 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
             <li class="">
-              <a style="padding: 10px;" href="http://localhost:8080/deployer/swagger-ui/index.html?url=/deployer/swagger.json#!/default"><img src="http://localhost:8080/deployer/swagger-ui/images/logo_small.png"/></a>
+              <a style="padding: 10px;" href="http://localhost:8080/deployer/swagger-ui/index.html?url=/deployer/swagger.json"><img src="http://localhost:8080/deployer/swagger-ui/images/logo_small.png"/></a>
             </li>
             <li class=""><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
             <li class=""><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
-            <li class="active"><a href="http://localhost:8080/deployer/data-sources">Data-Sources</a></li>
+            <li class="active"><a href="http://localhost:8080/deployer/datasources">Data-Sources</a></li>
           </ul>
         </div>
       </div>
@@ -32,16 +32,16 @@
     <div class="panel panel-default">
       <div class="panel-heading">
         <h1>
-          <a href="http://localhost:8080/deployer/data-sources" class="glyphicon glyphicon-menu-left"></a>
+          <a href="http://localhost:8080/deployer/datasources" class="glyphicon glyphicon-menu-left"></a>
           foo
         </h1>
       </div>
 
       <div class="panel-body">
-        <form method="POST" id="delete" action="http://localhost:8080/deployer/data-sources/foo">
+        <form method="POST" id="delete" action="http://localhost:8080/deployer/datasources/foo">
           <input type="hidden" name="action" value="delete"/>
         </form>
-        <form method="POST" id="main" class="form-horizontal" action="http://localhost:8080/deployer/data-sources/foo">
+        <form method="POST" id="main" class="form-horizontal" action="http://localhost:8080/deployer/datasources/foo">
           <div class="form-group">
             <label for="name" class="control-label col-sm-1">Name</label>
             <div class="col-sm-11">

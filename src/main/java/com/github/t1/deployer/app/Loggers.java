@@ -14,9 +14,9 @@ import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.LoggerConfig;
-import com.github.t1.log.*;
+import com.github.t1.log.LogLevel;
 
-@Logged(level = INFO)
+@Boundary
 @Path("/loggers")
 public class Loggers {
     private static UriBuilder baseBuilder(UriInfo uriInfo) {

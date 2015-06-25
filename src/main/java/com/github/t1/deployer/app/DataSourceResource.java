@@ -11,8 +11,8 @@ import com.github.t1.deployer.container.DataSourceContainer;
 import com.github.t1.deployer.model.DataSourceConfig;
 import com.github.t1.log.Logged;
 
-@Api
-@Logged(level = INFO)
+@Api(tags = "datasources")
+@Boundary
 public class DataSourceResource {
     private DataSourceConfig dataSource;
 

@@ -35,6 +35,6 @@ public enum Navigation {
     public abstract URI uri(UriInfo uriInfo);
 
     public String linkName() {
-        return name().toLowerCase().replace("_", "-");
+        return name().toLowerCase().replace("_", "");
     }
 }

@@ -10,8 +10,28 @@ import javax.ws.rs.core.*;
 
 import lombok.*;
 
-@Api
 @Path("/")
+@Api(tags = "root")
+@SwaggerDefinition( //
+        info = @Info( //
+                title = "Deployer", //
+                description = "Deploys web archives to a JBoss web container", //
+                version = "pre-init", //
+                license = @License( //
+                        name = "Apache License 2.0", //
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.html" //
+                ) //
+        ), //
+        externalDocs = @ExternalDocs( //
+                value = "github", //
+                url = "http://github.com/t1/deployer" //
+        ), tags = { //
+        @Tag(name = "root"), //
+                @Tag(name = "deployments"), //
+                @Tag(name = "loggers"), //
+                @Tag(name = "datasources"), //
+        })
+@Boundary
 public class Index {
     private static final int FOUND = 302; // not in JAX-RS 1.1
 
@@ -20,7 +40,7 @@ public class Index {
             nickname = "/", //
             notes = "The html start page should be the list of deployments. "
                     + "Calling the root resouce redirects there by responding with `302 Found`.\n\n" //
-                    + "**NOTE** the actual path is the root path `/`, not `1` as Swagger claims.")
+                    + "**NOTE** The `Try it out` button will follow the redirect and show the list of deployments.")
     @ApiResponses(@ApiResponse(code = FOUND, message = "redirect to deployments list"))
     public Response redirectToDeploymentsList(@Context UriInfo uriInfo) {
         return Response.status(FOUND).location(Deployments.pathAll(uriInfo)).build();

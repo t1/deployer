@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
-import static com.github.t1.log.LogLevel.*;
 
 import java.net.URI;
 import java.util.*;
@@ -14,9 +13,8 @@ import javax.ws.rs.core.*;
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.log.Logged;
 
-@Logged(level = INFO)
+@Boundary
 @Path("/deployments")
 public class Deployments {
     public static final String CONTEXT_ROOT = "context-root";
