@@ -50,6 +50,11 @@ public class NavBar extends Component {
                 return this;
             }
 
+            public NavBarItemBuilder img(Component img) {
+                this.link.multiline().body(Tags.img(img));
+                return this;
+            }
+
             public void build() {
                 navbar.li(link.build(), classArray()).build();
             }

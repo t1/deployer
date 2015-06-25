@@ -23,7 +23,7 @@ import lombok.*;
                 ) //
         ), //
         externalDocs = @ExternalDocs( //
-                value = "github", //
+                value = "see also on github:", //
                 url = "http://github.com/t1/deployer" //
         ), tags = { //
         @Tag(name = "root"), //

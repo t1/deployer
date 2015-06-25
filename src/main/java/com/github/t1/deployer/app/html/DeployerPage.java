@@ -95,12 +95,10 @@ public class DeployerPage extends Component {
 
         private NavBarBuilder navigation() {
             NavBarBuilder navbar = navBar().brand("Deployer");
-            navbar.item()
-            //
-                    .style("padding: 10px;")
-                    //
-                    .href(text("http://localhost:8080/deployer/swagger-ui/index.html?url=/deployer/swagger.json")) // FIXME
-                    .img("http://localhost:8080/deployer/swagger-ui/images/logo_small.png") // FIXME
+            navbar.item() //
+                    .style("padding: 10px;") //
+                    .href(baseUri("swagger-ui/index.html").queryParam("url", "/deployer/swagger.yaml")) //
+                    .img(baseUri("swagger-ui/images/logo_small.png")) //
                     .build();
             for (final Navigation navigation : Navigation.values()) {
                 navbar.item() //
