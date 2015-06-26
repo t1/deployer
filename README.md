@@ -1,5 +1,7 @@
 # Deployer
 
+[![Join the chat at https://gitter.im/t1/deployer](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/t1/deployer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Lists the applications deployed in a JBoss 7 or 8 (for now) container with the version found in Artifactory (for now), and allows to deploy any version found in the repository.
 
 Writing operations (deploy, redeploy, or undeploy) require basic auth with a JBoss management user; and they are written to a logger `com.github.t1.deployer.container.Audit` (as well as denied attempts to do so).
