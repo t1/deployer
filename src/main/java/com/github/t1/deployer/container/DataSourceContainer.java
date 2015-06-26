@@ -49,7 +49,7 @@ public class DataSourceContainer extends AbstractContainer {
                 .driver(node.get("driver-name").asString()) //
                 .uri(URI.create(node.get("connection-url").asString())) //
                 .user(node.get("user-name").asString()) //
-                .password(node.get("password").asString()) //
+                .password("************") // don't provide the real password
                 .build();
     }
 
