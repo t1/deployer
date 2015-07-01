@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.html.DeployerComponents.*;
 import static com.github.t1.deployer.app.html.DeployerPage.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Table.*;
@@ -25,7 +26,7 @@ public class DeploymentListHtmlWriter extends TextHtmlListMessageBodyWriter<Depl
         protected URI contentFrom(BuildContext out) {
             return Deployments.newDeployment(out.get(UriInfo.class));
         }
-    }).body(text("+"))).build();
+    }).body(ADD_ELEMENT)).build();
 
     private static final Component TABLE = new Component() {
         @Override

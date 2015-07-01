@@ -1,6 +1,7 @@
 package com.github.t1.deployer.model;
 
 import static javax.xml.bind.annotation.XmlAccessType.*;
+import io.swagger.annotations.ApiModel;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @AllArgsConstructor
 @XmlRootElement
 @XmlAccessorType(FIELD)
+@ApiModel
 public class Deployment implements Comparable<Deployment> {
     public static final String NEW_DEPLOYMENT_PATH = "!";
     private static final DeploymentName NEW_DEPLOYMENT_NAME = new DeploymentName(NEW_DEPLOYMENT_PATH);

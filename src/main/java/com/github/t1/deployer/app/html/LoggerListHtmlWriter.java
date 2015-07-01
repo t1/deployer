@@ -34,7 +34,7 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
         protected URI contentFrom(BuildContext out) {
             return Loggers.newLogger(out.get(UriInfo.class));
         }
-    }).body(text("+"))).build();
+    }).body(ADD_ELEMENT)).build();
 
     private static final Component TABLE = new Component() {
         @Override
@@ -58,7 +58,7 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
         }
 
         private FormBuilder levelForm(LogLevel level, URI action) {
-            return form().action(action).body(levelSelect(level));
+            return form().action(action).input(hiddenAction("patch")).body(levelSelect(level));
         }
 
         private ComponentBuilder deleteButton(int i, URI action) {

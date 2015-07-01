@@ -1,12 +1,15 @@
 package com.github.t1.deployer.model;
 
+import io.swagger.annotations.ApiModel;
 import lombok.*;
-import lombok.experimental.Accessors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.t1.log.LogLevel;
 
-@Data
-@Accessors(chain = true)
+@Value
+@Builder
+@AllArgsConstructor
+@ApiModel
 public class LoggerConfig implements Comparable<LoggerConfig> {
     public static final String NEW_LOGGER = "!";
 
@@ -15,11 +18,22 @@ public class LoggerConfig implements Comparable<LoggerConfig> {
     @NonNull
     LogLevel level;
 
+    @SuppressWarnings("unused")
+    private LoggerConfig() {
+        this.category = null;
+        this.level = null;
+    }
+
+    public LoggerConfigBuilder copy() {
+        return builder().category(category).level(level);
+    }
+
     @Override
     public int compareTo(LoggerConfig that) {
         return this.category.compareToIgnoreCase(that.category);
     }
 
+    @JsonIgnore
     public boolean isNew() {
         return NEW_LOGGER.equals(category);
     }

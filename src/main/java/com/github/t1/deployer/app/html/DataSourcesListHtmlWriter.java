@@ -57,7 +57,7 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                 }
 
                 private TagBuilder addDataSourceItem(UriInfo uriInfo) {
-                    return link(DataSources.newDataSource(uriInfo)).body(ADD_DATA_SOURCE).multiline();
+                    return link(DataSources.newDataSource(uriInfo)).body(ADD_ELEMENT).multiline();
                 }
             }) //
             .build();

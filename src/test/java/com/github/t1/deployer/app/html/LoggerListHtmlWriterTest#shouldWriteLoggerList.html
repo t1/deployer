@@ -37,6 +37,7 @@
           <td><a href="http://localhost:8080/deployer/loggers/bar">bar</a></td>
           <td>
             <form method="POST" action="http://localhost:8080/deployer/loggers/bar">
+              <input type="hidden" name="action" value="patch"/>
               <select class="form-control input-sm" name="level" onchange="this.form.submit()">
                 <option>ALL</option>
                 <option>TRACE</option>
@@ -68,6 +69,7 @@
           <td><a href="http://localhost:8080/deployer/loggers/foo">foo</a></td>
           <td>
             <form method="POST" action="http://localhost:8080/deployer/loggers/foo">
+              <input type="hidden" name="action" value="patch"/>
               <select class="form-control input-sm" name="level" onchange="this.form.submit()">
                 <option>ALL</option>
                 <option>TRACE</option>

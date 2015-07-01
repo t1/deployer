@@ -22,6 +22,7 @@ public class LoggerContainer extends AbstractContainer {
         List<LoggerConfig> loggers = new ArrayList<>();
         for (ModelNode cliLoggerMatch : readAllLoggers())
             loggers.add(toLogger(cliLoggerMatch.get("result")));
+        Collections.sort(loggers);
         return loggers;
     }
 
@@ -45,8 +46,12 @@ public class LoggerContainer extends AbstractContainer {
         return new LoggerConfig(name, level);
     }
 
-    public boolean hasLogger(String loggerName) {
-        ModelNode result = execute(readLogger(loggerName));
+    public boolean hasLogger(LoggerConfig logger) {
+        return hasLogger(logger.getCategory());
+    }
+
+    public boolean hasLogger(String category) {
+        ModelNode result = execute(readLogger(category));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
             return true;
@@ -58,13 +63,13 @@ public class LoggerContainer extends AbstractContainer {
         }
     }
 
-    public LoggerConfig getLogger(String loggerName) {
-        ModelNode result = execute(readLogger(loggerName));
+    public LoggerConfig getLogger(String category) {
+        ModelNode result = execute(readLogger(category));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
             return toLogger(result.get("result"));
         } else if (isNotFoundMessage(result)) {
-            throw notFound("no logger '" + loggerName + "'");
+            throw notFound("no logger '" + category + "'");
         } else {
             log.error("failed: {}", result);
             throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
@@ -105,6 +110,6 @@ public class LoggerContainer extends AbstractContainer {
 
         ModelNode result = execute(node);
         checkOutcome(result);
-        System.out.println(result);
+        log.debug("result: {}", result);
     }
 }

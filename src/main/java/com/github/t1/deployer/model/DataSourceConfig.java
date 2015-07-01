@@ -1,6 +1,7 @@
 package com.github.t1.deployer.model;
 
 import static lombok.AccessLevel.*;
+import io.swagger.annotations.ApiModel;
 
 import java.net.URI;
 
@@ -14,6 +15,7 @@ import lombok.experimental.Accessors;
 @Builder
 @AllArgsConstructor(access = PRIVATE)
 @Accessors(chain = true)
+@ApiModel
 public class DataSourceConfig implements Comparable<DataSourceConfig> {
     public static final String NEW_DATA_SOURCE = "!";
 

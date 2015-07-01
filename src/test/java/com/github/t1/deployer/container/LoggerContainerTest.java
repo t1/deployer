@@ -96,15 +96,15 @@ public class LoggerContainerTest {
     }
 
     @Test
-    public void shouldGetTwoLoggers() {
+    public void shouldGetTwoLoggersSorted() {
         givenLoggers("foo", "bar");
 
         List<LoggerConfig> loggers = container.getLoggers();
 
         assertEquals(2, loggers.size());
-        assertEquals("foo", loggers.get(0).getCategory());
+        assertEquals("bar", loggers.get(0).getCategory());
         assertEquals(WARN, loggers.get(0).getLevel());
-        assertEquals("bar", loggers.get(1).getCategory());
+        assertEquals("foo", loggers.get(1).getCategory());
         assertEquals(WARN, loggers.get(1).getLevel());
     }
 }

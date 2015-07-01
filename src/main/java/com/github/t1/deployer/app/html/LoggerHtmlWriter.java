@@ -52,15 +52,22 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
                     }
                 }) //
                 .panelBody(div().style("float: right") //
-                        .body(form("delete").action(Loggers.path(uriInfo, logger)) //
-                                .input(hiddenAction("delete"))) //
+                        .body(form("delete") //
+                                .action(Loggers.path(uriInfo, logger)) //
+                                .input(hiddenAction("delete")) //
+                        ) //
                         .body(buttonGroup() //
-                                .button(button().size(S).style(danger).forForm("delete").body(text("Delete"))) //
-                        )) //
+                                .button(button().size(S).style(danger).forForm("delete").body(text("Delete")) //
+                                ) //
+                        ) //
+                ) //
                 .body(nl()) //
-                .panelBody(form(MAIN_FORM_ID).action(Loggers.path(uriInfo, logger)) //
+                .panelBody(form(MAIN_FORM_ID) //
+                        .action(Loggers.path(uriInfo, logger)) //
+                        .input(hiddenAction("patch")) //
                         .body(levelSelect(logger.getLevel())) //
-                ).build();
+                ) //
+                .build();
     }
 
     public static CompoundBuilder levelSelect(LogLevel selectedLevel) {

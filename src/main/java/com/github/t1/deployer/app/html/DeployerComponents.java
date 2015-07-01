@@ -14,7 +14,7 @@ import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
 
 public class DeployerComponents {
-    public static final Component ADD_DATA_SOURCE = text("+");
+    public static final Component ADD_ELEMENT = text("+");
 
     public static ButtonBuilder remove(String formId) {
         return remove(formId, M);

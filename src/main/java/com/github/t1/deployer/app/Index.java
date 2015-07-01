@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import static javax.ws.rs.core.MediaType.*;
 import io.swagger.annotations.*;
 
 import java.net.URI;
@@ -25,12 +26,16 @@ import lombok.*;
         externalDocs = @ExternalDocs( //
                 value = "see also on github:", //
                 url = "http://github.com/t1/deployer" //
-        ), tags = { //
+        ), //
+        tags = { //
         @Tag(name = "root"), //
                 @Tag(name = "deployments"), //
                 @Tag(name = "loggers"), //
                 @Tag(name = "datasources"), //
-        })
+        }, //
+        consumes = { APPLICATION_JSON, "application/yaml", APPLICATION_XML }, //
+        produces = { APPLICATION_JSON, "application/yaml", APPLICATION_XML } //
+)
 @Boundary
 public class Index {
     private static final int FOUND = 302; // not in JAX-RS 1.1
