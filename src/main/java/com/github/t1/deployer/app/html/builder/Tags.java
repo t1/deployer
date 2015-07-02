@@ -61,6 +61,7 @@ public class Tags {
     public static class BaseUriBuilder extends AppendingComponent<URI> {
         private String path = "/";
         private final Map<String, String> queryParams = new HashMap<>();
+        private AppendingComponent<String> fragment;
 
         @Override
         protected URI contentFrom(BuildContext out) {
@@ -68,6 +69,10 @@ public class Tags {
             uriBuilder.path(path);
             for (Entry<String, String> entry : queryParams.entrySet()) {
                 uriBuilder.queryParam(entry.getKey(), entry.getValue());
+            }
+            if (fragment != null) {
+                // this extra step is necessary to prevent escaping (at least on JBoss)
+                return uriBuilder.fragment("{fragment}").build(fragment.contentFrom(out));
             }
             return uriBuilder.build();
         }
@@ -79,6 +84,11 @@ public class Tags {
 
         public BaseUriBuilder queryParam(String key, String value) {
             queryParams.put(key, value);
+            return this;
+        }
+
+        public BaseUriBuilder fragment(AppendingComponent<String> fragment) {
+            this.fragment = fragment;
             return this;
         }
     }

@@ -16,6 +16,7 @@ import com.github.t1.deployer.app.Navigation;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -97,7 +98,15 @@ public class DeployerPage extends Component {
             NavBarBuilder navbar = navBar().brand("Deployer");
             navbar.item() //
                     .style("padding: 10px;") //
-                    .href(baseUri("swagger-ui/index.html").queryParam("url", "/deployer/swagger.yaml")) //
+                    .href(baseUri("swagger-ui/index.html") //
+                            .queryParam("url", "/deployer/swagger.yaml") //
+                            .fragment(new AppendingComponent<String>() {
+                                @Override
+                                protected String contentFrom(BuildContext out) {
+                                    return "!/" + out.get(Navigation.class).linkName();
+                                }
+                            }) //
+                    ) //
                     .img(baseUri("swagger-ui/images/logo_small.png")) //
                     .build();
             for (final Navigation navigation : Navigation.values()) {
