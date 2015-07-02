@@ -68,7 +68,7 @@ public class Loggers {
 
     @GET
     @Path("{category}")
-    @ApiOperation("one logger by category")
+    @ApiOperation("a logger by category")
     public LoggerConfig getLogger(@PathParam("category") String category) {
         return (NEW_LOGGER.equals(category)) ? newLogger() : container.getLogger(category);
     }

@@ -91,14 +91,14 @@ public class DataSourceContainer extends AbstractContainer {
         return node;
     }
 
-    public void remove(DataSourceConfig dataSource) {
-        ModelNode result = execute(removeDataSource(dataSource));
+    public void remove(String dataSourceName) {
+        ModelNode result = execute(removeDataSource(dataSourceName));
         checkOutcome(result);
     }
 
-    private static ModelNode removeDataSource(DataSourceConfig dataSource) {
+    private static ModelNode removeDataSource(String dataSourceName) {
         ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "datasource").add("name", dataSource.getName());
+        node.get("address").add("subsystem", "datasource").add("name", dataSourceName);
         node.get("operation").set("remove");
         return node;
     }
