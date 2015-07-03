@@ -50,7 +50,7 @@ public class IndexTest {
         List<Index.Link> links = index.getIndexList(uriInfo);
 
         assertEquals("[{" //
-                + "\"uri\":\"/deployments/*\"," //
+                + "\"uri\":\"/deployments\"," //
                 + "\"rel\":\"deployments\"," //
                 + "\"title\":\"Deployments\"" //
                 + "},{" //

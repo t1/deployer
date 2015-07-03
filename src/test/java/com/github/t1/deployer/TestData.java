@@ -11,8 +11,6 @@ import java.util.*;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 
-import lombok.Value;
-
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -21,22 +19,6 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 
 public class TestData {
-    @Value
-    public static class OngoingDeploymentStub {
-        Repository repository;
-        Deployment deployment;
-
-        public void availableVersions(String... versions) {
-            List<VersionInfo> list = new ArrayList<>();
-            for (String versionString : versions) {
-                Version version = new Version(versionString);
-                CheckSum checkSum = fakeChecksumFor(deployment.getContextRoot(), version);
-                list.add(new VersionInfo(version, checkSum));
-            }
-            when(repository.availableVersionsFor(deployment.getCheckSum())).thenReturn(list);
-        }
-    }
-
     public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
         return new Deployment(nameFor(contextRoot), contextRoot, fakeChecksumFor(contextRoot, version), version);
     }
@@ -77,13 +59,30 @@ public class TestData {
 
     public static void givenDeployments(Repository repository, ContextRoot... contextRoots) {
         for (ContextRoot contextRoot : contextRoots) {
-            for (Version version : fakeVersionsFor(contextRoot)) {
+            List<VersionInfo> versionInfos = versionInfos(contextRoot);
+            for (VersionInfo versionInfo : versionInfos) {
+                Version version = versionInfo.getVersion();
                 CheckSum checksum = fakeChecksumFor(contextRoot, version);
-                when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(contextRoot, version));
+                when(repository.getByChecksum(checksum)).thenReturn(
+                        deploymentFor(contextRoot, version));
+                when(repository.availableVersionsFor(checksum)).thenReturn(versionInfos);
                 when(repository.getArtifactInputStream(checksum)) //
                         .thenReturn(inputStreamFor(contextRoot, version));
             }
         }
+    }
+
+    public static List<VersionInfo> versionInfos(ContextRoot contextRoot) {
+        List<Version> versions = fakeVersionsFor(contextRoot);
+        return versionInfos(contextRoot, versions);
+    }
+
+    private static List<VersionInfo> versionInfos(ContextRoot contextRoot, List<Version> versions) {
+        List<VersionInfo> result = new ArrayList<>();
+        for (Version version : versions) {
+            result.add(new VersionInfo(version, fakeChecksumFor(contextRoot, version)));
+        }
+        return result;
     }
 
     public static void givenDeployments(final DeploymentContainer container, ContextRoot... contextRoots) {
@@ -125,12 +124,6 @@ public class TestData {
                 + "\"checkSum\":\"" + fakeChecksumFor(contextRoot, version) + "\"," //
                 + "\"version\":\"" + version + "\"" //
                 + "}";
-    }
-
-    public static Form deploymentForm(String action, ContextRoot contextRoot, Version version) {
-        return new Form("action", action) //
-                .param("checksum", fakeChecksumFor(contextRoot, version).toString()) //
-                .param("contextRoot", contextRoot.getValue());
     }
 
     public static void assertStatus(Status status, Response response) {

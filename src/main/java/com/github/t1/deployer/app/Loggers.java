@@ -147,9 +147,8 @@ public class Loggers {
             case delete:
                 delete(category);
                 return Response.seeOther(Loggers.base(uriInfo)).build();
-            default:
-                throw badRequest("unspecified action '" + action + "'");
         }
+        throw new RuntimeException("unreachable code");
     }
 
     @PATCH

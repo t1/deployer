@@ -21,7 +21,7 @@
             <li class="">
               <a style="padding: 10px;" href="http://localhost:8080/deployer/swagger-ui/index.html?url=/deployer/swagger.yaml#!/deployments"><img src="http://localhost:8080/deployer/swagger-ui/images/logo_small.png"/></a>
             </li>
-            <li class="active"><a href="http://localhost:8080/deployer/deployments/*">Deployments</a></li>
+            <li class="active"><a href="http://localhost:8080/deployer/deployments">Deployments</a></li>
             <li class=""><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
             <li class=""><a href="http://localhost:8080/deployer/datasources">Data-Sources</a></li>
           </ul>
@@ -32,14 +32,14 @@
     <div class="panel panel-default">
       <div class="panel-heading">
         <h1>
-          <a href="http://localhost:8080/deployer/deployments/*" class="glyphicon glyphicon-menu-left"></a>
+          <a href="http://localhost:8080/deployer/deployments" class="glyphicon glyphicon-menu-left"></a>
           foo
         </h1>
       </div>
 
       <div class="panel-body">
         <div style="float: right">
-          <form method="POST" id="undeploy" action="http://localhost:8080/deployer/deployments;context-root=foox">
+          <form method="POST" id="undeploy" action="http://localhost:8080/deployer/deployments/foox">
             <input type="hidden" name="contextRoot" value="foox"/>
             <input type="hidden" name="checksum" value="AABBCC"/>
             <input type="hidden" name="action" value="undeploy"/>
@@ -68,7 +68,7 @@
         <tr>
           <td>1.0</td>
           <td>
-            <form method="POST" id="redeploy-0" action="http://localhost:8080/deployer/deployments;context-root=foox">
+            <form method="POST" id="redeploy-0" action="http://localhost:8080/deployer/deployments/foox">
               <input type="hidden" name="contextRoot" value="foox"/>
               <input type="hidden" name="checksum" value="FACE0000723C2C2081E2AA4154545F0D17B46C3E"/>
               <input type="hidden" name="action" value="redeploy"/>
@@ -81,7 +81,7 @@
         <tr>
           <td>2.0</td>
           <td>
-            <form method="POST" id="redeploy-1" action="http://localhost:8080/deployer/deployments;context-root=foox">
+            <form method="POST" id="redeploy-1" action="http://localhost:8080/deployer/deployments/foox">
               <input type="hidden" name="contextRoot" value="foox"/>
               <input type="hidden" name="checksum" value="FACE00006A07A48D123262BD5ADB9E0816E42F97"/>
               <input type="hidden" name="action" value="redeploy"/>

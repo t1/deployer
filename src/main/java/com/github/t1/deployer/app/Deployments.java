@@ -1,14 +1,18 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
+import static com.github.t1.deployer.tools.StatusDetails.*;
+import io.swagger.annotations.*;
 
+import java.io.*;
 import java.net.URI;
 import java.util.*;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+
+import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
@@ -16,8 +20,14 @@ import com.github.t1.deployer.repository.Repository;
 
 @Boundary
 @Path("/deployments")
+@Api(tags = "deployments")
+@Slf4j
 public class Deployments {
-    public static final String CONTEXT_ROOT = "context-root";
+    @ApiModel
+    public enum PostDeploymentAction {
+        redeploy,
+        undeploy;
+    }
 
     private static UriBuilder baseBuilder(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path(Deployments.class);
@@ -28,11 +38,11 @@ public class Deployments {
     }
 
     public static URI pathAll(UriInfo uriInfo) {
-        return baseBuilder(uriInfo).path("*").build();
+        return base(uriInfo);
     }
 
     public static URI path(UriInfo uriInfo, ContextRoot contextRoot) {
-        return baseBuilder(uriInfo).matrixParam(CONTEXT_ROOT, contextRoot).build();
+        return baseBuilder(uriInfo).path(contextRoot.getValue()).build();
     }
 
     public static URI newDeployment(UriInfo uriInfo) {
@@ -43,19 +53,12 @@ public class Deployments {
     DeploymentContainer container;
     @Inject
     Repository repository;
-    @Inject
-    Instance<DeploymentResource> deploymentResources;
     @Context
     UriInfo uriInfo;
 
     @GET
-    @Path("*")
+    @ApiOperation("list all deployments")
     public List<Deployment> getAllDeployments() {
-        return getAllDeploymentsWithVersions();
-    }
-
-    @javax.enterprise.inject.Produces
-    List<Deployment> getAllDeploymentsWithVersions() {
         List<Deployment> deployments = new ArrayList<>();
         for (Deployment deployment : container.getAllDeployments()) {
             deployments.add(withVersion(deployment));
@@ -75,29 +78,181 @@ public class Deployments {
 
     @GET
     @Path(NEW_DEPLOYMENT_PATH)
+    @ApiOperation(hidden = true, value = "return a form for new deployments")
     public Deployment newDeployment() {
         return NEW_DEPLOYMENT;
     }
 
-    @Path("")
-    public DeploymentResource deploymentSubResourceByContextRoot(@MatrixParam(CONTEXT_ROOT) ContextRoot contextRoot) {
-        Deployment deployment = null;
-        if (contextRoot == null) {
-            deployment = tentativeDeploymentFor(contextRoot);
+    @GET
+    @Path("/{contextRoot}")
+    @ApiOperation("get a deployment")
+    public Deployment getByContextRoot(@PathParam("contextRoot") ContextRoot contextRoot) {
+        Deployment deployment = container.getDeploymentFor(contextRoot);
+        if (deployment == null)
+            deployment = new Deployment(contextRoot);
+        List<VersionInfo> availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
+        return withVersion(deployment).withAvailableVersions(availableVersions);
+    }
+
+    @POST
+    @ApiOperation("post a new deployment")
+    public Response post( //
+            @Context UriInfo uriInfo, //
+            @FormParam("checksum") @ApiParam(required = true) CheckSum checkSum, //
+            @FormParam("name") @ApiParam("optional name; defaults to the name in the repository") DeploymentName name //
+    ) {
+        Deployment newDeployment = deploy(checkSum, name);
+        ContextRoot contextRoot = newDeployment.getContextRoot();
+        return Response.seeOther(Deployments.path(uriInfo, contextRoot)).build();
+    }
+
+    @POST
+    @Path("/{contextRoot}")
+    @ApiOperation("post an action on an existing deployment")
+    public Response postToContextRoot( //
+            @Context UriInfo uriInfo, //
+            @PathParam("contextRoot") ContextRoot contextRoot, //
+            @FormParam("action") @ApiParam(required = true) PostDeploymentAction action, //
+            @FormParam("checksum") @ApiParam(required = true) CheckSum checkSum //
+    ) {
+        if (action == null)
+            throw badRequest("action form parameter is missing");
+        switch (action) {
+            case redeploy:
+                check(contextRoot, getDeploymentFromRepository(checkSum).getContextRoot());
+                redeploy(checkSum);
+                return Response.seeOther(Deployments.path(uriInfo, contextRoot)).build();
+            case undeploy:
+                if (checkSum == null)
+                    throw badRequest("checksum form parameter is missing");
+                Deployment newDeployment = repository.getByChecksum(checkSum);
+                if (newDeployment == null)
+                    log.warn("undeploying deployment with checksum " + checkSum + " not found in repository");
+                else
+                    check(contextRoot, getDeploymentFromRepository(checkSum).getContextRoot());
+                delete(contextRoot);
+                return Response.seeOther(Deployments.pathAll(uriInfo)).build();
+        }
+        throw new RuntimeException("unreachable code");
+    }
+
+    @PUT
+    @Path("/{contextRoot}")
+    @ApiOperation("create or update a deployment")
+    public Response put( //
+            @Context UriInfo uriInfo, //
+            @PathParam("contextRoot") ContextRoot contextRoot, //
+            Deployment entity //
+    ) {
+        check(contextRoot, entity.getContextRoot());
+        CheckSum checkSum = entity.getCheckSum();
+        if (checkSum == null)
+            throw badRequest("checksum missing in " + entity);
+        if (container.hasDeploymentWith(contextRoot)) {
+            redeploy(checkSum);
+            return Response.noContent().build();
         } else {
-            deployment = container.getDeploymentFor(contextRoot);
-            if (deployment == null) {
-                deployment = tentativeDeploymentFor(contextRoot);
+            deploy(checkSum, entity.getName());
+            return created(uriInfo, contextRoot);
+        }
+    }
+
+    private Response created(UriInfo uriInfo, ContextRoot contextRoot) {
+        return Response.created(Deployments.path(uriInfo, contextRoot)).build();
+    }
+
+    private void check(ContextRoot left, ContextRoot right) {
+        if (!Objects.equals(left, right))
+            throw badRequest("context roots don't match: " + left + " is not " + right);
+    }
+
+    private Deployment deploy(CheckSum checkSum, DeploymentName nameOverride) {
+        Deployment newDeployment = getDeploymentFromRepository(checkSum);
+        if (hasNameOverride(nameOverride)) {
+            log.info("overwrite deployment name {} with {}", newDeployment.getName(), nameOverride);
+            newDeployment = newDeployment.withName(nameOverride);
+        }
+        try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
+            container.deploy(newDeployment, inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return newDeployment;
+    }
+
+    private boolean hasNameOverride(DeploymentName name) {
+        return name != null && name.getValue() != null && !name.getValue().isEmpty();
+    }
+
+    private void redeploy(CheckSum checkSum) {
+        Deployment newDeployment = getDeploymentFromRepository(checkSum);
+        try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
+            container.redeploy(newDeployment, inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Deployment getDeploymentFromRepository(CheckSum checkSum) {
+        if (checkSum == null)
+            throw badRequest("checksum missing");
+        Deployment newDeployment = repository.getByChecksum(checkSum);
+        if (newDeployment == null)
+            throw notFound("no deployment with checksum " + checkSum + " found in repository");
+        return newDeployment;
+    }
+
+    @DELETE
+    @Path("/{contextRoot}")
+    @ApiOperation("delete a deployment")
+    public void delete(@PathParam("contextRoot") ContextRoot contextRoot) {
+        Deployment deployment = container.getDeploymentFor(contextRoot);
+        container.undeploy(deployment);
+    }
+
+    @GET
+    @Path("/{contextRoot}/name")
+    @ApiOperation("get the name of a deployment")
+    public DeploymentName getName(@PathParam("contextRoot") ContextRoot contextRoot) {
+        return container.getDeploymentFor(contextRoot).getName();
+    }
+
+    @GET
+    @Path("/{contextRoot}/version")
+    @ApiOperation("get the version of a deployment")
+    public Version getVersion(@PathParam("contextRoot") ContextRoot contextRoot) {
+        return withVersion(container.getDeploymentFor(contextRoot)).getVersion();
+    }
+
+    @PUT
+    @Path("/{contextRoot}/version")
+    @ApiOperation("put the version of a deployment, triggering a redeploy")
+    public Response putVersion(@PathParam("contextRoot") ContextRoot contextRoot, Version newVersion) {
+        if (!container.hasDeploymentWith(contextRoot))
+            throw badRequest("no context root: " + contextRoot);
+        for (VersionInfo available : getAvailableVersions(contextRoot)) {
+            if (available.getVersion().equals(newVersion)) {
+                redeploy(available.getCheckSum());
+                return Response.noContent().build();
             }
         }
-        return deploymentResource(withVersion(deployment));
+        throw notFound("no version " + newVersion + " for " + contextRoot);
     }
 
-    private Deployment tentativeDeploymentFor(ContextRoot contextRoot) {
-        return new Deployment(contextRoot);
+    @GET
+    @Path("/{contextRoot}/checksum")
+    @ApiOperation("get the checksum of a deployment")
+    public CheckSum getCheckSum(@PathParam("contextRoot") ContextRoot contextRoot) {
+        return container.getDeploymentFor(contextRoot).getCheckSum();
     }
 
-    private DeploymentResource deploymentResource(Deployment deployment) {
-        return deploymentResources.get().deployment(deployment);
+    @GET
+    @Path("/{contextRoot}/available-versions")
+    @ApiOperation("get the available versions of a deployment")
+    public List<VersionInfo> getAvailableVersions(@PathParam("contextRoot") ContextRoot contextRoot) {
+        Deployment deployment = container.getDeploymentFor(contextRoot);
+        List<VersionInfo> availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
+        deployment = deployment.withAvailableVersions(availableVersions);
+        return deployment.getAvailableVersions();
     }
 }

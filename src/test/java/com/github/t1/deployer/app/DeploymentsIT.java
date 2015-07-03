@@ -20,7 +20,6 @@ import javax.ws.rs.core.*;
 
 import lombok.extern.java.Log;
 
-import org.glassfish.hk2.api.*;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.junit.*;
@@ -33,7 +32,7 @@ import com.github.t1.deployer.app.html.DeploymentHtmlWriter;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.*;
+import com.github.t1.deployer.tools.InterceptorMock;
 import com.github.t1.rest.RestResource;
 
 @Log
@@ -70,21 +69,6 @@ public class DeploymentsIT {
                     final UriInfo uriInfo = mock(UriInfo.class);
                     bindUriBuilder(uriInfo);
 
-                    bind(new FactoryInstance<>(new Factory<DeploymentResource>() {
-                        @Override
-                        public DeploymentResource provide() {
-                            // User.setCurrent(new User("the-prince").withPrivilege("deploy", "redeploy", "undeploy"));
-                            DeploymentResource result = new DeploymentResource();
-                            result.container = interceptedContainer;
-                            result.repository = repository;
-                            result.uriInfo = uriInfo;
-                            return result;
-                        }
-
-                        @Override
-                        public void dispose(DeploymentResource instance) {}
-                    })).to(new TypeLiteral<javax.enterprise.inject.Instance<DeploymentResource>>() {});
-
                     bind(deploymentListFile).to(DeploymentListFile.class);
                 }
 
@@ -94,7 +78,6 @@ public class DeploymentsIT {
                     when(uriBuilder.path(Matchers.any(Class.class))).thenReturn(uriBuilder);
                     when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
                     when(uriBuilder.build()).thenReturn(URI.create("http://no.where"));
-                    when(uriBuilder.matrixParam(anyString(), Matchers.any(Object[].class))).thenReturn(uriBuilder);
                 }
             });
 
@@ -123,7 +106,7 @@ public class DeploymentsIT {
     };
 
     private WebTarget deploymentsWebTarget(ContextRoot contextRoot) {
-        return deploymentsWebTarget().matrixParam("context-root", contextRoot);
+        return deploymentsWebTarget().path(contextRoot.getValue());
     }
 
     private WebTarget deploymentsWebTarget() {
@@ -139,7 +122,7 @@ public class DeploymentsIT {
     }
 
     private RestResource deploymentsRestResource(ContextRoot contextRoot) {
-        return deploymentsRestResource().matrix("context-root", contextRoot);
+        return deploymentsRestResource().path(contextRoot.getValue());
     }
 
     private RestResource deploymentsRestResource() {
@@ -154,10 +137,15 @@ public class DeploymentsIT {
         return new RestResource(baseUri);
     }
 
-
     private void given(ContextRoot... contextRoots) {
         givenDeployments(repository, contextRoots);
         givenDeployments(container, contextRoots);
+    }
+
+    private void assertRedeployLatestFoo(Response response) {
+        assertStatus(NO_CONTENT, response);
+        verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
+        verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
     @Test
@@ -165,7 +153,7 @@ public class DeploymentsIT {
         given(FOO, BAR);
 
         Response response = deployer() //
-                .path("deployments/*") //
+                .path("deployments") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
@@ -194,7 +182,6 @@ public class DeploymentsIT {
     }
 
     @Test
-    @Ignore("sub resources after matrix params don't seem to work in Dropwizard")
     public void shouldGetAvailableVersions() {
         given(FOO, BAR);
 
@@ -204,8 +191,20 @@ public class DeploymentsIT {
                 .get();
 
         assertStatus(OK, response);
-        List<Version> versions = response.readEntity(new GenericType<List<Version>>() {});
-        assertEquals(FOO_VERSIONS.toString(), versions.toString());
+        List<VersionInfo> versions = response.readEntity(new GenericType<List<VersionInfo>>() {});
+        assertEquals(versionInfos(FOO).toString(), versions.toString());
+    }
+
+    @Test
+    public void shouldGetVersion() {
+        given(FOO, BAR);
+
+        Version version = deploymentsWebTarget(FOO) //
+                .path("version") //
+                .request(APPLICATION_JSON_TYPE) //
+                .get(Version.class);
+
+        assertEquals(CURRENT_FOO_VERSION, version);
     }
 
     @Test
@@ -233,9 +232,19 @@ public class DeploymentsIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .put(Entity.json(deploymentJson(FOO, NEWEST_FOO_VERSION)));
 
-        assertStatus(NO_CONTENT, response);
-        verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
-        verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        assertRedeployLatestFoo(response);
+    }
+
+    @Test
+    public void shouldPutVersion() {
+        given(FOO, BAR);
+
+        Response response = deploymentsWebTarget(FOO) //
+                .path("version") //
+                .request(APPLICATION_JSON_TYPE) //
+                .put(Entity.json(NEWEST_FOO_VERSION));
+
+        assertRedeployLatestFoo(response);
     }
 
     @Test
@@ -255,7 +264,8 @@ public class DeploymentsIT {
         givenDeployments(repository, FOO, BAR);
         givenDeployments(container, BAR);
 
-        Response response = deploymentsWebTarget().request() //
+        Response response = deploymentsWebTarget() //
+                .request(APPLICATION_JSON_TYPE) //
                 .post(Entity.form(new Form("action", "deploy") //
                         .param("checksum", fakeChecksumFor(FOO, CURRENT_FOO_VERSION).toString()) //
                         ));
@@ -269,8 +279,11 @@ public class DeploymentsIT {
     public void shouldPostRedeploy() {
         given(FOO, BAR);
 
-        Response response = deploymentsWebTarget().request() //
-                .post(Entity.form(deploymentForm("redeploy", FOO, NEWEST_FOO_VERSION)));
+        Response response = deploymentsWebTarget(FOO) //
+                .request(APPLICATION_JSON_TYPE) //
+                .post(Entity.form(new Form("action", "redeploy") //
+                        .param("checksum", fakeChecksumFor(FOO, NEWEST_FOO_VERSION).toString()) //
+                        .param("contextRoot", FOO.getValue())));
 
         assertStatus(OK, response); // redirected
         verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
@@ -283,8 +296,10 @@ public class DeploymentsIT {
 
         // RestResource resource = deploymentsRestResource(FOO).post();
         Response response = deploymentsWebTarget(FOO) //
-                .request() //
-                .post(Entity.form(deploymentForm("undeploy", FOO, NEWEST_FOO_VERSION)));
+                .request(APPLICATION_JSON_TYPE) //
+                .post(Entity.form(new Form("action", "undeploy") //
+                        .param("checksum", fakeChecksumFor(FOO, CURRENT_FOO_VERSION).toString()) //
+                        .param("contextRoot", FOO.getValue())));
 
         assertStatus(OK, response); // redirected
         verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);

@@ -23,14 +23,19 @@ public class Deployment implements Comparable<Deployment> {
     public static final Deployment NEW_DEPLOYMENT = new Deployment(NEW_DEPLOYMENT_NAME, null, null, null, null);
 
     @Wither
-    private final DeploymentName name;
-    private final ContextRoot contextRoot;
-    private final CheckSum checkSum;
+    DeploymentName name;
+
+    ContextRoot contextRoot;
+
+    CheckSum checkSum;
 
     @Wither
-    private Version version;
+    Version version;
+
     @Wither
-    private List<VersionInfo> availableVersions;
+    @XmlElement(name = "version")
+    @XmlElementWrapper
+    List<VersionInfo> availableVersions;
 
     /** required by JAXB, etc. */
     @SuppressWarnings("unused")
