@@ -8,6 +8,10 @@ import com.github.t1.log.Logged;
 
 @Logged
 public abstract class Repository {
+    public static final Version ERROR = new Version("error");
+    public static final Version NO_CHECKSUM = new Version("no checksum");
+    public static final Version UNKNOWN = new Version("unknown");
+
     public abstract Deployment getByChecksum(CheckSum checkSum);
 
     public abstract List<VersionInfo> availableVersionsFor(CheckSum checkSum);

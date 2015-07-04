@@ -12,7 +12,9 @@ import lombok.experimental.Wither;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/** This is the artifact returned by Artifactory as well as the deployment installed in the container. */
 @Value
+@Wither
 @AllArgsConstructor
 @XmlRootElement
 @XmlAccessorType(FIELD)
@@ -22,24 +24,16 @@ public class Deployment implements Comparable<Deployment> {
     private static final DeploymentName NEW_DEPLOYMENT_NAME = new DeploymentName(NEW_DEPLOYMENT_PATH);
     public static final Deployment NEW_DEPLOYMENT = new Deployment(NEW_DEPLOYMENT_NAME, null, null, null, null);
 
-    @Wither
     DeploymentName name;
-
     ContextRoot contextRoot;
-
     CheckSum checkSum;
-
-    @Wither
     Version version;
 
-    @Wither
     @XmlElement(name = "version")
     @XmlElementWrapper
     List<VersionInfo> availableVersions;
 
-    /** required by JAXB, etc. */
-    @SuppressWarnings("unused")
-    private Deployment() {
+    public Deployment() {
         this.name = null;
         this.contextRoot = null;
         this.checkSum = null;

@@ -2,7 +2,6 @@ package com.github.t1.deployer.repository;
 
 import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 
@@ -67,28 +66,35 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        try {
-            repository().getByChecksum(FAILING_CHECKSUM);
-        } catch (RuntimeException e) {
-            assertThat(e.getCause().getMessage(),
-                    containsString("expected status 200 OK but got 500 Internal Server Error"));
-        }
+        Deployment deployment = repository().getByChecksum(FAILING_CHECKSUM);
+
+        assertEquals("error", deployment.getVersion().toString());
+        assertEquals(FAILING_CHECKSUM, deployment.getCheckSum());
+        assertNull(deployment.getContextRoot());
+        assertNull(deployment.getName());
+        assertNull(deployment.getAvailableVersions());
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
-        try {
-            repository().getByChecksum(AMBIGUOUS_CHECKSUM);
-        } catch (RuntimeException e) {
-            assertThat(e.getCause().getMessage(), containsString("checksum not unique"));
-        }
+        Deployment deployment = repository().getByChecksum(AMBIGUOUS_CHECKSUM);
+
+        assertEquals("error", deployment.getVersion().toString());
+        assertEquals(AMBIGUOUS_CHECKSUM, deployment.getCheckSum());
+        assertNull(deployment.getContextRoot());
+        assertNull(deployment.getName());
+        assertNull(deployment.getAvailableVersions());
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnknown() {
         Deployment deployment = repository().getByChecksum(UNKNOWN_CHECKSUM);
 
-        assertNull(deployment);
+        assertEquals("unknown", deployment.getVersion().toString());
+        assertEquals(UNKNOWN_CHECKSUM, deployment.getCheckSum());
+        assertNull(deployment.getContextRoot());
+        assertNull(deployment.getName());
+        assertNull(deployment.getAvailableVersions());
     }
 
     @Test

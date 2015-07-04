@@ -1,5 +1,8 @@
 package com.github.t1.deployer.repository;
 
+import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
+import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
+import static com.github.t1.deployer.tools.StatusDetails.*;
 import static java.util.Collections.*;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -10,10 +13,8 @@ import java.util.*;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriBuilder;
 
-import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.auth.Credentials;
@@ -63,57 +64,83 @@ public class ArtifactoryRepository extends Repository {
                 ).accept(ChecksumSearchResult.class);
     }
 
+    private RestRequest authenticated(RestRequest request) {
+        if (credentials != null && request.authority().equals(artifactory.authority()))
+            request = request.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
+        return request;
+    }
+
     /**
      * It's not really nice to get the version out of the repo path, but where else would I get it? Even the
      * <code>X-Result-Detail</code> header doesn't provide it.
      */
     @Override
     public Deployment getByChecksum(CheckSum checkSum) {
-        ChecksumSearchResultItem item = searchByChecksum(checkSum);
-        if (item == null)
-            return null;
-        URI result = item.getUri();
-        log.debug("got uri {}", result);
-        Path path = path(result);
+        if (isEmpty(checkSum))
+            return new Deployment().withVersion(NO_CHECKSUM);
+        SearchResult result = searchByChecksum(checkSum);
+        if (result.is(error))
+            return new Deployment().withCheckSum(checkSum).withVersion(ERROR);
+        if (result.is(SearchResultStatus.notFound))
+            return new Deployment().withCheckSum(checkSum).withVersion(UNKNOWN);
+        URI uri = result.getUri();
+        log.debug("got uri {}", uri);
+        Path path = path(uri);
         return deployment(checkSum, path);
     }
 
-    @Data
-    @NoArgsConstructor
-    @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
-    private static class ChecksumSearchResult {
-        List<ChecksumSearchResultItem> results;
+    private boolean isEmpty(CheckSum checkSum) {
+        return checkSum == null || checkSum.isEmpty();
     }
 
-    @Data
-    @NoArgsConstructor
-    private static class ChecksumSearchResultItem {
-        URI uri;
-        URI downloadUri;
-    }
-
-    private ChecksumSearchResultItem searchByChecksum(CheckSum checkSum) {
+    private SearchResult searchByChecksum(CheckSum checkSum) {
         try {
             log.debug("searchByChecksum({})", checkSum);
             List<ChecksumSearchResultItem> results = searchByChecksum.with("checkSum", checkSum.hexString()) //
                     .get().getResults();
             if (results.size() == 0)
-                return null;
+                return searchResult().status(notFound).build();
             if (results.size() > 1)
                 throw new RuntimeException("checksum not unique in repository: " + checkSum);
-            ChecksumSearchResultItem result = results.get(0);
-            log.debug("got {}", result);
-            return result;
+            ChecksumSearchResultItem item = results.get(0);
+            log.debug("got {}", item);
+            return searchResult().status(ok).uri(item.getUri()).downloadUri(item.getDownloadUri()).build();
         } catch (RuntimeException e) {
             log.error("can't search by checksum [" + checkSum + "] in " + baseUri, e);
-            return null;
+            return searchResult().status(error).build();
         }
     }
 
-    private RestRequest authenticated(RestRequest request) {
-        if (credentials != null && request.authority().equals(artifactory.authority()))
-            request = request.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
-        return request;
+    public enum SearchResultStatus {
+        ok,
+        notFound,
+        error;
+    }
+
+    @lombok.Value
+    @lombok.Builder(builderMethodName = "searchResult")
+    protected static class SearchResult {
+        SearchResultStatus status;
+        URI uri;
+        URI downloadUri;
+
+        public boolean is(SearchResultStatus status) {
+            return this.status == status;
+        }
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
+    private static class ChecksumSearchResult {
+        List<ChecksumSearchResultItem> results;
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    private static class ChecksumSearchResultItem {
+        URI uri;
+        URI downloadUri;
     }
 
     private Path path(URI result) {
@@ -141,8 +168,8 @@ public class ArtifactoryRepository extends Repository {
         return prefix + suffix;
     }
 
-    @Data
-    @NoArgsConstructor
+    @lombok.Data
+    @lombok.NoArgsConstructor
     @VendorType("org.jfrog.artifactory.storage.FolderInfo")
     private static class FolderInfo {
         List<FileInfo> children;
@@ -153,8 +180,8 @@ public class ArtifactoryRepository extends Repository {
         }
     }
 
-    @Data
-    @NoArgsConstructor
+    @lombok.Data
+    @lombok.NoArgsConstructor
     @VendorType("org.jfrog.artifactory.storage.FileInfo")
     private static class FileInfo {
         boolean folder;
@@ -172,12 +199,12 @@ public class ArtifactoryRepository extends Repository {
 
     @Override
     public List<VersionInfo> availableVersionsFor(CheckSum checkSum) {
-        ChecksumSearchResultItem deployment = searchByChecksum(checkSum);
-        if (deployment == null)
+        SearchResult result = searchByChecksum(checkSum);
+        if (!result.is(ok))
             return emptyList();
-        URI uri = deployment.getUri();
+        URI uri = result.getUri();
         uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
-        return versionsIn(fileNameWithoutVersion(deployment.getUri()), uri);
+        return versionsIn(fileNameWithoutVersion(result.getUri()), uri);
     }
 
     private String versionsFolder(URI uri) {
@@ -221,9 +248,11 @@ public class ArtifactoryRepository extends Repository {
 
     @Override
     public InputStream getArtifactInputStream(CheckSum checkSum) {
-        ChecksumSearchResultItem found = searchByChecksum(checkSum);
-        if (found == null)
-            throw new WebApplicationException(NOT_FOUND);
+        SearchResult found = searchByChecksum(checkSum);
+        if (found.is(error))
+            throw webException(BAD_GATEWAY, "error while finding checksum " + checkSum);
+        if (found.is(notFound))
+            throw notFound("checksum " + checkSum + " not found to fetch input stream");
         URI uri = found.getDownloadUri();
         log.info("found {} for checksum {}", uri, checkSum);
         return authenticated(new RestResource(uri).request()).accept(InputStream.class).get();

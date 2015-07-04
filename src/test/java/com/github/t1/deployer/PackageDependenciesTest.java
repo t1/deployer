@@ -76,7 +76,9 @@ public class PackageDependenciesTest {
                 packageOf(org.jboss.as.controller.client.ModelControllerClient.class),
                 packageOf(org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class),
                 packageOf(org.jboss.dmr.ModelNode.class));
-        repository.dependsUpon(model, //
+        repository.dependsUpon( //
+                model, //
+                tools, //
                 packageOf(org.apache.http.auth.Credentials.class), //
                 packageOf("com.github.t1.rest"));
 

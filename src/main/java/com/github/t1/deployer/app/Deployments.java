@@ -67,13 +67,8 @@ public class Deployments {
     }
 
     private Deployment withVersion(Deployment deployment) {
-        CheckSum checkSum = deployment.getCheckSum();
-        Deployment byChecksum = isEmpty(checkSum) ? null : repository.getByChecksum(checkSum);
-        return deployment.withVersion((byChecksum == null) ? Version.UNKNOWN : byChecksum.getVersion());
-    }
-
-    private boolean isEmpty(CheckSum checkSum) {
-        return checkSum == null || checkSum.isEmpty();
+        Deployment byChecksum = repository.getByChecksum(deployment.getCheckSum());
+        return deployment.withVersion(byChecksum.getVersion());
     }
 
     @GET
