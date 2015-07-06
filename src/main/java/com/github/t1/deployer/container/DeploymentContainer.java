@@ -225,19 +225,19 @@ public class DeploymentContainer extends AbstractContainer {
 
     @DeploymentOperation
     @RolesAllowed("deployer")
-    public void deploy(Deployment deployment, InputStream inputStream) {
-        new DeployPlan(deployment.getName(), inputStream).execute();
+    public void deploy(DeploymentName deploymentName, InputStream inputStream) {
+        new DeployPlan(deploymentName, inputStream).execute();
     }
 
     @DeploymentOperation
     @RolesAllowed("deployer")
-    public void redeploy(Deployment deployment, InputStream inputStream) {
-        new ReplacePlan(deployment.getName(), inputStream).execute();
+    public void redeploy(DeploymentName deploymentName, InputStream inputStream) {
+        new ReplacePlan(deploymentName, inputStream).execute();
     }
 
     @DeploymentOperation
     @RolesAllowed("deployer")
-    public void undeploy(Deployment deployment) {
-        new UndeployPlan(deployment.getName()).execute();
+    public void undeploy(DeploymentName deploymentName) {
+        new UndeployPlan(deploymentName).execute();
     }
 }

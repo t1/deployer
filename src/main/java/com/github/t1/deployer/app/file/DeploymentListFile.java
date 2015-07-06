@@ -114,7 +114,7 @@ public class DeploymentListFile {
                 Version expectedVersion = expected.get(contextRoot);
                 if (expectedVersion == null) {
                     log.info("expected version of {} is null -> undeploy", contextRoot);
-                    container.undeploy(actual);
+                    container.undeploy(actual.getName());
                 } else if (expectedVersion.equals(actual.getVersion())) {
                     log.debug("expected version of {} equals actual {} -> skip", contextRoot, expectedVersion);
                     // already the expected version
@@ -145,7 +145,7 @@ public class DeploymentListFile {
 
     private void redeploy(Deployment newDeployment) {
         try (InputStream inputStream = repository.getArtifactInputStream(newDeployment.getCheckSum())) {
-            container.redeploy(newDeployment, inputStream);
+            container.redeploy(newDeployment.getName(), inputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -168,7 +168,7 @@ public class Deployments {
             newDeployment = newDeployment.withName(nameOverride);
         }
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
-            container.deploy(newDeployment, inputStream);
+            container.deploy(newDeployment.getName(), inputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -182,7 +182,7 @@ public class Deployments {
     private void redeploy(CheckSum checkSum) {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
-            container.redeploy(newDeployment, inputStream);
+            container.redeploy(newDeployment.getName(), inputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -202,7 +202,7 @@ public class Deployments {
     @ApiOperation("delete a deployment")
     public void delete(@PathParam("contextRoot") ContextRoot contextRoot) {
         Deployment deployment = container.getDeploymentFor(contextRoot);
-        container.undeploy(deployment);
+        container.undeploy(deployment.getName());
     }
 
     @GET

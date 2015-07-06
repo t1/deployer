@@ -145,7 +145,7 @@ public class DeploymentsIT {
     private void assertRedeployLatestFoo(Response response) {
         assertStatus(NO_CONTENT, response);
         verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
-        verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
     @Test
@@ -219,7 +219,7 @@ public class DeploymentsIT {
 
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
-        verify(container).deploy(deploymentFor(FOO), inputStreamFor(FOO, CURRENT_FOO_VERSION));
+        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
         verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
     }
 
@@ -271,7 +271,7 @@ public class DeploymentsIT {
                         ));
 
         assertStatus(OK, response); // redirected
-        verify(container).deploy(deploymentFor(FOO), inputStreamFor(FOO, CURRENT_FOO_VERSION));
+        verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
         verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
     }
 
@@ -287,7 +287,7 @@ public class DeploymentsIT {
 
         assertStatus(OK, response); // redirected
         verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
-        verify(container).redeploy(deploymentFor(FOO, NEWEST_FOO_VERSION), inputStreamFor(FOO, NEWEST_FOO_VERSION));
+        verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
     @Test

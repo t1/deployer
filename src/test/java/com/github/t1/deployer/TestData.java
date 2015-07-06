@@ -63,8 +63,7 @@ public class TestData {
             for (VersionInfo versionInfo : versionInfos) {
                 Version version = versionInfo.getVersion();
                 CheckSum checksum = fakeChecksumFor(contextRoot, version);
-                when(repository.getByChecksum(checksum)).thenReturn(
-                        deploymentFor(contextRoot, version));
+                when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(contextRoot, version));
                 when(repository.availableVersionsFor(checksum)).thenReturn(versionInfos);
                 when(repository.getArtifactInputStream(checksum)) //
                         .thenReturn(inputStreamFor(contextRoot, version));
@@ -100,7 +99,7 @@ public class TestData {
                 givenDeployment(container, deployments, deployment);
                 return null;
             }
-        }).when(container).deploy(any(Deployment.class), any(InputStream.class));
+        }).when(container).deploy(any(DeploymentName.class), any(InputStream.class));
         when(container.getAllDeployments()).thenReturn(deployments);
     }
 
