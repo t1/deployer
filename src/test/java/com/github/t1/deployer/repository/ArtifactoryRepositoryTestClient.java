@@ -4,8 +4,6 @@ import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.net.URI;
 
-import javax.ws.rs.core.UriBuilder;
-
 import com.github.t1.deployer.model.*;
 
 public class ArtifactoryRepositoryTestClient {
@@ -42,7 +40,7 @@ public class ArtifactoryRepositoryTestClient {
 
     private static ArtifactoryRepository initRepo(URI uri) {
         ArtifactoryRepository repo = new ArtifactoryRepository();
-        repo.baseUri = UriBuilder.fromUri(uri).path("artifactory").build();
+        // FIXME repo.baseUri = UriBuilder.fromUri(uri).path("artifactory").build();
         repo.init();
         return repo;
     }

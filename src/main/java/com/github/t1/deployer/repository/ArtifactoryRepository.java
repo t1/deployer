@@ -15,13 +15,10 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 
-import lombok.extern.slf4j.Slf4j;
-
-import org.apache.http.auth.Credentials;
-
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
-import com.github.t1.rest.UriTemplate.UriScheme;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ArtifactoryRepository extends Repository {
@@ -43,30 +40,23 @@ public class ArtifactoryRepository extends Repository {
 
     @Inject
     @Artifactory
-    URI baseUri;
+    RestResource artifactory;
 
-    @Inject
-    @Artifactory
-    Credentials credentials;
-
-    private RestResource artifactory;
     private EntityRequest<ChecksumSearchResult> searchByChecksum;
 
     @PostConstruct
     void init() {
-        UriTemplate template = UriScheme.of(baseUri).authority(baseUri.getAuthority()).path(baseUri.getPath());
-        this.artifactory = new RestResource(template);
-        this.searchByChecksum = authenticated( //
-                artifactory //
-                        .path("api/search/checksum") //
-                        .query("sha1", "{checkSum}") //
-                        .header("X-Result-Detail", "info") //
-                ).accept(ChecksumSearchResult.class);
+        this.searchByChecksum = artifactory //
+                .path("api/search/checksum") //
+                .query("sha1", "{checkSum}") //
+                .header("X-Result-Detail", "info") //
+                .accept(ChecksumSearchResult.class);
     }
 
     private RestRequest authenticated(RestRequest request) {
-        if (credentials != null && request.authority().equals(artifactory.authority()))
-            request = request.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
+        // FIXME
+        // if (credentials != null && request.authority().equals(artifactory.authority()))
+        // request = request.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
         return request;
     }
 
@@ -79,10 +69,14 @@ public class ArtifactoryRepository extends Repository {
         if (isEmpty(checkSum))
             return new Deployment().withVersion(NO_CHECKSUM);
         SearchResult result = searchByChecksum(checkSum);
-        if (result.is(error))
-            return new Deployment().withCheckSum(checkSum).withVersion(ERROR);
-        if (result.is(SearchResultStatus.notFound))
-            return new Deployment().withCheckSum(checkSum).withVersion(UNKNOWN);
+        switch (result.getStatus()) {
+            case error:
+                return new Deployment().withCheckSum(checkSum).withVersion(ERROR);
+            case unknown:
+                return new Deployment().withCheckSum(checkSum).withVersion(UNKNOWN);
+            case ok:
+                break;
+        }
         URI uri = result.getUri();
         log.debug("got uri {}", uri);
         Path path = path(uri);
@@ -99,21 +93,21 @@ public class ArtifactoryRepository extends Repository {
             List<ChecksumSearchResultItem> results = searchByChecksum.with("checkSum", checkSum.hexString()) //
                     .get().getResults();
             if (results.size() == 0)
-                return searchResult().status(notFound).build();
+                return searchResult().status(SearchResultStatus.unknown).build();
             if (results.size() > 1)
                 throw new RuntimeException("checksum not unique in repository: " + checkSum);
             ChecksumSearchResultItem item = results.get(0);
             log.debug("got {}", item);
             return searchResult().status(ok).uri(item.getUri()).downloadUri(item.getDownloadUri()).build();
         } catch (RuntimeException e) {
-            log.error("can't search by checksum [" + checkSum + "] in " + baseUri, e);
+            log.error("can't search by checksum [" + checkSum + "] in " + searchByChecksum, e);
             return searchResult().status(error).build();
         }
     }
 
     public enum SearchResultStatus {
         ok,
-        notFound,
+        unknown,
         error;
     }
 
@@ -249,10 +243,14 @@ public class ArtifactoryRepository extends Repository {
     @Override
     public InputStream getArtifactInputStream(CheckSum checkSum) {
         SearchResult found = searchByChecksum(checkSum);
-        if (found.is(error))
-            throw webException(BAD_GATEWAY, "error while finding checksum " + checkSum);
-        if (found.is(notFound))
-            throw notFound("checksum " + checkSum + " not found to fetch input stream");
+        switch (found.getStatus()) {
+            case error:
+                throw webException(BAD_GATEWAY, "error while finding checksum " + checkSum);
+            case unknown:
+                throw notFound("checksum " + checkSum + " not found to fetch input stream");
+            case ok:
+                break;
+        }
         URI uri = found.getDownloadUri();
         log.info("found {} for checksum {}", uri, checkSum);
         return authenticated(new RestResource(uri).request()).accept(InputStream.class).get();

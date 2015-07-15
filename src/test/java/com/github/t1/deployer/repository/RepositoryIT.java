@@ -3,21 +3,20 @@ package com.github.t1.deployer.repository;
 import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.junit.Assert.*;
-import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.io.*;
-import java.net.URI;
 import java.util.List;
-
-import lombok.SneakyThrows;
 
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.*;
-
 import com.github.t1.deployer.model.*;
+import com.github.t1.rest.RestResource;
+
+import ch.qos.logback.classic.*;
+import io.dropwizard.testing.junit.DropwizardClientRule;
+import lombok.SneakyThrows;
 
 public class RepositoryIT {
     @ClassRule
@@ -25,7 +24,7 @@ public class RepositoryIT {
 
     private Repository repository() {
         ArtifactoryRepository repo = new ArtifactoryRepository();
-        repo.baseUri = URI.create(artifactory.baseUri() + "/artifactory");
+        repo.artifactory = new RestResource(artifactory.baseUri() + "/artifactory");
         repo.init();
         return repo;
     }
@@ -36,7 +35,7 @@ public class RepositoryIT {
     @Before
     public void setLogLevels() {
         setLogLevel("org.apache.http.wire", DEBUG);
-        // setLogLevel("com.github.t1.rest", DEBUG);
+        setLogLevel("com.github.t1.rest", DEBUG);
         setLogLevel("com.github.t1.deployer", DEBUG);
     }
 

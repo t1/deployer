@@ -12,14 +12,16 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.*;
 import javax.management.*;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
+import com.github.t1.rest.*;
+import com.github.t1.rest.UriTemplate.UriScheme;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Logged(level = DEBUG)
@@ -31,17 +33,17 @@ public class Config implements Serializable {
     private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
 
     private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
-    private static final Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
-            .toAbsolutePath();
+    private static final Path CONFIG_FILE =
+            Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties").toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
-    private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding="
-            + SOCKET_BINDING_PREFIX;
+    private static final String SOCKET_BINDING =
+            "jboss.as:socket-binding-group=standard-sockets,socket-binding=" + SOCKET_BINDING_PREFIX;
     private static final ObjectName[] MANAGEMENT_INTERFACES = { //
             objectName(SOCKET_BINDING + "native"), //
-                    objectName(SOCKET_BINDING + "https"), //
-                    objectName(SOCKET_BINDING + "http"), //
-            };
+            objectName(SOCKET_BINDING + "https"), //
+            objectName(SOCKET_BINDING + "http"), //
+    };
 
     private static ObjectName objectName(String name) {
         try {
@@ -120,8 +122,19 @@ public class Config implements Serializable {
 
     @Produces
     @Artifactory
-    public URI produceArtifactoryUri() {
-        return getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
+    public RestResource produceArtifactoryRequestBase() {
+        URI uri = getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
+        UriTemplate template = UriScheme.of(uri).authority(uri.getAuthority()).absolutePath(uri.getPath());
+        RestResource artifactory = new RestResource(template);
+        return authenticated(artifactory);
+    }
+
+    private RestResource authenticated(RestResource resource) {
+        // FIXME
+        // UsernamePasswordCredentials credentials = getArtifactoryCredentials();
+        // if (credentials != null && resource.authority().equals(artifactory.authority()))
+        // resource = resource.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
+        return resource;
     }
 
     private URI getUriProperty(String propertyName, String defaultUri) {
@@ -153,9 +166,7 @@ public class Config implements Serializable {
         return properties;
     }
 
-    @Produces
-    @Artifactory
-    public UsernamePasswordCredentials produceArtifactoryCredentials() {
+    private UsernamePasswordCredentials getArtifactoryCredentials() {
         String username = properties().getProperty("deployer.artifactory.username");
         if (username == null)
             return null;

@@ -4,17 +4,16 @@ import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import lombok.SneakyThrows;
 
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
@@ -28,6 +27,8 @@ import com.github.t1.deployer.TestData;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.StatusDetails;
+
+import lombok.SneakyThrows;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeploymentContainerTest {

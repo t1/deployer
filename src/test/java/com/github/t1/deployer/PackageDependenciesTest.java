@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import java.util.Collection;
 
-import jdepend.framework.*;
-
 import org.junit.*;
 
 import com.github.t1.deployer.app.Deployments;
@@ -15,6 +13,8 @@ import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.Config;
+
+import jdepend.framework.*;
 
 public class PackageDependenciesTest {
     private final JDepend jdepend = new JDepend();
@@ -61,6 +61,8 @@ public class PackageDependenciesTest {
         Package repository = packageOf(Repository.class);
         Package tools = packageOf(Config.class);
 
+        Package rest = packageOf("com.github.t1.rest");
+
         app.dependsUpon(model, container, repository, tools, file, //
                 packageOf(io.swagger.config.Scanner.class), //
                 packageOf(io.swagger.jaxrs.Reader.class), //
@@ -70,24 +72,21 @@ public class PackageDependenciesTest {
         html.dependsUpon(model, app, builder); // app for resource paths
         file.dependsUpon(model, repository, container);
 
-        container.dependsUpon(
-                model,
-                tools, //
+        container.dependsUpon(model, tools, //
                 packageOf(org.jboss.as.controller.client.ModelControllerClient.class),
                 packageOf(org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class),
                 packageOf(org.jboss.dmr.ModelNode.class));
         repository.dependsUpon( //
                 model, //
                 tools, //
-                packageOf(org.apache.http.auth.Credentials.class), //
-                packageOf("com.github.t1.rest"));
+                rest);
 
         tools.dependsUpon( //
                 packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient
                 packageOf("org.apache.http.auth"), // should move to Rest-Client
                 packageOf("com.fasterxml.jackson.dataformat.yaml.snakeyaml"), // YamlMessageBodyWriter
-                packageOf("com.github.t1.rest.fallback") // ConverterTools
-        );
+                packageOf("com.github.t1.rest.fallback"), // ConverterTools
+                rest);
     }
 
     private Package packageOf(Class<?> type) {
