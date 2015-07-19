@@ -12,7 +12,7 @@ import org.junit.rules.ExpectedException;
 import org.slf4j.LoggerFactory;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.rest.RestResource;
+import com.github.t1.rest.RestConfig;
 
 import ch.qos.logback.classic.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
@@ -22,18 +22,14 @@ public class RepositoryIT {
     @ClassRule
     public static DropwizardClientRule artifactory = new DropwizardClientRule(new ArtifactoryMock());
 
-    private Repository repository() {
-        ArtifactoryRepository repo = new ArtifactoryRepository();
-        repo.artifactory = new RestResource(artifactory.baseUri() + "/artifactory");
-        repo.init();
-        return repo;
-    }
-
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    private final RestConfig config = new RestConfig().register("artifactory", artifactory.baseUri() + "/artifactory");
+    private final ArtifactoryRepository repository = new ArtifactoryRepository(config);
+
     @Before
-    public void setLogLevels() {
+    public void init() {
         setLogLevel("org.apache.http.wire", DEBUG);
         setLogLevel("com.github.t1.rest", DEBUG);
         setLogLevel("com.github.t1.deployer", DEBUG);
@@ -55,7 +51,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldGetAvailableVersions() {
-        List<VersionInfo> versions = repository().availableVersionsFor(fakeChecksumFor(FOO));
+        List<VersionInfo> versions = repository.availableVersionsFor(fakeChecksumFor(FOO));
 
         assertEquals(FOO_VERSIONS.size(), versions.size());
         for (VersionInfo entry : versions) {
@@ -65,7 +61,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        Deployment deployment = repository().getByChecksum(FAILING_CHECKSUM);
+        Deployment deployment = repository.getByChecksum(FAILING_CHECKSUM);
 
         assertEquals("error", deployment.getVersion().toString());
         assertEquals(FAILING_CHECKSUM, deployment.getCheckSum());
@@ -76,7 +72,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
-        Deployment deployment = repository().getByChecksum(AMBIGUOUS_CHECKSUM);
+        Deployment deployment = repository.getByChecksum(AMBIGUOUS_CHECKSUM);
 
         assertEquals("error", deployment.getVersion().toString());
         assertEquals(AMBIGUOUS_CHECKSUM, deployment.getCheckSum());
@@ -87,7 +83,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnknown() {
-        Deployment deployment = repository().getByChecksum(UNKNOWN_CHECKSUM);
+        Deployment deployment = repository.getByChecksum(UNKNOWN_CHECKSUM);
 
         assertEquals("unknown", deployment.getVersion().toString());
         assertEquals(UNKNOWN_CHECKSUM, deployment.getCheckSum());
@@ -98,7 +94,7 @@ public class RepositoryIT {
 
     @Test
     public void shouldSearchByChecksum() {
-        Deployment deployment = repository().getByChecksum(fakeChecksumFor(FOO));
+        Deployment deployment = repository.getByChecksum(fakeChecksumFor(FOO));
 
         assertEquals(FOO, deployment.getContextRoot());
         assertEquals(FOO_WAR, deployment.getName());
@@ -109,7 +105,7 @@ public class RepositoryIT {
     @Test
     public void shouldGetArtifact() {
         @SuppressWarnings("resource")
-        InputStream inputStream = repository().getArtifactInputStream(fakeChecksumFor(FOO));
+        InputStream inputStream = repository.getArtifactInputStream(fakeChecksumFor(FOO));
 
         assertEquals("foo-1.3.1.war@1.3.1", read(inputStream));
     }

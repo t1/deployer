@@ -7,10 +7,10 @@ import java.security.Principal;
 
 import javax.inject.Inject;
 
-import lombok.extern.slf4j.Slf4j;
-
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.DeploymentName;
 import com.github.t1.log.*;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("unused")
@@ -31,6 +31,6 @@ public class Audit {
     @LogContext
     String host = getLocalHost().getHostName();
 
-    @Logged(value = "{principal};{client-ip};{operation};{contextRoot};{version};{host}", level = INFO)
-    public void allow(String operation, ContextRoot contextRoot, Version version) {}
+    @Logged(value = "{principal};{client-ip};{operation};{name};{host}", level = INFO)
+    public void allow(String operation, DeploymentName name) {}
 }

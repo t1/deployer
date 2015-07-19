@@ -4,9 +4,8 @@ import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.List;

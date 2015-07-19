@@ -12,13 +12,11 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.*;
 import javax.management.*;
 
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
 import com.github.t1.rest.*;
-import com.github.t1.rest.UriTemplate.UriScheme;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -122,19 +120,14 @@ public class Config implements Serializable {
 
     @Produces
     @Artifactory
-    public RestResource produceArtifactoryRequestBase() {
-        URI uri = getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
-        UriTemplate template = UriScheme.of(uri).authority(uri.getAuthority()).absolutePath(uri.getPath());
-        RestResource artifactory = new RestResource(template);
-        return authenticated(artifactory);
-    }
-
-    private RestResource authenticated(RestResource resource) {
-        // FIXME
-        // UsernamePasswordCredentials credentials = getArtifactoryCredentials();
-        // if (credentials != null && resource.authority().equals(artifactory.authority()))
-        // resource = resource.basicAuth(credentials.getUserPrincipal().getName(), credentials.getPassword());
-        return resource;
+    public RestConfig produceArtifactoryRequestBase() {
+        RestConfig config = new RestConfig();
+        URI baseUri = getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
+        config.register("artifactory", baseUri);
+        Credentials credentials = getArtifactoryCredentials();
+        if (credentials != null)
+            config.put(baseUri, credentials);
+        return config;
     }
 
     private URI getUriProperty(String propertyName, String defaultUri) {
@@ -166,13 +159,13 @@ public class Config implements Serializable {
         return properties;
     }
 
-    private UsernamePasswordCredentials getArtifactoryCredentials() {
+    private Credentials getArtifactoryCredentials() {
         String username = properties().getProperty("deployer.artifactory.username");
         if (username == null)
             return null;
         String password = properties().getProperty("deployer.artifactory.password");
         if (password == null)
             return null;
-        return new UsernamePasswordCredentials(username, password);
+        return new Credentials(username, password);
     }
 }

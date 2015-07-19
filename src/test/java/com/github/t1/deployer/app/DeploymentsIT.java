@@ -5,11 +5,10 @@ import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
-import static org.hamcrest.CoreMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
-import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.net.URI;
 import java.security.Principal;
@@ -17,8 +16,6 @@ import java.util.List;
 
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.*;
-
-import lombok.extern.java.Log;
 
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -35,6 +32,9 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.InterceptorMock;
 import com.github.t1.rest.RestResource;
 
+import io.dropwizard.testing.junit.DropwizardClientRule;
+import lombok.extern.java.Log;
+
 @Log
 public class DeploymentsIT {
     private static DeploymentContainer container = mock(DeploymentContainer.class);
@@ -49,7 +49,6 @@ public class DeploymentsIT {
         DeploymentOperationInterceptor interceptor = new DeploymentOperationInterceptor();
         interceptor.audit = audit;
         interceptor.deploymentsList = deploymentListFile;
-        interceptor.principal = principal;
         return interceptor;
     }
 
@@ -122,19 +121,13 @@ public class DeploymentsIT {
     }
 
     private RestResource deploymentsRestResource(ContextRoot contextRoot) {
-        return deploymentsRestResource().path(contextRoot.getValue());
+        return deployerRestResource(contextRoot.getValue());
     }
 
-    private RestResource deploymentsRestResource() {
-        return deployerRestResource() //
-                // .register(new LoggingFilter(log, false)) //
-                .path("deployments");
-    }
-
-    private RestResource deployerRestResource() {
-        URI baseUri = deployer.baseUri();
+    private RestResource deployerRestResource(String path) {
+        String baseUri = deployer.baseUri() + "/deployments";
         // URI baseUri = URI.create("http://localhost:8080/deployer/");
-        return new RestResource(baseUri);
+        return new RestResource(baseUri + "/" + path);
     }
 
     private void given(ContextRoot... contextRoots) {
@@ -144,7 +137,7 @@ public class DeploymentsIT {
 
     private void assertRedeployLatestFoo(Response response) {
         assertStatus(NO_CONTENT, response);
-        verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
+        verify(audit).allow("redeploy", FOO_WAR);
         verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
@@ -174,9 +167,7 @@ public class DeploymentsIT {
     public void shouldGetDeploymentByContextRoot() {
         given(FOO, BAR);
 
-        Deployment deployment = deploymentsRestResource(FOO) //
-                .accept(Deployment.class) //
-                .get();
+        Deployment deployment = deploymentsRestResource(FOO).GET(Deployment.class);
 
         assertDeployment(FOO, deployment);
     }
@@ -220,7 +211,7 @@ public class DeploymentsIT {
         assertStatus(CREATED, response);
         assertEquals(uri.getUri(), response.getLocation());
         verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
-        verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("deploy", FOO_WAR);
     }
 
     @Test
@@ -256,7 +247,7 @@ public class DeploymentsIT {
                 .delete();
 
         assertStatus(NO_CONTENT, response);
-        verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("undeploy", FOO_WAR);
     }
 
     @Test
@@ -268,11 +259,11 @@ public class DeploymentsIT {
                 .request(APPLICATION_JSON_TYPE) //
                 .post(Entity.form(new Form("action", "deploy") //
                         .param("checksum", fakeChecksumFor(FOO, CURRENT_FOO_VERSION).toString()) //
-                        ));
+        ));
 
         assertStatus(OK, response); // redirected
         verify(container).deploy(FOO_WAR, inputStreamFor(FOO, CURRENT_FOO_VERSION));
-        verify(audit).allow("deploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("deploy", FOO_WAR);
     }
 
     @Test
@@ -286,7 +277,7 @@ public class DeploymentsIT {
                         .param("contextRoot", FOO.getValue())));
 
         assertStatus(OK, response); // redirected
-        verify(audit).allow("redeploy", FOO, NEWEST_FOO_VERSION);
+        verify(audit).allow("redeploy", FOO_WAR);
         verify(container).redeploy(FOO_WAR, inputStreamFor(FOO, NEWEST_FOO_VERSION));
     }
 
@@ -302,7 +293,7 @@ public class DeploymentsIT {
                         .param("contextRoot", FOO.getValue())));
 
         assertStatus(OK, response); // redirected
-        verify(audit).allow("undeploy", FOO, CURRENT_FOO_VERSION);
+        verify(audit).allow("undeploy", FOO_WAR);
     }
 
     @Test
@@ -313,9 +304,9 @@ public class DeploymentsIT {
                 .get();
 
         assertStatus(OK, response);
-        assertThat(
-                response.readEntity(String.class),
-                allOf(containsString("Add Deployment"), containsString("<form"),
-                        containsString("name=\"action\" value=\"deploy\"")));
+        assertThat(response.readEntity(String.class)) //
+                .contains("Add Deployment") //
+                .contains("<form") //
+                .contains("name=\"action\" value=\"deploy\"");
     }
 }

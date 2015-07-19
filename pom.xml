@@ -14,7 +14,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <swagger.version>1.5.1-SNAPSHOT</swagger.version>
         <jackson.version>2.5.1</jackson.version>
     </properties>
 
@@ -75,12 +74,6 @@
                         <overlay>
                             <groupId>com.github.t1</groupId>
                             <artifactId>logging-interceptor</artifactId>
-                            <type>jar</type>
-                            <targetPath>WEB-INF/classes</targetPath>
-                        </overlay>
-                        <overlay>
-                            <groupId>com.github.t1</groupId>
-                            <artifactId>rest-client</artifactId>
                             <type>jar</type>
                             <targetPath>WEB-INF/classes</targetPath>
                         </overlay>
@@ -175,50 +168,30 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
             <version>7.0</version>
             <scope>provided</scope>
         </dependency>
-<!--
-         <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-as7-adapter</artifactId>
-            <version>1.0.5.Final</version>
-            <scope>provided</scope>
-        </dependency>
- -->
 
         <!-- compile scope -->
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
-            <version>1.0.0.CR5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.4.1</version>
+            <version>1.0.0.Final</version>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jaxrs</artifactId>
-            <version>${swagger.version}</version>
+            <version>1.5.1-SNAPSHOT</version>
         </dependency>
-
-        <!-- "overlay" scope -->
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>rest-client</artifactId>
             <version>1.0.0-SNAPSHOT</version>
-            <optional>true</optional>
         </dependency>
+
+        <!-- "overlay" scope -->
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>logging-interceptor</artifactId>
@@ -251,8 +224,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>2.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
+            <artifactId>mockito-core</artifactId>
             <version>1.10.19</version>
             <scope>test</scope>
         </dependency>

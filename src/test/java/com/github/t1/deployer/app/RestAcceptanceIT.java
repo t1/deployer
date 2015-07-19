@@ -34,7 +34,7 @@ public class RestAcceptanceIT {
     @Test
     public void shouldGetIndex() {
         System.out.println("-------------------------- get index from " + uri);
-        String entity = new RestResource(uri.getBaseUri()).get(String.class);
+        String entity = new RestResource(uri.getBaseUri()).GET(String.class);
 
         assertEquals("", entity);
     }

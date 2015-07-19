@@ -83,7 +83,6 @@ public class PackageDependenciesTest {
 
         tools.dependsUpon( //
                 packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient
-                packageOf("org.apache.http.auth"), // should move to Rest-Client
                 packageOf("com.fasterxml.jackson.dataformat.yaml.snakeyaml"), // YamlMessageBodyWriter
                 packageOf("com.github.t1.rest.fallback"), // ConverterTools
                 rest);

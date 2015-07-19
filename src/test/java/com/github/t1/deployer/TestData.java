@@ -8,7 +8,7 @@ import static org.mockito.Mockito.*;
 import java.io.InputStream;
 import java.util.*;
 
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.mockito.invocation.InvocationOnMock;
@@ -93,9 +93,9 @@ public class TestData {
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) {
-                Deployment deployment = invocation.getArgumentAt(0, Deployment.class);
-                Deployment deploymentIs = deploymentFrom(invocation.getArgumentAt(1, InputStream.class));
-                assert deployment.equals(deploymentIs);
+                DeploymentName deploymentName = invocation.getArgumentAt(0, DeploymentName.class);
+                Deployment deployment = deploymentFrom(invocation.getArgumentAt(1, InputStream.class));
+                assert deploymentName.equals(deployment.getName());
                 givenDeployment(container, deployments, deployment);
                 return null;
             }

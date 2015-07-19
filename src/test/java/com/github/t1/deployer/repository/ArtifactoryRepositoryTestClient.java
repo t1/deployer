@@ -1,20 +1,21 @@
 package com.github.t1.deployer.repository;
 
-import io.dropwizard.testing.junit.DropwizardClientRule;
-
-import java.net.URI;
-
 import com.github.t1.deployer.model.*;
+import com.github.t1.rest.RestConfig;
+
+import io.dropwizard.testing.junit.DropwizardClientRule;
+import lombok.SneakyThrows;
 
 public class ArtifactoryRepositoryTestClient {
-    private static final CheckSum CHECKSUM = CheckSum.ofHexString("5064E70F510D3E01A939A344B4712C0594081BBB");
+    private static final CheckSum CHECKSUM = CheckSum.ofHexString("CC99BBEC4AF60E0A39AE4CA4312001B29287580C");
 
     private static final class Dropwizard extends DropwizardClientRule {
         private Dropwizard() {
             super(new ArtifactoryMock());
         }
 
-        public Dropwizard start() throws Throwable {
+        @SneakyThrows(Throwable.class)
+        public Dropwizard start() {
             super.before();
             return this;
         }
@@ -24,9 +25,11 @@ public class ArtifactoryRepositoryTestClient {
         }
     }
 
-    public static void main(String[] args) throws Throwable {
+    public static void main(String[] args) {
         Dropwizard dropwizard = new Dropwizard().start();
-        ArtifactoryRepository repo = initRepo(dropwizard.baseUri());
+        String artifactory = dropwizard.baseUri() + "/artifactory";
+        RestConfig config = new RestConfig().register("artifactory", artifactory);
+        ArtifactoryRepository repo = new ArtifactoryRepository(config);
 
         try {
             // Deployment deployment = repo.getByChecksum(CHECKSUM);
@@ -36,12 +39,5 @@ public class ArtifactoryRepositoryTestClient {
         } finally {
             dropwizard.stop();
         }
-    }
-
-    private static ArtifactoryRepository initRepo(URI uri) {
-        ArtifactoryRepository repo = new ArtifactoryRepository();
-        // FIXME repo.baseUri = UriBuilder.fromUri(uri).path("artifactory").build();
-        repo.init();
-        return repo;
     }
 }
