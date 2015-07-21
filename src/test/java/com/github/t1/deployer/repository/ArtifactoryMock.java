@@ -17,7 +17,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
 
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.t1.deployer.model.*;
@@ -29,6 +29,8 @@ import com.github.t1.deployer.model.*;
 @Slf4j
 @Path("/artifactory")
 public class ArtifactoryMock {
+    private static final String BASIC_FOO_BAR_AUTHORIZATION = "Basic Zm9vOmJhcg==";
+
     public static boolean FAKES = false;
 
     private static final MediaType FILE_INFO = vendorTypeJFrog("FileInfo");
@@ -137,14 +139,28 @@ public class ArtifactoryMock {
         return uriInfo.getBaseUriBuilder().path(ArtifactoryMock.class).path(path).build();
     }
 
+    @Setter
+    private boolean requireAuthorization = false;
+
     @GET
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
-    public String searchByChecksum(@QueryParam("sha1") CheckSum checkSum) {
+    public String searchByChecksum(@HeaderParam("Authorization") String authorization, //
+            @QueryParam("sha1") CheckSum checkSum) {
+        checkAuthorization(authorization);
         log.info("search by checksum: {}", checkSum);
         if (checkSum == null)
             throw badRequest("Required query parameter 'sha1' is missing.");
         return "{\"results\": [" + searchResultsFor(checkSum) + "]}";
+    }
+
+    private void checkAuthorization(String authorization) {
+        if (!requireAuthorization)
+            return;
+        if (authorization == null)
+            throw webException(BAD_REQUEST, "missing authorization");
+        if (!BASIC_FOO_BAR_AUTHORIZATION.equals(authorization))
+            throw webException(BAD_REQUEST, "wrong credentials");
     }
 
     private String searchResultsFor(CheckSum checkSum) {
@@ -239,8 +255,9 @@ public class ArtifactoryMock {
 
     @GET
     @Path("/api/storage/{repoKey}/{path:.*}")
-    public Response fileOrFolderInfo(@PathParam("repoKey") String repoKey, @PathParam("path") String path)
-            throws IOException {
+    public Response fileOrFolderInfo(@HeaderParam("Authorization") String authorization, //
+            @PathParam("repoKey") String repoKey, @PathParam("path") String path) throws IOException {
+        checkAuthorization(authorization);
         log.info("get file/folder info for {} in {}", path, repoKey);
         String info = "{\n" //
                 + "   \"repo\" : \"" + repoKey + "\",\n" //
@@ -404,8 +421,10 @@ public class ArtifactoryMock {
     @GET
     @Path("/{repoKey}/{path:.*}")
     @Produces("application/java-archive")
-    public InputStream getFileStream(@SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
-            @PathParam("path") String pathString) throws IOException {
+    public InputStream getFileStream(@HeaderParam("Authorization") String authorization, //
+            @SuppressWarnings("unused") @PathParam("repoKey") String repoKey, @PathParam("path") String pathString)
+            throws IOException {
+        checkAuthorization(authorization);
         java.nio.file.Path path = Paths.get(pathString);
         if (isIndexed(path)) {
             java.nio.file.Path repoPath = MAVEN_REPOSITORY.resolve(path);
