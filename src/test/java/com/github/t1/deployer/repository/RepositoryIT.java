@@ -3,22 +3,21 @@ package com.github.t1.deployer.repository;
 import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.junit.Assert.*;
-import io.dropwizard.testing.junit.DropwizardClientRule;
 
 import java.io.*;
 import java.net.URI;
 import java.util.List;
 
-import lombok.SneakyThrows;
-
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.*;
-
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
+
+import ch.qos.logback.classic.*;
+import io.dropwizard.testing.junit.DropwizardClientRule;
+import lombok.SneakyThrows;
 
 public class RepositoryIT {
     private static ArtifactoryMock ARTIFACTORY_MOCK = new ArtifactoryMock();
@@ -26,7 +25,7 @@ public class RepositoryIT {
     @ClassRule
     public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(ARTIFACTORY_MOCK);
     private final URI baseUri = URI.create(ARTIFACTORY.baseUri() + "/artifactory");
-    private final RestConfig config = new RestConfig().register("artifactory", baseUri);
+    private final RestContext config = new RestContext().register("artifactory", baseUri);
     private final ArtifactoryRepository repository = new ArtifactoryRepository(config);
 
     @Rule

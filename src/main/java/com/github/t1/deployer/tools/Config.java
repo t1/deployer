@@ -120,8 +120,8 @@ public class Config implements Serializable {
 
     @Produces
     @Artifactory
-    public RestConfig produceArtifactoryRequestBase() {
-        RestConfig config = new RestConfig();
+    public RestContext produceArtifactoryRequestBase() {
+        RestContext config = new RestContext();
         URI baseUri = getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
         config.register("artifactory", baseUri);
         Credentials credentials = getArtifactoryCredentials();

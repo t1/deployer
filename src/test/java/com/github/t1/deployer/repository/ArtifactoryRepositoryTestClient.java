@@ -1,7 +1,7 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.rest.RestConfig;
+import com.github.t1.rest.RestContext;
 
 import io.dropwizard.testing.junit.DropwizardClientRule;
 import lombok.SneakyThrows;
@@ -28,7 +28,7 @@ public class ArtifactoryRepositoryTestClient {
     public static void main(String[] args) {
         Dropwizard dropwizard = new Dropwizard().start();
         String artifactory = dropwizard.baseUri() + "/artifactory";
-        RestConfig config = new RestConfig().register("artifactory", artifactory);
+        RestContext config = new RestContext().register("artifactory", artifactory);
         ArtifactoryRepository repo = new ArtifactoryRepository(config);
 
         try {

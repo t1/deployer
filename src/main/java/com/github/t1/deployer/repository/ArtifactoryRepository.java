@@ -14,10 +14,10 @@ import java.util.*;
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 
-import lombok.extern.slf4j.Slf4j;
-
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ArtifactoryRepository extends Repository {
@@ -39,7 +39,13 @@ public class ArtifactoryRepository extends Repository {
 
     @Inject
     @Artifactory
-    private RestConfig rest;
+    private RestContext rest;
+
+    public ArtifactoryRepository() {}
+
+    public ArtifactoryRepository(RestContext rest) {
+        this.rest = rest;
+    }
 
     /**
      * It's not really nice to get the version out of the repo path, but where else would I get it? Even the
@@ -69,7 +75,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private SearchResult searchByChecksum(CheckSum checkSum) {
-        EntityRequest<ChecksumSearchResult> request = searchByChecksumRequest();
+        RestRequest<ChecksumSearchResult> request = searchByChecksumRequest();
         try {
             log.debug("searchByChecksum({})", checkSum);
             List<ChecksumSearchResultItem> results = request.with("checkSum", checkSum.hexString()) //
@@ -88,13 +94,13 @@ public class ArtifactoryRepository extends Repository {
         }
     }
 
-    private EntityRequest<ChecksumSearchResult> searchByChecksumRequest() {
+    private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
         UriTemplate uri = rest //
                 .nonQueryUri("artifactory") //
                 .path("api/search/checksum") //
                 .query("sha1", "{checkSum}");
-        EntityRequest<ChecksumSearchResult> searchByChecksum = rest //
-                .resource(uri) //
+        RestRequest<ChecksumSearchResult> searchByChecksum = rest //
+                .createResource(uri) //
                 .header("X-Result-Detail", "info") //
                 .accept(ChecksumSearchResult.class);
         log.debug("configured searchByChecksum request: {}", searchByChecksum);
@@ -208,7 +214,7 @@ public class ArtifactoryRepository extends Repository {
         log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
-        FolderInfo folderInfo = rest.resource(uri).GET(FolderInfo.class);
+        FolderInfo folderInfo = rest.createResource(uri).GET(FolderInfo.class);
         log.trace("got {}", folderInfo);
         return versionsIn(fileName, folderInfo);
     }
@@ -232,7 +238,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private Deployment deploymentIn(URI uri) {
-        FileInfo file = rest.resource(uri).GET(FileInfo.class);
+        FileInfo file = rest.createResource(uri).GET(FileInfo.class);
         return file.deployment();
     }
 
@@ -249,6 +255,6 @@ public class ArtifactoryRepository extends Repository {
         }
         URI uri = found.getDownloadUri();
         log.info("found {} for checksum {}", uri, checkSum);
-        return rest.resource(uri).GET(InputStream.class);
+        return rest.createResource(uri).GET(InputStream.class);
     }
 }
