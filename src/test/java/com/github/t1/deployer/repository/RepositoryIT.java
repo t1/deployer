@@ -2,6 +2,7 @@ package com.github.t1.deployer.repository;
 
 import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static com.github.t1.rest.RestContext.*;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -25,7 +26,7 @@ public class RepositoryIT {
     @ClassRule
     public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(ARTIFACTORY_MOCK);
     private final URI baseUri = URI.create(ARTIFACTORY.baseUri() + "/artifactory");
-    private final RestContext config = new RestContext().register("artifactory", baseUri);
+    private RestContext config = REST.register("artifactory", baseUri);
     private final ArtifactoryRepository repository = new ArtifactoryRepository(config);
 
     @Rule
@@ -108,7 +109,7 @@ public class RepositoryIT {
     @Test
     public void shouldSearchByChecksumWithAuthorization() {
         try {
-            config.put(baseUri, new Credentials("foo", "bar"));
+            config = config.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
             Deployment deployment = repository.getByChecksum(fakeChecksumFor(FOO));

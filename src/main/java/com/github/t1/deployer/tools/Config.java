@@ -1,6 +1,7 @@
 package com.github.t1.deployer.tools;
 
 import static com.github.t1.log.LogLevel.*;
+import static com.github.t1.rest.RestContext.*;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -12,14 +13,14 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.*;
 import javax.management.*;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
 import com.github.t1.rest.*;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Logged(level = DEBUG)
@@ -31,17 +32,17 @@ public class Config implements Serializable {
     private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
 
     private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
-    private static final Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
-            .toAbsolutePath();
+    private static final Path CONFIG_FILE =
+            Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties").toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
-    private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding="
-            + SOCKET_BINDING_PREFIX;
+    private static final String SOCKET_BINDING =
+            "jboss.as:socket-binding-group=standard-sockets,socket-binding=" + SOCKET_BINDING_PREFIX;
     private static final ObjectName[] MANAGEMENT_INTERFACES = { //
             objectName(SOCKET_BINDING + "native"), //
-                    objectName(SOCKET_BINDING + "https"), //
-                    objectName(SOCKET_BINDING + "http"), //
-            };
+            objectName(SOCKET_BINDING + "https"), //
+            objectName(SOCKET_BINDING + "http"), //
+    };
 
     private static ObjectName objectName(String name) {
         try {
@@ -121,13 +122,13 @@ public class Config implements Serializable {
     @Produces
     @Artifactory
     public RestContext produceArtifactoryRequestBase() {
-        RestContext config = new RestContext();
+        RestContext config = REST;
         URI baseUri = getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
-        config.register("artifactory", baseUri);
+        config = config.register("artifactory", baseUri);
         Credentials credentials = getArtifactoryCredentials();
         if (credentials != null) {
             log.debug("put {} credentials for {}", credentials.userName(), baseUri);
-            config.put(baseUri, credentials);
+            config = config.register(baseUri, credentials);
         }
         return config;
     }
