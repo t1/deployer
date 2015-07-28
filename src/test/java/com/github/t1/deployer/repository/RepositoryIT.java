@@ -112,7 +112,7 @@ public class RepositoryIT {
             config = config.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
-            Deployment deployment = repository.getByChecksum(fakeChecksumFor(FOO));
+            Deployment deployment = new ArtifactoryRepository(config).getByChecksum(fakeChecksumFor(FOO));
 
             assertEquals(FOO, deployment.getContextRoot());
             assertEquals(FOO_WAR, deployment.getName());
