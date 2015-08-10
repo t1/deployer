@@ -21,4 +21,14 @@
         <param-name>resteasy.scan</param-name>
         <param-value>true</param-value>
     </context-param>
+    <context-param>
+        <param-name>resteasy.media.type.mappings</param-name>
+        <param-value>
+            json : application/json,
+            xml : application/xml,
+            yaml : application/yaml,
+            csv : application/csv,
+            txt : text/plain
+        </param-value>
+    </context-param>
 </web-app>

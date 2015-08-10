@@ -1,10 +1,10 @@
 package com.github.t1.deployer.model;
 
-import io.swagger.annotations.ApiModel;
-import lombok.*;
-
 import com.github.t1.deployer.model.LoggerConfig.LoggerConfigBuilder;
 import com.github.t1.log.LogLevel;
+
+import io.swagger.annotations.ApiModel;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
@@ -18,7 +18,7 @@ public class LoggerPatch {
         this.logLevel = null;
     }
 
-    public LoggerConfig on(LoggerConfig logger) {
+    public LoggerConfig apply(LoggerConfig logger) {
         LoggerConfigBuilder builder = logger.copy();
         if (logLevel != null)
             builder.level(logLevel);

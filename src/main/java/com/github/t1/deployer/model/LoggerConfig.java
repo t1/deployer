@@ -1,10 +1,10 @@
 package com.github.t1.deployer.model;
 
+import com.fasterxml.jackson.annotation.*;
+import com.github.t1.log.LogLevel;
+
 import io.swagger.annotations.ApiModel;
 import lombok.*;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.github.t1.log.LogLevel;
 
 @Value
 @Builder
@@ -14,8 +14,11 @@ public class LoggerConfig implements Comparable<LoggerConfig> {
     public static final String NEW_LOGGER = "!";
 
     @NonNull
+    @JsonProperty
     String category;
+
     @NonNull
+    @JsonProperty
     LogLevel level;
 
     @SuppressWarnings("unused")

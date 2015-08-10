@@ -1,16 +1,16 @@
 package com.github.t1.deployer.model;
 
 import static javax.xml.bind.annotation.XmlAccessType.*;
-import io.swagger.annotations.ApiModel;
 
 import java.util.List;
 
 import javax.xml.bind.annotation.*;
 
+import com.fasterxml.jackson.annotation.*;
+
+import io.swagger.annotations.ApiModel;
 import lombok.*;
 import lombok.experimental.Wither;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** This is the artifact returned by Artifactory as well as the deployment installed in the container. */
 @Value
@@ -24,11 +24,16 @@ public class Deployment implements Comparable<Deployment> {
     private static final DeploymentName NEW_DEPLOYMENT_NAME = new DeploymentName(NEW_DEPLOYMENT_PATH);
     public static final Deployment NEW_DEPLOYMENT = new Deployment(NEW_DEPLOYMENT_NAME, null, null, null, null);
 
+    @JsonProperty
     DeploymentName name;
+    @JsonProperty
     ContextRoot contextRoot;
+    @JsonProperty
     CheckSum checkSum;
+    @JsonProperty
     Version version;
 
+    @JsonProperty
     @XmlElement(name = "version")
     @XmlElementWrapper
     List<VersionInfo> availableVersions;
@@ -59,8 +64,14 @@ public class Deployment implements Comparable<Deployment> {
         return NEW_DEPLOYMENT_NAME.equals(name);
     }
 
+    @JsonIgnore
+    /** Is the name of the deployment equal to the context-root plus '.war'? */
+    public boolean isDefaultName() {
+        return name.getValue().equals(contextRoot + ".war");
+    }
+
     @Override
     public String toString() {
-        return name + "(" + contextRoot + ")";
+        return (isDefaultName() ? "" : name + ":") + contextRoot + "@" + version;
     }
 }

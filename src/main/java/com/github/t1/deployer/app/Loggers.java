@@ -4,8 +4,6 @@ import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.deployer.model.LoggerPatch.*;
 import static com.github.t1.deployer.tools.StatusDetails.*;
 import static com.github.t1.log.LogLevel.*;
-import io.swagger.annotations.*;
-import io.swagger.jaxrs.PATCH;
 
 import java.net.URI;
 import java.util.List;
@@ -19,6 +17,9 @@ import javax.ws.rs.core.*;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
+
+import io.swagger.annotations.*;
+import io.swagger.jaxrs.PATCH;
 
 @Api(tags = "loggers")
 @Boundary
@@ -159,7 +160,7 @@ public class Loggers {
             @Valid LoggerPatch patch //
     ) {
         LoggerConfig logger = getLogger(category);
-        logger = patch.on(logger);
+        logger = patch.apply(logger);
         container.update(logger);
         return Response.noContent().build();
     }

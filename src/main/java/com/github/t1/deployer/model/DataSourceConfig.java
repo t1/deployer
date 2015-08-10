@@ -1,10 +1,12 @@
 package com.github.t1.deployer.model;
 
 import static lombok.AccessLevel.*;
-import io.swagger.annotations.ApiModel;
 
 import java.net.URI;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.annotations.ApiModel;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -20,10 +22,13 @@ public class DataSourceConfig implements Comparable<DataSourceConfig> {
     public static final String NEW_DATA_SOURCE = "!";
 
     @NonNull
+    @JsonProperty
     String name;
 
+    @JsonProperty
     String driver;
 
+    @JsonProperty
     String jndiName;
 
     /**
@@ -32,10 +37,13 @@ public class DataSourceConfig implements Comparable<DataSourceConfig> {
      */
     // String className();
 
+    @JsonProperty
     URI uri;
 
+    @JsonProperty
     String user;
 
+    @JsonProperty
     String password;
 
     /**
