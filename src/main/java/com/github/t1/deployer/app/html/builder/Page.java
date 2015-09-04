@@ -8,10 +8,10 @@ import static java.util.Arrays.*;
 
 import java.util.List;
 
-import lombok.*;
-
 import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+
+import lombok.*;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -25,12 +25,12 @@ public class Page extends Component {
                 tag("meta").attr("charset", "utf-8").build(), //
                 tag("meta").attr("http-equiv", "X-UA-Compatible").attr("content", "IE=edge").build(), //
                 tag("meta").attr("name", "viewport").attr("content", "width=device-width, initial-scale=1").build() //
-                );
+        );
 
         private final List<Component> styleSheets = asList( //
                 styleSheet("bootstrap/css/bootstrap.css"), //
-                styleSheet("webapp/css/style.css") //
-                );
+                styleSheet("css/style.css") //
+        );
 
         private Component title;
         private final CompoundBuilder body = compound("\n");
@@ -38,7 +38,7 @@ public class Page extends Component {
                 nl(), //
                 script("jquery/jquery.js"), //
                 script("bootstrap/js/bootstrap.js") //
-                );
+        );
 
         public PageBuilder title(Component title) {
             this.title = title;

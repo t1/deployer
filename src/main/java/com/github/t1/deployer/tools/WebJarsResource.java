@@ -1,6 +1,7 @@
 package com.github.t1.deployer.tools;
 
 import static com.github.t1.log.LogLevel.*;
+import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -9,12 +10,12 @@ import java.net.URL;
 import java.util.*;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
+
+import com.github.t1.log.Logged;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import com.github.t1.log.Logged;
 
 /**
  * Serve static resources from <code>src/main/resources</code> or any <a href="http://www.webjars.org">webjar</a>
@@ -34,53 +35,98 @@ import com.github.t1.log.Logged;
 @Path("/")
 @Logged(level = TRACE)
 public class WebJarsResource {
-    private abstract class StaticFilesLoader {
-        public String prefix() {
-            return "";
-        }
-
-        public abstract String name();
-    }
-
-    private class WebappStaticFilesLoader extends StaticFilesLoader {
-        @Override
-        public String name() {
-            return "webapp";
-        }
-    }
+    private static final List<String> ALLOWED_STATIC_FOLDERS =
+            asList("css", "doc", "fonts", "html", "img", "js", "scripts", "styles");
 
     @RequiredArgsConstructor
-    private class WebjarFilesLoader extends StaticFilesLoader {
-        private final String artifact;
-        private final String version;
+    private class StaticFilesLoader {
+        final String name;
+        final String prefix;
 
-        @Override
-        public String prefix() {
-            return "META-INF/resources/webjars/" + artifact + "/" + version;
+        public StaticFilesLoader(String name) {
+            this(name, "");
+        }
+
+        @SuppressWarnings("resource")
+        public Response response(String filePath) {
+            String path = prefix + filePath;
+            InputStream stream = classLoader().getResourceAsStream(path);
+            if (stream == null)
+                return notFound("resource '" + filePath + "' not found in '" + name + "'");
+            log.debug("found {} in {}", filePath, name);
+            return Response.ok(stream).type(type(fileSuffix(filePath))).build();
+        }
+
+        private String fileSuffix(String filePath) {
+            if (filePath == null)
+                return null;
+            int i = filePath.lastIndexOf('.');
+            if (i < 0)
+                return null;
+            return filePath.substring(i);
+        }
+
+        private MediaType type(String fileSuffix) {
+            if (fileSuffix == null)
+                return null;
+            switch (fileSuffix) {
+                case ".css":
+                    return MediaType.valueOf("text/css");
+                case ".html":
+                    return TEXT_HTML_TYPE;
+
+                case ".gif":
+                    return MediaType.valueOf("image/gif");
+                case ".ico":
+                    return MediaType.valueOf("image/x-icon");
+                case ".jpeg":
+                    return MediaType.valueOf("image/jpeg");
+                case ".png":
+                    return MediaType.valueOf("image/png");
+
+                case ".raml":
+                    return MediaType.valueOf("application/raml+yaml");
+
+                default:
+                    return TEXT_PLAIN_TYPE;
+            }
+        }
+    }
+
+    private class NotFoundLoader extends StaticFilesLoader {
+        public NotFoundLoader(String name) {
+            super(name);
         }
 
         @Override
-        public String name() {
-            return artifact + " webjar";
+        public Response response(String filePath) {
+            return notFound("no static resource found for " + name + ". "
+                    + "Note that we serve only webjars and these resource folder: " + ALLOWED_STATIC_FOLDERS);
+        }
+    }
+
+    private class WebjarFilesLoader extends StaticFilesLoader {
+        public WebjarFilesLoader(String artifact, String version) {
+            super(artifact + " webjar", "META-INF/resources/webjars/" + artifact + "/" + version + "/");
         }
     }
 
     private final Map<String, StaticFilesLoader> loaders = new HashMap<>();
 
     @GET
-    @Path("/{artifact}/{file-path:.*}")
-    @SuppressWarnings("resource")
-    public Response getStaticResource(@PathParam("artifact") String artifact, @PathParam("file-path") String filePath) {
+    @Path("favicon.ico")
+    public Response getFavicon() {
+        return new StaticFilesLoader("favicon").response("favicon.ico");
+    }
+
+    @GET
+    @Path("/{artifact}/{filePath:.*}")
+    public Response getStaticResource(@PathParam("artifact") String artifact, @PathParam("filePath") String filePath) {
         StaticFilesLoader loader = getLoaderFor(artifact);
         if (loader == null)
             return notFound("artifact not found '" + artifact + "' (for path '" + filePath + "')");
-        String path = loader.prefix() + "/" + filePath;
-        InputStream stream = classLoader().getResourceAsStream(path);
-        if (stream != null) {
-            log.debug("found {} in {}", filePath, loader.name());
-            return Response.ok(stream).build();
-        }
-        return notFound("resource '" + filePath + "' not found in '" + artifact + "'");
+        log.debug("serve {} from {}", filePath, loader.name);
+        return loader.response(filePath);
     }
 
     private Response notFound(String message) {
@@ -98,11 +144,11 @@ public class WebJarsResource {
     }
 
     private StaticFilesLoader createLoaderFor(String artifact) {
-        if ("webapp".equals(artifact))
-            return new WebappStaticFilesLoader();
+        if (ALLOWED_STATIC_FOLDERS.contains(artifact))
+            return new StaticFilesLoader(artifact, artifact + "/");
         String version = versionOf(artifact);
         if (version == null)
-            return null;
+            return new NotFoundLoader(artifact);
         return new WebjarFilesLoader(artifact, version);
     }
 

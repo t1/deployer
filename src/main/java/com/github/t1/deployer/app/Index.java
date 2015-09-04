@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static javax.ws.rs.core.MediaType.*;
-import io.swagger.annotations.*;
 
 import java.net.URI;
 import java.util.*;
@@ -9,33 +8,35 @@ import java.util.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
+import io.swagger.annotations.*;
 import lombok.*;
 
-@Path("/")
-@Api(tags = "root")
 @SwaggerDefinition( //
         info = @Info( //
                 title = "Deployer", //
                 description = "Deploys web archives to a JBoss web container", //
-                version = "pre-init", //
+                version = "", //
                 license = @License( //
                         name = "Apache License 2.0", //
                         url = "http://www.apache.org/licenses/LICENSE-2.0.html" //
-                ) //
-        ), //
+) //
+) , //
+        basePath = "http://localhost:8080/deployer", //
         externalDocs = @ExternalDocs( //
                 value = "see also on github:", //
                 url = "http://github.com/t1/deployer" //
-        ), //
+) , //
         tags = { //
-        @Tag(name = "root"), //
-                @Tag(name = "deployments"), //
-                @Tag(name = "loggers"), //
-                @Tag(name = "datasources"), //
-        }, //
+                @Tag(name = "root", description = "Entry points into the application"), //
+                @Tag(name = "deployments", description = "WARs, EARs, etc."), //
+                @Tag(name = "loggers", description = "Loggers, log levels, etc."), //
+                @Tag(name = "datasources", description = "Database connections, etc."), //
+}, //
         consumes = { APPLICATION_JSON, "application/yaml", APPLICATION_XML }, //
         produces = { APPLICATION_JSON, "application/yaml", APPLICATION_XML } //
 )
+@Path("/")
+@Api(tags = "root")
 @Boundary
 public class Index {
     private static final int FOUND = 302; // not in JAX-RS 1.1
