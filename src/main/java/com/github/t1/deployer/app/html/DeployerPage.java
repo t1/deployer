@@ -10,13 +10,13 @@ import static com.github.t1.deployer.app.html.builder.Tags.*;
 import java.security.Principal;
 import java.util.*;
 
-import lombok.*;
-
 import com.github.t1.deployer.app.Navigation;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
+
+import lombok.*;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -96,6 +96,22 @@ public class DeployerPage extends Component {
 
         private NavBarBuilder navigation() {
             NavBarBuilder navbar = navBar().brand("Deployer");
+            raml(navbar);
+            swagger(navbar);
+            for (final Navigation navigation : Navigation.values())
+                nav(navbar, navigation);
+            return navbar;
+        }
+
+        private void raml(NavBarBuilder navbar) {
+            navbar.item() //
+                    .style("padding: 10px;") //
+                    .href(baseUri("doc/api-console.html")) //
+                    .img(baseUri("img/raml.png")) //
+                    .build();
+        }
+
+        private void swagger(NavBarBuilder navbar) {
             navbar.item() //
                     .style("padding: 10px;") //
                     .href(baseUri("swagger-ui/index.html") //
@@ -105,24 +121,23 @@ public class DeployerPage extends Component {
                                 protected String contentFrom(BuildContext out) {
                                     return "!/" + out.get(Navigation.class).linkName();
                                 }
-                            }) //
-                    ) //
+                            }))
                     .img(baseUri("swagger-ui/images/logo_small.png")) //
                     .build();
-            for (final Navigation navigation : Navigation.values()) {
-                navbar.item() //
-                        .href(NavigationLink.link(navigation)) //
-                        .title(text(navigation.title())) //
-                        .classes(new Component() {
-                            @Override
-                            public void writeTo(BuildContext out) {
-                                if (navigation == out.get(Navigation.class))
-                                    out.append("active");
-                            }
-                        }) //
-                        .build();
-            }
-            return navbar;
+        }
+
+        private void nav(NavBarBuilder navbar, final Navigation navigation) {
+            navbar.item() //
+                    .href(NavigationLink.link(navigation)) //
+                    .title(text(navigation.title())) //
+                    .classes(new Component() {
+                        @Override
+                        public void writeTo(BuildContext out) {
+                            if (navigation == out.get(Navigation.class))
+                                out.append("active");
+                        }
+                    }) //
+                    .build();
         }
 
         private Component pageFooter() {
