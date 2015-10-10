@@ -208,7 +208,7 @@
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jaxrs</artifactId>
-            <version>1.5.1-SNAPSHOT</version>
+            <version>1.5.3</version>
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
