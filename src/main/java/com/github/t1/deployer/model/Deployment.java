@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.*;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.*;
 import lombok.*;
 import lombok.experimental.Wither;
 
@@ -16,6 +16,7 @@ import lombok.experimental.Wither;
 @Value
 @Wither
 @AllArgsConstructor
+@NoArgsConstructor(force = true)
 @XmlRootElement
 @XmlAccessorType(FIELD)
 @ApiModel
@@ -26,25 +27,22 @@ public class Deployment implements Comparable<Deployment> {
 
     @JsonProperty
     DeploymentName name;
+
     @JsonProperty
     ContextRoot contextRoot;
+
     @JsonProperty
     CheckSum checkSum;
+
+    @ApiModelProperty("The version currently deployed")
     @JsonProperty
     Version version;
 
+    @ApiModelProperty("The list of available releases for this artifact")
     @JsonProperty
-    @XmlElement(name = "version")
+    @XmlElement(name = "release")
     @XmlElementWrapper
-    List<VersionInfo> availableVersions;
-
-    public Deployment() {
-        this.name = null;
-        this.contextRoot = null;
-        this.checkSum = null;
-        this.version = null;
-        this.availableVersions = null;
-    }
+    List<Release> releases;
 
     public Deployment(ContextRoot contextRoot) {
         this(null, contextRoot, null, null, null);

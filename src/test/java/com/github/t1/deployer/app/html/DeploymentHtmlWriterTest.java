@@ -32,10 +32,10 @@ public class DeploymentHtmlWriterTest extends AbstractHtmlWriterTest<Deployment>
     @Test
     public void shouldWriteExistingDeploymentForm() throws Exception {
         Deployment deployment = new Deployment(NAME, CONTEXT_ROOT, CHECK_SUM, new Version("2.0")) //
-                .withAvailableVersions(asList( //
-                        new VersionInfo(new Version("1.0"), CHECK_SUM_1_0), //
-                        new VersionInfo(new Version("2.0"), CHECK_SUM_2_0) //
-                ));
+                .withReleases(asList( //
+                        new Release(new Version("1.0"), CHECK_SUM_1_0), //
+                        new Release(new Version("2.0"), CHECK_SUM_2_0) //
+        ));
 
         String entity = write(deployment);
 

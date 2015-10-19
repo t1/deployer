@@ -1,24 +1,22 @@
 package com.github.t1.deployer.model;
 
-import javax.xml.bind.annotation.XmlValue;
+import static lombok.AccessLevel.*;
 
-import lombok.*;
+import javax.xml.bind.annotation.XmlValue;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
+import lombok.*;
+
 @Value
-@AllArgsConstructor
+@NoArgsConstructor(access = PRIVATE, force = true)
+@RequiredArgsConstructor
 @JsonSerialize(using = ToStringSerializer.class)
 public class ContextRoot {
     @NonNull
     @XmlValue
     String value;
-
-    @SuppressWarnings("unused")
-    private ContextRoot() {
-        this.value = null;
-    }
 
     @Override
     public String toString() {

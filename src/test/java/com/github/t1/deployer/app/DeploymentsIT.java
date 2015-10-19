@@ -182,8 +182,8 @@ public class DeploymentsIT {
                 .get();
 
         assertStatus(OK, response);
-        List<VersionInfo> versions = response.readEntity(new GenericType<List<VersionInfo>>() {});
-        assertEquals(versionInfos(FOO).toString(), versions.toString());
+        List<Release> releases = response.readEntity(new GenericType<List<Release>>() {});
+        assertEquals(releases(FOO).toString(), releases.toString());
     }
 
     @Test

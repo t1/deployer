@@ -87,7 +87,7 @@ public class Loggers {
     public void putLevel( //
             @PathParam("category") String category, //
             @ApiParam(value = "must be a valid log level as string, i.e. in quotes.", required = true) LogLevel level) {
-        LoggerConfig patched = getLogger(category).copy().level(level).build();
+        LoggerConfig patched = getLogger(category).toBuilder().level(level).build();
         container.update(patched);
     }
 
@@ -113,7 +113,7 @@ public class Loggers {
             @NotNull LoggerConfig logger //
     ) {
         if (logger.getCategory() == null)
-            logger = logger.copy().category(category).build();
+            logger = logger.toBuilder().category(category).build();
         else if (!category.equals(logger.getCategory()))
             throw badRequest("path category '" + category + "' " //
                     + "and body category '" + logger.getCategory() + "' don't match " //

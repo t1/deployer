@@ -1,28 +1,23 @@
 package com.github.t1.deployer.model;
 
-import static javax.xml.bind.annotation.XmlAccessType.*;
+import static lombok.AccessLevel.*;
 
 import javax.xml.bind.annotation.*;
-
-import lombok.*;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
+import lombok.*;
+
 @Value
-@AllArgsConstructor
-@XmlAccessorType(NONE)
+@NoArgsConstructor(access = PRIVATE, force = true)
+@RequiredArgsConstructor
+@XmlAccessorType(XmlAccessType.NONE)
 @JsonSerialize(using = ToStringSerializer.class)
 public class Version {
     @NonNull
     @XmlValue
     private String version;
-
-    /** required for JAXB, etc. */
-    @SuppressWarnings("unused")
-    private Version() {
-        this.version = null;
-    }
 
     @Override
     public String toString() {

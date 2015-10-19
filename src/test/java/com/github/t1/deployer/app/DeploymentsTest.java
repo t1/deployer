@@ -11,8 +11,6 @@ import java.util.*;
 
 import javax.xml.bind.JAXB;
 
-import lombok.Value;
-
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -24,6 +22,8 @@ import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 
+import lombok.Value;
+
 @RunWith(MockitoJUnitRunner.class)
 public class DeploymentsTest {
     private static final ObjectMapper JSON = new ObjectMapper().setSerializationInclusion(NON_NULL);
@@ -32,14 +32,14 @@ public class DeploymentsTest {
     public class OngoingDeploymentStub {
         Deployment deployment;
 
-        public OngoingDeploymentStub availableVersions(String... versions) {
-            List<VersionInfo> list = new ArrayList<>();
+        public OngoingDeploymentStub availableReleases(String... versions) {
+            List<Release> releases = new ArrayList<>();
             for (String versionString : versions) {
                 Version version = new Version(versionString);
                 CheckSum checkSum = fakeChecksumFor(deployment.getContextRoot(), version);
-                list.add(new VersionInfo(version, checkSum));
+                releases.add(new Release(version, checkSum));
             }
-            when(repository.availableVersionsFor(deployment.getCheckSum())).thenReturn(list);
+            when(repository.releasesFor(deployment.getCheckSum())).thenReturn(releases);
             return this;
         }
     }
@@ -69,10 +69,10 @@ public class DeploymentsTest {
         return new OngoingDeploymentStub(deploymentFor(contextRoot, fakeVersionFor(contextRoot)));
     }
 
-    private void assertVersions(ContextRoot contextRoot, List<VersionInfo> actual, String... versions) {
+    private void assertReleases(ContextRoot contextRoot, List<Release> actual, String... versions) {
         assertEquals(versions.length, actual.size());
         int i = 0;
-        for (VersionInfo entry : actual) {
+        for (Release entry : actual) {
             Version expected = new Version(versions[i]);
             assertEquals("version#" + i, expected, entry.getVersion());
             assertEquals("checkSum#" + i, fakeChecksumFor(contextRoot, expected), entry.getCheckSum());
@@ -94,22 +94,22 @@ public class DeploymentsTest {
 
     @Test
     public void shouldGetDeploymentByContextRoot() {
-        givenDeployment(FOO).availableVersions("1.3.1");
+        givenDeployment(FOO).availableReleases("1.3.1");
 
         Deployment deployment = deployments.getByContextRoot(FOO);
 
         assertEquals("1.3.1", deployment.getVersion().toString());
-        assertVersions(deployment.getContextRoot(), deployment.getAvailableVersions(), "1.3.1");
+        assertReleases(deployment.getContextRoot(), deployment.getReleases(), "1.3.1");
     }
 
     @Test
     public void shouldGetDeploymentVersions() {
         String[] versions = { "1.2.6", "1.2.7", "1.2.8-SNAPSHOT", "1.3.0", "1.3.1", "1.3.2" };
-        givenDeployment(FOO).availableVersions(versions);
+        givenDeployment(FOO).availableReleases(versions);
 
         Deployment deployment = deployments.getByContextRoot(FOO);
 
-        assertVersions(FOO, deployment.getAvailableVersions(), versions);
+        assertReleases(FOO, deployment.getReleases(), versions);
     }
 
     private static final String DEPLOYMENT_JSON = "{" //
@@ -124,7 +124,7 @@ public class DeploymentsTest {
             + "\"contextRoot\":\"foo\"," //
             + "\"checkSum\":\"FACE000094D353F082E6939015AF81D263BA0F8F\"," //
             + "\"version\":\"1.3.1\"," //
-            + "\"availableVersions\":[" //
+            + "\"releases\":[" //
             + "{\"version\":\"1.0\",\"checkSum\":\"FACE0000949FD646CD3A0D9AF75635813FAE3225\"}," //
             + "{\"version\":\"1.1\",\"checkSum\":\"FACE0000BDA60DDA3EBCF32ABB974013CCDDC2F7\"}," //
             + "{\"version\":\"2.0\",\"checkSum\":\"FACE0000A962CF1E5BE6E12ED6BBD283620DC64B\"}" //
@@ -136,7 +136,7 @@ public class DeploymentsTest {
                 + "<deployment>\n" //
                 + "    <name>" + nameFor(contextRoot) + "</name>\n" //
                 + "    <contextRoot>" + contextRoot + "</contextRoot>\n" //
-                // base64 as the @XmlSchemaType(name = "hexBinary") doesn't seem to work
+        // base64 as the @XmlSchemaType(name = "hexBinary") doesn't seem to work
                 + "    <checkSum>" + fakeChecksumFor(contextRoot).base64() + "</checkSum>\n" //
                 + "    <version>" + fakeVersionFor(contextRoot) + "</version>\n" //
                 + "</deployment>\n";
@@ -163,7 +163,7 @@ public class DeploymentsTest {
 
     @Test
     public void shouldSerializeResourceAsJson() throws IOException {
-        givenDeployment(FOO).availableVersions("1.0", "1.1", "2.0");
+        givenDeployment(FOO).availableReleases("1.0", "1.1", "2.0");
         Deployment deployment = deployments.getByContextRoot(FOO);
 
         StringWriter stringWriter = new StringWriter();
@@ -193,7 +193,7 @@ public class DeploymentsTest {
 
     @Test
     public void shouldMarshalResourceAsXml() {
-        givenDeployment(FOO).availableVersions("1.0", "1.1", "2.0");
+        givenDeployment(FOO).availableReleases("1.0", "1.1", "2.0");
         Deployment deployment = deployments.getByContextRoot(FOO);
 
         StringWriter writer = new StringWriter();
@@ -205,12 +205,12 @@ public class DeploymentsTest {
                 + "    <contextRoot>foo</contextRoot>\n" //
                 + "    <checkSum>+s4AAJTTU/CC5pOQFa+B0mO6D48=</checkSum>\n" //
                 + "    <version>1.3.1</version>\n" //
-                + "    <availableVersions>\n" //
-                + "        <version checkSum=\"+s4AAJSf1kbNOg2a91Y1gT+uMiU=\">1.0</version>\n" //
-                + "        <version checkSum=\"+s4AAL2mDdo+vPMqu5dAE8zdwvc=\">1.1</version>\n" //
-                + "        <version checkSum=\"+s4AAKlizx5b5uEu1rvSg2INxks=\">2.0</version>\n" //
-                + "    </availableVersions>\n" //
+                + "    <releases>\n" //
+                + "        <release checkSum=\"+s4AAJSf1kbNOg2a91Y1gT+uMiU=\">1.0</release>\n" //
+                + "        <release checkSum=\"+s4AAL2mDdo+vPMqu5dAE8zdwvc=\">1.1</release>\n" //
+                + "        <release checkSum=\"+s4AAKlizx5b5uEu1rvSg2INxks=\">2.0</release>\n" //
+                + "    </releases>\n" //
                 + "</deployment>\n" //
-        , writer.toString());
+                , writer.toString());
     }
 }

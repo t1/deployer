@@ -1,5 +1,7 @@
 package com.github.t1.deployer.model;
 
+import static lombok.AccessLevel.*;
+
 import com.fasterxml.jackson.annotation.*;
 import com.github.t1.log.LogLevel;
 
@@ -7,8 +9,10 @@ import io.swagger.annotations.ApiModel;
 import lombok.*;
 
 @Value
-@Builder
-@AllArgsConstructor
+@Builder(toBuilder = true)
+@NoArgsConstructor(access = PRIVATE, force = true)
+@RequiredArgsConstructor
+@ToString(of = { "category", "level" })
 @ApiModel
 public class LoggerConfig implements Comparable<LoggerConfig> {
     public static final String NEW_LOGGER = "!";
@@ -20,16 +24,6 @@ public class LoggerConfig implements Comparable<LoggerConfig> {
     @NonNull
     @JsonProperty
     LogLevel level;
-
-    @SuppressWarnings("unused")
-    private LoggerConfig() {
-        this.category = null;
-        this.level = null;
-    }
-
-    public LoggerConfigBuilder copy() {
-        return builder().category(category).level(level);
-    }
 
     @Override
     public int compareTo(LoggerConfig that) {

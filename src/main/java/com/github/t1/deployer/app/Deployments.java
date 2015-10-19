@@ -2,7 +2,6 @@ package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.deployer.tools.StatusDetails.*;
-import io.swagger.annotations.*;
 
 import java.io.*;
 import java.net.URI;
@@ -12,18 +11,17 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import lombok.extern.slf4j.Slf4j;
-
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 
+import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
+
 @Boundary
 @Path("/deployments")
-@Api(tags = "deployments")
 @Slf4j
 public class Deployments {
-    @ApiModel
     public enum PostDeploymentAction {
         redeploy,
         undeploy;
@@ -85,8 +83,8 @@ public class Deployments {
         Deployment deployment = container.getDeploymentFor(contextRoot);
         if (deployment == null)
             deployment = new Deployment(contextRoot);
-        List<VersionInfo> availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
-        return withVersion(deployment).withAvailableVersions(availableVersions);
+        List<Release> releases = repository.releasesFor(deployment.getCheckSum());
+        return withVersion(deployment).withReleases(releases);
     }
 
     @POST
@@ -225,9 +223,9 @@ public class Deployments {
     public Response putVersion(@PathParam("contextRoot") ContextRoot contextRoot, Version newVersion) {
         if (!container.hasDeploymentWith(contextRoot))
             throw badRequest("no context root: " + contextRoot);
-        for (VersionInfo available : getAvailableVersions(contextRoot)) {
-            if (available.getVersion().equals(newVersion)) {
-                redeploy(available.getCheckSum());
+        for (Release release : getReleases(contextRoot)) {
+            if (release.getVersion().equals(newVersion)) {
+                redeploy(release.getCheckSum());
                 return Response.noContent().build();
             }
         }
@@ -242,12 +240,10 @@ public class Deployments {
     }
 
     @GET
-    @Path("/{contextRoot}/available-versions")
-    @ApiOperation("get the available versions of a deployment")
-    public List<VersionInfo> getAvailableVersions(@PathParam("contextRoot") ContextRoot contextRoot) {
+    @Path("/{contextRoot}/releases")
+    @ApiOperation("get the releases of a deployment")
+    public List<Release> getReleases(@PathParam("contextRoot") ContextRoot contextRoot) {
         Deployment deployment = container.getDeploymentFor(contextRoot);
-        List<VersionInfo> availableVersions = repository.availableVersionsFor(deployment.getCheckSum());
-        deployment = deployment.withAvailableVersions(availableVersions);
-        return deployment.getAvailableVersions();
+        return repository.releasesFor(deployment.getCheckSum());
     }
 }

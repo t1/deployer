@@ -14,16 +14,14 @@ public abstract class Repository {
 
     public abstract Deployment getByChecksum(CheckSum checkSum);
 
-    public abstract List<VersionInfo> availableVersionsFor(CheckSum checkSum);
+    public abstract List<Release> releasesFor(CheckSum checkSum);
 
     public abstract InputStream getArtifactInputStream(CheckSum checkSum);
 
     public CheckSum getChecksumForVersion(Deployment deployment, Version version) {
-        for (VersionInfo entry : availableVersionsFor(deployment.getCheckSum())) {
-            if (version.equals(entry.getVersion())) {
-                return entry.getCheckSum();
-            }
-        }
+        for (Release release : releasesFor(deployment.getCheckSum()))
+            if (version.equals(release.getVersion()))
+                return release.getCheckSum();
         throw new IllegalArgumentException("no version " + version + " for " + deployment.getName());
     }
 }

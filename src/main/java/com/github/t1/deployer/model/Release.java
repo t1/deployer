@@ -1,5 +1,7 @@
 package com.github.t1.deployer.model;
 
+import static lombok.AccessLevel.*;
+
 import javax.xml.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,11 +10,12 @@ import io.swagger.annotations.ApiModel;
 import lombok.*;
 
 @Value
+@NoArgsConstructor(access = PRIVATE, force = true)
 @RequiredArgsConstructor
-@XmlRootElement(name = "version")
+@XmlRootElement(name = "release")
 @XmlAccessorType(XmlAccessType.NONE)
 @ApiModel
-public class VersionInfo {
+public class Release {
     @JsonProperty
     @XmlValue
     Version version;
@@ -20,10 +23,4 @@ public class VersionInfo {
     @JsonProperty
     @XmlAttribute
     CheckSum checkSum;
-
-    @SuppressWarnings("unused")
-    private VersionInfo() {
-        this.version = null;
-        this.checkSum = null;
-    }
 }

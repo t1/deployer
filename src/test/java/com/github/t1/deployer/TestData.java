@@ -59,27 +59,27 @@ public class TestData {
 
     public static void givenDeployments(Repository repository, ContextRoot... contextRoots) {
         for (ContextRoot contextRoot : contextRoots) {
-            List<VersionInfo> versionInfos = versionInfos(contextRoot);
-            for (VersionInfo versionInfo : versionInfos) {
-                Version version = versionInfo.getVersion();
+            List<Release> releases = releases(contextRoot);
+            for (Release release : releases) {
+                Version version = release.getVersion();
                 CheckSum checksum = fakeChecksumFor(contextRoot, version);
                 when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(contextRoot, version));
-                when(repository.availableVersionsFor(checksum)).thenReturn(versionInfos);
+                when(repository.releasesFor(checksum)).thenReturn(releases);
                 when(repository.getArtifactInputStream(checksum)) //
                         .thenReturn(inputStreamFor(contextRoot, version));
             }
         }
     }
 
-    public static List<VersionInfo> versionInfos(ContextRoot contextRoot) {
+    public static List<Release> releases(ContextRoot contextRoot) {
         List<Version> versions = fakeVersionsFor(contextRoot);
-        return versionInfos(contextRoot, versions);
+        return releases(contextRoot, versions);
     }
 
-    private static List<VersionInfo> versionInfos(ContextRoot contextRoot, List<Version> versions) {
-        List<VersionInfo> result = new ArrayList<>();
+    private static List<Release> releases(ContextRoot contextRoot, List<Version> versions) {
+        List<Release> result = new ArrayList<>();
         for (Version version : versions) {
-            result.add(new VersionInfo(version, fakeChecksumFor(contextRoot, version)));
+            result.add(new Release(version, fakeChecksumFor(contextRoot, version)));
         }
         return result;
     }

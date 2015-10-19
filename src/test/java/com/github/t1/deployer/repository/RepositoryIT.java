@@ -55,10 +55,10 @@ public class RepositoryIT {
 
     @Test
     public void shouldGetAvailableVersions() {
-        List<VersionInfo> versions = repository.availableVersionsFor(fakeChecksumFor(FOO));
+        List<Release> versions = repository.releasesFor(fakeChecksumFor(FOO));
 
         assertEquals(FOO_VERSIONS.size(), versions.size());
-        for (VersionInfo entry : versions) {
+        for (Release entry : versions) {
             assertEquals(fakeChecksumFor(FOO, entry.getVersion()), entry.getCheckSum());
         }
     }
@@ -71,7 +71,7 @@ public class RepositoryIT {
         assertEquals(FAILING_CHECKSUM, deployment.getCheckSum());
         assertNull(deployment.getContextRoot());
         assertNull(deployment.getName());
-        assertNull(deployment.getAvailableVersions());
+        assertNull(deployment.getReleases());
     }
 
     @Test
@@ -82,7 +82,7 @@ public class RepositoryIT {
         assertEquals(AMBIGUOUS_CHECKSUM, deployment.getCheckSum());
         assertNull(deployment.getContextRoot());
         assertNull(deployment.getName());
-        assertNull(deployment.getAvailableVersions());
+        assertNull(deployment.getReleases());
     }
 
     @Test
@@ -93,7 +93,7 @@ public class RepositoryIT {
         assertEquals(UNKNOWN_CHECKSUM, deployment.getCheckSum());
         assertNull(deployment.getContextRoot());
         assertNull(deployment.getName());
-        assertNull(deployment.getAvailableVersions());
+        assertNull(deployment.getReleases());
     }
 
     @Test

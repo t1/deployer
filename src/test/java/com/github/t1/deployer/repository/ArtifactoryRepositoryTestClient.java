@@ -35,7 +35,7 @@ public class ArtifactoryRepositoryTestClient {
 
         try {
             // Deployment deployment = repo.getByChecksum(CHECKSUM);
-            for (VersionInfo version : repo.availableVersionsFor(CHECKSUM)) {
+            for (Release version : repo.releasesFor(CHECKSUM)) {
                 System.out.println("-> " + version);
             }
         } finally {

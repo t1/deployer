@@ -182,7 +182,7 @@ public class LoggersTest {
 
         Response response = loggers.patch(L2.getCategory(), LEVEL_PATCH);
 
-        verify(container).update(L2.copy().level(TRACE).build());
+        verify(container).update(L2.toBuilder().level(TRACE).build());
         assertEquals(NO_CONTENT, response.getStatusInfo());
     }
 
@@ -192,7 +192,7 @@ public class LoggersTest {
 
         loggers.putLevel(L2.getCategory(), TRACE);
 
-        verify(container).update(L2.copy().level(TRACE).build());
+        verify(container).update(L2.toBuilder().level(TRACE).build());
     }
 
     @Test
@@ -210,7 +210,7 @@ public class LoggersTest {
 
         Response response = loggers.post(null, L2.getCategory(), patch, TRACE);
 
-        verify(container).update(L2.copy().level(TRACE).build());
+        verify(container).update(L2.toBuilder().level(TRACE).build());
         assertEquals(NO_CONTENT, response.getStatusInfo());
     }
 

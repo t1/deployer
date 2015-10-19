@@ -1,7 +1,7 @@
 package com.github.t1.deployer.model;
 
 import static javax.xml.bind.DatatypeConverter.*;
-import static javax.xml.bind.annotation.XmlAccessType.*;
+import static lombok.AccessLevel.*;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -9,14 +9,14 @@ import java.security.*;
 
 import javax.xml.bind.annotation.*;
 
-import lombok.*;
-
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
+import lombok.*;
+
 @Value
-@XmlAccessorType(NONE)
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = PRIVATE)
+@XmlAccessorType(XmlAccessType.NONE)
 @JsonSerialize(using = ToStringSerializer.class)
 public class CheckSum {
     public static CheckSum of(byte[] bytes) {
@@ -67,8 +67,7 @@ public class CheckSum {
     @XmlSchemaType(name = "hexBinary")
     private final byte[] bytes;
 
-    /** required by JAXB */
-    @SuppressWarnings("unused")
+    /** required by JAXB, etc.; but lombok NoArgConstructor doesn't work with byte[] */
     private CheckSum() {
         this.bytes = null;
     }
