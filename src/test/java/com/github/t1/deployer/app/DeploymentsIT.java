@@ -173,11 +173,11 @@ public class DeploymentsIT {
     }
 
     @Test
-    public void shouldGetAvailableVersions() {
+    public void shouldGetReleases() {
         given(FOO, BAR);
 
         Response response = deploymentsWebTarget(FOO) //
-                .path("available-versions") //
+                .path("releases") //
                 .request(APPLICATION_JSON_TYPE) //
                 .get();
 
