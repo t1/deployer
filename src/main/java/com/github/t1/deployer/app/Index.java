@@ -8,6 +8,8 @@ import java.util.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
+import com.github.t1.ramlap.ApiResponse;
+
 import io.swagger.annotations.*;
 import lombok.*;
 
@@ -47,7 +49,7 @@ public class Index {
             notes = "The html start page should be the list of deployments. "
                     + "Calling the root resouce redirects there by responding with `302 Found`.\n\n" //
                     + "**NOTE** The `Try it out` button will follow the redirect and show the list of deployments.")
-    @ApiResponses(@ApiResponse(code = FOUND, message = "redirect to deployments list"))
+    @ApiResponse(statusCode = FOUND, title = "redirect to deployments list")
     public Response redirectToDeploymentsList(@Context UriInfo uriInfo) {
         return Response.status(FOUND).location(Deployments.pathAll(uriInfo)).build();
     }
