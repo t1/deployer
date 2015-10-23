@@ -27,8 +27,8 @@ import org.mockito.stubbing.Answer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.tools.StatusDetails;
 import com.github.t1.log.LogLevel;
+import com.github.t1.ramlap.ProblemDetail;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoggersTest {
@@ -122,10 +122,10 @@ public class LoggersTest {
         try {
             loggers.put(uriInfo, L1.getCategory(), L2);
         } catch (WebApplicationException e) {
-            StatusDetails entity = (StatusDetails) e.getResponse().getEntity();
-            assertEquals(BAD_REQUEST, entity.getStatus());
+            ProblemDetail entity = (ProblemDetail) e.getResponse().getEntity();
+            assertEquals(BAD_REQUEST, entity.status());
             assertEquals("path category 'l1' and body category 'l2' don't match (and body category is not null).",
-                    entity.getType());
+                    entity.detail());
         }
     }
 
@@ -230,9 +230,9 @@ public class LoggersTest {
             loggers.post(uriInfo, L1.getCategory(), null, null);
             fail("expected WebApplicationException");
         } catch (WebApplicationException e) {
-            StatusDetails entity = (StatusDetails) e.getResponse().getEntity();
-            assertEquals(BAD_REQUEST, entity.getStatus());
-            assertEquals("missing action form param", entity.getType());
+            ProblemDetail entity = (ProblemDetail) e.getResponse().getEntity();
+            assertEquals(BAD_REQUEST, entity.status());
+            assertEquals("missing action form param", entity.detail());
         }
     }
 }

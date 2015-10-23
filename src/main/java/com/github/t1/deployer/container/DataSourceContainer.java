@@ -1,19 +1,19 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.deployer.tools.StatusDetails.*;
 import static com.github.t1.log.LogLevel.*;
+import static com.github.t1.ramlap.ProblemDetail.*;
 
 import java.net.URI;
 import java.util.*;
 
 import javax.ejb.Stateless;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.jboss.dmr.ModelNode;
 
 import com.github.t1.deployer.model.DataSourceConfig;
 import com.github.t1.log.Logged;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Logged(level = INFO)

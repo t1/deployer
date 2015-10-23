@@ -1,7 +1,7 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.deployer.tools.StatusDetails.*;
 import static com.github.t1.log.LogLevel.*;
+import static com.github.t1.ramlap.ProblemDetail.*;
 import static java.util.concurrent.TimeUnit.*;
 
 import java.io.*;
@@ -11,14 +11,14 @@ import java.util.concurrent.*;
 import javax.annotation.security.*;
 import javax.ejb.Stateless;
 
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Logged(level = INFO)
@@ -98,7 +98,7 @@ public class DeploymentContainer extends AbstractContainer {
             return plan //
                     .add(deploymentName.getValue(), inputStream) //
                     .deploy(deploymentName.getValue()) //
-            ;
+                    ;
         }
     }
 
@@ -122,7 +122,7 @@ public class DeploymentContainer extends AbstractContainer {
             return plan //
                     .undeploy(deploymentName.getValue()) //
                     .remove(deploymentName.getValue()) //
-            ;
+                    ;
         }
     }
 

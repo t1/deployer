@@ -25,7 +25,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.t1.deployer.TestData;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.StatusDetails;
+import com.github.t1.ramlap.ProblemDetail;
 
 import lombok.SneakyThrows;
 
@@ -59,12 +59,12 @@ public class DeploymentContainerTest {
         return node;
     }
 
-    public static void assertStatusDetails(Status status, String type, WebApplicationException e) {
+    public static void assertStatusDetails(Status status, String detail, WebApplicationException e) {
         Response response = e.getResponse();
         assertEquals(status, response.getStatusInfo());
-        StatusDetails error = (StatusDetails) response.getEntity();
-        assertEquals(status, error.getStatus());
-        assertEquals(type, error.getType());
+        ProblemDetail error = (ProblemDetail) response.getEntity();
+        assertEquals(status, error.status());
+        assertEquals(detail, error.detail());
     }
 
     public static String readDeploymentsCliResult(ContextRoot... contextRoots) {

@@ -1,7 +1,7 @@
 package com.github.t1.deployer.repository;
 
 import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
-import static com.github.t1.deployer.tools.StatusDetails.*;
+import static com.github.t1.ramlap.ProblemDetail.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -17,10 +17,10 @@ import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
 
+import com.github.t1.deployer.model.*;
+
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-
-import com.github.t1.deployer.model.*;
 
 /**
  * @see ArtifactoryMockLauncher
@@ -94,14 +94,14 @@ public class ArtifactoryMock {
             new Version("1.2.1"), //
             new Version("1.2.1-SNAPSHOT"), //
             new Version("1.2.0") //
-            );
+    );
 
     public static final Version CURRENT_BAR_VERSION = new Version("0.3");
 
     public static final List<Version> BAR_VERSIONS = asList(//
             CURRENT_BAR_VERSION, //
             new Version("0.2") //
-            );
+    );
 
     private static final class StringInputStream extends ByteArrayInputStream {
         private final String string;
@@ -150,7 +150,7 @@ public class ArtifactoryMock {
         checkAuthorization(authorization);
         log.info("search by checksum: {}", checkSum);
         if (checkSum == null)
-            throw badRequest("Required query parameter 'sha1' is missing.");
+            throw validationFailed("Required query parameter 'sha1' is missing.");
         return "{\"results\": [" + searchResultsFor(checkSum) + "]}";
     }
 
@@ -158,9 +158,9 @@ public class ArtifactoryMock {
         if (!requireAuthorization)
             return;
         if (authorization == null)
-            throw webException(BAD_REQUEST, "missing authorization");
+            throw unauthorized("missing authorization");
         if (!BASIC_FOO_BAR_AUTHORIZATION.equals(authorization))
-            throw webException(BAD_REQUEST, "wrong credentials");
+            throw unauthorized("wrong credentials");
     }
 
     private String searchResultsFor(CheckSum checkSum) {
@@ -300,12 +300,14 @@ public class ArtifactoryMock {
             CheckSum checksum = fakeChecksumFor(new ContextRoot(path.getFileName().toString()));
             return fileInfo(12345, checksum, checksum);
         }
-        throw new WebApplicationException(Response.status(NOT_FOUND).type(APPLICATION_JSON).entity("{\n" //
-                + "  \"errors\" : [ {\n" //
-                + "    \"status\" : 404,\n" //
-                + "    \"message\" : \"Unable to find item\"\n" //
-                + "  } ]\n" //
-                + "}").build());
+        throw new WebApplicationException(Response.status(NOT_FOUND).type(APPLICATION_JSON)
+                .entity("{\n" //
+                        + "  \"errors\" : [ {\n" //
+                        + "    \"status\" : 404,\n" //
+                        + "    \"message\" : \"Unable to find item\"\n" //
+                        + "  } ]\n" //
+                        + "}")
+                .build());
     }
 
     private String folderInfo(java.nio.file.Path path) throws IOException {
@@ -386,7 +388,7 @@ public class ArtifactoryMock {
                 + "         \"folder\" : true,\n" //
                 + "         \"uri\" : \"/" + fileName + "\"\n" //
                 + "      },\n" //
-        ;
+                ;
     }
 
     private String fileChild(String fileName) {
@@ -394,7 +396,7 @@ public class ArtifactoryMock {
                 + "         \"folder\" : false,\n" //
                 + "         \"uri\" : \"/" + fileName + "\"\n" //
                 + "      },\n" //
-        ;
+                ;
     }
 
     private String fileInfo(java.nio.file.Path path) throws IOException {
@@ -423,7 +425,7 @@ public class ArtifactoryMock {
     @Produces("application/java-archive")
     public InputStream getFileStream(@HeaderParam("Authorization") String authorization, //
             @SuppressWarnings("unused") @PathParam("repoKey") String repoKey, @PathParam("path") String pathString)
-            throws IOException {
+                    throws IOException {
         checkAuthorization(authorization);
         java.nio.file.Path path = Paths.get(pathString);
         if (isIndexed(path)) {

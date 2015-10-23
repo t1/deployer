@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
-import static com.github.t1.deployer.tools.StatusDetails.*;
+import static com.github.t1.ramlap.ProblemDetail.*;
 
 import java.io.*;
 import java.net.URI;

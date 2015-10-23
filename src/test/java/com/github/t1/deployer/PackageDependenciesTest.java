@@ -13,6 +13,7 @@ import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.Config;
+import com.github.t1.ramlap.ProblemDetail;
 
 import jdepend.framework.*;
 
@@ -60,10 +61,11 @@ public class PackageDependenciesTest {
         Package model = packageOf(Deployment.class);
         Package repository = packageOf(Repository.class);
         Package tools = packageOf(Config.class);
+        Package raml = packageOf(ProblemDetail.class);
 
         Package rest = packageOf("com.github.t1.rest");
 
-        app.dependsUpon(model, container, repository, tools, file, //
+        app.dependsUpon(model, container, repository, raml, file, //
                 packageOf(io.swagger.config.Scanner.class), //
                 packageOf(io.swagger.jaxrs.Reader.class), //
                 packageOf(io.swagger.jaxrs.config.BeanConfig.class), //
@@ -72,19 +74,20 @@ public class PackageDependenciesTest {
         html.dependsUpon(model, app, builder); // app for resource paths
         file.dependsUpon(model, repository, container);
 
-        container.dependsUpon(model, tools, //
+        container.dependsUpon(model, raml, //
                 packageOf(org.jboss.as.controller.client.ModelControllerClient.class),
                 packageOf(org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class),
                 packageOf(org.jboss.dmr.ModelNode.class));
         repository.dependsUpon( //
                 model, //
-                tools, //
+                raml, //
                 rest);
 
         tools.dependsUpon( //
                 packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient
                 packageOf("com.fasterxml.jackson.dataformat.yaml.snakeyaml"), // YamlMessageBodyWriter
                 packageOf("com.github.t1.rest.fallback"), // ConverterTools
+                raml, //
                 rest);
     }
 

@@ -1,21 +1,22 @@
 package com.github.t1.deployer.tools;
 
-import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 import javax.ejb.EJBAccessException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.*;
 
+import com.github.t1.ramlap.*;
+
 @Provider
 public class EJBAccessExceptionMapper implements ExceptionMapper<EJBAccessException> {
+    @ApiResponse(status = UNAUTHORIZED, title = "requires authentication")
+    public static class Unauthorized extends ProblemDetail {}
+
     @Override
     public Response toResponse(EJBAccessException exception) {
-        return Response //
-                .status(UNAUTHORIZED) //
+        return new Unauthorized().toResponseBuilder() //
                 .header("WWW-Authenticate", "Basic realm=\"Deployer\"") //
-                .entity(new StatusDetails(UNAUTHORIZED, exception.getMessage())) //
-                .type(APPLICATION_JSON_TYPE) // TODO this prevents JBoss from trying YAML :(
                 .build();
     }
 }

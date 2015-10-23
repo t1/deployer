@@ -2,8 +2,8 @@ package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.deployer.model.LoggerPatch.*;
-import static com.github.t1.deployer.tools.StatusDetails.*;
 import static com.github.t1.log.LogLevel.*;
+import static com.github.t1.ramlap.ProblemDetail.*;
 
 import java.net.URI;
 import java.util.List;
