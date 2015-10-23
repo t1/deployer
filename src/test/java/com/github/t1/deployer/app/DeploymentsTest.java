@@ -32,9 +32,9 @@ public class DeploymentsTest {
     public class OngoingDeploymentStub {
         Deployment deployment;
 
-        public OngoingDeploymentStub availableReleases(String... versions) {
+        public OngoingDeploymentStub withReleases(String... versionStrings) {
             List<Release> releases = new ArrayList<>();
-            for (String versionString : versions) {
+            for (String versionString : versionStrings) {
                 Version version = new Version(versionString);
                 CheckSum checkSum = fakeChecksumFor(deployment.getContextRoot(), version);
                 releases.add(new Release(version, checkSum));
@@ -94,7 +94,7 @@ public class DeploymentsTest {
 
     @Test
     public void shouldGetDeploymentByContextRoot() {
-        givenDeployment(FOO).availableReleases("1.3.1");
+        givenDeployment(FOO).withReleases("1.3.1");
 
         Deployment deployment = deployments.getByContextRoot(FOO);
 
@@ -105,7 +105,7 @@ public class DeploymentsTest {
     @Test
     public void shouldGetDeploymentVersions() {
         String[] versions = { "1.2.6", "1.2.7", "1.2.8-SNAPSHOT", "1.3.0", "1.3.1", "1.3.2" };
-        givenDeployment(FOO).availableReleases(versions);
+        givenDeployment(FOO).withReleases(versions);
 
         Deployment deployment = deployments.getByContextRoot(FOO);
 
@@ -163,7 +163,7 @@ public class DeploymentsTest {
 
     @Test
     public void shouldSerializeResourceAsJson() throws IOException {
-        givenDeployment(FOO).availableReleases("1.0", "1.1", "2.0");
+        givenDeployment(FOO).withReleases("1.0", "1.1", "2.0");
         Deployment deployment = deployments.getByContextRoot(FOO);
 
         StringWriter stringWriter = new StringWriter();
@@ -193,7 +193,7 @@ public class DeploymentsTest {
 
     @Test
     public void shouldMarshalResourceAsXml() {
-        givenDeployment(FOO).availableReleases("1.0", "1.1", "2.0");
+        givenDeployment(FOO).withReleases("1.0", "1.1", "2.0");
         Deployment deployment = deployments.getByContextRoot(FOO);
 
         StringWriter writer = new StringWriter();

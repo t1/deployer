@@ -200,7 +200,9 @@ public class ArtifactoryRepository extends Repository {
             return emptyList();
         URI uri = result.getUri();
         uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
-        return releasesIn(fileNameWithoutVersion(result.getUri()), uri);
+        List<Release> releases = releasesIn(fileNameWithoutVersion(result.getUri()), uri);
+        Collections.sort(releases);
+        return releases;
     }
 
     private String versionsFolder(URI uri) {

@@ -88,10 +88,12 @@ public class ArtifactoryMock {
 
     public static final List<Version> FOO_VERSIONS = asList(//
             NEWEST_FOO_VERSION, //
+            new Version("1.3.12"), //
             new Version("1.3.2"), //
             CURRENT_FOO_VERSION, //
             new Version("1.3.0"), //
             new Version("1.2.1"), //
+            new Version("1.2.1.1"), //
             new Version("1.2.1-SNAPSHOT"), //
             new Version("1.2.0") //
     );
@@ -151,7 +153,9 @@ public class ArtifactoryMock {
         log.info("search by checksum: {}", checkSum);
         if (checkSum == null)
             throw validationFailed("Required query parameter 'sha1' is missing.");
-        return "{\"results\": [" + searchResultsFor(checkSum) + "]}";
+        String results = searchResultsFor(checkSum);
+        log.info("found {}", results);
+        return "{\"results\": [" + results + "]}";
     }
 
     private void checkAuthorization(String authorization) {

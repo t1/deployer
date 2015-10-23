@@ -15,12 +15,19 @@ import lombok.*;
 @XmlRootElement(name = "release")
 @XmlAccessorType(XmlAccessType.NONE)
 @ApiModel
-public class Release {
+public class Release implements Comparable<Release> {
+    @NonNull
     @JsonProperty
     @XmlValue
     Version version;
 
+    @NonNull
     @JsonProperty
     @XmlAttribute
     CheckSum checkSum;
+
+    @Override
+    public int compareTo(Release that) {
+        return this.version.compareTo(that == null ? null : that.version);
+    }
 }

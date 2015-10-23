@@ -3,6 +3,7 @@ package com.github.t1.deployer.repository;
 import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.rest.RestContext.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -54,13 +55,26 @@ public class RepositoryIT {
     }
 
     @Test
-    public void shouldGetAvailableVersions() {
-        List<Release> versions = repository.releasesFor(fakeChecksumFor(FOO));
+    public void shouldGetReleases() {
+        List<Release> releases = repository.releasesFor(fakeChecksumFor(FOO));
 
-        assertEquals(FOO_VERSIONS.size(), versions.size());
-        for (Release entry : versions) {
+        assertEquals(FOO_VERSIONS.size(), releases.size());
+        for (Release entry : releases) {
             assertEquals(fakeChecksumFor(FOO, entry.getVersion()), entry.getCheckSum());
         }
+
+        assertThat(releases).extracting(r -> r.getVersion().toString()) //
+                .containsExactly( //
+                        "1.2.0", //
+                        "1.2.1-SNAPSHOT", //
+                        "1.2.1", //
+                        "1.2.1.1", //
+                        "1.3.0", //
+                        "1.3.1", //
+                        "1.3.2", //
+                        "1.3.10", //
+                        "1.3.12" //
+        );
     }
 
     @Test
