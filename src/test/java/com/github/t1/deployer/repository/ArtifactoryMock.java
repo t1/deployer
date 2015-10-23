@@ -46,7 +46,7 @@ public class ArtifactoryMock {
     static final java.nio.file.Path MAVEN_REPOSITORY = MAVEN_HOME.resolve("repository");
     static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
 
-    private static final Map<CheckSum, java.nio.file.Path> INDEX = new HashMap<>();
+    static final Map<CheckSum, java.nio.file.Path> INDEX = new HashMap<>();
 
     static Map<CheckSum, java.nio.file.Path> index() {
         if (INDEX.isEmpty())

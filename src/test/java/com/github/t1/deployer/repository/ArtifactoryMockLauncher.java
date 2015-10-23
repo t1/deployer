@@ -1,11 +1,6 @@
 package com.github.t1.deployer.repository;
 
 import static ch.qos.logback.classic.Level.*;
-import io.dropwizard.*;
-import io.dropwizard.jetty.HttpConnectorFactory;
-import io.dropwizard.lifecycle.ServerLifecycleListener;
-import io.dropwizard.server.SimpleServerFactory;
-import io.dropwizard.setup.Environment;
 
 import org.eclipse.jetty.server.Server;
 import org.jboss.aesh.cl.CommandDefinition;
@@ -16,9 +11,14 @@ import org.jboss.aesh.console.command.registry.*;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.*;
-
 import com.codahale.metrics.health.HealthCheck;
+
+import ch.qos.logback.classic.*;
+import io.dropwizard.*;
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.lifecycle.ServerLifecycleListener;
+import io.dropwizard.server.SimpleServerFactory;
+import io.dropwizard.setup.Environment;
 
 /**
  * If you don't have a real Artifactory Pro available, launch this, which will start a more or less working mock of
@@ -104,6 +104,7 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
         @Override
         public CommandResult execute(CommandInvocation invocation) {
             new ArtifactoryMockIndexBuilder().run();
+            ArtifactoryMock.INDEX.clear();
             return CommandResult.SUCCESS;
         }
     }
