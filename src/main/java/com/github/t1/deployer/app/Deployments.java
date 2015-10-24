@@ -14,6 +14,7 @@ import javax.ws.rs.core.*;
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
+import com.github.t1.ramlap.ApiResponse;
 
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
@@ -220,16 +221,18 @@ public class Deployments {
     @PUT
     @Path("/{contextRoot}/version")
     @ApiOperation("put the version of a deployment, triggering a redeploy")
+    @ApiResponse(type = ValidationFailed.class, title = "no context root")
+    @ApiResponse(type = NotFound.class, title = "no release with version found")
     public Response putVersion(@PathParam("contextRoot") ContextRoot contextRoot, Version newVersion) {
         if (!container.hasDeploymentWith(contextRoot))
-            throw badRequest("no context root: " + contextRoot);
+            throw validationFailed("no context root: " + contextRoot);
         for (Release release : getReleases(contextRoot)) {
             if (release.getVersion().equals(newVersion)) {
                 redeploy(release.getCheckSum());
                 return Response.noContent().build();
             }
         }
-        throw notFound("no version " + newVersion + " for " + contextRoot);
+        throw notFound("no released version " + newVersion + " for " + contextRoot);
     }
 
     @GET
