@@ -3,6 +3,7 @@ package com.github.t1.deployer.container;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.ramlap.ProblemDetail.*;
 import static java.util.concurrent.TimeUnit.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 import java.io.*;
 import java.util.*;
@@ -16,6 +17,7 @@ import org.jboss.dmr.ModelNode;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
+import com.github.t1.ramlap.*;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,14 @@ import lombok.extern.slf4j.Slf4j;
 @Logged(level = INFO)
 @Stateless
 public class DeploymentContainer extends AbstractContainer {
+    @ApiResponse(status = INTERNAL_SERVER_ERROR,
+            detail = "The deployment operation has failed. "
+                    + "Look into the server logs for details about the reason. "
+                    + "Common problems are that the deployment requires resources (queues, data source, etc.) "
+                    + "that have not been configured; " //
+                    + "or the deployment file is corrupt or built for a different server environment.")
+    public static class DeploymentOperationFailed extends ProblemDetail {}
+
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
 
     private abstract class AbstractPlan {
@@ -40,7 +50,7 @@ public class DeploymentContainer extends AbstractContainer {
 
                 checkOutcome(plan, result);
             } catch (IOException | ExecutionException | TimeoutException | InterruptedException e) {
-                throw new RuntimeException(e);
+                throw new DeploymentOperationFailed().toWebException().causedBy(e);
             }
         }
 

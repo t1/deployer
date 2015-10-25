@@ -2,6 +2,7 @@ package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
 import static com.github.t1.ramlap.ProblemDetail.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 import java.io.*;
 import java.net.URI;
@@ -182,8 +183,8 @@ public class Deployments {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
             container.redeploy(newDeployment.getName(), inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw internalServerError(e.getMessage());
         }
     }
 
@@ -221,8 +222,10 @@ public class Deployments {
     @PUT
     @Path("/{contextRoot}/version")
     @ApiOperation("put the version of a deployment, triggering a redeploy")
+    @ApiResponse(status = NO_CONTENT, title = "Okay. New version is deployed")
     @ApiResponse(type = ValidationFailed.class, title = "no context root")
     @ApiResponse(type = NotFound.class, title = "no release with version found")
+    @ApiResponse(type = InternalServerError.class, title = "deployment didn't work")
     public Response putVersion(@PathParam("contextRoot") ContextRoot contextRoot, Version newVersion) {
         if (!container.hasDeploymentWith(contextRoot))
             throw validationFailed("no context root: " + contextRoot);
