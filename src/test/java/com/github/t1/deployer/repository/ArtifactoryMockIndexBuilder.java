@@ -8,9 +8,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.*;
 import java.util.*;
 
-import lombok.*;
-
 import com.github.t1.deployer.model.CheckSum;
+
+import lombok.*;
 
 public class ArtifactoryMockIndexBuilder {
     public static void main(String[] args) {
@@ -53,7 +53,7 @@ public class ArtifactoryMockIndexBuilder {
 
         Instant end = Instant.now();
         Duration duration = Duration.between(start, end);
-        System.out.println("ended after " + duration + " for " + visitor.getCount() + " deployables");
+        System.out.println("ended after " + duration.getSeconds() + "s for " + visitor.getCount() + " deployables");
     }
 
     @SneakyThrows(IOException.class)
