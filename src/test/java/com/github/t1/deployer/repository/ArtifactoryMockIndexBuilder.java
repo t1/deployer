@@ -5,12 +5,10 @@ import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.*;
 import java.util.*;
 
 import lombok.*;
-
-import org.joda.time.*;
-import org.joda.time.format.PeriodFormat;
 
 import com.github.t1.deployer.model.CheckSum;
 
@@ -49,12 +47,13 @@ public class ArtifactoryMockIndexBuilder {
         System.out.println("build local maven repository checksum index");
         BuildChecksumsFileVisitor visitor = new BuildChecksumsFileVisitor(MAVEN_REPOSITORY);
         Instant start = Instant.now();
+
         Files.walkFileTree(MAVEN_REPOSITORY, visitor);
-        Instant end = Instant.now();
-        Duration duration = new Duration(start, end);
-        System.out.println("ended after " + PeriodFormat.getDefault().print(duration.toPeriod()) //
-                + " for " + visitor.getCount() + " deployables");
         writeIndex();
+
+        Instant end = Instant.now();
+        Duration duration = Duration.between(start, end);
+        System.out.println("ended after " + duration + " for " + visitor.getCount() + " deployables");
     }
 
     @SneakyThrows(IOException.class)
