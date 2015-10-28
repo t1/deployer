@@ -56,19 +56,20 @@ public class ArtifactoryMock {
 
     @SneakyThrows(IOException.class)
     private static void readIndex() {
-        try (BufferedReader reader = Files.newBufferedReader(MAVEN_INDEX_FILE, UTF_8)) {
-            while (true) {
-                String line = reader.readLine();
-                if (line == null)
-                    break;
-                int index = line.indexOf(":");
-                if (index != 40)
-                    throw new IllegalStateException("unexpected line in index file");
-                CheckSum checkSum = CheckSum.ofHexString(line.substring(0, index));
-                java.nio.file.Path path = Paths.get(line.substring(index + 1));
-                INDEX.put(checkSum, path);
+        if (Files.isReadable(MAVEN_INDEX_FILE))
+            try (BufferedReader reader = Files.newBufferedReader(MAVEN_INDEX_FILE, UTF_8)) {
+                while (true) {
+                    String line = reader.readLine();
+                    if (line == null)
+                        break;
+                    int index = line.indexOf(":");
+                    if (index != 40)
+                        throw new IllegalStateException("unexpected line in index file");
+                    CheckSum checkSum = CheckSum.ofHexString(line.substring(0, index));
+                    java.nio.file.Path path = Paths.get(line.substring(index + 1));
+                    INDEX.put(checkSum, path);
+                }
             }
-        }
     }
 
     private static final java.nio.file.Path REPO_NAME = Paths.get("libs-release-local");
