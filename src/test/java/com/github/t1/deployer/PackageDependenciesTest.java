@@ -12,7 +12,7 @@ import com.github.t1.deployer.app.html.DeployerPage;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.Deployment;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.Config;
+import com.github.t1.deployer.tools.ConfigProducer;
 import com.github.t1.ramlap.ProblemDetail;
 
 import jdepend.framework.*;
@@ -60,7 +60,7 @@ public class PackageDependenciesTest {
         Package container = packageOf(LoggerContainer.class);
         Package model = packageOf(Deployment.class);
         Package repository = packageOf(Repository.class);
-        Package tools = packageOf(Config.class);
+        Package tools = packageOf(ConfigProducer.class);
         Package raml = packageOf(ProblemDetail.class);
 
         Package rest = packageOf("com.github.t1.rest");

@@ -1,13 +1,15 @@
 package com.github.t1.deployer.tools;
 
+import static com.github.t1.deployer.model.Config.ContainerConfig.*;
+import static com.github.t1.deployer.model.Config.RepositoryConfig.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
+import static com.github.t1.rest.fallback.JsonMessageBodyReader.*;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.nio.file.*;
-import java.util.Properties;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.*;
@@ -15,6 +17,8 @@ import javax.management.*;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
+import com.github.t1.deployer.model.Config;
+import com.github.t1.deployer.model.Config.Authentication;
 import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
 import com.github.t1.rest.*;
@@ -25,14 +29,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Logged(level = DEBUG)
 @ApplicationScoped
-public class Config implements Serializable {
+public class ConfigProducer implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final String ARTIFACTORY_URI_PROPERTY = "deployer.artifactory.uri";
-    private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
-
     private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
-    private static final Path CONFIG_FILE =
+    static Path CONFIG_FILE =
             Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties").toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
@@ -52,31 +53,29 @@ public class Config implements Serializable {
         }
     }
 
-    private Properties properties;
+    private Config config;
 
     private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
-        URI uri = getUriProperty(CONTAINER_URI_PROPERTY, defaultUri());
+        URI uri = config().container().uri();
+        if (uri == null)
+            uri = getContainerUriFromMBeans();
+        if (uri == null)
+            throw new RuntimeException("no container configured and no appropriate MBean found");
         log.info("connect to JBoss AS on: {}", uri);
         return createModelControllerClient(uri);
     }
 
-    private String defaultUri() {
+    private URI getContainerUriFromMBeans() {
         ObjectName managementInterface = findManagementInterface();
-        return boundScheme(managementInterface) //
+        if (managementInterface == null)
+            return null;
+        return URI.create(boundScheme(managementInterface) //
                 + "://" + getAttribute(managementInterface, "boundAddress", "localhost") //
-                + ":" + getAttribute(managementInterface, "boundPort", "9990");
-    }
-
-    private String boundScheme(ObjectName managementInterface) {
-        log.trace("management interface: {}", managementInterface.getCanonicalName());
-        String socketBinding = managementInterface.getKeyProperty("socket-binding");
-        log.trace("socket binding: {}", socketBinding);
-        if (socketBinding.startsWith(SOCKET_BINDING_PREFIX))
-            socketBinding = socketBinding.substring(SOCKET_BINDING_PREFIX.length());
-        return (socketBinding.equals("native")) ? "remote" : socketBinding + "-remoting";
+                + ":" + getAttribute(managementInterface, "boundPort", "9990") //
+        );
     }
 
     private ObjectName findManagementInterface() {
@@ -95,6 +94,15 @@ public class Config implements Serializable {
         return null;
     }
 
+    private String boundScheme(ObjectName managementInterface) {
+        log.trace("management interface: {}", managementInterface.getCanonicalName());
+        String socketBinding = managementInterface.getKeyProperty("socket-binding");
+        log.trace("socket binding: {}", socketBinding);
+        if (socketBinding.startsWith(SOCKET_BINDING_PREFIX))
+            socketBinding = socketBinding.substring(SOCKET_BINDING_PREFIX.length());
+        return (socketBinding.equals("native")) ? "remote" : socketBinding + "-remoting";
+    }
+
     private String getAttribute(ObjectName objectName, String attributeName, String defaultValue) {
         try {
             Object value = server.getAttribute(objectName, attributeName);
@@ -109,64 +117,54 @@ public class Config implements Serializable {
     }
 
     private ModelControllerClient createModelControllerClient(URI uri) throws UnknownHostException {
-        InetAddress host = InetAddress.getByName(uri.getHost());
+        String host = uri.getHost();
         int port = uri.getPort();
         log.debug("create ModelControllerClient {}://{}:{}", uri.getScheme(), host, port);
         return ModelControllerClient.Factory.create(uri.getScheme(), host, port);
     }
 
-    void closeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {
+    void disposeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {
         client.close();
     }
 
     @Produces
     @Artifactory
-    public RestContext produceArtifactoryRequestBase() {
-        RestContext config = REST;
-        URI baseUri = getUriProperty(ARTIFACTORY_URI_PROPERTY, "http://localhost:8081/artifactory");
-        config = config.register("artifactory", baseUri);
+    public RestContext produceArtifactoryRestContext() {
+        RestContext rest = REST;
+        URI baseUri = config().repository().uri();
+        if (baseUri == null)
+            baseUri = URI.create("http://localhost:8081/artifactory");
+        rest = rest.register("artifactory", baseUri);
         Credentials credentials = getArtifactoryCredentials();
         if (credentials != null) {
             log.debug("put {} credentials for {}", credentials.userName(), baseUri);
-            config = config.register(baseUri, credentials);
+            rest = rest.register(baseUri, credentials);
+        }
+        return rest;
+    }
+
+    @SneakyThrows(IOException.class)
+    private Config config() {
+        if (config == null) {
+            if (CONFIG_FILE != null && Files.isReadable(CONFIG_FILE)) {
+                log.debug("read config from {}", CONFIG_FILE);
+                config = MAPPER.readValue(Files.newBufferedReader(CONFIG_FILE), Config.class);
+            } else {
+                log.debug("no config file found at {}; use defaults", CONFIG_FILE);
+                config = Config.config().container(container().build()).repository(repository().build()).build();
+            }
         }
         return config;
     }
 
-    private URI getUriProperty(String propertyName, String defaultUri) {
-        String value = properties().getProperty(propertyName);
-        if (value != null) {
-            log.debug("use property from config file {}: {}", propertyName, value);
-        } else {
-            value = System.getProperty(propertyName);
-            if (value != null) {
-                log.debug("use system property {}: {}", propertyName, value);
-            } else {
-                value = defaultUri;
-                log.debug("use default property {}: {}", propertyName, value);
-            }
-        }
-        return URI.create(value);
-    }
-
-    @SneakyThrows(IOException.class)
-    private Properties properties() {
-        if (properties == null) {
-            log.debug("read config from {}", CONFIG_FILE);
-            properties = new Properties();
-            if (Files.isReadable(CONFIG_FILE))
-                properties.load(Files.newInputStream(CONFIG_FILE));
-            else
-                log.debug("no config file found at {}; use defaults", CONFIG_FILE);
-        }
-        return properties;
-    }
-
     private Credentials getArtifactoryCredentials() {
-        String username = properties().getProperty("deployer.artifactory.username");
+        Authentication authentication = config().repository().authentication();
+        if (authentication == null)
+            return null;
+        String username = authentication.username();
         if (username == null)
             return null;
-        String password = properties().getProperty("deployer.artifactory.password");
+        String password = authentication.password();
         if (password == null)
             return null;
         return new Credentials(username, password);
