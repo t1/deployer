@@ -5,7 +5,6 @@ import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 import static java.util.Arrays.*;
-import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ public class NavBar implements Component {
             }
 
             public NavBarItemBuilder classes(String... classes) {
-                this.classes.addAll(asList(classes).stream().map(s -> text(s)).collect(toList()));
+                asList(classes).forEach(c -> this.classes.add(text(c)));
                 return this;
             }
 
@@ -49,6 +48,10 @@ public class NavBar implements Component {
             public NavBarItemBuilder title(Component title) {
                 this.link.body(title);
                 return this;
+            }
+
+            public void icon(String icon) {
+                this.link.body(span().classes("glyphicon", "glyphicon-" + icon));
             }
 
             public NavBarItemBuilder img(String img) {

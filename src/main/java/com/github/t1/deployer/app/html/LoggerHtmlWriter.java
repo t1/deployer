@@ -31,7 +31,7 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
     private static final String MAIN_FORM_ID = "main";
     private static final Component LOGGERS = new AppendingComponent<URI>() {
         @Override
-        protected URI contentFrom(BuildContext out) {
+        public URI contentFrom(BuildContext out) {
             return Loggers.base(out.get(UriInfo.class));
         }
     };
@@ -40,14 +40,14 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
         return deployerPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
-                    protected String contentFrom(BuildContext out) {
+                    public String contentFrom(BuildContext out) {
                         LoggerConfig logger = out.get(LoggerConfig.class);
                         return "Logger: " + logger.getCategory();
                     }
                 }) //
                 .backLink(new AppendingComponent<URI>() {
                     @Override
-                    protected URI contentFrom(BuildContext out) {
+                    public URI contentFrom(BuildContext out) {
                         return Loggers.base(out.get(UriInfo.class));
                     }
                 }) //
@@ -55,18 +55,18 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
                         .body(form("delete") //
                                 .action(Loggers.path(uriInfo, logger)) //
                                 .input(hiddenAction("delete")) //
-                        ) //
+        ) //
                         .body(buttonGroup() //
                                 .button(button().size(S).style(danger).forForm("delete").body(text("Delete")) //
-                                ) //
-                        ) //
-                ) //
+        ) //
+        ) //
+        ) //
                 .body(nl()) //
                 .panelBody(form(MAIN_FORM_ID) //
                         .action(Loggers.path(uriInfo, logger)) //
                         .input(hiddenAction("patch")) //
                         .body(levelSelect(logger.getLevel())) //
-                ) //
+        ) //
                 .build();
     }
 
@@ -97,12 +97,12 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
                                     .body(div().classes("form-group").body(levelSelectBuilder(DEBUG))), //
                             buttonGroup() //
                                     .button(button().style(primary).forForm(MAIN_FORM_ID).body(text("Add"))) //
-                    )) //
+    )) //
             .build();
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(Navigation.LOGGERS);
+        buildContext.put(Navigation.loggers);
     }
 
     @Override

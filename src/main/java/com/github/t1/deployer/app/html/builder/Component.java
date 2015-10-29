@@ -6,10 +6,10 @@ public interface Component {
         public abstract Component build();
     }
 
-    public abstract void writeTo(BuildContext out);
+    public abstract void writeTo(BuildContext context);
 
-    public default void writeInlineTo(BuildContext out) {
-        writeTo(out);
+    public default void writeInlineTo(BuildContext context) {
+        writeTo(context);
     }
 
     public default boolean isMultiLine() {

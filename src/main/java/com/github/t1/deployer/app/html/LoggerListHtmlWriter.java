@@ -21,8 +21,7 @@ import javax.ws.rs.ext.Provider;
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
-import com.github.t1.deployer.app.html.builder.Table.Cell;
-import com.github.t1.deployer.app.html.builder.Table.TableBuilder;
+import com.github.t1.deployer.app.html.builder.Table.*;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.log.LogLevel;
@@ -31,7 +30,7 @@ import com.github.t1.log.LogLevel;
 public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerConfig> {
     private static final Cell ADD_LOGGER_ROW = cell().colspan(3).body(link(new AppendingComponent<URI>() {
         @Override
-        protected URI contentFrom(BuildContext out) {
+        public URI contentFrom(BuildContext out) {
             return Loggers.newLogger(out.get(UriInfo.class));
         }
     }).body(ADD_ELEMENT)).build();
@@ -77,7 +76,7 @@ public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerCo
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(Navigation.LOGGERS);
+        buildContext.put(Navigation.loggers);
     }
 
     @Override

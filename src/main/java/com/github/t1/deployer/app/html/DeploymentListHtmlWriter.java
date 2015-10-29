@@ -14,8 +14,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder.*;
-import com.github.t1.deployer.app.html.builder.Table.Cell;
-import com.github.t1.deployer.app.html.builder.Table.TableBuilder;
+import com.github.t1.deployer.app.html.builder.Table.*;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 
@@ -23,7 +22,7 @@ import com.github.t1.deployer.model.*;
 public class DeploymentListHtmlWriter extends TextHtmlListMessageBodyWriter<Deployment> {
     private static final Cell ADD_DEPLOYMENT_ROW = cell().colspan(3).body(link(new AppendingComponent<URI>() {
         @Override
-        protected URI contentFrom(BuildContext out) {
+        public URI contentFrom(BuildContext out) {
             return Deployments.newDeployment(out.get(UriInfo.class));
         }
     }).body(ADD_ELEMENT)).build();
@@ -58,7 +57,7 @@ public class DeploymentListHtmlWriter extends TextHtmlListMessageBodyWriter<Depl
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(Navigation.DEPLOYMENTS);
+        buildContext.put(Navigation.deployments);
     }
 
     @Override

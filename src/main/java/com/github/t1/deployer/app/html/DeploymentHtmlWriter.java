@@ -34,56 +34,56 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
         return deployerPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
-                    protected String contentFrom(BuildContext out) {
+                    public String contentFrom(BuildContext out) {
                         Deployment target = out.get(Deployment.class);
                         return target.isNew() ? "Add Deployment" : target.getName().getValue();
                     }
                 }) //
                 .backLink(new AppendingComponent<URI>() {
                     @Override
-                    protected URI contentFrom(BuildContext out) {
+                    public URI contentFrom(BuildContext out) {
                         return Deployments.pathAll(out.get(UriInfo.class));
                     }
                 });
     }
 
     private static final Component RELEASES = //
-            new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    UriInfo uriInfo = out.get(UriInfo.class);
-                    Deployment deployment = out.get(Deployment.class);
-                    Version currentVersion = deployment.getVersion();
-                    TableBuilder table = table();
-                    int i = 0;
-                    for (Release release : deployment.getReleases()) {
-                        boolean isCurrent = release.getVersion().equals(currentVersion);
-                        table.row( //
-                                cell().body(text(release.getVersion().getVersion())), //
-                                cell().body(redeployButton("redeploy-" + i++, //
-                                        deployment.getContextRoot(), release.getCheckSum(), //
-                                        uriInfo, isCurrent)) //
-                        );
-                    }
-                    table.build().writeTo(out);
-                }
+    new Component() {
+        @Override
+        public void writeTo(BuildContext out) {
+            UriInfo uriInfo = out.get(UriInfo.class);
+            Deployment deployment = out.get(Deployment.class);
+            Version currentVersion = deployment.getVersion();
+            TableBuilder table = table();
+            int i = 0;
+            for (Release release : deployment.getReleases()) {
+                boolean isCurrent = release.getVersion().equals(currentVersion);
+                table.row( //
+                        cell().body(text(release.getVersion().getVersion())), //
+                        cell().body(redeployButton("redeploy-" + i++, //
+                                deployment.getContextRoot(), release.getCheckSum(), //
+                                uriInfo, isCurrent)) //
+                );
+            }
+            table.build().writeTo(out);
+        }
 
-                private CompoundBuilder redeployButton(String id, ContextRoot contextRoot, CheckSum checkSum,
-                        UriInfo uriInfo, boolean isCurrent) {
-                    FormBuilder form = form(id);
-                    form.action(text(Deployments.path(uriInfo, contextRoot)));
-                    form.input(hiddenInput("contextRoot", contextRoot.getValue()));
-                    form.input(hiddenInput("checksum", checkSum.hexString()));
-                    form.input(hiddenAction("redeploy"));
+        private CompoundBuilder redeployButton(String id, ContextRoot contextRoot, CheckSum checkSum, UriInfo uriInfo,
+                boolean isCurrent) {
+            FormBuilder form = form(id);
+            form.action(text(Deployments.path(uriInfo, contextRoot)));
+            form.input(hiddenInput("contextRoot", contextRoot.getValue()));
+            form.input(hiddenInput("checksum", checkSum.hexString()));
+            form.input(hiddenAction("redeploy"));
 
-                    Static deployLabel = text(isCurrent ? "Redeploy" : "Deploy");
-                    return compound( //
-                            form, //
-                            buttonGroup().button( //
-                                    button().size(XS).style(primary).forForm(id).body(deployLabel)) //
-                    );
-                }
-            };
+            Static deployLabel = text(isCurrent ? "Redeploy" : "Deploy");
+            return compound( //
+                    form, //
+                    buttonGroup().button( //
+                            button().size(XS).style(primary).forForm(id).body(deployLabel)) //
+            );
+        }
+    };
 
     private static final Component DEPLOYMENT_INFO = new Component() {
         @Override
@@ -107,7 +107,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
 
     private static final AppendingComponent<URI> DEPLOYMENT_LINK = new AppendingComponent<URI>() {
         @Override
-        protected URI contentFrom(BuildContext out) {
+        public URI contentFrom(BuildContext out) {
             return Deployments.path(out.get(UriInfo.class), out.get(Deployment.class).getContextRoot());
         }
     };
@@ -117,13 +117,13 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
                     form("undeploy").action(DEPLOYMENT_LINK) //
                             .input(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
                                 @Override
-                                protected ContextRoot contentFrom(BuildContext out) {
+                                public ContextRoot contentFrom(BuildContext out) {
                                     return out.get(Deployment.class).getContextRoot();
                                 }
                             })) //
                             .input(hiddenInput().name("checksum").value(new AppendingComponent<CheckSum>() {
                                 @Override
-                                protected CheckSum contentFrom(BuildContext out) {
+                                public CheckSum contentFrom(BuildContext out) {
                                     return out.get(Deployment.class).getCheckSum();
                                 }
                             })) //
@@ -145,7 +145,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
             form(MAIN_FORM_ID) //
                     .action(new AppendingComponent<URI>() {
                         @Override
-                        protected URI contentFrom(BuildContext out) {
+                        public URI contentFrom(BuildContext out) {
                             return Deployments.base(out.get(UriInfo.class));
                         }
                     }) //
@@ -158,7 +158,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(Navigation.DEPLOYMENTS);
+        buildContext.put(Navigation.deployments);
     }
 
     @Override

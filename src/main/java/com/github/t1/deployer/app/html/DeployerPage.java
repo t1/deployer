@@ -105,7 +105,7 @@ public class DeployerPage implements Component {
 
         private void raml(NavBarBuilder navbar) {
             navbar.item() //
-                    .style("padding: 10px;") //
+                    .classes("raml") //
                     .href(baseUri("doc/api-console.html")) //
                     .img(baseUri("img/raml.png")) //
                     .build();
@@ -113,29 +113,30 @@ public class DeployerPage implements Component {
 
         private void swagger(NavBarBuilder navbar) {
             navbar.item() //
-                    .style("padding: 10px;") //
+                    .classes("swagger") //
                     .href(baseUri("swagger-ui/index.html") //
                             .queryParam("url", "/deployer/swagger.yaml") //
                             .fragment(new AppendingComponent<String>() {
                                 @Override
-                                protected String contentFrom(BuildContext out) {
-                                    return "!/" + out.get(Navigation.class).linkName();
+                                public String contentFrom(BuildContext out) {
+                                    return "!/" + out.get(Navigation.class).name();
                                 }
                             }))
                     .img(baseUri("swagger-ui/images/logo_small.png")) //
                     .build();
         }
 
-        private void nav(NavBarBuilder navbar, final Navigation navigation) {
+        private void nav(NavBarBuilder navbar, Navigation navigation) {
             NavBarItemBuilder item = navbar.item() //
                     .href(NavigationLink.link(navigation));
+            if (navigation.icon() != null)
+                item.icon(navigation.icon());
             if (navigation.title() != null)
                 item.title(text(navigation.title()));
-            if (navigation.icon() != null)
-                item.classes("glyphicon", "glyphicon-" + navigation.icon());
             item.classes(out -> {
+                out.append(navigation.name());
                 if (navigation == out.get(Navigation.class))
-                    out.append("active");
+                    out.append(" active");
             });
             item.build();
         }

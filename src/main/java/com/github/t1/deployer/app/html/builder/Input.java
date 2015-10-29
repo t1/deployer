@@ -6,10 +6,10 @@ import static com.github.t1.deployer.app.html.builder.Tags.*;
 
 import java.lang.reflect.Field;
 
-import lombok.*;
-
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
+
+import lombok.*;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -42,7 +42,7 @@ public class Input extends DelegateComponent {
         private TagBuilder label;
         private final TagBuilder input = tag("input").attr("type", new AppendingComponent<String>() {
             @Override
-            protected String contentFrom(BuildContext out) {
+            public String contentFrom(BuildContext out) {
                 return type;
             }
         }).multiline();
@@ -97,7 +97,7 @@ public class Input extends DelegateComponent {
         public InputBuilder fieldValue(final Class<?> type, final String fieldName) {
             value(new AppendingComponent<String>() {
                 @Override
-                protected String contentFrom(BuildContext out) {
+                public String contentFrom(BuildContext out) {
                     try {
                         final Field field = type.getDeclaredField(fieldName);
                         field.setAccessible(true);

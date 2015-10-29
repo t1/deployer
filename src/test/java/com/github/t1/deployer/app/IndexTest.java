@@ -63,7 +63,7 @@ public class IndexTest {
                         + "\"rel\":\"datasources\"," //
                         + "\"title\":\"Data-Sources\"" //
                         + "},{" //
-                        + "\"uri\":\"/datasources\"," //
+                        + "\"uri\":\"/config\"," //
                         + "\"rel\":\"config\"," //
                         + "\"title\":null" //
                         + "}]", //

@@ -37,9 +37,8 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
                     sort(dataSources);
                     int i = 0;
                     UriInfo uriInfo = out.get(UriInfo.class);
-                    for (DataSourceConfig dataSource : dataSources) {
+                    for (DataSourceConfig dataSource : dataSources)
                         ul.item(dataSourceItem(dataSource, uriInfo, i++));
-                    }
                     ul.item(addDataSourceItem(uriInfo));
 
                     ul.build().writeTo(out);
@@ -64,7 +63,7 @@ public class DataSourcesListHtmlWriter extends TextHtmlListMessageBodyWriter<Dat
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(Navigation.DATA_SOURCES);
+        buildContext.put(Navigation.datasources);
     }
 
     @Override

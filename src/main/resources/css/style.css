@@ -1,5 +1,22 @@
 @CHARSET "UTF-8";
 
-ul.nav li.glyphicon {
-    font-size: x-large; margin: 10px !important; color: rgb(130, 130, 130)
+ul.nav li span.glyphicon {
+    font-size: x-large;
+}
+
+ul.nav li.raml a {
+    padding: 5px !important;
+    padding-top: 10px !important;
+    padding-bottom: 8px !important;
+}
+
+ul.nav li.swagger a {
+    padding: 10px !important;
+    padding-left: 5px !important;
+}
+
+ul.nav li.config a {
+    padding: 10px !important;
+    padding-top: 13px !important;
+    padding-bottom: 8px !important;
 }

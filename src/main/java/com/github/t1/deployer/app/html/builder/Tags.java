@@ -6,6 +6,7 @@ import static com.github.t1.deployer.app.html.builder.Tag.*;
 import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import javax.ws.rs.core.*;
 
@@ -13,13 +14,22 @@ import com.github.t1.deployer.app.html.builder.Component.ComponentBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 public class Tags {
-    public static abstract class AppendingComponent<T> implements Component {
+    public static <T> Component append(Function<BuildContext, T> function) {
+        return new AppendingComponent<T>() {
+            @Override
+            public T contentFrom(BuildContext context) {
+                return function.apply(context);
+            }
+        };
+    }
+
+    public static interface AppendingComponent<T> extends Component {
         @Override
-        public void writeTo(BuildContext out) {
+        public default void writeTo(BuildContext out) {
             out.append(contentFrom(out));
         }
 
-        protected abstract T contentFrom(BuildContext out);
+        public T contentFrom(BuildContext out);
     }
 
     public static TagBuilder span() {
@@ -58,13 +68,13 @@ public class Tags {
         return tag("script").attr("src", baseUri(href)).build();
     }
 
-    public static class BaseUriBuilder extends AppendingComponent<URI> {
+    public static class BaseUriBuilder implements AppendingComponent<URI> {
         private String path = "/";
         private final Map<String, String> queryParams = new HashMap<>();
         private AppendingComponent<String> fragment;
 
         @Override
-        protected URI contentFrom(BuildContext out) {
+        public URI contentFrom(BuildContext out) {
             UriBuilder uriBuilder = out.get(UriInfo.class).getBaseUriBuilder();
             uriBuilder.path(path);
             for (Entry<String, String> entry : queryParams.entrySet())

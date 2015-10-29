@@ -42,7 +42,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
 
     private static final AppendingComponent<URI> DATA_SOURCE_LINK = new AppendingComponent<URI>() {
         @Override
-        protected URI contentFrom(BuildContext out) {
+        public URI contentFrom(BuildContext out) {
             return DataSources.path(out.get(UriInfo.class), out.get(DataSourceConfig.class));
         }
     };
@@ -57,28 +57,27 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
             buttonGroup() //
                     .button(submitButton("Update")) //
                     .button(button().style(danger).forForm("delete").body(text("Delete"))) //
-            ) //
+    ) //
             .build();
 
-    private static final Compound NEW_DATA_SOURCE_FORM = //
-            compound( //
-                    p("Enter the name of a new data source to configure"), //
-                    withFields(false, form(MAIN_FORM_ID).horizontal().action(NavigationLink.link(DATA_SOURCES))), //
-                    buttonGroup().button(submitButton("Add")) //
-            ).build();
+    private static final Compound NEW_DATA_SOURCE_FORM = compound( //
+            p("Enter the name of a new data source to configure"), //
+            withFields(false, form(MAIN_FORM_ID).horizontal().action(NavigationLink.link(datasources))), //
+            buttonGroup().button(submitButton("Add")) //
+    ).build();
 
     private static final DeployerPageBuilder page() {
         return deployerPage() //
                 .title(new AppendingComponent<String>() {
                     @Override
-                    protected String contentFrom(BuildContext out) {
+                    public String contentFrom(BuildContext out) {
                         DataSourceConfig target = out.get(DataSourceConfig.class);
                         return title(target);
                     }
                 }) //
                 .backLink(new AppendingComponent<URI>() {
                     @Override
-                    protected URI contentFrom(BuildContext out) {
+                    public URI contentFrom(BuildContext out) {
                         return DataSources.base(out.get(UriInfo.class));
                     }
                 });
@@ -97,7 +96,7 @@ public class DataSourceHtmlWriter extends TextHtmlMessageBodyWriter<DataSourceCo
 
     @Override
     protected void prepare(BuildContext buildContext) {
-        buildContext.put(Navigation.DATA_SOURCES);
+        buildContext.put(Navigation.datasources);
     }
 
     @Override
