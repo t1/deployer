@@ -7,8 +7,7 @@ import java.util.*;
 import lombok.*;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
-public class Compound extends Component {
+public class Compound implements Component {
     public static CompoundBuilder compound(ComponentBuilder... components) {
         return compound("", components);
     }

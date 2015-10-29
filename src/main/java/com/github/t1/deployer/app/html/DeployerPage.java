@@ -13,14 +13,14 @@ import java.util.*;
 import com.github.t1.deployer.app.Navigation;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder;
+import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder.NavBarItemBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 
 import lombok.*;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
-public class DeployerPage extends Component {
+public class DeployerPage implements Component {
     public static DeployerPageBuilder deployerPage() {
         return new DeployerPageBuilder();
     }
@@ -77,9 +77,9 @@ public class DeployerPage extends Component {
 
         public TagBuilder heading(Component backLink, final Component title) {
             TagBuilder h1 = tag("h1");
-            if (backLink == null) {
+            if (backLink == null)
                 h1.body(title);
-            } else {
+            else {
                 TagBuilder back = link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text(""));
                 h1.body(back).body(new Component() {
                     @Override
@@ -127,17 +127,17 @@ public class DeployerPage extends Component {
         }
 
         private void nav(NavBarBuilder navbar, final Navigation navigation) {
-            navbar.item() //
-                    .href(NavigationLink.link(navigation)) //
-                    .title(text(navigation.title())) //
-                    .classes(new Component() {
-                        @Override
-                        public void writeTo(BuildContext out) {
-                            if (navigation == out.get(Navigation.class))
-                                out.append("active");
-                        }
-                    }) //
-                    .build();
+            NavBarItemBuilder item = navbar.item() //
+                    .href(NavigationLink.link(navigation));
+            if (navigation.title() != null)
+                item.title(text(navigation.title()));
+            if (navigation.icon() != null)
+                item.classes("glyphicon", "glyphicon-" + navigation.icon());
+            item.classes(out -> {
+                if (navigation == out.get(Navigation.class))
+                    out.append("active");
+            });
+            item.build();
         }
 
         private Component pageFooter() {

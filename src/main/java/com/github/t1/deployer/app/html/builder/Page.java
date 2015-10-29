@@ -11,11 +11,10 @@ import java.util.List;
 import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
-import lombok.*;
+import lombok.Value;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
-public class Page extends Component {
+public class Page implements Component {
     public static PageBuilder page() {
         return new PageBuilder();
     }

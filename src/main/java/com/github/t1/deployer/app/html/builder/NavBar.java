@@ -5,17 +5,18 @@ import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 import static java.util.Arrays.*;
+import static java.util.stream.Collectors.*;
 
-import java.util.*;
-
-import lombok.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.github.t1.deployer.app.html.builder.HtmlList.HtmlListBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
+import lombok.*;
+
 @Value
-@EqualsAndHashCode(callSuper = true)
-public class NavBar extends Component {
+public class NavBar implements Component {
     public static NavBarBuilder navBar() {
         return new NavBarBuilder();
     }
@@ -27,6 +28,11 @@ public class NavBar extends Component {
 
             public NavBarItemBuilder classes(Component... components) {
                 this.classes.addAll(asList(components));
+                return this;
+            }
+
+            public NavBarItemBuilder classes(String... classes) {
+                this.classes.addAll(asList(classes).stream().map(s -> text(s)).collect(toList()));
                 return this;
             }
 

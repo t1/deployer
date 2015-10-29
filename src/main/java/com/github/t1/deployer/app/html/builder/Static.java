@@ -3,8 +3,7 @@ package com.github.t1.deployer.app.html.builder;
 import lombok.*;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
-public class Static extends Component {
+public class Static implements Component {
     public static Static nl() {
         return text("\n");
     }

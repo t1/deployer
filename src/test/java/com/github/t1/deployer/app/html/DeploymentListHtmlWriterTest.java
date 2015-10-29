@@ -27,7 +27,7 @@ public class DeploymentListHtmlWriterTest extends AbstractHtmlWriterTest<List<De
         List<Deployment> deployments = asList( //
                 deployment("foo", "foox", "aabbcc", "2.3.1"), //
                 deployment("bar", "barx", "ddeeff", "1.0") //
-                );
+        );
 
         String entity = write(deployments);
 

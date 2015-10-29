@@ -1,2 +1,5 @@
 @CHARSET "UTF-8";
 
+ul.nav li.glyphicon {
+    font-size: x-large; margin: 10px !important; color: rgb(130, 130, 130)
+}

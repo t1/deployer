@@ -5,21 +5,19 @@ import static com.github.t1.deployer.app.html.builder.Static.*;
 
 import java.util.*;
 
-import lombok.*;
-
 import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
+
+import lombok.*;
 
 @Value
 @Builder(builderMethodName = "tag")
-@EqualsAndHashCode(callSuper = true)
-public class Tag extends Component {
+public class Tag implements Component {
     public static TagBuilder tag(String name) {
         return new TagBuilder().name(name);
     }
 
     @Value
-    @EqualsAndHashCode(callSuper = true)
-    public static class Attribute extends Component {
+    public static class Attribute implements Component {
         String name;
         Component value;
 
@@ -75,15 +73,14 @@ public class Tag extends Component {
         }
 
         public TagBuilder classes(String... classes) {
-            for (String klass : classes) {
+            for (String klass : classes)
                 classes(text(klass));
-            }
             return this;
         }
 
         public TagBuilder classes(Component... classes) {
             CompoundBuilder compound = compound(" ");
-            if (attributes != null) {
+            if (attributes != null)
                 for (Iterator<Attribute> iter = attributes.iterator(); iter.hasNext();) {
                     Attribute attribute = iter.next();
                     if (attribute.getName().equals("class")) {
@@ -91,7 +88,6 @@ public class Tag extends Component {
                         compound.component(attribute.getValue());
                     }
                 }
-            }
             compound.component(classes);
             attr("class", compound.build());
             return this;
@@ -140,9 +136,9 @@ public class Tag extends Component {
         if (attributes != null)
             for (Attribute attribute : attributes)
                 attribute.writeInlineTo(out);
-        if (body == null) {
+        if (body == null)
             out.append("/>");
-        } else if (body.isMultiLine()) {
+        else if (body.isMultiLine()) {
             out.appendln(">").in();
             body.writeTo(out);
             out.out().print("</").append(name).append(">");

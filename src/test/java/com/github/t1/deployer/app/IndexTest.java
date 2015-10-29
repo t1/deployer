@@ -49,19 +49,24 @@ public class IndexTest {
 
         List<Index.Link> links = index.getIndexList(uriInfo);
 
-        assertEquals("[{" //
-                + "\"uri\":\"/deployments\"," //
-                + "\"rel\":\"deployments\"," //
-                + "\"title\":\"Deployments\"" //
-                + "},{" //
-                + "\"uri\":\"/loggers\"," //
-                + "\"rel\":\"loggers\"," //
-                + "\"title\":\"Loggers\"" //
-                + "},{" //
-                + "\"uri\":\"/datasources\"," //
-                + "\"rel\":\"datasources\"," //
-                + "\"title\":\"Data-Sources\"" //
-                + "}]", //
+        assertEquals(
+                "[{" //
+                        + "\"uri\":\"/deployments\"," //
+                        + "\"rel\":\"deployments\"," //
+                        + "\"title\":\"Deployments\"" //
+                        + "},{" //
+                        + "\"uri\":\"/loggers\"," //
+                        + "\"rel\":\"loggers\"," //
+                        + "\"title\":\"Loggers\"" //
+                        + "},{" //
+                        + "\"uri\":\"/datasources\"," //
+                        + "\"rel\":\"datasources\"," //
+                        + "\"title\":\"Data-Sources\"" //
+                        + "},{" //
+                        + "\"uri\":\"/datasources\"," //
+                        + "\"rel\":\"config\"," //
+                        + "\"title\":null" //
+                        + "}]", //
                 json(links));
     }
 }

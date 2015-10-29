@@ -7,30 +7,42 @@ import javax.ws.rs.core.UriInfo;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+@Getter
+@Accessors(fluent = true)
 @RequiredArgsConstructor
 public enum Navigation {
-    DEPLOYMENTS("Deployments") {
+    DEPLOYMENTS("Deployments", null) {
         @Override
         public URI uri(UriInfo uriInfo) {
             return Deployments.pathAll(uriInfo);
         }
     },
-    LOGGERS("Loggers") {
+    LOGGERS("Loggers", null) {
         @Override
         public URI uri(UriInfo uriInfo) {
             return Loggers.base(uriInfo);
         }
     },
-    DATA_SOURCES("Data-Sources") {
+    DATA_SOURCES("Data-Sources", null) {
         @Override
         public URI uri(UriInfo uriInfo) {
             return DataSources.base(uriInfo);
         }
+    },
+    CONFIG(null, "cog") {
+        @Override
+        public URI uri(UriInfo uriInfo) {
+            return DataSources.base(uriInfo);
+        }
+
+        @Override
+        public String linkName() {
+            return "config";
+        }
     };
 
-    @Getter
-    @Accessors(fluent = true)
     private final String title;
+    private final String icon;
 
     public abstract URI uri(UriInfo uriInfo);
 

@@ -1,12 +1,11 @@
 package com.github.t1.deployer.app.html.builder;
 
-import lombok.*;
+import lombok.Value;
 import lombok.experimental.NonFinal;
 
 @Value
 @NonFinal
-@EqualsAndHashCode(callSuper = true)
-public abstract class DelegateComponent extends Component {
+public abstract class DelegateComponent implements Component {
 
     Component component;
 

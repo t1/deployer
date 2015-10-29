@@ -13,7 +13,7 @@ import com.github.t1.deployer.app.html.builder.Component.ComponentBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 public class Tags {
-    public static abstract class AppendingComponent<T> extends Component {
+    public static abstract class AppendingComponent<T> implements Component {
         @Override
         public void writeTo(BuildContext out) {
             out.append(contentFrom(out));
@@ -67,13 +67,12 @@ public class Tags {
         protected URI contentFrom(BuildContext out) {
             UriBuilder uriBuilder = out.get(UriInfo.class).getBaseUriBuilder();
             uriBuilder.path(path);
-            for (Entry<String, String> entry : queryParams.entrySet()) {
+            for (Entry<String, String> entry : queryParams.entrySet())
                 uriBuilder.queryParam(entry.getKey(), entry.getValue());
-            }
-            if (fragment != null) {
-                // this extra step is necessary to prevent escaping (at least on JBoss)
+            if (fragment != null)
+                // this extra step is necessary to prevent escaping (at least on
+                // JBoss)
                 return uriBuilder.fragment("{fragment}").build(fragment.contentFrom(out));
-            }
             return uriBuilder.build();
         }
 

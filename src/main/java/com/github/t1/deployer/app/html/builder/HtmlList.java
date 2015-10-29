@@ -2,13 +2,13 @@ package com.github.t1.deployer.app.html.builder;
 
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
-import lombok.*;
 
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
+import lombok.Value;
+
 @Value
-@EqualsAndHashCode(callSuper = true)
-public class HtmlList extends Component {
+public class HtmlList implements Component {
     public static HtmlListBuilder ul() {
         return new HtmlListBuilder("ul");
     }
@@ -34,9 +34,8 @@ public class HtmlList extends Component {
         }
 
         public HtmlListBuilder classes(String... classes) {
-            for (String klass : classes) {
+            for (String klass : classes)
                 classes(text(klass));
-            }
             return this;
         }
 
