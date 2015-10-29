@@ -32,13 +32,16 @@ import lombok.extern.slf4j.Slf4j;
 public class ConfigProducer implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private static final String REPOSITORY_URI_PROPERTY = "deployer.repository.uri";
+    private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
+
     private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
-    static Path CONFIG_FILE =
-            Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties").toAbsolutePath();
+    static Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
+            .toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
-    private static final String SOCKET_BINDING =
-            "jboss.as:socket-binding-group=standard-sockets,socket-binding=" + SOCKET_BINDING_PREFIX;
+    private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding="
+            + SOCKET_BINDING_PREFIX;
     private static final ObjectName[] MANAGEMENT_INTERFACES = { //
             objectName(SOCKET_BINDING + "native"), //
             objectName(SOCKET_BINDING + "https"), //
@@ -129,13 +132,13 @@ public class ConfigProducer implements Serializable {
 
     @Produces
     @Artifactory
-    public RestContext produceArtifactoryRestContext() {
+    public RestContext produceRepositoryRestContext() {
         RestContext rest = REST;
         URI baseUri = config().repository().uri();
         if (baseUri == null)
             baseUri = URI.create("http://localhost:8081/artifactory");
-        rest = rest.register("artifactory", baseUri);
-        Credentials credentials = getArtifactoryCredentials();
+        rest = rest.register("repository", baseUri);
+        Credentials credentials = getRepositoryCredentials();
         if (credentials != null) {
             log.debug("put {} credentials for {}", credentials.userName(), baseUri);
             rest = rest.register(baseUri, credentials);
@@ -151,13 +154,27 @@ public class ConfigProducer implements Serializable {
                 config = MAPPER.readValue(Files.newBufferedReader(CONFIG_FILE), Config.class);
             } else {
                 log.debug("no config file found at {}; use defaults", CONFIG_FILE);
-                config = Config.config().container(container().build()).repository(repository().build()).build();
+                config = Config.config() //
+                        .container(container() //
+                                .uri(getUriSystemProperty(CONTAINER_URI_PROPERTY)) //
+                                .build()) //
+                        .repository(repository() //
+                                .uri(getUriSystemProperty(REPOSITORY_URI_PROPERTY)) //
+                                // no authorization from system properties... not secure
+                                .build()) //
+                        .build();
             }
         }
         return config;
     }
 
-    private Credentials getArtifactoryCredentials() {
+    private URI getUriSystemProperty(String name) {
+        if (System.getProperty(name) == null)
+            return null;
+        return URI.create(System.getProperty(name));
+    }
+
+    private Credentials getRepositoryCredentials() {
         Authentication authentication = config().repository().authentication();
         if (authentication == null)
             return null;

@@ -27,7 +27,7 @@ public class RepositoryIT {
     @ClassRule
     public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(ARTIFACTORY_MOCK);
     private final URI baseUri = URI.create(ARTIFACTORY.baseUri() + "/artifactory");
-    private RestContext config = REST.register("artifactory", baseUri);
+    private RestContext config = REST.register("repository", baseUri);
     private final ArtifactoryRepository repository = new ArtifactoryRepository(config);
 
     @Rule

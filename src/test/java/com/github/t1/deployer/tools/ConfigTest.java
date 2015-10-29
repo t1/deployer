@@ -57,16 +57,16 @@ public class ConfigTest {
     }
 
     @Test
-    public void shouldProduceDefaultArtifactoryConfig() {
-        RestContext restContext = configProducer.produceArtifactoryRestContext();
+    public void shouldProduceDefaultRepositoryConfig() {
+        RestContext restContext = configProducer.produceRepositoryRestContext();
 
-        UriTemplate uri = restContext.uri("artifactory");
+        UriTemplate uri = restContext.uri("repository");
         assertThat(uri.toString()).isEqualTo("http://localhost:8081/artifactory");
         assertThat(restContext.getCredentials(uri.toUri())).isNull();
     }
 
     @Test
-    public void shouldProduceArtifactoryConfigFromFile() {
+    public void shouldProduceRepositoryConfigFromFile() {
         givenConfigFile(Config.config()
                 .repository(repository() //
                         .uri(DUMMY_URI)
@@ -77,32 +77,30 @@ public class ConfigTest {
                 .build()) //
         );
 
-        RestContext restContext = configProducer.produceArtifactoryRestContext();
+        RestContext restContext = configProducer.produceRepositoryRestContext();
 
-        UriTemplate artifactory = restContext.uri("artifactory");
-        assertThat(artifactory.toString()).isEqualTo(DUMMY_URI.toString());
-        Credentials credentials = restContext.getCredentials(artifactory.toUri());
+        UriTemplate repository = restContext.uri("repository");
+        assertThat(repository.toString()).isEqualTo(DUMMY_URI.toString());
+        Credentials credentials = restContext.getCredentials(repository.toUri());
         assertThat(credentials.userName()).isEqualTo("joe");
         assertThat(credentials.password()).isEqualTo("doe");
     }
 
     @Test
-    public void shouldProduceArtifactoryConfigFromSystemProperty() {
-        givenSystemProperty("deployer.artifactory.uri", DUMMY_URI);
-        givenSystemProperty("deployer.artifactory.username", "joe");
-        givenSystemProperty("deployer.artifactory.password", "doe");
+    public void shouldProduceRepositoryConfigFromSystemProperty() {
+        givenSystemProperty("deployer.repository.uri", DUMMY_URI);
 
-        RestContext restContext = configProducer.produceArtifactoryRestContext();
+        RestContext restContext = configProducer.produceRepositoryRestContext();
 
-        UriTemplate artifactory = restContext.uri("artifactory");
-        assertThat(artifactory.toString()).isEqualTo(DUMMY_URI.toString());
-        assertThat(restContext.getCredentials(artifactory.toUri())).isNull();
+        UriTemplate repository = restContext.uri("repository");
+        assertThat(repository.toString()).isEqualTo(DUMMY_URI.toString());
+        assertThat(restContext.getCredentials(repository.toUri())).isNull();
     }
 
     @Test
     public void shouldFailToProduceModelControllerClientWithoutMBeanNorConfig() {
         assertThatThrownBy(() -> configProducer.produceModelControllerClient()) //
-                .hasMessageContaining("no config for the container") //
+                .hasMessage("no container configured and no appropriate MBean found") //
                 .isInstanceOf(RuntimeException.class);
     }
 

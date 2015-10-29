@@ -96,7 +96,7 @@ public class ArtifactoryRepository extends Repository {
 
     private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
         UriTemplate uri = rest //
-                .nonQueryUri("artifactory") //
+                .nonQueryUri("repository") //
                 .path("api/search/checksum") //
                 .query("sha1", "{checkSum}");
         RestRequest<ChecksumSearchResult> searchByChecksum = rest //

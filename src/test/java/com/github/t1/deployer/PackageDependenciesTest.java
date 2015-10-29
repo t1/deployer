@@ -85,8 +85,10 @@ public class PackageDependenciesTest {
 
         tools.dependsUpon( //
                 packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient
-                packageOf("com.fasterxml.jackson.dataformat.yaml.snakeyaml"), // YamlMessageBodyWriter
                 packageOf("com.github.t1.rest.fallback"), // ConverterTools
+                packageOf("com.fasterxml.jackson.dataformat.yaml.snakeyaml"), // YamlMessageBodyWriter
+                packageOf("com.fasterxml.jackson.databind"), //
+                model, //
                 raml, //
                 rest);
     }
