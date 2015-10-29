@@ -18,17 +18,15 @@ import org.junit.*;
 
 import com.github.t1.deployer.MementoRule;
 import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Config.ConfigBuilder;
+import com.github.t1.deployer.model.Config.*;
 import com.github.t1.rest.*;
 
 import lombok.SneakyThrows;
 
-public class ConfigTest {
+public class ConfigProducerTest {
     private static final URI DUMMY_URI = URI.create("https://localhost:1234");
 
-
     private final ConfigProducer configProducer = new ConfigProducer();
-
 
     @Rule
     public MementoRule<Path> configPath = new MementoRule<>(() -> CONFIG_FILE, (p) -> CONFIG_FILE = p, null);
@@ -138,5 +136,12 @@ public class ConfigTest {
         Field field = controllerClient.getClass().getDeclaredField("clientConfiguration");
         field.setAccessible(true);
         return (ModelControllerClientConfiguration) field.get(controllerClient);
+    }
+
+    @Test
+    public void shouldProduceDefaultDeploymentListFileConfig() throws Exception {
+        DeploymentListFileConfig fileConfig = configProducer.produceDeploymentListFileConfig();
+
+        assertThat(fileConfig.autoUndeploy()).isFalse();
     }
 }

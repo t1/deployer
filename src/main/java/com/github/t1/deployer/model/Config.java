@@ -5,10 +5,12 @@ import static lombok.AccessLevel.*;
 import java.net.URI;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.t1.deployer.tools.Never;
 
 import lombok.*;
 import lombok.experimental.Accessors;
 
+@Never
 @Value
 @Builder(builderMethodName = "config")
 @AllArgsConstructor(access = PRIVATE)
@@ -46,8 +48,19 @@ public class Config {
         URI uri;
     }
 
+    @Value
+    @Builder(builderMethodName = "deploymentListFileConfig")
+    @AllArgsConstructor(access = PRIVATE)
+    @NoArgsConstructor(access = PRIVATE, force = true)
+    public static class DeploymentListFileConfig {
+        @JsonProperty
+        Boolean autoUndeploy;
+    }
+
     @JsonProperty
     RepositoryConfig repository;
     @JsonProperty
     ContainerConfig container;
+    @JsonProperty
+    DeploymentListFileConfig deploymentListFileConfig;
 }

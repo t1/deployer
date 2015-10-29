@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app.file;
 
 import static com.github.t1.deployer.container.DeploymentContainer.*;
+import static java.lang.Boolean.*;
 import static java.util.concurrent.TimeUnit.*;
 
 import java.io.*;
@@ -14,12 +15,13 @@ import javax.annotation.*;
 import javax.ejb.*;
 import javax.inject.Inject;
 
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
-
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Config.DeploymentListFileConfig;
 import com.github.t1.deployer.repository.Repository;
+
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Startup
@@ -43,12 +45,12 @@ public class DeploymentListFile {
                 if (!Objects.equals(lastModified, lastModified())) {
                     boolean isNew = (lastModified == null);
                     lastModified = lastModified();
-                    if (isNew) {
-                        // PostConstruct is too early: delay until the starup has completed
+                    if (isNew)
+                        // PostConstruct is too early: delay until the starup
+                        // has completed
                         writeDeploymentsList();
-                    } else {
+                    else
                         updateFromList();
-                    }
                 }
             } catch (RuntimeException e) {
                 e.printStackTrace();
@@ -85,6 +87,8 @@ public class DeploymentListFile {
     DeploymentContainer container;
     @Inject
     Repository repository;
+    @Inject
+    DeploymentListFileConfig config;
 
     private final Path configDir = Paths.get(System.getProperty("jboss.server.config.dir", "."));
     private final Path deploymentsList = configDir.resolve("deployments.properties");
@@ -106,19 +110,24 @@ public class DeploymentListFile {
     private void updateFromList() {
         log.info("deployment list file has changed");
         try {
-            // FIXME User.setCurrent(new User("-file").withPrivilege("deploy", "redeploy", "undeploy"));
+            // FIXME User.setCurrent(new User("-file").withPrivilege("deploy",
+            // "redeploy", "undeploy"));
 
             Map<ContextRoot, Version> expected = readDeploymentsListFile();
             for (Deployment actual : deployments()) {
                 ContextRoot contextRoot = actual.getContextRoot();
                 Version expectedVersion = expected.get(contextRoot);
                 if (expectedVersion == null) {
-                    log.info("expected version of {} is null -> undeploy", contextRoot);
-                    container.undeploy(actual.getName());
-                } else if (expectedVersion.equals(actual.getVersion())) {
+                    if (TRUE == config.autoUndeploy()) {
+                        log.info("expected version of {} is null -> undeploy", contextRoot);
+                        container.undeploy(actual.getName());
+                    } else
+                        log.info("expected version of {} is null -> would undeploy but autoUndeploy is disabled",
+                                contextRoot);
+                } else if (expectedVersion.equals(actual.getVersion()))
                     log.debug("expected version of {} equals actual {} -> skip", contextRoot, expectedVersion);
-                    // already the expected version
-                } else {
+                // already the expected version
+                else {
                     log.info("version of {} changed from {} to {} -> redeploy", //
                             contextRoot, actual.getVersion(), expectedVersion);
                     CheckSum checksum = repository.getChecksumForVersion(actual, expectedVersion);
@@ -154,9 +163,8 @@ public class DeploymentListFile {
     public void writeDeploymentsList() {
         log.info("write deployments list");
         try (Writer writer = Files.newBufferedWriter(deploymentsList, UTF_8)) {
-            for (Deployment deployment : deployments()) {
+            for (Deployment deployment : deployments())
                 writer.write(new DeploymentInfo(deployment) + "\n");
-            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -1,6 +1,7 @@
 package com.github.t1.deployer.tools;
 
 import static com.github.t1.deployer.model.Config.ContainerConfig.*;
+import static com.github.t1.deployer.model.Config.DeploymentListFileConfig.*;
 import static com.github.t1.deployer.model.Config.RepositoryConfig.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
@@ -18,7 +19,7 @@ import javax.management.*;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Config.Authentication;
+import com.github.t1.deployer.model.Config.*;
 import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
 import com.github.t1.rest.*;
@@ -36,8 +37,7 @@ public class ConfigProducer implements Serializable {
     private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
 
     private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
-    static Path CONFIG_FILE = Paths.get(JBOSS_BASE, "security", "deployer.war", "credentials.properties")
-            .toAbsolutePath();
+    static Path CONFIG_FILE = Paths.get(JBOSS_BASE, "configuration", "deployer.war", "config.json").toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
     private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding="
@@ -61,6 +61,11 @@ public class ConfigProducer implements Serializable {
     private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 
     @Produces
+    Config produceConfig() {
+        return config();
+    }
+
+    @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
         URI uri = config().container().uri();
         if (uri == null)
@@ -82,18 +87,15 @@ public class ConfigProducer implements Serializable {
     }
 
     private ObjectName findManagementInterface() {
-        for (ObjectName objectName : MANAGEMENT_INTERFACES) {
+        for (ObjectName objectName : MANAGEMENT_INTERFACES)
             if (server.isRegistered(objectName)) {
                 if ("true".equals(getAttribute(objectName, "bound", "false"))) {
                     log.trace("found registered and bound management interface {}", objectName);
                     return objectName;
-                } else {
+                } else
                     log.trace("management interface {} is not bound", objectName);
-                }
-            } else {
+            } else
                 log.trace("management interface {} is not registered", objectName);
-            }
-        }
         return null;
     }
 
@@ -148,7 +150,7 @@ public class ConfigProducer implements Serializable {
 
     @SneakyThrows(IOException.class)
     private Config config() {
-        if (config == null) {
+        if (config == null)
             if (CONFIG_FILE != null && Files.isReadable(CONFIG_FILE)) {
                 log.debug("read config from {}", CONFIG_FILE);
                 config = MAPPER.readValue(Files.newBufferedReader(CONFIG_FILE), Config.class);
@@ -160,11 +162,14 @@ public class ConfigProducer implements Serializable {
                                 .build()) //
                         .repository(repository() //
                                 .uri(getUriSystemProperty(REPOSITORY_URI_PROPERTY)) //
-                                // no authorization from system properties... not secure
+                                // no authorization from system properties...
+                                // not secure
+                                .build()) //
+                        .deploymentListFileConfig(deploymentListFileConfig() //
+                                .autoUndeploy(false) //
                                 .build()) //
                         .build();
             }
-        }
         return config;
     }
 
@@ -185,5 +190,9 @@ public class ConfigProducer implements Serializable {
         if (password == null)
             return null;
         return new Credentials(username, password);
+    }
+
+    public DeploymentListFileConfig produceDeploymentListFileConfig() {
+        return config().deploymentListFileConfig();
     }
 }
