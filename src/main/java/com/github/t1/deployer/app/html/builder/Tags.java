@@ -15,7 +15,11 @@ import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 public class Tags {
     public static <T> Component append(Function<BuildContext, T> function) {
-        return context -> context.append(function.apply(context));
+        return context -> {
+            T value = function.apply(context);
+            if (value != null)
+                context.append(value);
+        };
     }
 
     public static TagBuilder span() {

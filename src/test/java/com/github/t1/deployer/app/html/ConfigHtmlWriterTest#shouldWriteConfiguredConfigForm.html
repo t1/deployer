@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <title>Configuration</title>
+
+    <link href="http://localhost:8080/deployer/bootstrap/css/bootstrap.css" rel="stylesheet"/>
+    <link href="http://localhost:8080/deployer/css/style.css" rel="stylesheet"/>
+  </head>
+  <body class="container-fluid" style="padding-top: 70px">
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand">Deployer</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li class="raml">
+              <a href="http://localhost:8080/deployer/doc/api-console.html"><img src="http://localhost:8080/deployer/img/raml.png"/></a>
+            </li>
+            <li class="swagger">
+              <a href="http://localhost:8080/deployer/swagger-ui/index.html?url=/deployer/swagger.yaml#!/config"><img src="http://localhost:8080/deployer/swagger-ui/images/logo_small.png"/></a>
+            </li>
+            <li class="deployments"><a href="http://localhost:8080/deployer/deployments">Deployments</a></li>
+            <li class="loggers"><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
+            <li class="datasources"><a href="http://localhost:8080/deployer/datasources">Data-Sources</a></li>
+            <li class="config active"><a href="http://localhost:8080/deployer/config"><span class="glyphicon glyphicon-cog"/></a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"><h1>Configuration</h1></div>
+
+      <div class="panel-body">
+        <form method="POST" id="main" class="form-horizontal" action="http://localhost:8080/deployer/config">
+          <div class="form-group">
+            <label for="autoUndeploy" class="control-label col-sm-1">Auto-Undeploy</label>
+            <div class="col-sm-11">
+              <input type="text" class="form-control" value="true" name="autoUndeploy" id="autoUndeploy" required autofocus/>
+            </div>
+          </div>
+        </form>
+        <div role="group" class="btn-group">
+          <button class="btn btn-primary" form="main" type="submit">Update</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="text-muted pull-right">Principal: Joe Doe</footer>
+
+    <script src="http://localhost:8080/deployer/jquery/jquery.js"/>
+    <script src="http://localhost:8080/deployer/bootstrap/js/bootstrap.js"/>
+  </body>
+</html>

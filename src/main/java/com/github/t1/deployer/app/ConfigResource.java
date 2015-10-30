@@ -6,7 +6,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Config;
 
 import io.swagger.annotations.*;
 
@@ -20,12 +20,6 @@ public class ConfigResource {
 
     public static URI base(UriInfo uriInfo) {
         return baseBuilder(uriInfo).build();
-    }
-
-    public static URI path(UriInfo uriInfo, DataSourceConfig dataSource) {
-        return baseBuilder(uriInfo) //
-                .path(dataSource.getName()) //
-                .build();
     }
 
     @Inject

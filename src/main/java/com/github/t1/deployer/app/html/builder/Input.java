@@ -4,7 +4,7 @@ import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 
-import java.lang.reflect.Field;
+import java.util.function.Function;
 
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
@@ -88,20 +88,8 @@ public class Input extends DelegateComponent {
             return this;
         }
 
-        public InputBuilder fieldValue(final Class<?> type, final String fieldName) {
-            value(append(context -> {
-                try {
-                    final Field field = type.getDeclaredField(fieldName);
-                    field.setAccessible(true);
-                    Object target = context.get(type);
-                    if (target == null)
-                        return "";
-                    Object value = field.get(target);
-                    return (value == null) ? "" : value.toString();
-                } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException(e);
-                }
-            }));
+        public InputBuilder fieldValue(Function<BuildContext, String> extractor) {
+            value(append(context -> extractor.apply(context)));
             return this;
         }
 
@@ -110,7 +98,8 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder value(Component value) {
-            input.attr("value", value);
+            if (value != null)
+                input.attr("value", value);
             return this;
         }
 
