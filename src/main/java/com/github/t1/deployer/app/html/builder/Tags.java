@@ -15,21 +15,7 @@ import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
 
 public class Tags {
     public static <T> Component append(Function<BuildContext, T> function) {
-        return new AppendingComponent<T>() {
-            @Override
-            public T contentFrom(BuildContext context) {
-                return function.apply(context);
-            }
-        };
-    }
-
-    public static interface AppendingComponent<T> extends Component {
-        @Override
-        public default void writeTo(BuildContext out) {
-            out.append(contentFrom(out));
-        }
-
-        public T contentFrom(BuildContext out);
+        return context -> context.append(function.apply(context));
     }
 
     public static TagBuilder span() {
@@ -68,22 +54,20 @@ public class Tags {
         return tag("script").attr("src", baseUri(href)).build();
     }
 
-    public static class BaseUriBuilder implements AppendingComponent<URI> {
+    public static class BaseUriBuilder implements Component {
         private String path = "/";
         private final Map<String, String> queryParams = new HashMap<>();
-        private AppendingComponent<String> fragment;
+        private Function<BuildContext, String> fragment;
 
         @Override
-        public URI contentFrom(BuildContext out) {
-            UriBuilder uriBuilder = out.get(UriInfo.class).getBaseUriBuilder();
+        public void writeTo(BuildContext context) {
+            UriBuilder uriBuilder = context.get(UriInfo.class).getBaseUriBuilder();
             uriBuilder.path(path);
             for (Entry<String, String> entry : queryParams.entrySet())
                 uriBuilder.queryParam(entry.getKey(), entry.getValue());
             if (fragment != null)
-                // this extra step is necessary to prevent escaping (at least on
-                // JBoss)
-                return uriBuilder.fragment("{fragment}").build(fragment.contentFrom(out));
-            return uriBuilder.build();
+                uriBuilder.fragment(fragment.apply(context));
+            context.append(uriBuilder.build());
         }
 
         public BaseUriBuilder path(String path) {
@@ -96,7 +80,7 @@ public class Tags {
             return this;
         }
 
-        public BaseUriBuilder fragment(AppendingComponent<String> fragment) {
+        public BaseUriBuilder fragment(Function<BuildContext, String> fragment) {
             this.fragment = fragment;
             return this;
         }

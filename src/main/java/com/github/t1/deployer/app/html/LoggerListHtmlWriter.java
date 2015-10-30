@@ -21,19 +21,15 @@ import javax.ws.rs.ext.Provider;
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
-import com.github.t1.deployer.app.html.builder.Table.*;
-import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.log.LogLevel;
 
 @Provider
 public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerConfig> {
-    private static final Cell ADD_LOGGER_ROW = cell().colspan(3).body(link(new AppendingComponent<URI>() {
-        @Override
-        public URI contentFrom(BuildContext out) {
-            return Loggers.newLogger(out.get(UriInfo.class));
-        }
-    }).body(ADD_ELEMENT)).build();
+    private static final Cell ADD_LOGGER_ROW = cell().colspan(3)
+            .body(link(append(context -> Loggers.newLogger(context.get(UriInfo.class)))) //
+                    .body(ADD_ELEMENT))
+            .build();
 
     private static final Component TABLE = new Component() {
         @Override

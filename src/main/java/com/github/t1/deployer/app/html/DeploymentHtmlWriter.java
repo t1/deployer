@@ -13,8 +13,6 @@ import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.app.html.builder.Table.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 
-import java.net.URI;
-
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
@@ -25,26 +23,17 @@ import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.DescriptionList.DescriptionListBuilder;
 import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
 import com.github.t1.deployer.app.html.builder.Table.TableBuilder;
-import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 
 @Provider
 public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> {
     private static DeployerPageBuilder page() {
         return deployerPage() //
-                .title(new AppendingComponent<String>() {
-                    @Override
-                    public String contentFrom(BuildContext out) {
-                        Deployment target = out.get(Deployment.class);
-                        return target.isNew() ? "Add Deployment" : target.getName().getValue();
-                    }
-                }) //
-                .backLink(new AppendingComponent<URI>() {
-                    @Override
-                    public URI contentFrom(BuildContext out) {
-                        return Deployments.pathAll(out.get(UriInfo.class));
-                    }
-                });
+                .title(append(out -> {
+                    Deployment target = out.get(Deployment.class);
+                    return target.isNew() ? "Add Deployment" : target.getName().getValue();
+                })) //
+                .backLink(append(context -> Deployments.pathAll(context.get(UriInfo.class))));
     }
 
     private static final Component RELEASES = //
@@ -85,48 +74,36 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
         }
     };
 
-    private static final Component DEPLOYMENT_INFO = new Component() {
-        @Override
-        public void writeTo(BuildContext out) {
-            Deployment deployment = out.get(Deployment.class);
-            DescriptionListBuilder description = descriptionList().horizontal();
+    private static final Component DEPLOYMENT_INFO = out -> {
+        Deployment deployment = out.get(Deployment.class);
+        DescriptionListBuilder description = descriptionList().horizontal();
 
-            description.title("Name").description(text(deployment.getName())).build();
-            description.nl();
-            description.title("Context-Root").description(text(deployment.getContextRoot())).build();
-            description.nl();
-            description.title("Version").description(textOr(deployment.getVersion(), "unknown")).build();
-            description.nl();
-            description.title("CheckSum").description(text(deployment.getCheckSum())).build();
+        description.title("Name").description(text(deployment.getName())).build();
+        description.nl();
+        description.title("Context-Root").description(text(deployment.getContextRoot())).build();
+        description.nl();
+        description.title("Version").description(textOr(deployment.getVersion(), "unknown")).build();
+        description.nl();
+        description.title("CheckSum").description(text(deployment.getCheckSum())).build();
 
-            description.build().writeTo(out);
-        }
+        description.build().writeTo(out);
     };
 
     private static final String MAIN_FORM_ID = "main";
 
-    private static final AppendingComponent<URI> DEPLOYMENT_LINK = new AppendingComponent<URI>() {
-        @Override
-        public URI contentFrom(BuildContext out) {
-            return Deployments.path(out.get(UriInfo.class), out.get(Deployment.class).getContextRoot());
-        }
-    };
+    private static final Component DEPLOYMENT_LINK = append(
+            context -> Deployments.path(context.get(UriInfo.class), context.get(Deployment.class).getContextRoot()));
 
-    private static Component UNDEPLOY = div().attr("style", "float: right")
+    private static Component UNDEPLOY = div()
+            .attr("style",
+                    "float: right")
             .body(compound( //
-                    form("undeploy").action(DEPLOYMENT_LINK) //
-                            .input(hiddenInput().name("contextRoot").value(new AppendingComponent<ContextRoot>() {
-                                @Override
-                                public ContextRoot contentFrom(BuildContext out) {
-                                    return out.get(Deployment.class).getContextRoot();
-                                }
-                            })) //
-                            .input(hiddenInput().name("checksum").value(new AppendingComponent<CheckSum>() {
-                                @Override
-                                public CheckSum contentFrom(BuildContext out) {
-                                    return out.get(Deployment.class).getCheckSum();
-                                }
-                            })) //
+                    form("undeploy") //
+                            .action(DEPLOYMENT_LINK) //
+                            .input(hiddenInput().name("contextRoot")
+                                    .value(append(context -> context.get(Deployment.class).getContextRoot()))) //
+                            .input(hiddenInput().name("checksum")
+                                    .value(append(context -> context.get(Deployment.class).getCheckSum()))) //
                             .input(hiddenAction("undeploy")) //
                             , //
                     buttonGroup().button( //
@@ -143,12 +120,7 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
     private static final DeployerPage NEW_DEPLOYMENT_FORM = page().panelBody(compound( //
             p("Enter the checksum of a new artifact to deploy"), //
             form(MAIN_FORM_ID) //
-                    .action(new AppendingComponent<URI>() {
-                        @Override
-                        public URI contentFrom(BuildContext out) {
-                            return Deployments.base(out.get(UriInfo.class));
-                        }
-                    }) //
+                    .action(append(context -> Deployments.base(context.get(UriInfo.class)))) //
                     .body(hiddenAction("deploy")) //
                     .body(input("checksum").placeholder("Checksum").required().autofocus()) //
                     .body(input("name").placeholder("Deployment Name (optional)")), //
@@ -163,17 +135,14 @@ public class DeploymentHtmlWriter extends TextHtmlMessageBodyWriter<Deployment> 
 
     @Override
     protected Component component() {
-        return new Component() {
-            @Override
-            public void writeTo(BuildContext out) {
-                Deployment target = out.get(Deployment.class);
-                Component page;
-                if (target.isNew())
-                    page = NEW_DEPLOYMENT_FORM;
-                else
-                    page = EXISTING_DEPLOYMENT_FORM;
-                page.writeTo(out);
-            }
+        return out -> {
+            Deployment target = out.get(Deployment.class);
+            Component page;
+            if (target.isNew())
+                page = NEW_DEPLOYMENT_FORM;
+            else
+                page = EXISTING_DEPLOYMENT_FORM;
+            page.writeTo(out);
         };
     }
 }

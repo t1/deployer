@@ -15,7 +15,6 @@ import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder;
 import com.github.t1.deployer.app.html.builder.NavBar.NavBarBuilder.NavBarItemBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
-import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 
 import lombok.*;
 
@@ -81,13 +80,10 @@ public class DeployerPage implements Component {
                 h1.body(title);
             else {
                 TagBuilder back = link(backLink).classes("glyphicon", "glyphicon-menu-left").body(text(""));
-                h1.body(back).body(new Component() {
-                    @Override
-                    public void writeTo(BuildContext out) {
-                        out.print("");
-                        title.writeTo(out);
-                        out.appendln();
-                    }
+                h1.body(back).body(out -> {
+                    out.print("");
+                    title.writeTo(out);
+                    out.appendln();
                 });
             }
 
@@ -116,12 +112,7 @@ public class DeployerPage implements Component {
                     .classes("swagger") //
                     .href(baseUri("swagger-ui/index.html") //
                             .queryParam("url", "/deployer/swagger.yaml") //
-                            .fragment(new AppendingComponent<String>() {
-                                @Override
-                                public String contentFrom(BuildContext out) {
-                                    return "!/" + out.get(Navigation.class).name();
-                                }
-                            }))
+                            .fragment(context -> "!/" + context.get(Navigation.class).name()))
                     .img(baseUri("swagger-ui/images/logo_small.png")) //
                     .build();
         }
@@ -142,17 +133,14 @@ public class DeployerPage implements Component {
         }
 
         private Component pageFooter() {
-            return new Component() {
-                @Override
-                public void writeTo(BuildContext out) {
-                    Principal principal = out.get(Principal.class);
-                    if (principal != null)
-                        compound( //
-                                nl(), //
-                                footer().classes("text-muted", "pull-right") //
-                                        .body(text("Principal: " + principal.getName())).build() //
-                        ).build().writeTo(out);
-                }
+            return out -> {
+                Principal principal = out.get(Principal.class);
+                if (principal != null)
+                    compound( //
+                            nl(), //
+                            footer().classes("text-muted", "pull-right") //
+                                    .body(text("Principal: " + principal.getName())).build() //
+                    ).build().writeTo(out);
             };
         }
     }

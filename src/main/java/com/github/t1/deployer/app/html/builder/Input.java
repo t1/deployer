@@ -7,7 +7,6 @@ import static com.github.t1.deployer.app.html.builder.Tags.*;
 import java.lang.reflect.Field;
 
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
-import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 
 import lombok.*;
 
@@ -40,17 +39,12 @@ public class Input extends DelegateComponent {
 
     public static class InputBuilder extends ComponentBuilder {
         private TagBuilder label;
-        private final TagBuilder input = tag("input").attr("type", new AppendingComponent<String>() {
-            @Override
-            public String contentFrom(BuildContext out) {
-                return type;
-            }
-        }).multiline();
         private String idAndName;
         private String type = "text";
         private boolean autofocus;
         private boolean required;
         private boolean horizontal;
+        private final TagBuilder input = tag("input").attr("type", append(context -> type)).multiline();
 
         public InputBuilder idAndName(String idAndName) {
             this.idAndName = idAndName;
@@ -95,22 +89,19 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder fieldValue(final Class<?> type, final String fieldName) {
-            value(new AppendingComponent<String>() {
-                @Override
-                public String contentFrom(BuildContext out) {
-                    try {
-                        final Field field = type.getDeclaredField(fieldName);
-                        field.setAccessible(true);
-                        Object target = out.get(type);
-                        if (target == null)
-                            return "";
-                        Object value = field.get(target);
-                        return (value == null) ? "" : value.toString();
-                    } catch (ReflectiveOperationException e) {
-                        throw new RuntimeException(e);
-                    }
+            value(append(context -> {
+                try {
+                    final Field field = type.getDeclaredField(fieldName);
+                    field.setAccessible(true);
+                    Object target = context.get(type);
+                    if (target == null)
+                        return "";
+                    Object value = field.get(target);
+                    return (value == null) ? "" : value.toString();
+                } catch (ReflectiveOperationException e) {
+                    throw new RuntimeException(e);
                 }
-            });
+            }));
             return this;
         }
 

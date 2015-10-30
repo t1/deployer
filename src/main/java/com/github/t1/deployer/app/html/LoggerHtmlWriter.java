@@ -13,8 +13,6 @@ import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
 import static com.github.t1.log.LogLevel.*;
 
-import java.net.URI;
-
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
@@ -22,35 +20,18 @@ import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
 import com.github.t1.deployer.app.html.builder.Select.SelectBuilder;
-import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.log.LogLevel;
 
 @Provider
 public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
     private static final String MAIN_FORM_ID = "main";
-    private static final Component LOGGERS = new AppendingComponent<URI>() {
-        @Override
-        public URI contentFrom(BuildContext out) {
-            return Loggers.base(out.get(UriInfo.class));
-        }
-    };
+    private static final Component LOGGERS = append(context -> Loggers.base(context.get(UriInfo.class)));
 
     private static final DeployerPage existingLogger(UriInfo uriInfo, LoggerConfig logger) {
         return deployerPage() //
-                .title(new AppendingComponent<String>() {
-                    @Override
-                    public String contentFrom(BuildContext out) {
-                        LoggerConfig logger = out.get(LoggerConfig.class);
-                        return "Logger: " + logger.getCategory();
-                    }
-                }) //
-                .backLink(new AppendingComponent<URI>() {
-                    @Override
-                    public URI contentFrom(BuildContext out) {
-                        return Loggers.base(out.get(UriInfo.class));
-                    }
-                }) //
+                .title(append(context -> "Logger: " + context.get(LoggerConfig.class).getCategory())) //
+                .backLink(append(context -> Loggers.base(context.get(UriInfo.class)))) //
                 .panelBody(div().style("float: right") //
                         .body(form("delete") //
                                 .action(Loggers.path(uriInfo, logger)) //
@@ -107,18 +88,15 @@ public class LoggerHtmlWriter extends TextHtmlMessageBodyWriter<LoggerConfig> {
 
     @Override
     protected Component component() {
-        return new Component() {
-            @Override
-            public void writeTo(BuildContext out) {
-                LoggerConfig target = out.get(LoggerConfig.class);
-                UriInfo uriInfo = out.get(UriInfo.class);
-                Component page;
-                if (target.isNew())
-                    page = NEW_LOGGER;
-                else
-                    page = existingLogger(uriInfo, target);
-                page.writeTo(out);
-            }
+        return out -> {
+            LoggerConfig target = out.get(LoggerConfig.class);
+            UriInfo uriInfo = out.get(UriInfo.class);
+            Component page;
+            if (target.isNew())
+                page = NEW_LOGGER;
+            else
+                page = existingLogger(uriInfo, target);
+            page.writeTo(out);
         };
     }
 }

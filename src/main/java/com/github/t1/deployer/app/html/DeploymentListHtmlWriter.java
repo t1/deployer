@@ -14,40 +14,32 @@ import javax.ws.rs.ext.Provider;
 
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.builder.*;
-import com.github.t1.deployer.app.html.builder.Table.*;
-import com.github.t1.deployer.app.html.builder.Tags.AppendingComponent;
 import com.github.t1.deployer.model.*;
 
 @Provider
 public class DeploymentListHtmlWriter extends TextHtmlListMessageBodyWriter<Deployment> {
-    private static final Cell ADD_DEPLOYMENT_ROW = cell().colspan(3).body(link(new AppendingComponent<URI>() {
-        @Override
-        public URI contentFrom(BuildContext out) {
-            return Deployments.newDeployment(out.get(UriInfo.class));
-        }
-    }).body(ADD_ELEMENT)).build();
+    private static final Cell ADD_DEPLOYMENT_ROW = cell().colspan(3)
+            .body(link(append(context -> Deployments.newDeployment(context.get(UriInfo.class)))).body(ADD_ELEMENT))
+            .build();
 
-    private static final Component TABLE = new Component() {
-        @Override
-        public void writeTo(BuildContext out) {
-            TableBuilder table = table();
-            @SuppressWarnings("unchecked")
-            List<Deployment> deployments = out.get(List.class);
-            Collections.sort(deployments);
-            UriInfo uriInfo = out.get(UriInfo.class);
-            for (Deployment deployment : deployments) {
-                ContextRoot contextRoot = deployment.getContextRoot();
-                URI uri = Deployments.path(uriInfo, contextRoot);
-                String checksum = "SHA-1: " + deployment.getCheckSum();
-                table.row( //
-                        cell().body(link(uri).body(text(contextRoot))), //
-                        cell().body(text(deployment.getName())), //
-                        cell().title(checksum).body(textOr(deployment.getVersion(), "unknown")) //
-                );
-            }
-            table.row(ADD_DEPLOYMENT_ROW);
-            table.build().writeTo(out);
+    private static final Component TABLE = out -> {
+        TableBuilder table = table();
+        @SuppressWarnings("unchecked")
+        List<Deployment> deployments = out.get(List.class);
+        Collections.sort(deployments);
+        UriInfo uriInfo = out.get(UriInfo.class);
+        for (Deployment deployment : deployments) {
+            ContextRoot contextRoot = deployment.getContextRoot();
+            URI uri = Deployments.path(uriInfo, contextRoot);
+            String checksum = "SHA-1: " + deployment.getCheckSum();
+            table.row( //
+                    cell().body(link(uri).body(text(contextRoot))), //
+                    cell().body(text(deployment.getName())), //
+                    cell().title(checksum).body(textOr(deployment.getVersion(), "unknown")) //
+            );
         }
+        table.row(ADD_DEPLOYMENT_ROW);
+        table.build().writeTo(out);
     };
 
     private static final DeployerPage PAGE = deployerPage() //
