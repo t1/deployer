@@ -5,11 +5,12 @@ import static com.github.t1.deployer.app.html.builder.Button.*;
 import static com.github.t1.deployer.app.html.builder.ButtonGroup.*;
 import static com.github.t1.deployer.app.html.builder.Compound.*;
 import static com.github.t1.deployer.app.html.builder.Form.*;
-import static com.github.t1.deployer.app.html.builder.Input.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
+import static java.lang.Boolean.*;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import javax.ws.rs.core.UriInfo;
@@ -19,8 +20,8 @@ import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.html.DeployerPage.DeployerPageBuilder;
 import com.github.t1.deployer.app.html.builder.*;
 import com.github.t1.deployer.app.html.builder.Button.ButtonBuilder;
-import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Config.DeploymentListFileConfig;
+import com.github.t1.deployer.app.html.builder.Input.InputBuilder;
+import com.github.t1.deployer.model.*;
 
 @Provider
 public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<Config> {
@@ -43,20 +44,23 @@ public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<Config> {
             DeployerPageBuilder page = deployerPage().title(text("Configuration"));
             page.panelBody(compound( //
                     form(MAIN_FORM_ID).horizontal().action(CONFIG_LINK) //
-                            .input(input("autoUndeploy").label("Auto-Undeploy").value(append(autoUndeploy())).required()
-                                    .autofocus()), //
+                            .input(input().required().autofocus()), //
                     buttonGroup().button(submitButton("Update"))) //
                             .build());
             page.build().writeTo(out);
         };
     }
 
+    private InputBuilder input() {
+        return Input.input("autoUndeploy").label("Auto-Undeploy").value(append(autoUndeploy()));
+    }
+
     private static Function<BuildContext, String> autoUndeploy() {
-        return context -> {
-            Config config = context.get(Config.class);
-            DeploymentListFileConfig deploymentListFileConfig = config.deploymentListFileConfig();
-            Boolean autoUndeploy = (deploymentListFileConfig == null) ? null : deploymentListFileConfig.autoUndeploy();
-            return (autoUndeploy == null) ? "false" : autoUndeploy.toString();
-        };
+        return context -> new ConfigProperties(() -> Optional.ofNullable(context.get(Config.class))) //
+                .deploymentListFileConfig() //
+                .autoUndeploy() //
+                .get() //
+                .orElse(FALSE) //
+                .toString();
     }
 }
