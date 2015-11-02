@@ -27,8 +27,8 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
         boolean textHtml = isTextHtml(mediaType);
         Class<?> writerType = getType();
         boolean assignable = writerType.isAssignableFrom(type);
-        log.trace("isWriteable: type {}, genericType {}, mediaType {}, writerType {} -> html: {}, assignable: {}",
-                type, genericType, mediaType, writerType, textHtml, assignable);
+        log.trace("isWriteable: type {}, genericType {}, mediaType {}, writerType {} -> html: {}, assignable: {}", type,
+                genericType, mediaType, writerType, textHtml, assignable);
         return textHtml && assignable;
     }
 
@@ -57,12 +57,12 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
         httpHeaders.add("X-Content-Type-Options", "nosniff");
         try {
             OutputStreamWriter out = new OutputStreamWriter(entityStream);
-            BuildContext context = new BuildContext(component());
+            BuildContext context = new BuildContext();
             context.put(target).put(uriInfo);
             if (principal != null)
                 context.put(principal);
             prepare(context);
-            context.writeTo(out);
+            context.write(component(), out);
             out.flush();
         } catch (Exception e) {
             log.error("failed to write " + genericType + " as " + mediaType, e);

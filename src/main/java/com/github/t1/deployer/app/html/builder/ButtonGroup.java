@@ -13,7 +13,7 @@ public class ButtonGroup extends DelegateComponent {
         return new ButtonGroupBuilder();
     }
 
-    public static class ButtonGroupBuilder extends ComponentBuilder {
+    public static class ButtonGroupBuilder implements ComponentBuilder {
         private boolean wrapButtons = false;
         private final TagBuilder tag = div().multiline().attr("role", "group").classes("btn-group");
 

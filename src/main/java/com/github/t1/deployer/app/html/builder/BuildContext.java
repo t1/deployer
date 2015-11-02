@@ -11,21 +11,20 @@ public class BuildContext {
             + "                                                                                                     "
             + "                                                                                                     ";
 
-    @NonNull
-    private final Component component;
     private final Map<Class<?>, Object> targets = new LinkedHashMap<>();
 
     private Writer out;
     private int indent;
 
-    public BuildContext(Component component) {
-        this.component = component;
-    }
-
-    public BuildContext writeTo(Writer out) {
-        this.out = out;
-        component.writeTo(this);
-        return this;
+    public BuildContext write(@NonNull Component component, @NonNull Writer out) {
+        Writer origOut = this.out;
+        try {
+            this.out = out;
+            component.writeTo(this);
+            return this;
+        } finally {
+            this.out = origOut;
+        }
     }
 
     public BuildContext append(Object object) {
@@ -35,7 +34,7 @@ public class BuildContext {
 
     @SneakyThrows(IOException.class)
     public BuildContext appendRaw(String string) {
-        out.append(string); // FIXME escape html
+        out.append(string);
         return this;
     }
 

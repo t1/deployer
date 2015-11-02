@@ -1,8 +1,10 @@
 package com.github.t1.deployer.app.html.builder;
 
+import java.io.StringWriter;
+
 @FunctionalInterface
 public interface Component {
-    public static abstract class ComponentBuilder {
+    public interface ComponentBuilder {
         public abstract Component build();
     }
 
@@ -10,6 +12,12 @@ public interface Component {
 
     public default void writeInlineTo(BuildContext context) {
         writeTo(context);
+    }
+
+    public default String asString(BuildContext context) {
+        StringWriter out = new StringWriter();
+        context.write(this, out);
+        return out.toString();
     }
 
     public default boolean isMultiLine() {

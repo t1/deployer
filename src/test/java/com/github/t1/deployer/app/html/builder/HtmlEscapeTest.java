@@ -10,34 +10,39 @@ import org.junit.*;
 
 public class HtmlEscapeTest {
     private final Writer stringWriter = new StringWriter();
-    private final BuildContext context = new BuildContext(text("foo")).writeTo(stringWriter);
+    private final BuildContext context = new BuildContext();
+
+    private void write(Component component) {
+        context.write(component, stringWriter);
+    }
 
     @Test
     public void shouldAppendEmptyString() {
-        context.append("");
+        write(text(""));
 
-        assertEquals("foo", stringWriter.toString());
+        assertEquals("", stringWriter.toString());
     }
 
     @Test
     public void shouldAppendSimpleString() {
-        context.append("bar");
+        write(text("bar"));
 
-        assertEquals("foobar", stringWriter.toString());
+        assertEquals("bar", stringWriter.toString());
     }
 
     @Test
     public void shouldAppendTag() {
-        tag("bar").build().writeTo(context);
+        write(tag("bar").build());
 
-        assertEquals("foo<bar/>\n", stringWriter.toString());
+        assertEquals("<bar/>\n", stringWriter.toString());
     }
 
+    // FIXME escape html!
     @Test
     @Ignore
     public void shouldEscapeLessThan() {
-        context.append("<");
+        write(text("<"));
 
-        assertEquals("foo&lt;", stringWriter.toString());
+        assertEquals("&lt;", stringWriter.toString());
     }
 }

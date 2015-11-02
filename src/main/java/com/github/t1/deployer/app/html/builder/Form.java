@@ -5,10 +5,10 @@ import static com.github.t1.deployer.app.html.builder.Tag.*;
 
 import java.net.URI;
 
-import lombok.*;
-
 import com.github.t1.deployer.app.html.builder.Input.InputBuilder;
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+
+import lombok.*;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -25,7 +25,7 @@ public class Form extends DelegateComponent {
         return new FormBuilder();
     }
 
-    public static class FormBuilder extends ComponentBuilder {
+    public static class FormBuilder implements ComponentBuilder {
         private final TagBuilder tag = tag("form").attr("method", "POST");
         private boolean horizontal;
 
@@ -74,6 +74,17 @@ public class Form extends DelegateComponent {
         @Override
         public Form build() {
             return new Form(tag.build());
+        }
+
+        public FormBuilder fieldset(String legend, InputBuilder... inputs) {
+            TagBuilder fieldset = tag("fieldset").body(tag("legend").body(text(legend)));
+            for (InputBuilder input : inputs) {
+                if (horizontal)
+                    input.horizontal();
+                fieldset.body(input);
+            }
+            tag.body(fieldset);
+            return this;
         }
     }
 

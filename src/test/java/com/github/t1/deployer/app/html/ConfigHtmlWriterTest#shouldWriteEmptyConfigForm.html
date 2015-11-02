@@ -38,12 +38,47 @@
 
       <div class="panel-body">
         <form method="POST" id="main" class="form-horizontal" action="http://localhost:8080/deployer/config">
-          <div class="form-group">
-            <label for="autoUndeploy" class="control-label col-sm-1">Auto-Undeploy</label>
-            <div class="col-sm-11">
-              <input type="text" class="form-control" value="false" name="autoUndeploy" id="autoUndeploy" required autofocus/>
+          <fieldset>
+            <legend>Repository</legend>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="uri">URI</label>
+              <div class="col-sm-10">
+                <input type="uri" class="form-control" name="uri" id="uri" value="" autofocus/>
+              </div>
             </div>
-          </div>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="username">User-Name</label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" name="username" id="username" value=""/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="password">Password</label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" name="password" id="password" value=""/>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Container</legend>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="uri">URI</label>
+              <div class="col-sm-10">
+                <input type="uri" class="form-control" name="uri" id="uri" value=""/>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Deployment-List-File</legend>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="autoUndeploy">Auto-Undeploy</label>
+              <div class="col-sm-10 checkbox">
+                <label>
+                  <input type="checkbox" name="autoUndeploy" id="autoUndeploy" value="autoUndeploy" required>Automatically delete all deployments not found in the deployments list.</input>
+                </label>
+              </div>
+            </div>
+          </fieldset>
         </form>
         <div role="group" class="btn-group">
           <button class="btn btn-primary" form="main" type="submit">Update</button>

@@ -4,8 +4,7 @@ import static com.github.t1.deployer.app.html.builder.Compound.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 
 import java.util.*;
-
-import com.github.t1.deployer.app.html.builder.Compound.CompoundBuilder;
+import java.util.Map.Entry;
 
 import lombok.*;
 
@@ -17,32 +16,19 @@ public class Tag implements Component {
     }
 
     @Value
-    public static class Attribute implements Component {
-        String name;
+    @AllArgsConstructor
+    public static class Attribute {
+        @NonNull
+        Component key;
+
         Component value;
 
-        @Override
-        public void writeInlineTo(BuildContext out) {
-            out.append(" ").append(name);
-            if (value != null) {
-                out.append("=\"");
-                value.writeInlineTo(out);
-                out.append("\"");
-            }
-        }
-
-        @Override
-        public void writeTo(BuildContext out) {
-            writeInlineTo(out);
-        }
-
-        @Override
-        public boolean isMultiLine() {
-            return false;
+        public Attribute(String key, Component value) {
+            this(text(key), value);
         }
     }
 
-    public static class TagBuilder extends ComponentBuilder {
+    public static class TagBuilder implements ComponentBuilder {
         private String bodyDelimiter = "";
         private boolean multiline;
 
@@ -59,7 +45,16 @@ public class Tag implements Component {
             return attr(key, (Component) null);
         }
 
+        public TagBuilder attr(Component key) {
+            return attr(key, (Component) null);
+        }
+
         public TagBuilder attr(String key, Component value) {
+            attribute(new Attribute(key, value));
+            return this;
+        }
+
+        public TagBuilder attr(Component key, Component value) {
             attribute(new Attribute(key, value));
             return this;
         }
@@ -79,17 +74,7 @@ public class Tag implements Component {
         }
 
         public TagBuilder classes(Component... classes) {
-            CompoundBuilder compound = compound(" ");
-            if (attributes != null)
-                for (Iterator<Attribute> iter = attributes.iterator(); iter.hasNext();) {
-                    Attribute attribute = iter.next();
-                    if (attribute.getName().equals("class")) {
-                        iter.remove();
-                        compound.component(attribute.getValue());
-                    }
-                }
-            compound.component(classes);
-            attr("class", compound.build());
+            attr("class", compound(" ", classes).build());
             return this;
         }
 
@@ -134,8 +119,7 @@ public class Tag implements Component {
     public void writeInlineTo(BuildContext out) {
         out.append("<").append(name);
         if (attributes != null)
-            for (Attribute attribute : attributes)
-                attribute.writeInlineTo(out);
+            writeAttributes(out);
         if (body == null)
             out.append("/>");
         else if (body.isMultiLine()) {
@@ -149,16 +133,36 @@ public class Tag implements Component {
         }
     }
 
+    private void writeAttributes(BuildContext context) {
+        for (Entry<String, String> entry : getAttributeMap(context).entrySet()) {
+            context.append(" ").append(entry.getKey());
+            if (entry.getValue() != null) {
+                context.append("=\"").append(entry.getValue()).append("\"");
+            }
+        }
+    }
+
+    /**
+     * Build all attributes to a <code>Map<String,String></code>, concatenating attributes with the same name with a
+     * space as delimiter. This is required namely for class attributes.
+     */
+    public Map<String, String> getAttributeMap(BuildContext context) {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (Attribute attribute : attributes) {
+            String key = attribute.getKey().asString(context);
+            if (key.isEmpty()) // optional tag
+                continue;
+            String value = (attribute.getValue() == null) ? null : attribute.getValue().asString(context);
+            if (map.containsKey(key))
+                value = map.get(key) + " " + value;
+            map.put(key, value);
+        }
+        return map;
+    }
+
     @Override
     public boolean isMultiLine() {
         return multiline;
-    }
-
-    public Component getAttribute(String name) {
-        for (Attribute attribute : attributes)
-            if (name.equals(attribute.getName()))
-                return attribute.getValue();
-        return null;
     }
 
     @Override
@@ -185,7 +189,7 @@ public class Tag implements Component {
                 first = false;
             else
                 out.append(",");
-            out.append(attribute.getName()).append(":").append(attribute.getValue());
+            out.append(attribute.getKey()).append(":").append(attribute.getValue());
         }
         out.append("]");
     }

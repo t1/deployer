@@ -20,7 +20,7 @@ public class NavBar implements Component {
         return new NavBarBuilder();
     }
 
-    public static class NavBarBuilder extends ComponentBuilder {
+    public static class NavBarBuilder implements ComponentBuilder {
         public class NavBarItemBuilder {
             private final TagBuilder link = tag("a");
             private final List<Component> classes = new ArrayList<>();

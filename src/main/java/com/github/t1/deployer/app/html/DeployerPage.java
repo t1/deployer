@@ -24,7 +24,7 @@ public class DeployerPage implements Component {
         return new DeployerPageBuilder();
     }
 
-    public static class DeployerPageBuilder extends ComponentBuilder {
+    public static class DeployerPageBuilder implements ComponentBuilder {
         private Component title;
         private Component backLink;
         private final List<Component> bodyComponents = new ArrayList<>();

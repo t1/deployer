@@ -29,7 +29,7 @@ public class Compound implements Component {
     }
 
     @RequiredArgsConstructor
-    public static class CompoundBuilder extends ComponentBuilder {
+    public static class CompoundBuilder implements ComponentBuilder {
         private final String delimiter;
         private final List<Component> components = new ArrayList<>();
 

@@ -3,10 +3,12 @@ package com.github.t1.deployer.app.html.builder;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
+import static java.lang.Boolean.*;
 
 import java.util.function.Function;
 
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
+import com.github.t1.deployer.model.*;
 
 import lombok.*;
 
@@ -25,10 +27,27 @@ public class Input extends DelegateComponent {
         return new InputBuilder().type("hidden").name(name).value(value).build();
     }
 
-    public static InputBuilder input() {
-        InputBuilder builder = new InputBuilder();
-        builder.input.classes("form-control");
-        return builder;
+    public static <T> InputBuilder input(StringProperty<T> property, Class<T> type) {
+        return input(property.id()) //
+                .label(property.title()) //
+                .value(append(c -> property.get(c.get(type)).orElse(null)));
+    }
+
+    public static <T> InputBuilder input(UriProperty<T> property, Class<T> type) {
+        return input(property.id()) //
+                .type("uri") //
+                .label(property.title()) //
+                .value(append(c -> property.get(c.get(type)).orElse(null)));
+    }
+
+    public static <T> InputBuilder input(BooleanProperty<T> property, Class<T> type) {
+        return new InputBuilder() // not form-control!
+                .idAndName(property.id()) //
+                .type("checkbox") //
+                .value(property.id()) //
+                .label(property.title()) //
+                .description(property.description()) //
+                .attr(append(c -> property.get(c.get(type)).orElse(FALSE) ? "checked" : ""));
     }
 
     public static InputBuilder input(String idAndName) {
@@ -37,10 +56,17 @@ public class Input extends DelegateComponent {
         return builder;
     }
 
-    public static class InputBuilder extends ComponentBuilder {
+    public static InputBuilder input() {
+        InputBuilder builder = new InputBuilder();
+        builder.input.classes("form-control");
+        return builder;
+    }
+
+    public static class InputBuilder implements ComponentBuilder {
         private TagBuilder label;
         private String idAndName;
         private String type = "text";
+        private String description;
         private boolean autofocus;
         private boolean required;
         private boolean horizontal;
@@ -48,6 +74,8 @@ public class Input extends DelegateComponent {
 
         public InputBuilder idAndName(String idAndName) {
             this.idAndName = idAndName;
+            if (idAndName != null)
+                input.attr("name", idAndName).id(idAndName);
             return this;
         }
 
@@ -79,7 +107,21 @@ public class Input extends DelegateComponent {
         }
 
         public InputBuilder name(Component name) {
-            input.attr("name", name);
+            return attr("name", name);
+        }
+
+        public InputBuilder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        private InputBuilder attr(Component name) {
+            input.attr(name);
+            return this;
+        }
+
+        private InputBuilder attr(String name, Component value) {
+            input.attr(name, value);
             return this;
         }
 
@@ -120,8 +162,6 @@ public class Input extends DelegateComponent {
 
         @Override
         public Input build() {
-            if (idAndName != null)
-                input.attr("name", idAndName).id(idAndName);
             if (required)
                 input.attr("required");
             if (autofocus)
@@ -132,12 +172,18 @@ public class Input extends DelegateComponent {
                         : div().classes("form-group").body(input.build()).build(), type);
             if (idAndName != null)
                 label.attr("for", idAndName);
-            TagBuilder input = this.input;
+            TagBuilder body = this.input;
+            if (description != null)
+                body.body(text(description));
+            if ("checkbox".equals(type))
+                body = tag("label").body(body.build());
             if (horizontal) {
-                label.classes("col-sm-1");
-                input = div().classes("col-sm-11").body(input.build());
+                label.classes("col-sm-2");
+                body = div().classes("col-sm-10").body(body.build());
             }
-            return new Input(div().classes("form-group").body(label.build()).body(input.build()).build(), type);
+            if ("checkbox".equals(type))
+                body.classes("checkbox");
+            return new Input(div().classes("form-group").body(label.build()).body(body.build()).build(), type);
         }
     }
 

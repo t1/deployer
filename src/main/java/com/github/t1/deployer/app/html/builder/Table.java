@@ -51,7 +51,7 @@ public class Table extends DelegateComponent {
     @Value
     @EqualsAndHashCode(callSuper = true)
     public static class Cell extends DelegateComponent {
-        public static class CellBuilder extends ComponentBuilder {
+        public static class CellBuilder implements ComponentBuilder {
             private final TagBuilder tag = tag("td").multiline();
 
             public CellBuilder id(String id) {

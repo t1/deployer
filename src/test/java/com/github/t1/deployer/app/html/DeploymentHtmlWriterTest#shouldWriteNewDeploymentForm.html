@@ -46,10 +46,10 @@
         <form method="POST" id="main" action="http://localhost:8080/deployer/deployments">
           <input type="hidden" name="action" value="deploy"/>
           <div class="form-group">
-            <input type="text" class="form-control" placeholder="Checksum" name="checksum" id="checksum" required autofocus/>
+            <input type="text" class="form-control" name="checksum" id="checksum" placeholder="Checksum" required autofocus/>
           </div>
           <div class="form-group">
-            <input type="text" class="form-control" placeholder="Deployment Name (optional)" name="name" id="name"/>
+            <input type="text" class="form-control" name="name" id="name" placeholder="Deployment Name (optional)"/>
           </div>
         </form>
         <div role="group" class="btn-group">

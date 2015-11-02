@@ -139,7 +139,7 @@ public class ConfigProducerTest {
     }
 
     @Test
-    public void shouldProduceDefaultDeploymentListFileConfig() throws Exception {
+    public void shouldProduceDefaultDeploymentListFileConfig() {
         DeploymentListFileConfig fileConfig = configProducer.produceDeploymentListFileConfig();
 
         assertThat(fileConfig.autoUndeploy()).isFalse();
