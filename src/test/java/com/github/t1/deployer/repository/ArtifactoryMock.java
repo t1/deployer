@@ -18,7 +18,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.model.*;
-
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 

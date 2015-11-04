@@ -15,25 +15,25 @@ public class ConfigProperties<B> {
 
     Function<B, Optional<Config>> backtrack;
 
-    public DeploymentListFileConfigProperties<B> deploymentListFileConfig() {
+    public Config_DeploymentListFileConfigProperties<B> deploymentListFileConfig() {
         Function<B, Optional<DeploymentListFileConfig>> backtrack =
                 source -> this.backtrack.apply(source).map(container -> container.deploymentListFileConfig());
-        return new DeploymentListFileConfigProperties<>(backtrack);
+        return new Config_DeploymentListFileConfigProperties<>(backtrack);
     }
 
-    public RepositoryConfigProperties<B> repositoryConfig() {
+    public Config_RepositoryConfigProperties<B> repositoryConfig() {
         Function<B, Optional<RepositoryConfig>> backtrack =
                 source -> this.backtrack.apply(source).map(container -> container.repository());
-        return new RepositoryConfigProperties<>(backtrack);
+        return new Config_RepositoryConfigProperties<>(backtrack);
     }
 
-    public ContainerConfigProperties<B> containerConfig() {
+    public Config_ContainerConfigProperties<B> containerConfig() {
         Function<B, Optional<ContainerConfig>> backtrack =
                 source -> this.backtrack.apply(source).map(container -> container.container());
-        return new ContainerConfigProperties<>(backtrack);
+        return new Config_ContainerConfigProperties<>(backtrack);
     }
 
     public String $name() {
-        return "Configuration";
+        return "Config";
     }
 }

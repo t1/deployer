@@ -19,7 +19,6 @@ import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Config.DeploymentListFileConfig;
 import com.github.t1.deployer.repository.Repository;
-
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 

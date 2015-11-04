@@ -8,7 +8,7 @@ import static java.lang.Boolean.*;
 import java.util.function.Function;
 
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
-import com.github.t1.deployer.model.*;
+import com.github.t1.meta.*;
 
 import lombok.*;
 

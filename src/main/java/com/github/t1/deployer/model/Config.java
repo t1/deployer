@@ -6,6 +6,7 @@ import java.net.URI;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.t1.deployer.tools.Never;
+import com.github.t1.meta.GenerateMeta;
 
 import lombok.*;
 import lombok.experimental.Accessors;
@@ -21,6 +22,7 @@ public class Config {
     @Builder(builderMethodName = "authentication")
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
+    @GenerateMeta
     public static class Authentication {
         @JsonProperty
         String username;
@@ -43,6 +45,7 @@ public class Config {
     @Builder(builderMethodName = "container")
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
+    @GenerateMeta
     public static class ContainerConfig {
         @JsonProperty
         URI uri;
@@ -52,7 +55,9 @@ public class Config {
     @Builder(builderMethodName = "deploymentListFileConfig")
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
+    @GenerateMeta
     public static class DeploymentListFileConfig {
+        /** Automatically delete all deployments not found in the deployments list. */
         @JsonProperty
         Boolean autoUndeploy;
     }
