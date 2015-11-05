@@ -17,12 +17,12 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor(access = PRIVATE)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @Accessors(fluent = true)
+@GenerateMeta
 public class Config {
     @Value
     @Builder(builderMethodName = "authentication")
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
-    @GenerateMeta
     public static class Authentication {
         @JsonProperty
         String username;
@@ -45,7 +45,6 @@ public class Config {
     @Builder(builderMethodName = "container")
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
-    @GenerateMeta
     public static class ContainerConfig {
         @JsonProperty
         URI uri;
@@ -55,7 +54,6 @@ public class Config {
     @Builder(builderMethodName = "deploymentListFileConfig")
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
-    @GenerateMeta
     public static class DeploymentListFileConfig {
         /** Automatically delete all deployments not found in the deployments list. */
         @JsonProperty

@@ -40,13 +40,13 @@ public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<Config> {
     protected Component component() {
         return out -> {
             ConfigProperties<Config> config = configProperties();
-            DeployerPageBuilder page = deployerPage().title(text(config.$name()));
-            Config_RepositoryConfigProperties<Config> repository = config.repositoryConfig();
-            Config_ContainerConfigProperties<Config> container = config.containerConfig();
+            DeployerPageBuilder page = deployerPage().title(text(config.$title()));
+            Config_RepositoryConfigProperties<Config> repository = config.repository();
+            Config_ContainerConfigProperties<Config> container = config.container();
             Config_DeploymentListFileConfigProperties<Config> deploymentListFileConfig =
                     config.deploymentListFileConfig();
             FormBuilder form = form(MAIN_FORM_ID).horizontal().action(CONFIG_LINK) //
-                    .fieldset(repository.$name(), //
+                    .fieldset(repository.$title(), //
                             input(repository.uri(), Config.class).autofocus(), //
                             input(repository.authentication().username(), Config.class), //
                             input(repository.authentication().password(), Config.class)) //
