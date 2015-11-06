@@ -59,21 +59,19 @@ public class RepositoryIT {
         List<Release> releases = repository.releasesFor(fakeChecksumFor(FOO));
 
         assertEquals(FOO_VERSIONS.size(), releases.size());
-        for (Release entry : releases) {
+        for (Release entry : releases)
             assertEquals(fakeChecksumFor(FOO, entry.getVersion()), entry.getCheckSum());
-        }
-
         assertThat(releases).extracting(r -> r.getVersion().toString()) //
-                .containsExactly( //
-                        "1.2.0", //
-                        "1.2.1-SNAPSHOT", //
-                        "1.2.1", //
-                        "1.2.1.1", //
-                        "1.3.0", //
-                        "1.3.1", //
-                        "1.3.2", //
+                .containsOnly( //
+                        "1.3.12", //
                         "1.3.10", //
-                        "1.3.12" //
+                        "1.3.2", //
+                        "1.3.1", //
+                        "1.3.0", //
+                        "1.2.1.1", //
+                        "1.2.1", //
+                        "1.2.1-SNAPSHOT", //
+                        "1.2.0" //
         );
     }
 
