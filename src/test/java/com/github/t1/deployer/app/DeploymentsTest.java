@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
+
 import lombok.Value;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -103,12 +104,27 @@ public class DeploymentsTest {
 
     @Test
     public void shouldGetDeploymentVersions() {
-        String[] versions = { "1.2.6", "1.2.7", "1.2.8-SNAPSHOT", "1.3.0", "1.3.1", "1.3.2" };
-        givenDeployment(FOO).withReleases(versions);
+        givenDeployment(FOO).withReleases(new String[] { //
+                // quite random
+                "1.3.1", //
+                "1.2.6", //
+                "1.2.8-SNAPSHOT", //
+                "1.2.7", //
+                "1.3.0", //
+                "1.3.2" //
+        });
 
         Deployment deployment = deployments.getByContextRoot(FOO);
 
-        assertReleases(FOO, deployment.getReleases(), versions);
+        assertReleases(FOO, deployment.getReleases(), //
+                // reverse sorted
+                "1.3.2", //
+                "1.3.1", //
+                "1.3.0", //
+                "1.2.8-SNAPSHOT", //
+                "1.2.7", //
+                "1.2.6" //
+        );
     }
 
     private static final String DEPLOYMENT_JSON = "{" //
@@ -116,18 +132,6 @@ public class DeploymentsTest {
             + "\"contextRoot\":\"foo\"," //
             + "\"checkSum\":\"FACE000094D353F082E6939015AF81D263BA0F8F\"," //
             + "\"version\":\"1.3.1\"" //
-            + "}";
-
-    private static final String RESOURCE_JSON = "{" //
-            + "\"name\":\"foo.war\"," //
-            + "\"contextRoot\":\"foo\"," //
-            + "\"checkSum\":\"FACE000094D353F082E6939015AF81D263BA0F8F\"," //
-            + "\"version\":\"1.3.1\"," //
-            + "\"releases\":[" //
-            + "{\"version\":\"1.0\",\"checkSum\":\"FACE0000949FD646CD3A0D9AF75635813FAE3225\"}," //
-            + "{\"version\":\"1.1\",\"checkSum\":\"FACE0000BDA60DDA3EBCF32ABB974013CCDDC2F7\"}," //
-            + "{\"version\":\"2.0\",\"checkSum\":\"FACE0000A962CF1E5BE6E12ED6BBD283620DC64B\"}" //
-            + "]" //
             + "}";
 
     private static String deploymentXml(ContextRoot contextRoot) {
@@ -168,7 +172,17 @@ public class DeploymentsTest {
         StringWriter stringWriter = new StringWriter();
         JSON.writeValue(stringWriter, deployment);
 
-        assertEquals(RESOURCE_JSON, stringWriter.toString());
+        assertEquals("{" //
+                + "\"name\":\"foo.war\"," //
+                + "\"contextRoot\":\"foo\"," //
+                + "\"checkSum\":\"FACE000094D353F082E6939015AF81D263BA0F8F\"," //
+                + "\"version\":\"1.3.1\"," //
+                + "\"releases\":[" //
+                + "{\"version\":\"2.0\",\"checkSum\":\"FACE0000A962CF1E5BE6E12ED6BBD283620DC64B\"}," //
+                + "{\"version\":\"1.1\",\"checkSum\":\"FACE0000BDA60DDA3EBCF32ABB974013CCDDC2F7\"}," //
+                + "{\"version\":\"1.0\",\"checkSum\":\"FACE0000949FD646CD3A0D9AF75635813FAE3225\"}" //
+                + "]" //
+                + "}", stringWriter.toString());
     }
 
     @Test
@@ -205,9 +219,9 @@ public class DeploymentsTest {
                 + "    <checkSum>+s4AAJTTU/CC5pOQFa+B0mO6D48=</checkSum>\n" //
                 + "    <version>1.3.1</version>\n" //
                 + "    <releases>\n" //
-                + "        <release checkSum=\"+s4AAJSf1kbNOg2a91Y1gT+uMiU=\">1.0</release>\n" //
-                + "        <release checkSum=\"+s4AAL2mDdo+vPMqu5dAE8zdwvc=\">1.1</release>\n" //
                 + "        <release checkSum=\"+s4AAKlizx5b5uEu1rvSg2INxks=\">2.0</release>\n" //
+                + "        <release checkSum=\"+s4AAL2mDdo+vPMqu5dAE8zdwvc=\">1.1</release>\n" //
+                + "        <release checkSum=\"+s4AAJSf1kbNOg2a91Y1gT+uMiU=\">1.0</release>\n" //
                 + "    </releases>\n" //
                 + "</deployment>\n" //
                 , writer.toString());

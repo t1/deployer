@@ -86,6 +86,8 @@ public class Deployments {
         if (deployment == null)
             deployment = new Deployment(contextRoot);
         List<Release> releases = repository.releasesFor(deployment.getCheckSum());
+        Comparator<Release> byVersion = Comparator.comparing(r -> r.getVersion());
+        releases.sort(byVersion.reversed());
         return withVersion(deployment).withReleases(releases);
     }
 
@@ -113,20 +115,20 @@ public class Deployments {
         if (action == null)
             throw badRequest("action form parameter is missing");
         switch (action) {
-            case redeploy:
+        case redeploy:
+            check(contextRoot, getDeploymentFromRepository(checkSum).getContextRoot());
+            redeploy(checkSum);
+            return Response.seeOther(Deployments.path(uriInfo, contextRoot)).build();
+        case undeploy:
+            if (checkSum == null)
+                throw badRequest("checksum form parameter is missing");
+            Deployment newDeployment = repository.getByChecksum(checkSum);
+            if (newDeployment == null)
+                log.warn("undeploying deployment with checksum " + checkSum + " not found in repository");
+            else
                 check(contextRoot, getDeploymentFromRepository(checkSum).getContextRoot());
-                redeploy(checkSum);
-                return Response.seeOther(Deployments.path(uriInfo, contextRoot)).build();
-            case undeploy:
-                if (checkSum == null)
-                    throw badRequest("checksum form parameter is missing");
-                Deployment newDeployment = repository.getByChecksum(checkSum);
-                if (newDeployment == null)
-                    log.warn("undeploying deployment with checksum " + checkSum + " not found in repository");
-                else
-                    check(contextRoot, getDeploymentFromRepository(checkSum).getContextRoot());
-                delete(contextRoot);
-                return Response.seeOther(Deployments.pathAll(uriInfo)).build();
+            delete(contextRoot);
+            return Response.seeOther(Deployments.pathAll(uriInfo)).build();
         }
         throw new RuntimeException("unreachable code");
     }

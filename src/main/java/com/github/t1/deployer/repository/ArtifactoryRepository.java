@@ -57,12 +57,12 @@ public class ArtifactoryRepository extends Repository {
             return new Deployment().withVersion(NO_CHECKSUM);
         SearchResult result = searchByChecksum(checkSum);
         switch (result.getStatus()) {
-            case error:
-                return new Deployment().withCheckSum(checkSum).withVersion(ERROR);
-            case unknown:
-                return new Deployment().withCheckSum(checkSum).withVersion(UNKNOWN);
-            case ok:
-                break;
+        case error:
+            return new Deployment().withCheckSum(checkSum).withVersion(ERROR);
+        case unknown:
+            return new Deployment().withCheckSum(checkSum).withVersion(UNKNOWN);
+        case ok:
+            break;
         }
         URI uri = result.getUri();
         log.debug("got uri {}", uri);
@@ -200,9 +200,7 @@ public class ArtifactoryRepository extends Repository {
             return emptyList();
         URI uri = result.getUri();
         uri = UriBuilder.fromUri(uri).replacePath(versionsFolder(uri)).build();
-        List<Release> releases = releasesIn(fileNameWithoutVersion(result.getUri()), uri);
-        Collections.sort(releases);
-        return releases;
+        return releasesIn(fileNameWithoutVersion(result.getUri()), uri);
     }
 
     private String versionsFolder(URI uri) {
@@ -248,12 +246,12 @@ public class ArtifactoryRepository extends Repository {
     public InputStream getArtifactInputStream(CheckSum checkSum) {
         SearchResult found = searchByChecksum(checkSum);
         switch (found.getStatus()) {
-            case error:
-                throw webException(BAD_GATEWAY, "error while finding checksum " + checkSum);
-            case unknown:
-                throw notFound("checksum " + checkSum + " not found to fetch input stream");
-            case ok:
-                break;
+        case error:
+            throw webException(BAD_GATEWAY, "error while finding checksum " + checkSum);
+        case unknown:
+            throw notFound("checksum " + checkSum + " not found to fetch input stream");
+        case ok:
+            break;
         }
         URI uri = found.getDownloadUri();
         log.info("found {} for checksum {}", uri, checkSum);
