@@ -25,9 +25,9 @@ public class Config {
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class Authentication {
         @JsonProperty
-        String username;
+        public String username;
         @JsonProperty
-        String password;
+        public String password;
     }
 
     @Value
@@ -36,9 +36,9 @@ public class Config {
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class RepositoryConfig {
         @JsonProperty
-        URI uri;
+        public URI uri;
         @JsonProperty
-        Authentication authentication;
+        public Authentication authentication;
     }
 
     @Value
@@ -47,7 +47,7 @@ public class Config {
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class ContainerConfig {
         @JsonProperty
-        URI uri;
+        public URI uri;
     }
 
     @Value
@@ -57,13 +57,13 @@ public class Config {
     public static class DeploymentListFileConfig {
         /** Automatically delete all deployments not found in the deployments list. */
         @JsonProperty
-        Boolean autoUndeploy;
+        public Boolean autoUndeploy;
     }
 
     @JsonProperty
-    RepositoryConfig repository;
+    public RepositoryConfig repository;
     @JsonProperty
-    ContainerConfig container;
+    public ContainerConfig container;
     @JsonProperty
-    DeploymentListFileConfig deploymentListFileConfig;
+    public DeploymentListFileConfig deploymentListFileConfig;
 }
