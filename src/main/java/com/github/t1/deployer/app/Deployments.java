@@ -18,6 +18,7 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.ramlap.ApiResponse;
 
 import io.swagger.annotations.*;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Boundary
@@ -163,6 +164,7 @@ public class Deployments {
             throw badRequest("context roots don't match: " + left + " is not " + right);
     }
 
+    @SneakyThrows(IOException.class)
     private Deployment deploy(CheckSum checkSum, DeploymentName nameOverride) {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
         if (hasNameOverride(nameOverride)) {
@@ -171,8 +173,6 @@ public class Deployments {
         }
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
             container.deploy(newDeployment.getName(), inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return newDeployment;
     }
@@ -181,12 +181,11 @@ public class Deployments {
         return name != null && name.getValue() != null && !name.getValue().isEmpty();
     }
 
+    @SneakyThrows(IOException.class)
     private void redeploy(CheckSum checkSum) {
         Deployment newDeployment = getDeploymentFromRepository(checkSum);
         try (InputStream inputStream = repository.getArtifactInputStream(checkSum)) {
             container.redeploy(newDeployment.getName(), inputStream);
-        } catch (Exception e) {
-            throw internalServerError(e.getMessage());
         }
     }
 

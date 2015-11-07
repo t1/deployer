@@ -19,6 +19,7 @@ import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Config.DeploymentListFileConfig;
 import com.github.t1.deployer.repository.Repository;
+
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -120,12 +121,12 @@ public class DeploymentListFile {
                     if (TRUE == config.autoUndeploy()) {
                         log.info("expected version of {} is null -> undeploy", contextRoot);
                         container.undeploy(actual.getName());
-                    } else
+                    } else {
                         log.info("expected version of {} is null -> would undeploy but autoUndeploy is disabled",
                                 contextRoot);
+                    }
                 } else if (expectedVersion.equals(actual.getVersion()))
                     log.debug("expected version of {} equals actual {} -> skip", contextRoot, expectedVersion);
-                // already the expected version
                 else {
                     log.info("version of {} changed from {} to {} -> redeploy", //
                             contextRoot, actual.getVersion(), expectedVersion);
