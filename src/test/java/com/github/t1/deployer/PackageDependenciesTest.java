@@ -2,18 +2,13 @@ package com.github.t1.deployer;
 
 import static org.junit.Assert.*;
 
-import java.util.Collection;
+import java.util.*;
 
 import org.junit.*;
 
 import com.github.t1.deployer.app.Deployments;
-import com.github.t1.deployer.app.file.DeploymentListFile;
 import com.github.t1.deployer.app.html.DeployerPage;
-import com.github.t1.deployer.container.LoggerContainer;
-import com.github.t1.deployer.model.Deployment;
-import com.github.t1.deployer.repository.Repository;
-import com.github.t1.deployer.tools.ConfigProducer;
-import com.github.t1.ramlap.ProblemDetail;
+import com.github.t1.deployer.tools.*;
 
 import jdepend.framework.*;
 
@@ -21,23 +16,11 @@ public class PackageDependenciesTest {
     private final JDepend jdepend = new JDepend();
     private final DependencyConstraint constraint = new DependencyConstraint();
 
-    public static class Package extends JavaPackage {
-        public Package(String name) {
-            super(name);
-        }
-
-        public void dependsUpon(Package... packages) {
-            for (Package p : packages) {
-                super.dependsUpon(p);
-            }
-        }
-    }
-
     @Before
     public void setup() throws Exception {
         jdepend.addDirectory("target/classes");
         setupFilter();
-        setupDependencies();
+        setupDependencies(Deployments.class, DeployerPage.class, ConfigProducer.class);
         jdepend.analyze();
     }
 
@@ -46,60 +29,29 @@ public class PackageDependenciesTest {
         filter.addPackage("java.*");
         filter.addPackage("javax.*");
         filter.addPackage("lombok");
-        filter.addPackage("org.joda.*");
         filter.addPackage("org.slf4j");
         filter.addPackage("com.github.t1.log");
         jdepend.setFilter(filter);
     }
 
-    private void setupDependencies() {
-        Package app = packageOf(Deployments.class);
-        Package html = packageOf(DeployerPage.class);
-        Package builder = packageOf(com.github.t1.deployer.app.html.builder.Page.class);
-        Package file = packageOf(DeploymentListFile.class);
-        Package container = packageOf(LoggerContainer.class);
-        Package model = packageOf(Deployment.class);
-        Package repository = packageOf(Repository.class);
-        Package tools = packageOf(ConfigProducer.class);
-        Package raml = packageOf(ProblemDetail.class);
-
-        Package rest = packageOf("com.github.t1.rest");
-
-        app.dependsUpon(model, container, repository, raml, file, //
-                packageOf(io.swagger.config.Scanner.class), //
-                packageOf(io.swagger.jaxrs.Reader.class), //
-                packageOf(io.swagger.jaxrs.config.BeanConfig.class), //
-                packageOf(io.swagger.core.filter.SwaggerSpecFilter.class), //
-                packageOf(io.swagger.models.Swagger.class));
-        html.dependsUpon(model, app, builder); // app for resource paths
-        file.dependsUpon(model, repository, container);
-
-        container.dependsUpon(model, raml, //
-                packageOf(org.jboss.as.controller.client.ModelControllerClient.class),
-                packageOf(org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class),
-                packageOf(org.jboss.dmr.ModelNode.class));
-        repository.dependsUpon( //
-                model, //
-                raml, //
-                rest);
-
-        tools.dependsUpon( //
-                packageOf("org.jboss.as.controller.client"), // config -> ModelControllerClient
-                packageOf("com.github.t1.rest.fallback"), // ConverterTools
-                packageOf("com.fasterxml.jackson.dataformat.yaml.snakeyaml"), // YamlMessageBodyWriter
-                packageOf("com.fasterxml.jackson.databind"), //
-                model, //
-                raml, //
-                rest);
+    private void setupDependencies(Class<?>... types) {
+        for (Class<?> type : types)
+            loadDependenciesOf(type.getPackage());
     }
 
-    private Package packageOf(Class<?> type) {
-        return packageOf(type.getPackage().getName());
-    }
-
-    private Package packageOf(String packageName) {
-        Package result = new Package(packageName);
+    private JavaPackage loadDependenciesOf(Package pkg) {
+        JavaPackage result = new JavaPackage(pkg.getName());
+        for (Package target : dependenciesOf(pkg))
+            result.dependsUpon(loadDependenciesOf(target));
         constraint.addPackage(result);
+        return result;
+    }
+
+    private List<Package> dependenciesOf(Package source) {
+        List<Package> result = new ArrayList<>();
+        if (source.isAnnotationPresent(DependsUpon.class))
+            for (Class<?> target : source.getAnnotation(DependsUpon.class).value())
+                result.add(target.getPackage());
         return result;
     }
 
