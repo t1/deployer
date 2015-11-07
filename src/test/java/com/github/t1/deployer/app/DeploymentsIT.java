@@ -183,7 +183,9 @@ public class DeploymentsIT {
 
         assertStatus(OK, response);
         List<Release> releases = response.readEntity(new GenericType<List<Release>>() {});
-        assertEquals(releases(FOO).toString(), releases.toString());
+        List<Release> expected = releases(FOO);
+        expected.sort(Release.BY_VERSION.reversed());
+        assertEquals(expected.toString(), releases.toString());
     }
 
     @Test

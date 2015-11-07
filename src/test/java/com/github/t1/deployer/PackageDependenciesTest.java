@@ -65,7 +65,7 @@ public class PackageDependenciesTest {
 
         Package rest = packageOf("com.github.t1.rest");
 
-        app.dependsUpon(model, container, raml, file, //
+        app.dependsUpon(model, container, repository, raml, file, //
                 packageOf(io.swagger.config.Scanner.class), //
                 packageOf(io.swagger.jaxrs.Reader.class), //
                 packageOf(io.swagger.jaxrs.config.BeanConfig.class), //

@@ -25,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @Path("/deployments")
 @Slf4j
 public class Deployments {
+    private static final Comparator<Release> DESCENDING_RELEASE_ORDER = Release.BY_VERSION.reversed();
+
     public enum PostDeploymentAction {
         redeploy,
         undeploy;
@@ -87,8 +89,7 @@ public class Deployments {
         if (deployment == null)
             deployment = new Deployment(contextRoot);
         List<Release> releases = repository.releasesFor(deployment.getCheckSum());
-        Comparator<Release> byVersion = Comparator.comparing(r -> r.getVersion());
-        releases.sort(byVersion.reversed());
+        releases.sort(DESCENDING_RELEASE_ORDER);
         return withVersion(deployment).withReleases(releases);
     }
 
@@ -251,6 +252,8 @@ public class Deployments {
     @ApiOperation("get the releases of a deployment")
     public List<Release> getReleases(@PathParam("contextRoot") ContextRoot contextRoot) {
         Deployment deployment = container.getDeploymentFor(contextRoot);
-        return repository.releasesFor(deployment.getCheckSum());
+        List<Release> releases = repository.releasesFor(deployment.getCheckSum());
+        releases.sort(DESCENDING_RELEASE_ORDER);
+        return releases;
     }
 }

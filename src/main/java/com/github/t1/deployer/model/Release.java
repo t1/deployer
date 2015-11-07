@@ -2,6 +2,8 @@ package com.github.t1.deployer.model;
 
 import static lombok.AccessLevel.*;
 
+import java.util.Comparator;
+
 import javax.xml.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,6 +18,8 @@ import lombok.*;
 @XmlAccessorType(XmlAccessType.NONE)
 @ApiModel
 public class Release implements Comparable<Release> {
+    public static final Comparator<Release> BY_VERSION = Comparator.comparing(r -> (r == null) ? null : r.getVersion());
+
     @NonNull
     @JsonProperty
     @XmlValue
@@ -28,6 +32,6 @@ public class Release implements Comparable<Release> {
 
     @Override
     public int compareTo(Release that) {
-        return this.version.compareTo(that == null ? null : that.version);
+        return BY_VERSION.compare(this, that);
     }
 }
