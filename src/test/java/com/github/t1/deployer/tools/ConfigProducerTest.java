@@ -10,13 +10,10 @@ import static org.assertj.core.api.Assertions.*;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.file.*;
-import java.util.*;
-import java.util.Map.Entry;
 
 import org.jboss.as.controller.client.*;
 import org.junit.*;
 
-import com.github.t1.deployer.MementoRule;
 import com.github.t1.deployer.model.Config;
 import com.github.t1.deployer.model.Config.*;
 import com.github.t1.rest.*;
@@ -29,6 +26,9 @@ public class ConfigProducerTest {
     private final ConfigProducer configProducer = new ConfigProducer();
 
     @Rule
+    public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
+
+    @Rule
     public MementoRule<Path> configPath = new MementoRule<>(() -> CONFIG_FILE, (p) -> CONFIG_FILE = p, null);
 
     @SneakyThrows
@@ -36,22 +36,6 @@ public class ConfigProducerTest {
         Config config = configBuilder.build();
         CONFIG_FILE = Files.createTempFile("ConfigTest-", ".json");
         MAPPER.writeValue(Files.newBufferedWriter(CONFIG_FILE), config);
-    }
-
-    private final Map<String, String> oldSystemProperties = new HashMap<>();
-
-    private void givenSystemProperty(String name, Object value) {
-        String previousValue = System.setProperty(name, value.toString());
-        oldSystemProperties.put(name, previousValue);
-    }
-
-    @After
-    public void restoreSystemProperties() {
-        for (Entry<String, String> entry : oldSystemProperties.entrySet())
-            if (entry.getValue() == null)
-                System.clearProperty(entry.getKey());
-            else
-                System.setProperty(entry.getKey(), entry.getValue());
     }
 
     @Test
@@ -86,7 +70,7 @@ public class ConfigProducerTest {
 
     @Test
     public void shouldProduceRepositoryConfigFromSystemProperty() {
-        givenSystemProperty("deployer.repository.uri", DUMMY_URI);
+        systemProperties.given("deployer.repository.uri", DUMMY_URI);
 
         RestContext restContext = configProducer.produceRepositoryRestContext();
 
@@ -113,7 +97,7 @@ public class ConfigProducerTest {
 
     @Test
     public void shouldProduceModelControllerClientWithSystemProperty() throws Exception {
-        givenSystemProperty("deployer.container.uri", DUMMY_URI);
+        systemProperties.given("deployer.container.uri", DUMMY_URI);
 
         try (ModelControllerClient controllerClient = configProducer.produceModelControllerClient()) {
             assertControllerClient(controllerClient);
