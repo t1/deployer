@@ -3,7 +3,7 @@ package com.github.t1.deployer.container;
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static javax.ws.rs.core.Response.Status.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
@@ -16,8 +16,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -40,9 +39,6 @@ public class DeploymentContainerTest {
     @Mock
     Repository repository;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @SneakyThrows(IOException.class)
     private void givenDeployments(ContextRoot... contextRoots) {
         TestData.givenDeployments(repository, contextRoots);
@@ -61,10 +57,10 @@ public class DeploymentContainerTest {
 
     public static void assertStatusDetails(Status status, String detail, WebApplicationException e) {
         Response response = e.getResponse();
-        assertEquals(status, response.getStatusInfo());
+        assertThat(response.getStatusInfo()).isEqualTo(status);
         ProblemDetail error = (ProblemDetail) response.getEntity();
-        assertEquals(status, error.status());
-        assertEquals(detail, error.detail());
+        assertThat(error.status()).isEqualTo(status);
+        assertThat(error.detail()).isEqualTo(detail);
     }
 
     public static String readDeploymentsCliResult(ContextRoot... contextRoots) {
@@ -130,10 +126,9 @@ public class DeploymentContainerTest {
         when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
                 .thenThrow(new IOException("dummy"));
 
-        expectedException.expect(IOException.class);
-        expectedException.expectMessage("dummy");
-
-        container.getAllDeployments();
+        assertThatThrownBy(() -> container.getAllDeployments()) //
+                .isInstanceOf(IOException.class) //
+                .hasMessage("dummy");
     }
 
     @Test
@@ -142,7 +137,7 @@ public class DeploymentContainerTest {
 
         boolean exists = container.hasDeploymentWith(FOO);
 
-        assertFalse(exists);
+        assertThat(exists).isFalse();
     }
 
     @Test
@@ -178,7 +173,7 @@ public class DeploymentContainerTest {
 
         List<Deployment> deployments = container.getAllDeployments();
 
-        assertEquals(2, deployments.size());
+        assertThat(deployments.size()).isEqualTo(2);
         assertDeployment(FOO, NO_VERSION, deployments.get(0));
         assertDeployment(BAR, NO_VERSION, deployments.get(1));
     }
