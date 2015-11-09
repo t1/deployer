@@ -15,7 +15,7 @@ import org.jboss.as.controller.client.*;
 import org.junit.*;
 
 import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Config.*;
+import com.github.t1.deployer.model.Config.ConfigBuilder;
 import com.github.t1.rest.*;
 
 import lombok.SneakyThrows;
@@ -120,12 +120,5 @@ public class ConfigProducerTest {
         Field field = controllerClient.getClass().getDeclaredField("clientConfiguration");
         field.setAccessible(true);
         return (ModelControllerClientConfiguration) field.get(controllerClient);
-    }
-
-    @Test
-    public void shouldProduceDefaultDeploymentListFileConfig() {
-        DeploymentListFileConfig fileConfig = configProducer.produceDeploymentListFileConfig();
-
-        assertThat(fileConfig.autoUndeploy()).isFalse();
     }
 }

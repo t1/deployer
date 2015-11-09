@@ -50,20 +50,8 @@ public class Config {
         public URI uri;
     }
 
-    @Value
-    @Builder(builderMethodName = "deploymentListFileConfig")
-    @AllArgsConstructor(access = PRIVATE)
-    @NoArgsConstructor(access = PRIVATE, force = true)
-    public static class DeploymentListFileConfig {
-        /** Automatically delete all deployments not found in the deployments list. */
-        @JsonProperty
-        public Boolean autoUndeploy;
-    }
-
     @JsonProperty
     public RepositoryConfig repository;
     @JsonProperty
     public ContainerConfig container;
-    @JsonProperty
-    public DeploymentListFileConfig deploymentListFileConfig;
 }

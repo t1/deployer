@@ -11,6 +11,10 @@ import com.github.t1.deployer.tools.*;
 public class PackageDependenciesTest extends AbstractPackageDependenciesTest {
     @Override
     public List<Class<?>> getDependencyEntryPoints() {
-        return asList(Deployments.class, DeployerPage.class, ConfigProducer.class);
+        return asList( //
+                Deployments.class, // app
+                DeployerPage.class, // app.html
+                ConfigProducer.class // tools
+        );
     }
 }

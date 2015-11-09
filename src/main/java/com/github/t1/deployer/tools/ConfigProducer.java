@@ -1,7 +1,6 @@
 package com.github.t1.deployer.tools;
 
 import static com.github.t1.deployer.model.Config.ContainerConfig.*;
-import static com.github.t1.deployer.model.Config.DeploymentListFileConfig.*;
 import static com.github.t1.deployer.model.Config.RepositoryConfig.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
@@ -19,7 +18,7 @@ import javax.management.*;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Config.*;
+import com.github.t1.deployer.model.Config.Authentication;
 import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
 import com.github.t1.rest.*;
@@ -40,8 +39,8 @@ public class ConfigProducer implements Serializable {
     static Path CONFIG_FILE = Paths.get(JBOSS_BASE, "configuration", "deployer.war", "config.json").toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
-    private static final String SOCKET_BINDING = "jboss.as:socket-binding-group=standard-sockets,socket-binding="
-            + SOCKET_BINDING_PREFIX;
+    private static final String SOCKET_BINDING =
+            "jboss.as:socket-binding-group=standard-sockets,socket-binding=" + SOCKET_BINDING_PREFIX;
     private static final ObjectName[] MANAGEMENT_INTERFACES = { //
             objectName(SOCKET_BINDING + "native"), //
             objectName(SOCKET_BINDING + "https"), //
@@ -56,14 +55,7 @@ public class ConfigProducer implements Serializable {
         }
     }
 
-    private Config config;
-
     private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-
-    @Produces
-    Config produceConfig() {
-        return config();
-    }
 
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
@@ -148,8 +140,11 @@ public class ConfigProducer implements Serializable {
         return rest;
     }
 
+    private Config config;
+
+    @Produces
     @SneakyThrows(IOException.class)
-    private Config config() {
+    Config config() {
         if (config == null)
             if (CONFIG_FILE != null && Files.isReadable(CONFIG_FILE)) {
                 log.debug("read config from {}", CONFIG_FILE);
@@ -164,9 +159,6 @@ public class ConfigProducer implements Serializable {
                                 .uri(getUriSystemProperty(REPOSITORY_URI_PROPERTY)) //
                                 // no authorization from system properties...
                                 // not secure
-                                .build()) //
-                        .deploymentListFileConfig(deploymentListFileConfig() //
-                                .autoUndeploy(false) //
                                 .build()) //
                         .build();
             }
@@ -190,9 +182,5 @@ public class ConfigProducer implements Serializable {
         if (password == null)
             return null;
         return new Credentials(username, password);
-    }
-
-    public DeploymentListFileConfig produceDeploymentListFileConfig() {
-        return config().deploymentListFileConfig();
     }
 }

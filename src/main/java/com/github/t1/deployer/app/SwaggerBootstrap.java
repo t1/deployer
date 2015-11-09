@@ -1,11 +1,5 @@
 package com.github.t1.deployer.app;
 
-import io.swagger.config.*;
-import io.swagger.core.filter.SwaggerSpecFilter;
-import io.swagger.jaxrs.Reader;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.models.*;
-
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -13,9 +7,14 @@ import javax.servlet.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
-import lombok.extern.slf4j.Slf4j;
-
 import com.github.t1.log.VersionLogContextVariableProducer;
+
+import io.swagger.config.*;
+import io.swagger.core.filter.SwaggerSpecFilter;
+import io.swagger.jaxrs.Reader;
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.models.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @WebServlet(loadOnStartup = 1)

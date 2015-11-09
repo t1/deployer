@@ -15,9 +15,9 @@ import javax.annotation.*;
 import javax.ejb.*;
 import javax.inject.Inject;
 
+import com.github.t1.config.Config;
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Config.DeploymentListFileConfig;
 import com.github.t1.deployer.repository.Repository;
 
 import lombok.*;
@@ -87,8 +87,8 @@ public class DeploymentListFile {
     DeploymentContainer container;
     @Inject
     Repository repository;
-    @Inject
-    DeploymentListFileConfig config;
+    @Config(description = "Automatically delete all deployments not found in the deployments list.")
+    private Boolean autoUndeploy;
 
     private final Path configDir = Paths.get(System.getProperty("jboss.server.config.dir", "."));
     private final Path deploymentsList = configDir.resolve("deployments.properties");
@@ -118,7 +118,7 @@ public class DeploymentListFile {
                 ContextRoot contextRoot = actual.getContextRoot();
                 Version expectedVersion = expected.get(contextRoot);
                 if (expectedVersion == null) {
-                    if (TRUE == config.autoUndeploy()) {
+                    if (TRUE == autoUndeploy) {
                         log.info("expected version of {} is null -> undeploy", contextRoot);
                         container.undeploy(actual.getName());
                     } else {
