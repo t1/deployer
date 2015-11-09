@@ -1,4 +1,4 @@
-@DependsUpon({ //
+@DependsUpon(packagesOf = { //
         com.github.t1.deployer.model.Deployment.class, //
         com.github.t1.ramlap.ProblemDetail.class, //
         org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class, //

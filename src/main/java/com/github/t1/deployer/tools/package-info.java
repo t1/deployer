@@ -1,4 +1,4 @@
-@DependsUpon({ //
+@DependsUpon(packagesOf = { //
         com.fasterxml.jackson.databind.ObjectMapper.class, //
         com.fasterxml.jackson.dataformat.yaml.snakeyaml.Yaml.class, // YamlMessageBodyWriter
         com.github.t1.deployer.model.Deployment.class, //

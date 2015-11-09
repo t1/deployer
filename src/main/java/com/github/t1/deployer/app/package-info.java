@@ -1,4 +1,4 @@
-@DependsUpon({ //
+@DependsUpon(packagesOf = { //
         com.github.t1.deployer.model.Deployment.class, //
         com.github.t1.deployer.container.DeploymentContainer.class, //
         com.github.t1.deployer.repository.Repository.class, //
