@@ -35,8 +35,8 @@ public class ConfigProducer implements Serializable {
     private static final String REPOSITORY_URI_PROPERTY = "deployer.repository.uri";
     private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
 
-    private static final String JBOSS_BASE = System.getProperty("jboss.server.base.dir");
-    static Path CONFIG_FILE = Paths.get(JBOSS_BASE, "configuration", "deployer.war", "config.json").toAbsolutePath();
+    private static final String JBOSS_SERVER_CONFIG = System.getProperty("jboss.server.config.dir");
+    static Path CONFIG_FILE = Paths.get(JBOSS_SERVER_CONFIG, "deployer.war").resolve("config.json").toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
     private static final String SOCKET_BINDING =
