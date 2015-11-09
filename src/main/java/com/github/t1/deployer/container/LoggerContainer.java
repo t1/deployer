@@ -1,7 +1,9 @@
 package com.github.t1.deployer.container;
 
+import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.ramlap.ProblemDetail.*;
+import static java.util.stream.Collectors.*;
 
 import java.util.*;
 
@@ -19,29 +21,30 @@ import lombok.extern.slf4j.Slf4j;
 @Stateless
 public class LoggerContainer extends AbstractContainer {
     public List<LoggerConfig> getLoggers() {
-        List<LoggerConfig> loggers = new ArrayList<>();
-        for (ModelNode cliLoggerMatch : readAllLoggers())
-            loggers.add(toLogger(cliLoggerMatch.get("result")));
+        List<LoggerConfig> loggers =
+                execute(readLogger("*")).asList().stream().map(node -> toLogger(node.get("result"))).collect(toList());
         Collections.sort(loggers);
+        loggers.add(0, toLogger(execute(readLogger(ROOT))));
         return loggers;
     }
 
-    private List<ModelNode> readAllLoggers() {
-        ModelNode result = execute(readLogger("*"));
-        checkOutcome(result);
-        return result.get("result").asList();
+    private static ModelNode readLogger(String name) {
+        return readResource(loggerAddress(name));
     }
 
-    private static ModelNode readLogger(String name) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "logging").add("logger", name);
-        node.get("operation").set("read-resource");
-        node.get("recursive").set(true);
-        return node;
+    private static ModelNode loggerAddress(String name) {
+        ModelNode request = new ModelNode();
+        ModelNode logging = request.get("address").add("subsystem", "logging");
+        if (ROOT.equals(name) || name.isEmpty())
+            logging.add("root-logger", "ROOT");
+        else
+            logging.add("logger", name);
+        return request;
     }
 
     private LoggerConfig toLogger(ModelNode cliLogger) {
-        String name = cliLogger.get("category").asString();
+        ModelNode category = cliLogger.get("category");
+        String name = (category.isDefined()) ? category.asString() : "";
         LogLevel level = LogLevel.valueOf(cliLogger.get("level").asString());
         return new LoggerConfig(name, level);
     }
@@ -51,7 +54,7 @@ public class LoggerContainer extends AbstractContainer {
     }
 
     public boolean hasLogger(String category) {
-        ModelNode result = execute(readLogger(category));
+        ModelNode result = executeRaw(readLogger(category));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
             return true;
@@ -64,7 +67,7 @@ public class LoggerContainer extends AbstractContainer {
     }
 
     public LoggerConfig getLogger(String category) {
-        ModelNode result = execute(readLogger(category));
+        ModelNode result = executeRaw(readLogger(category));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
             return toLogger(result.get("result"));
@@ -77,39 +80,37 @@ public class LoggerContainer extends AbstractContainer {
     }
 
     public void add(LoggerConfig logger) {
-        ModelNode result = execute(addLogger(logger));
-        checkOutcome(result);
+        if (logger.isRoot())
+            throw new RuntimeException("can't add root logger");
+        execute(addLogger(logger));
     }
 
     private static ModelNode addLogger(LoggerConfig logger) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
-        node.get("operation").set("add");
-        node.get("level").set(logger.getLevel().name());
-        return node;
+        ModelNode request = loggerAddress(logger.getCategory());
+        request.get("operation").set("add");
+        request.get("level").set(logger.getLevel().name());
+        return request;
     }
 
     public void remove(LoggerConfig logger) {
-        ModelNode result = execute(removeLogger(logger));
-        checkOutcome(result);
+        if (logger.isRoot())
+            throw new RuntimeException("can't remove root logger");
+        execute(removeLogger(logger));
     }
 
     private static ModelNode removeLogger(LoggerConfig logger) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
-        node.get("operation").set("remove");
-        return node;
+        ModelNode request = loggerAddress(logger.getCategory());
+        request.get("operation").set("remove");
+        return request;
     }
 
     public void update(LoggerConfig logger) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "logging").add("logger", logger.getCategory());
-        node.get("operation").set("write-attribute");
-        node.get("name").set("level");
-        node.get("value").set(logger.getLevel().name());
+        ModelNode request = loggerAddress(logger.getCategory());
+        request.get("operation").set("write-attribute");
+        request.get("name").set("level");
+        request.get("value").set(logger.getLevel().name());
 
-        ModelNode result = execute(node);
-        checkOutcome(result);
+        ModelNode result = execute(request);
         log.debug("result: {}", result);
     }
 }

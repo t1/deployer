@@ -74,22 +74,22 @@ public class DeploymentContainer extends AbstractContainer {
                 if (deploymentException != null)
                     firstThrowable = deploymentException;
                 switch (actionResult.getResult()) {
-                    case CONFIGURATION_MODIFIED_REQUIRES_RESTART:
-                        log.warn("requries restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                        break;
-                    case EXECUTED:
-                        log.debug("executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                        break;
-                    case FAILED:
-                        failed = true;
-                        log.error("failed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                        break;
-                    case NOT_EXECUTED:
-                        log.debug("not executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                        break;
-                    case ROLLED_BACK:
-                        log.debug("rolled back: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                        break;
+                case CONFIGURATION_MODIFIED_REQUIRES_RESTART:
+                    log.warn("requries restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                    break;
+                case EXECUTED:
+                    log.debug("executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                    break;
+                case FAILED:
+                    failed = true;
+                    log.error("failed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                    break;
+                case NOT_EXECUTED:
+                    log.debug("not executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                    break;
+                case ROLLED_BACK:
+                    log.debug("rolled back: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                    break;
                 }
             }
             if (firstThrowable != null || failed) {
@@ -183,23 +183,15 @@ public class DeploymentContainer extends AbstractContainer {
     @PermitAll
     public List<Deployment> getAllDeployments() {
         List<Deployment> list = new ArrayList<>();
-        for (ModelNode cliDeploymentMatch : readAllDeployments())
+        for (ModelNode cliDeploymentMatch : execute(readDeployments()).asList())
             list.add(toDeployment(cliDeploymentMatch.get("result")));
         return list;
     }
 
-    private List<ModelNode> readAllDeployments() {
-        ModelNode result = execute(readDeployments());
-        checkOutcome(result);
-        return result.get("result").asList();
-    }
-
     private static ModelNode readDeployments() {
-        ModelNode node = new ModelNode();
-        node.get("address").add("deployment", "*");
-        node.get("operation").set("read-resource");
-        node.get("recursive").set(true);
-        return node;
+        ModelNode request = new ModelNode();
+        request.get("address").add("deployment", "*");
+        return readResource(request);
     }
 
     private Deployment toDeployment(ModelNode cliDeployment) {

@@ -6,13 +6,13 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 import com.github.t1.log.Logged;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Logged(level = INFO)
@@ -21,23 +21,35 @@ abstract class AbstractContainer {
         @Override
         public void handleReport(MessageSeverity severity, String message) {
             switch (severity) {
-                case ERROR:
-                    log.error(message);
-                case WARN:
-                    log.warn(message);
-                    break;
-                case INFO:
-                    log.info(message);
-                    break;
+            case ERROR:
+                log.error(message);
+            case WARN:
+                log.warn(message);
+                break;
+            case INFO:
+                log.info(message);
+                break;
             }
         }
     };
 
+    protected static ModelNode readResource(ModelNode request) {
+        request.get("operation").set("read-resource");
+        request.get("recursive").set(true);
+        return request;
+    }
+
     @Inject
     ModelControllerClient client;
 
+    protected ModelNode execute(ModelNode request) {
+        ModelNode result = executeRaw(request);
+        checkOutcome(result);
+        return result.get("result");
+    }
+
     @SneakyThrows(IOException.class)
-    protected ModelNode execute(ModelNode command) {
+    protected ModelNode executeRaw(ModelNode command) {
         log.debug("execute command {}", command);
         ModelNode result = client.execute(command, LOGGING);
         log.trace("-> {}", result);

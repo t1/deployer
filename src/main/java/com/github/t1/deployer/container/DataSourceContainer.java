@@ -29,17 +29,13 @@ public class DataSourceContainer extends AbstractContainer {
     }
 
     private List<ModelNode> readAllDataSources() {
-        ModelNode result = execute(readDataSource("*"));
-        checkOutcome(result);
-        return result.get("result").asList();
+        return execute(readDataSource("*")).asList();
     }
 
     private static ModelNode readDataSource(String name) {
-        ModelNode node = new ModelNode();
-        node.get("address").add("subsystem", "datasources").add("data-source", name);
-        node.get("operation").set("read-resource");
-        node.get("recursive").set(true);
-        return node;
+        ModelNode request = new ModelNode();
+        request.get("address").add("subsystem", "datasources").add("data-source", name);
+        return readResource(request);
     }
 
     private DataSourceConfig toDataSource(String name, ModelNode node) {
@@ -54,7 +50,7 @@ public class DataSourceContainer extends AbstractContainer {
     }
 
     public boolean hasDataSource(String dataSourceName) {
-        ModelNode result = execute(readDataSource(dataSourceName));
+        ModelNode result = executeRaw(readDataSource(dataSourceName));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
             return true;
@@ -67,7 +63,7 @@ public class DataSourceContainer extends AbstractContainer {
     }
 
     public DataSourceConfig getDataSource(String dataSourceName) {
-        ModelNode result = execute(readDataSource(dataSourceName));
+        ModelNode result = executeRaw(readDataSource(dataSourceName));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
             return toDataSource(dataSourceName, result.get("result"));
@@ -80,8 +76,7 @@ public class DataSourceContainer extends AbstractContainer {
     }
 
     public void add(DataSourceConfig dataSource) {
-        ModelNode result = execute(addDataSource(dataSource));
-        checkOutcome(result);
+        execute(addDataSource(dataSource));
     }
 
     private static ModelNode addDataSource(DataSourceConfig dataSource) {
@@ -92,8 +87,7 @@ public class DataSourceContainer extends AbstractContainer {
     }
 
     public void remove(String dataSourceName) {
-        ModelNode result = execute(removeDataSource(dataSourceName));
-        checkOutcome(result);
+        execute(removeDataSource(dataSourceName));
     }
 
     private static ModelNode removeDataSource(String dataSourceName) {
@@ -107,9 +101,7 @@ public class DataSourceContainer extends AbstractContainer {
         ModelNode node = new ModelNode();
         node.get("address").add("subsystem", "datasource").add("name", dataSource.getName());
         node.get("operation").set("write-attribute");
-
         ModelNode result = execute(node);
-        checkOutcome(result);
         System.out.println(result);
     }
 }

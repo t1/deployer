@@ -26,10 +26,9 @@ import com.github.t1.log.LogLevel;
 
 @Provider
 public class LoggerListHtmlWriter extends TextHtmlListMessageBodyWriter<LoggerConfig> {
-    private static final Cell ADD_LOGGER_ROW = cell().colspan(3)
-            .body(link(append(context -> Loggers.newLogger(context.get(UriInfo.class)))) //
-                    .body(ADD_ELEMENT))
-            .build();
+    private static final Cell ADD_LOGGER_ROW =
+            cell().colspan(3).body(link(append(context -> Loggers.newLogger(context.get(UriInfo.class)))) //
+                    .body(ADD_ELEMENT)).build();
 
     private static final Component TABLE = new Component() {
         @Override

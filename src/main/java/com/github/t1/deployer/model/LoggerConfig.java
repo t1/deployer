@@ -15,6 +15,7 @@ import lombok.*;
 @ToString(of = { "category", "level" })
 @ApiModel
 public class LoggerConfig implements Comparable<LoggerConfig> {
+    public static final String ROOT = "ROOT";
     public static final String NEW_LOGGER = "!";
 
     @NonNull
@@ -33,5 +34,13 @@ public class LoggerConfig implements Comparable<LoggerConfig> {
     @JsonIgnore
     public boolean isNew() {
         return NEW_LOGGER.equals(category);
+    }
+
+    public boolean isRoot() {
+        return category.isEmpty();
+    }
+
+    public String getCategory() {
+        return (category == null) ? null : (category.isEmpty()) ? ROOT : category;
     }
 }
