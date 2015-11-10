@@ -70,6 +70,6 @@ public class Deployment implements Comparable<Deployment> {
 
     @Override
     public String toString() {
-        return (isDefaultName() ? "" : name + ":") + contextRoot + "@" + version;
+        return (isDefaultName() ? "" : name + ":") + contextRoot + ((version == null) ? "" : "@" + version);
     }
 }

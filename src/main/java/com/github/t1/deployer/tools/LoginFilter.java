@@ -8,6 +8,9 @@ import javax.servlet.http.*;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * TODO WildFly: remove... the container does this automatically
+ */
 @Slf4j
 @WebFilter("/*")
 public class LoginFilter implements Filter {
@@ -18,8 +21,8 @@ public class LoginFilter implements Filter {
     public void destroy() {}
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException,
-            ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
         doFilter((HttpServletRequest) request, (HttpServletResponse) response, chain);
     }
 

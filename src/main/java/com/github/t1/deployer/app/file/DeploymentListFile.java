@@ -87,7 +87,8 @@ public class DeploymentListFile {
     DeploymentContainer container;
     @Inject
     Repository repository;
-    @Config(description = "Automatically delete all deployments not found in the deployments list.")
+    @Config(description = "Automatically delete all deployments not found in the deployments list.",
+            defaultValue = "false")
     private Boolean autoUndeploy;
 
     private final Path configDir = Paths.get(System.getProperty("jboss.server.config.dir", "."));
@@ -137,6 +138,7 @@ public class DeploymentListFile {
         } finally {
             // User.setCurrent(null);
         }
+        log.info("deployment list file update done");
     }
 
     @SneakyThrows(IOException.class)
@@ -163,8 +165,10 @@ public class DeploymentListFile {
     public void writeDeploymentsList() {
         log.info("write deployments list");
         try (Writer writer = Files.newBufferedWriter(deploymentsList, UTF_8)) {
-            for (Deployment deployment : deployments())
+            List<Deployment> deployments = deployments();
+            for (Deployment deployment : deployments)
                 writer.write(new DeploymentInfo(deployment) + "\n");
+            log.info("written deployments list with {} entries", deployments.size());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

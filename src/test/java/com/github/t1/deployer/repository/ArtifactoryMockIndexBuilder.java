@@ -59,10 +59,18 @@ public class ArtifactoryMockIndexBuilder {
     @SneakyThrows(IOException.class)
     private void writeIndex() {
         try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
-            for (Map.Entry<CheckSum, java.nio.file.Path> entry : INDEX.entrySet()) {
-                writer.append(entry.getKey().hexString()).append(":") //
-                        .append(entry.getValue().toString()).append("\n");
-            }
+            INDEX.entrySet().stream() //
+                    .sorted((left, right) -> left.getValue().compareTo(right.getValue())) //
+                    .forEach(entry -> write(writer, entry));
+        }
+    }
+
+    private Writer write(BufferedWriter writer, Map.Entry<CheckSum, java.nio.file.Path> entry) {
+        try {
+            return writer.append(entry.getKey().hexString()).append(":") //
+                    .append(entry.getValue().toString()).append("\n");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
