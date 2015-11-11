@@ -96,6 +96,11 @@ public class DeploymentListFile {
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + ": " + deploymentsList + "; autoUndeploy=" + autoUndeploy;
+    }
+
     @PostConstruct
     void start() {
         log.info("start file watcher");

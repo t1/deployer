@@ -115,7 +115,7 @@ public class LoggerContainerTest {
 
     private String logger(LoggerConfig logger) {
         return "" //
-                + "\"category\" => \"" + logger.getCategory() + "\"," //
+                + "\"category\" => undefined," // \"" + logger.getCategory() + "\"," //
                 + "\"filter\" => undefined," //
                 + "\"filter-spec\" => undefined," //
                 + "\"handlers\" => undefined," //

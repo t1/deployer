@@ -22,9 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 public class LoggerContainer extends AbstractContainer {
     public List<LoggerConfig> getLoggers() {
         List<LoggerConfig> loggers =
-                execute(readLogger("*")).asList().stream().map(node -> toLogger(node.get("result"))).collect(toList());
+                execute(readLogger("*")).asList().stream().map(node -> toLogger(node, "")).collect(toList());
         Collections.sort(loggers);
-        loggers.add(0, toLogger(execute(readLogger(ROOT))));
+        loggers.add(0, toLogger(executeRaw(readLogger(ROOT)), ""));
         return loggers;
     }
 
@@ -42,11 +42,24 @@ public class LoggerContainer extends AbstractContainer {
         return request;
     }
 
-    private LoggerConfig toLogger(ModelNode cliLogger) {
-        ModelNode category = cliLogger.get("category");
-        String name = (category.isDefined()) ? category.asString() : "";
-        LogLevel level = LogLevel.valueOf(cliLogger.get("level").asString());
+    private LoggerConfig toLogger(ModelNode response, String defaultCategory) {
+        String name = getCategory(response, defaultCategory);
+        LogLevel level = LogLevel.valueOf(response.get("result").get("level").asString());
         return new LoggerConfig(name, level);
+    }
+
+    private String getCategory(ModelNode response, String defaultCategory) {
+        ModelNode category = response.get("result").get("category");
+        if (category.isDefined()) // JBoss 8+
+            return category.asString();
+        if (response.get("address").isDefined())
+            return getAddress(response).asString(); // JBoss 7
+        // fall back for root logger or getLogger (which has only the requested category in JBoss 7)
+        return defaultCategory;
+    }
+
+    private ModelNode getAddress(ModelNode response) {
+        return response.get("address").asList().get(1).get("logger");
     }
 
     public boolean hasLogger(LoggerConfig logger) {
@@ -70,7 +83,7 @@ public class LoggerContainer extends AbstractContainer {
         ModelNode result = executeRaw(readLogger(category));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
-            return toLogger(result.get("result"));
+            return toLogger(result, category);
         } else if (isNotFoundMessage(result)) {
             throw notFound("no logger '" + category + "'");
         } else {
