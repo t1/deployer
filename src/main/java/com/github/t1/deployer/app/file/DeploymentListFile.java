@@ -85,8 +85,10 @@ public class DeploymentListFile {
 
     @Inject
     DeploymentContainer container;
+
     @Inject
     Repository repository;
+
     @Config(description = "Automatically delete all deployments not found in the deployments list.",
             defaultValue = "false")
     private Boolean autoUndeploy;

@@ -2,6 +2,7 @@ package com.github.t1.deployer.app.html;
 
 import static com.github.t1.deployer.model.Config.Authentication.*;
 import static com.github.t1.deployer.model.Config.ContainerConfig.*;
+import static com.github.t1.deployer.model.Config.DeploymentListFileConfig.*;
 import static com.github.t1.deployer.model.Config.RepositoryConfig.*;
 import static org.junit.Assert.*;
 
@@ -40,6 +41,9 @@ public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<Config> {
                                 .username("joe") //
                                 .password("doe") //
                                 .build()) //
+                        .build()) //
+                .deploymentListFileConfig(deploymentListFileConfig() //
+                        .autoUndeploy(true) //
                         .build()) //
                 .build();
 

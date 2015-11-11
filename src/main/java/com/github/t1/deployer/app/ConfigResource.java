@@ -1,5 +1,7 @@
 package com.github.t1.deployer.app;
 
+import static com.github.t1.deployer.model.Config.DeploymentListFileConfig.*;
+
 import java.net.URI;
 
 import javax.inject.Inject;
@@ -7,6 +9,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.model.Config;
+import com.github.t1.deployer.model.Config.ConfigBuilder;
+import com.github.t1.deployer.model.Config.DeploymentListFileConfig.DeploymentListFileConfigBuilder;
 
 import io.swagger.annotations.*;
 
@@ -25,9 +29,19 @@ public class ConfigResource {
     @Inject
     Config config;
 
+    @com.github.t1.config.Config(defaultValue = "false")
+    Boolean autoUndeploy;
+
     @GET
     @ApiOperation("read the current config")
     public Config getConfig() {
-        return config;
+        ConfigBuilder result = config.toBuilder();
+        DeploymentListFileConfigBuilder deploymentListFileConfig = //
+                (config.deploymentListFileConfig() == null) //
+                        ? deploymentListFileConfig() //
+                        : config.deploymentListFileConfig().toBuilder();
+        deploymentListFileConfig.autoUndeploy(autoUndeploy);
+        result.deploymentListFileConfig(deploymentListFileConfig.build());
+        return result.build();
     }
 }

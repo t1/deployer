@@ -13,14 +13,14 @@ import lombok.experimental.Accessors;
 
 @Never
 @Value
-@Builder(builderMethodName = "config")
+@Builder(builderMethodName = "config", toBuilder = true)
 @AllArgsConstructor(access = PRIVATE)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @Accessors(fluent = true)
 @GenerateMeta
 public class Config {
     @Value
-    @Builder(builderMethodName = "authentication")
+    @Builder(builderMethodName = "authentication", toBuilder = true)
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class Authentication {
@@ -31,7 +31,7 @@ public class Config {
     }
 
     @Value
-    @Builder(builderMethodName = "repository")
+    @Builder(builderMethodName = "repository", toBuilder = true)
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class RepositoryConfig {
@@ -42,7 +42,7 @@ public class Config {
     }
 
     @Value
-    @Builder(builderMethodName = "container")
+    @Builder(builderMethodName = "container", toBuilder = true)
     @AllArgsConstructor(access = PRIVATE)
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class ContainerConfig {
@@ -50,8 +50,20 @@ public class Config {
         public URI uri;
     }
 
+    @Value
+    @Builder(builderMethodName = "deploymentListFileConfig", toBuilder = true)
+    @AllArgsConstructor(access = PRIVATE)
+    @NoArgsConstructor(access = PRIVATE, force = true)
+    public static class DeploymentListFileConfig {
+        /** Automatically delete all deployments not found in the deployments list. */
+        @JsonProperty
+        public Boolean autoUndeploy;
+    }
+
     @JsonProperty
     public RepositoryConfig repository;
     @JsonProperty
     public ContainerConfig container;
+    @JsonProperty
+    public DeploymentListFileConfig deploymentListFileConfig;
 }

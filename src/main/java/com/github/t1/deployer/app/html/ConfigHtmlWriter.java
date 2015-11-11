@@ -43,6 +43,8 @@ public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<Config> {
             DeployerPageBuilder page = deployerPage().title(text(config.$title()));
             Config_RepositoryConfigProperties<Config> repository = config.repository();
             Config_ContainerConfigProperties<Config> container = config.container();
+            Config_DeploymentListFileConfigProperties<Config> deploymentListFileConfig =
+                    config.deploymentListFileConfig();
             FormBuilder form = form(MAIN_FORM_ID).horizontal().action(CONFIG_LINK) //
                     .fieldset(repository.$title(), //
                             input(repository.uri(), Config.class).autofocus(), //
@@ -50,6 +52,8 @@ public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<Config> {
                             input(repository.authentication().password(), Config.class)) //
                     .fieldset(container.$title(), //
                             input(container.uri(), Config.class)) //
+                    .fieldset(deploymentListFileConfig.$title(), //
+                            input(deploymentListFileConfig.autoUndeploy(), Config.class).required()) //
                             ;
             page.panelBody(compound( //
                     form, //
