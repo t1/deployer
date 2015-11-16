@@ -17,7 +17,6 @@ import com.github.t1.deployer.container.DeploymentContainer.DeploymentOperationF
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.ramlap.ApiResponse;
-import com.github.t1.ramlap.ProblemDetail.*;
 
 import io.swagger.annotations.*;
 import lombok.SneakyThrows;
