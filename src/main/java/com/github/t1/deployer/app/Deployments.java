@@ -13,9 +13,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.container.DeploymentContainer;
+import com.github.t1.deployer.container.DeploymentContainer.DeploymentOperationFailed;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.ramlap.ApiResponse;
+import com.github.t1.ramlap.ProblemDetail.*;
 
 import io.swagger.annotations.*;
 import lombok.SneakyThrows;
@@ -95,6 +97,7 @@ public class Deployments {
 
     @POST
     @ApiOperation("post a new deployment")
+    @ApiResponse(type = DeploymentOperationFailed.class)
     public Response post( //
             @Context UriInfo uriInfo, //
             @FormParam("checksum") @ApiParam(required = true) CheckSum checkSum, //
@@ -108,6 +111,7 @@ public class Deployments {
     @POST
     @Path("/{contextRoot}")
     @ApiOperation("post an action on an existing deployment")
+    @ApiResponse(type = DeploymentOperationFailed.class)
     public Response postToContextRoot( //
             @Context UriInfo uriInfo, //
             @PathParam("contextRoot") ContextRoot contextRoot, //
@@ -124,11 +128,13 @@ public class Deployments {
         case undeploy:
             if (checkSum == null)
                 throw badRequest("checksum form parameter is missing");
-            Deployment newDeployment = repository.getByChecksum(checkSum);
+            Deployment newDeployment = getDeploymentFromRepository(checkSum);
             if (newDeployment == null)
                 log.warn("undeploying deployment with checksum " + checkSum + " not found in repository");
+            else if (Repository.UNKNOWN.equals(newDeployment.getVersion()))
+                log.warn("undeploying deployment with unknown version: " + contextRoot);
             else
-                check(contextRoot, getDeploymentFromRepository(checkSum).getContextRoot());
+                check(contextRoot, newDeployment.getContextRoot());
             delete(contextRoot);
             return Response.seeOther(Deployments.pathAll(uriInfo)).build();
         }

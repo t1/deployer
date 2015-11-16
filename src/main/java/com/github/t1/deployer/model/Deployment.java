@@ -62,10 +62,10 @@ public class Deployment implements Comparable<Deployment> {
         return NEW_DEPLOYMENT_NAME.equals(name);
     }
 
-    @JsonIgnore
     /** Is the name of the deployment equal to the context-root plus '.war'? */
+    @JsonIgnore
     public boolean isDefaultName() {
-        return name.getValue().equals(contextRoot + ".war");
+        return (name == null) ? false : name.getValue().equals(contextRoot + ".war");
     }
 
     @Override
