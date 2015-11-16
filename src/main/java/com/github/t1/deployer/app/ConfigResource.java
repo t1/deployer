@@ -29,7 +29,9 @@ public class ConfigResource {
     @Inject
     Config config;
 
-    @com.github.t1.config.Config(defaultValue = "false")
+    @com.github.t1.config.Config(
+            description = "Automatically delete all deployments not found in the deployments list.",
+            defaultValue = "false")
     Boolean autoUndeploy;
 
     @GET
