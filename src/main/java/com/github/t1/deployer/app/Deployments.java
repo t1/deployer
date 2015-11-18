@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
-import static com.github.t1.ramlap.ProblemDetail.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 import java.io.*;
@@ -17,15 +16,26 @@ import com.github.t1.deployer.container.DeploymentContainer.DeploymentOperationF
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.ramlap.ApiResponse;
+import com.github.t1.ramlap.ProblemDetail.*;
 
 import io.swagger.annotations.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+@Api(tags = "deployments")
 @Boundary
 @Path("/deployments")
 @Slf4j
 public class Deployments {
+    public static class NoCheckSum extends ValidationFailed {}
+
+    public static class NoContextRoot extends ValidationFailed {}
+
+    public static class DeploymentNotFound extends NotFound {}
+
+    @ApiResponse(title = "no release with version found")
+    public static class ReleaseNotFound extends NotFound {}
+
     private static final Comparator<Release> DESCENDING_RELEASE_ORDER = Release.BY_VERSION.reversed();
 
     public enum PostDeploymentAction {
@@ -110,7 +120,10 @@ public class Deployments {
     @POST
     @Path("/{contextRoot}")
     @ApiOperation("post an action on an existing deployment")
-    @ApiResponse(type = DeploymentOperationFailed.class)
+    @ApiResponses({ //
+            @io.swagger.annotations.ApiResponse(code = 400, message = "action or checksum form parameter is missing"), //
+            @io.swagger.annotations.ApiResponse(code = 303, message = "redirect to redeployed deployment") //
+    })
     public Response postToContextRoot( //
             @Context UriInfo uriInfo, //
             @PathParam("contextRoot") ContextRoot contextRoot, //
@@ -118,7 +131,7 @@ public class Deployments {
             @FormParam("checksum") @ApiParam(required = true) CheckSum checkSum //
     ) {
         if (action == null)
-            throw badRequest("action form parameter is missing");
+            return Response.status(BAD_REQUEST).entity("action form parameter is missing").build();
         switch (action) {
         case redeploy:
             check(contextRoot, getDeploymentFromRepository(checkSum).getContextRoot());
@@ -126,7 +139,7 @@ public class Deployments {
             return Response.seeOther(Deployments.path(uriInfo, contextRoot)).build();
         case undeploy:
             if (checkSum == null)
-                throw badRequest("checksum form parameter is missing");
+                return Response.status(BAD_REQUEST).entity("checksum form parameter is missing").build();
             Deployment newDeployment = getDeploymentFromRepository(checkSum);
             if (newDeployment == null)
                 log.warn("undeploying deployment with checksum " + checkSum + " not found in repository");
@@ -151,7 +164,7 @@ public class Deployments {
         check(contextRoot, entity.getContextRoot());
         CheckSum checkSum = entity.getCheckSum();
         if (checkSum == null)
-            throw badRequest("checksum missing in " + entity);
+            return new NoCheckSum().toResponse();
         if (container.hasDeploymentWith(contextRoot)) {
             redeploy(checkSum);
             return Response.noContent().build();
@@ -167,7 +180,7 @@ public class Deployments {
 
     private void check(ContextRoot left, ContextRoot right) {
         if (!Objects.equals(left, right))
-            throw badRequest("context roots don't match: " + left + " is not " + right);
+            throw new BadRequest().detail("context roots don't match: " + left + " is not " + right).toWebException();
     }
 
     @SneakyThrows(IOException.class)
@@ -197,10 +210,11 @@ public class Deployments {
 
     private Deployment getDeploymentFromRepository(CheckSum checkSum) {
         if (checkSum == null)
-            throw badRequest("checksum missing");
+            throw new NoCheckSum().toWebException();
         Deployment newDeployment = repository.getByChecksum(checkSum);
         if (newDeployment == null)
-            throw notFound("no deployment with checksum " + checkSum + " found in repository");
+            throw new DeploymentNotFound().detail("no deployment with checksum " + checkSum + " found in repository")
+                    .toWebException();
         return newDeployment;
     }
 
@@ -230,19 +244,19 @@ public class Deployments {
     @Path("/{contextRoot}/version")
     @ApiOperation("put the version of a deployment, triggering a redeploy")
     @ApiResponse(status = NO_CONTENT, title = "Okay. New version is deployed")
-    @ApiResponse(type = ValidationFailed.class, title = "no context root")
-    @ApiResponse(type = NotFound.class, title = "no release with version found")
+    @ApiResponse(type = NoContextRoot.class)
+    @ApiResponse(type = ReleaseNotFound.class)
     @ApiResponse(type = InternalServerError.class, title = "deployment didn't work")
     public Response putVersion(@PathParam("contextRoot") ContextRoot contextRoot, Version newVersion) {
         if (!container.hasDeploymentWith(contextRoot))
-            throw validationFailed("no context root: " + contextRoot);
+            throw new NoContextRoot().detail("no context root: " + contextRoot).toWebException();
         for (Release release : getReleases(contextRoot)) {
             if (release.getVersion().equals(newVersion)) {
                 redeploy(release.getCheckSum());
                 return Response.noContent().build();
             }
         }
-        throw notFound("no released version " + newVersion + " for " + contextRoot);
+        return new ReleaseNotFound().detail("no released version " + newVersion + " for " + contextRoot).toResponse();
     }
 
     @GET
