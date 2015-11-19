@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.github.t1.ramlap.ApiExample;
 
 import lombok.*;
 
@@ -19,6 +20,7 @@ import lombok.*;
 public class Version implements Comparable<Version> {
     @NonNull
     @XmlValue
+    @ApiExample("1.12.3")
     private String version;
 
     @Override

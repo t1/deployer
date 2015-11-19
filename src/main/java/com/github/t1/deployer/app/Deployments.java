@@ -240,7 +240,7 @@ public class Deployments {
         return withVersion(container.getDeploymentFor(contextRoot)).getVersion();
     }
 
-    /** Put the version of a deployment, triggering a redeploy */
+    /** Set the version of a deployment. Triggers a redeploy. */
     @PUT
     @Path("/{contextRoot}/version")
     @ApiResponse(status = NO_CONTENT, title = "Okay. New version is deployed")
