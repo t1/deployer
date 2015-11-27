@@ -23,7 +23,6 @@ import io.swagger.annotations.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-@Api(tags = "deployments")
 @Boundary
 @Path("/deployments")
 @Slf4j
@@ -72,7 +71,6 @@ public class Deployments implements DeploymentsResource {
     UriInfo uriInfo;
 
     @Override
-    @ApiOperation("list all deployments")
     public Response getAllDeployments() {
         List<Deployment> deployments = container.getAllDeployments().stream()
                 .map(deployment -> withVersion(deployment))
@@ -87,7 +85,6 @@ public class Deployments implements DeploymentsResource {
 
     @GET
     @Path(NEW_DEPLOYMENT_PATH)
-    @ApiOperation(hidden = true, value = "return a form for new deployments")
     public Deployment newDeployment() {
         return NEW_DEPLOYMENT;
     }

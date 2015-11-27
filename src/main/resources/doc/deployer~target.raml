@@ -1,0 +1,1021 @@
+#%RAML 0.8
+title: Deployer
+baseUri: "http://localhost:8080/deployer"
+/:
+    displayName: index
+    get:
+        description: |
+            The html start page should be the list of deployments. Calling the root resouce redirects there by responding with `302 Found`.
+
+            **NOTE** The `Try it out` button will follow the redirect and show the list of deployments.
+        displayName: redirect to start page
+        responses:
+            "302":
+                description: redirect to deployments list
+                body:
+                    application/json:
+/config:
+    displayName: config resource
+    get:
+        displayName: read the current config
+        responses:
+            "200":
+                description: Success
+                body:
+                    application/json:
+                        schema: |
+                            {
+                                "$schema":"http://json-schema.org/schema#",
+                                "type":"object",
+                                "id":"urn:jsonschema:com:github:t1:deployer:model:Config",
+                                "properties":{
+                                    "repository":{
+                                        "type":"object",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:model:Config:RepositoryConfig",
+                                        "properties":{
+                                            "uri":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:java:net:URI"
+                                            },
+                                            "authentication":{
+                                                "type":"object",
+                                                "id":"urn:jsonschema:com:github:t1:deployer:model:Config:Authentication",
+                                                "properties":{
+                                                    "username":{
+                                                        "type":"string"
+                                                    },
+                                                    "password":{
+                                                        "type":"string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "container":{
+                                        "type":"object",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:model:Config:ContainerConfig",
+                                        "properties":{
+                                            "uri":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:java:net:URI"
+                                            }
+                                        }
+                                    },
+                                    "deploymentListFileConfig":{
+                                        "type":"object",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:model:Config:DeploymentListFileConfig",
+                                        "properties":{
+                                            "autoUndeploy":{
+                                                "type":"boolean",
+                                                "description":"Automatically delete all deployments not found in the deployments list."
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        example: |
+                            {
+                                "repository":{
+                                    "uri":"http://example.org/foo",
+                                    "authentication":{
+                                        "username":"foo",
+                                        "password":"foo"
+                                    }
+                                },
+                                "container":{
+                                    "uri":"http://example.org/foo"
+                                },
+                                "deploymentListFileConfig":{
+                                    "autoUndeploy":false
+                                }
+                            }
+/datasources:
+    displayName: data sources
+    get:
+        displayName: list of all data sources
+        responses:
+            "200":
+                description: Success
+                body:
+                    application/json:
+                        schema: |
+                            {
+                                "$schema":"http://json-schema.org/schema#",
+                                "type":"array",
+                                "items":{
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:DataSourceConfig",
+                                    "description":"@see javax.annotation.sql.DataSourceDefinition",
+                                    "properties":{
+                                        "name":{
+                                            "type":"string"
+                                        },
+                                        "driver":{
+                                            "type":"string"
+                                        },
+                                        "jndiName":{
+                                            "type":"string"
+                                        },
+                                        "uri":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:java:net:URI",
+                                            "description":"DataSource implementation class name which implements: <code>javax.sql.DataSource</code> or\n <code>javax.sql.XADataSource</code> or <code>javax.sql.ConnectionPoolDataSource</code>."
+                                        },
+                                        "user":{
+                                            "type":"string"
+                                        },
+                                        "password":{
+                                            "type":"string"
+                                        }
+                                    }
+                                }
+                            }
+                        example: |
+                            [
+                                {
+                                    "name":"foo",
+                                    "driver":"foo",
+                                    "jndiName":"foo",
+                                    "uri":"http://example.org/foo",
+                                    "user":"foo",
+                                    "password":"foo"
+                                }
+                            ]
+    post:
+        displayName: post a new data source
+        body:
+            application/json:
+        responses:
+            "200":
+                description: Success
+                body:
+                    application/json:
+    /{dataSourceName}:
+        uriParameters:
+            dataSourceName:
+                displayName: dataSourceName
+                type: string
+                required: true
+                repeat: false
+        get:
+            description: The data source name `!` creates a new data source; useful to render a html form.
+            displayName: a data source by name
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+                            schema: |
+                                {
+                                    "$schema":"http://json-schema.org/schema#",
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:DataSourceConfig",
+                                    "description":"@see javax.annotation.sql.DataSourceDefinition",
+                                    "properties":{
+                                        "name":{
+                                            "type":"string"
+                                        },
+                                        "driver":{
+                                            "type":"string"
+                                        },
+                                        "jndiName":{
+                                            "type":"string"
+                                        },
+                                        "uri":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:java:net:URI",
+                                            "description":"DataSource implementation class name which implements: <code>javax.sql.DataSource</code> or\n <code>javax.sql.XADataSource</code> or <code>javax.sql.ConnectionPoolDataSource</code>."
+                                        },
+                                        "user":{
+                                            "type":"string"
+                                        },
+                                        "password":{
+                                            "type":"string"
+                                        }
+                                    }
+                                }
+                            example: |
+                                {
+                                    "name":"foo",
+                                    "driver":"foo",
+                                    "jndiName":"foo",
+                                    "uri":"http://example.org/foo",
+                                    "user":"foo",
+                                    "password":"foo"
+                                }
+        post:
+            displayName: actions on a data source by name
+            body:
+                application/json:
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+        delete:
+            displayName: delete a data source by name
+            responses:
+                "200":
+                    description: Success
+/deployments:
+    displayName: deployments
+    post:
+        displayName: post a new deployment
+        body:
+            application/json:
+                schema: |
+                    {
+                        "$schema":"http://json-schema.org/schema#",
+                        "type":"string",
+                        "id":"urn:jsonschema:com:github:t1:deployer:model:DeploymentName"
+                    }
+        responses:
+            "500":
+                description: deployment operation failed
+                body:
+                    application/problem+json:
+                        schema: |
+                            {
+                                "$schema":"http://json-schema.org/schema#",
+                                "type":"object",
+                                "id":"urn:jsonschema:com:github:t1:deployer:container:DeploymentContainer:DeploymentOperationFailed",
+                                "properties":{
+                                    "type":{
+                                        "type":"string",
+                                        "id":"urn:jsonschema:java:net:URI",
+                                        "description":"A URI reference [RFC3986] that identifies the problem type. When dereferenced, it is encouraged to provide human-readable documentation for the problem type (e.g., using HTML [W3C.REC-html401-19991224]).<p>Defaults to the {@link #URN_PROBLEM_PREFIX} + \"java:\" + fully qualified class name."
+                                    },
+                                    "title":{
+                                        "type":"string",
+                                        "description":"A short, human-readable summary of the problem type. It SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization."
+                                    },
+                                    "status":{
+                                        "type":"object",
+                                        "id":"urn:jsonschema:javax:ws:rs:core:Response:StatusType",
+                                        "properties":{
+                                        },
+                                        "description":"The HTTP status code ([RFC7231], Section 6) generated by the origin server for this occurrence of the problem."
+                                    },
+                                    "detail":{
+                                        "type":"string",
+                                        "description":"The full, human-readable explanation specific to this occurrence of the problem. It MAY change from occurrence to occurrence of the problem."
+                                    },
+                                    "instance":{
+                                        "type":"string",
+                                        "id":"urn:jsonschema:java:net:URI",
+                                        "description":"A URI reference that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced."
+                                    }
+                                }
+                            }
+                        example: |
+                            {
+                                "type":"https://example.com/probs/out-of-credit",
+                                "title":"You do not have enough credit.",
+                                "status":{
+                                },
+                                "detail":"Your current balance is 30, but that costs 50.",
+                                "instance":"urn:problem-instance:233e7b05-0500-4b0d-a7d8-f4b90dbfa40e"
+                            }
+    /!:
+        get:
+            displayName: return a form for new deployments
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+                            schema: |
+                                {
+                                    "$schema":"http://json-schema.org/schema#",
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:Deployment",
+                                    "description":"This is the artifact returned by Artifactory as well as the deployment installed in the container.",
+                                    "properties":{
+                                        "name":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:DeploymentName",
+                                            "description":"The file name of the deployment"
+                                        },
+                                        "contextRoot":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:ContextRoot",
+                                            "description":"The first path item of the uri of the app, a.k.a. web context"
+                                        },
+                                        "checkSum":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum",
+                                            "description":"The sha-1 checksum of the deployment used to identify the deployment in the repository"
+                                        },
+                                        "version":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                        },
+                                        "releases":{
+                                            "type":"array",
+                                            "items":{
+                                                "type":"object",
+                                                "id":"urn:jsonschema:com:github:t1:deployer:model:Release",
+                                                "properties":{
+                                                    "version":{
+                                                        "type":"string",
+                                                        "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                                    },
+                                                    "checkSum":{
+                                                        "type":"string",
+                                                        "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum"
+                                                    }
+                                                }
+                                            },
+                                            "description":"The list of available releases for this artifact"
+                                        }
+                                    }
+                                }
+    /{contextRoot}:
+        uriParameters:
+            contextRoot:
+                displayName: The first path item of the uri of the app, a.k.a. web context
+                type: string
+                required: true
+                repeat: false
+        get:
+            displayName: get a deployment
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+                            schema: |
+                                {
+                                    "$schema":"http://json-schema.org/schema#",
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:Deployment",
+                                    "description":"This is the artifact returned by Artifactory as well as the deployment installed in the container.",
+                                    "properties":{
+                                        "name":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:DeploymentName",
+                                            "description":"The file name of the deployment"
+                                        },
+                                        "contextRoot":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:ContextRoot",
+                                            "description":"The first path item of the uri of the app, a.k.a. web context"
+                                        },
+                                        "checkSum":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum",
+                                            "description":"The sha-1 checksum of the deployment used to identify the deployment in the repository"
+                                        },
+                                        "version":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                        },
+                                        "releases":{
+                                            "type":"array",
+                                            "items":{
+                                                "type":"object",
+                                                "id":"urn:jsonschema:com:github:t1:deployer:model:Release",
+                                                "properties":{
+                                                    "version":{
+                                                        "type":"string",
+                                                        "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                                    },
+                                                    "checkSum":{
+                                                        "type":"string",
+                                                        "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum"
+                                                    }
+                                                }
+                                            },
+                                            "description":"The list of available releases for this artifact"
+                                        }
+                                    }
+                                }
+        post:
+            displayName: post an action on an existing deployment
+            body:
+                application/json:
+                    schema: |
+                        {
+                            "$schema":"http://json-schema.org/schema#",
+                            "type":"string",
+                            "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum"
+                        }
+            responses:
+                "400":
+                    description: action or checksum form parameter is missing
+                    body:
+                        application/json:
+                "303":
+                    description: redirect to redeployed deployment
+                    body:
+                        application/json:
+        put:
+            displayName: create or update a deployment
+            body:
+                application/json:
+                    schema: |
+                        {
+                            "$schema":"http://json-schema.org/schema#",
+                            "type":"object",
+                            "id":"urn:jsonschema:com:github:t1:deployer:model:Deployment",
+                            "description":"This is the artifact returned by Artifactory as well as the deployment installed in the container.",
+                            "properties":{
+                                "name":{
+                                    "type":"string",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:DeploymentName",
+                                    "description":"The file name of the deployment"
+                                },
+                                "contextRoot":{
+                                    "type":"string",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:ContextRoot",
+                                    "description":"The first path item of the uri of the app, a.k.a. web context"
+                                },
+                                "checkSum":{
+                                    "type":"string",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum",
+                                    "description":"The sha-1 checksum of the deployment used to identify the deployment in the repository"
+                                },
+                                "version":{
+                                    "type":"string",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                },
+                                "releases":{
+                                    "type":"array",
+                                    "items":{
+                                        "type":"object",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:model:Release",
+                                        "properties":{
+                                            "version":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                            },
+                                            "checkSum":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum"
+                                            }
+                                        }
+                                    },
+                                    "description":"The list of available releases for this artifact"
+                                }
+                            }
+                        }
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+        delete:
+            displayName: delete a deployment
+            responses:
+                "200":
+                    description: Success
+        /checksum:
+            get:
+                displayName: get the checksum of a deployment
+                responses:
+                    "200":
+                        description: Success
+                        body:
+                            application/json:
+                                schema: |
+                                    {
+                                        "$schema":"http://json-schema.org/schema#",
+                                        "type":"string",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum"
+                                    }
+        /name:
+            get:
+                displayName: get the name of a deployment
+                responses:
+                    "200":
+                        description: Success
+                        body:
+                            application/json:
+                                schema: |
+                                    {
+                                        "$schema":"http://json-schema.org/schema#",
+                                        "type":"string",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:model:DeploymentName"
+                                    }
+        /releases:
+            get:
+                displayName: get the releases of a deployment
+                responses:
+                    "200":
+                        description: Success
+                        body:
+                            application/json:
+                                schema: |
+                                    {
+                                        "$schema":"http://json-schema.org/schema#",
+                                        "type":"array",
+                                        "items":{
+                                            "type":"object",
+                                            "id":"urn:jsonschema:com:github:t1:deployer:model:Release",
+                                            "properties":{
+                                                "version":{
+                                                    "type":"string",
+                                                    "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                                },
+                                                "checkSum":{
+                                                    "type":"string",
+                                                    "id":"urn:jsonschema:com:github:t1:deployer:model:CheckSum"
+                                                }
+                                            }
+                                        }
+                                    }
+                                example: |
+                                    [
+                                        {
+                                            "version":"2.12.1",
+                                            "checkSum":"E4D3BC23D706CFF1599359EC14F61EB7000082E0"
+                                        }
+                                    ]
+        /version:
+            get:
+                displayName: get the version of a deployment
+                responses:
+                    "200":
+                        description: Success
+                        body:
+                            application/json:
+                                schema: |
+                                    {
+                                        "$schema":"http://json-schema.org/schema#",
+                                        "type":"string",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                                    }
+            put:
+                description: Set the version of a deployment. Triggers a redeploy.
+                displayName: Set the version of a deployment
+                body:
+                    application/json:
+                        schema: |
+                            {
+                                "$schema":"http://json-schema.org/schema#",
+                                "type":"string",
+                                "id":"urn:jsonschema:com:github:t1:deployer:model:Version"
+                            }
+                responses:
+                    "204":
+                        description: Okay. New version is deployed
+                        body:
+                            application/json:
+                    "400":
+                        description: release not found
+                        body:
+                            application/problem+json:
+                                schema: |
+                                    {
+                                        "$schema":"http://json-schema.org/schema#",
+                                        "type":"object",
+                                        "id":"urn:jsonschema:com:github:t1:deployer:app:Deployments:ReleaseNotFound",
+                                        "properties":{
+                                            "type":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:java:net:URI",
+                                                "description":"A URI reference [RFC3986] that identifies the problem type. When dereferenced, it is encouraged to provide human-readable documentation for the problem type (e.g., using HTML [W3C.REC-html401-19991224]).<p>Defaults to the {@link #URN_PROBLEM_PREFIX} + \"java:\" + fully qualified class name."
+                                            },
+                                            "title":{
+                                                "type":"string",
+                                                "description":"A short, human-readable summary of the problem type. It SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization."
+                                            },
+                                            "status":{
+                                                "type":"object",
+                                                "id":"urn:jsonschema:javax:ws:rs:core:Response:StatusType",
+                                                "properties":{
+                                                },
+                                                "description":"The HTTP status code ([RFC7231], Section 6) generated by the origin server for this occurrence of the problem."
+                                            },
+                                            "detail":{
+                                                "type":"string",
+                                                "description":"The full, human-readable explanation specific to this occurrence of the problem. It MAY change from occurrence to occurrence of the problem."
+                                            },
+                                            "instance":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:java:net:URI",
+                                                "description":"A URI reference that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced."
+                                            }
+                                        }
+                                    }
+                                example: |
+                                    {
+                                        "type":"https://example.com/probs/out-of-credit",
+                                        "title":"You do not have enough credit.",
+                                        "status":{
+                                        },
+                                        "detail":"Your current balance is 30, but that costs 50.",
+                                        "instance":"urn:problem-instance:233e7b05-0500-4b0d-a7d8-f4b90dbfa40e"
+                                    }
+                    "500":
+                        description: deployment didn't work
+                        body:
+                            application/problem+json:
+                                schema: |
+                                    {
+                                        "$schema":"http://json-schema.org/schema#",
+                                        "type":"object",
+                                        "id":"urn:jsonschema:com:github:t1:ramlap:tools:ProblemDetail:InternalServerError",
+                                        "properties":{
+                                            "type":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:java:net:URI",
+                                                "description":"A URI reference [RFC3986] that identifies the problem type. When dereferenced, it is encouraged to provide human-readable documentation for the problem type (e.g., using HTML [W3C.REC-html401-19991224]).<p>Defaults to the {@link #URN_PROBLEM_PREFIX} + \"java:\" + fully qualified class name."
+                                            },
+                                            "title":{
+                                                "type":"string",
+                                                "description":"A short, human-readable summary of the problem type. It SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization."
+                                            },
+                                            "status":{
+                                                "type":"object",
+                                                "id":"urn:jsonschema:javax:ws:rs:core:Response:StatusType",
+                                                "properties":{
+                                                },
+                                                "description":"The HTTP status code ([RFC7231], Section 6) generated by the origin server for this occurrence of the problem."
+                                            },
+                                            "detail":{
+                                                "type":"string",
+                                                "description":"The full, human-readable explanation specific to this occurrence of the problem. It MAY change from occurrence to occurrence of the problem."
+                                            },
+                                            "instance":{
+                                                "type":"string",
+                                                "id":"urn:jsonschema:java:net:URI",
+                                                "description":"A URI reference that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced."
+                                            }
+                                        }
+                                    }
+                                example: |
+                                    {
+                                        "type":"https://example.com/probs/out-of-credit",
+                                        "title":"You do not have enough credit.",
+                                        "status":{
+                                        },
+                                        "detail":"Your current balance is 30, but that costs 50.",
+                                        "instance":"urn:problem-instance:233e7b05-0500-4b0d-a7d8-f4b90dbfa40e"
+                                    }
+/favicon.ico:
+    get:
+        displayName: get favicon
+        responses:
+            "200":
+                description: Success
+                body:
+                    application/json:
+/index:
+    get:
+        displayName: list the navigation as links
+        responses:
+            "200":
+                description: Success
+                body:
+                    application/json:
+                        schema: |
+                            {
+                                "$schema":"http://json-schema.org/schema#",
+                                "type":"array",
+                                "items":{
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:app:Index:Link",
+                                    "description":"The JAX-RS Link class requires 2.0",
+                                    "properties":{
+                                        "uri":{
+                                            "type":"string",
+                                            "id":"urn:jsonschema:java:net:URI"
+                                        },
+                                        "rel":{
+                                            "type":"string"
+                                        },
+                                        "title":{
+                                            "type":"string"
+                                        }
+                                    }
+                                }
+                            }
+                        example: |
+                            [
+                                {
+                                    "uri":"http://example.org/foo",
+                                    "rel":"foo",
+                                    "title":"foo"
+                                }
+                            ]
+/loggers:
+    displayName: loggers
+    get:
+        displayName: list of all loggers
+        responses:
+            "200":
+                description: Success
+                body:
+                    application/json:
+                        schema: |
+                            {
+                                "$schema":"http://json-schema.org/schema#",
+                                "type":"array",
+                                "items":{
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:LoggerConfig",
+                                    "properties":{
+                                        "category":{
+                                            "type":"string"
+                                        },
+                                        "level":{
+                                            "type":"string",
+                                            "enum":[
+                                                "ALL",
+                                                "TRACE",
+                                                "DEBUG",
+                                                "INFO",
+                                                "WARN",
+                                                "ERROR",
+                                                "OFF",
+                                                "_DERIVED_"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        example: |
+                            [
+                                {
+                                    "category":"foo",
+                                    "level":"ALL"
+                                }
+                            ]
+    /:
+        post:
+            displayName: create new logger
+            body:
+                application/json:
+                    schema: |
+                        {
+                            "$schema":"http://json-schema.org/schema#",
+                            "type":"string",
+                            "enum":[
+                                "ALL",
+                                "TRACE",
+                                "DEBUG",
+                                "INFO",
+                                "WARN",
+                                "ERROR",
+                                "OFF",
+                                "_DERIVED_"
+                            ]
+                        }
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+    /!:
+        get:
+            displayName: return a form for new loggers
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+                            schema: |
+                                {
+                                    "$schema":"http://json-schema.org/schema#",
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:LoggerConfig",
+                                    "properties":{
+                                        "category":{
+                                            "type":"string"
+                                        },
+                                        "level":{
+                                            "type":"string",
+                                            "enum":[
+                                                "ALL",
+                                                "TRACE",
+                                                "DEBUG",
+                                                "INFO",
+                                                "WARN",
+                                                "ERROR",
+                                                "OFF",
+                                                "_DERIVED_"
+                                            ]
+                                        }
+                                    }
+                                }
+                            example: |
+                                {
+                                    "category":"foo",
+                                    "level":"ALL"
+                                }
+    /{category}:
+        uriParameters:
+            category:
+                displayName: category
+                type: string
+                required: true
+                repeat: false
+        get:
+            displayName: a logger by category
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+                            schema: |
+                                {
+                                    "$schema":"http://json-schema.org/schema#",
+                                    "type":"object",
+                                    "id":"urn:jsonschema:com:github:t1:deployer:model:LoggerConfig",
+                                    "properties":{
+                                        "category":{
+                                            "type":"string"
+                                        },
+                                        "level":{
+                                            "type":"string",
+                                            "enum":[
+                                                "ALL",
+                                                "TRACE",
+                                                "DEBUG",
+                                                "INFO",
+                                                "WARN",
+                                                "ERROR",
+                                                "OFF",
+                                                "_DERIVED_"
+                                            ]
+                                        }
+                                    }
+                                }
+                            example: |
+                                {
+                                    "category":"foo",
+                                    "level":"ALL"
+                                }
+        put:
+            displayName: create or update a logger
+            body:
+                application/json:
+                    schema: |
+                        {
+                            "$schema":"http://json-schema.org/schema#",
+                            "type":"object",
+                            "id":"urn:jsonschema:com:github:t1:deployer:model:LoggerConfig",
+                            "properties":{
+                                "category":{
+                                    "type":"string"
+                                },
+                                "level":{
+                                    "type":"string",
+                                    "enum":[
+                                        "ALL",
+                                        "TRACE",
+                                        "DEBUG",
+                                        "INFO",
+                                        "WARN",
+                                        "ERROR",
+                                        "OFF",
+                                        "_DERIVED_"
+                                    ]
+                                }
+                            }
+                        }
+                    example: |
+                        {
+                            "category":"foo",
+                            "level":"ALL"
+                        }
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+        post:
+            description: |
+                form field `action` can be:
+                * `patch` to patch the level of the logger (form param `level`) or
+                * `delete` to delete the logger
+            displayName: patch level or delete logger
+            body:
+                application/json:
+                    schema: |
+                        {
+                            "$schema":"http://json-schema.org/schema#",
+                            "type":"string",
+                            "enum":[
+                                "ALL",
+                                "TRACE",
+                                "DEBUG",
+                                "INFO",
+                                "WARN",
+                                "ERROR",
+                                "OFF",
+                                "_DERIVED_"
+                            ]
+                        }
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+        patch:
+            displayName: patch the level of a logger
+            body:
+                application/json:
+                    schema: |
+                        {
+                            "$schema":"http://json-schema.org/schema#",
+                            "type":"object",
+                            "id":"urn:jsonschema:com:github:t1:deployer:model:LoggerPatch",
+                            "properties":{
+                                "logLevel":{
+                                    "type":"string",
+                                    "enum":[
+                                        "ALL",
+                                        "TRACE",
+                                        "DEBUG",
+                                        "INFO",
+                                        "WARN",
+                                        "ERROR",
+                                        "OFF",
+                                        "_DERIVED_"
+                                    ]
+                                }
+                            }
+                        }
+                    example: |
+                        {
+                            "logLevel":"ALL"
+                        }
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
+        delete:
+            displayName: delete a logger
+            responses:
+                "200":
+                    description: Success
+        /level:
+            get:
+                description: "**Note**: Doesn't work in Swagger; seems to be a bug."
+                displayName: the level of a logger
+                responses:
+                    "200":
+                        description: Success
+                        body:
+                            application/json:
+                                schema: |
+                                    {
+                                        "$schema":"http://json-schema.org/schema#",
+                                        "type":"string",
+                                        "enum":[
+                                            "ALL",
+                                            "TRACE",
+                                            "DEBUG",
+                                            "INFO",
+                                            "WARN",
+                                            "ERROR",
+                                            "OFF",
+                                            "_DERIVED_"
+                                        ]
+                                    }
+            put:
+                displayName: set the category of a logger
+                body:
+                    application/json:
+                        schema: |
+                            {
+                                "$schema":"http://json-schema.org/schema#",
+                                "type":"string",
+                                "enum":[
+                                    "ALL",
+                                    "TRACE",
+                                    "DEBUG",
+                                    "INFO",
+                                    "WARN",
+                                    "ERROR",
+                                    "OFF",
+                                    "_DERIVED_"
+                                ]
+                            }
+                responses:
+                    "200":
+                        description: Success
+/{artifact}:
+    uriParameters:
+        artifact:
+            displayName: artifact
+            type: string
+            required: true
+            repeat: false
+    /{filePath}:
+        uriParameters:
+            filePath:
+                displayName: filePath
+                type: string
+                required: true
+                repeat: false
+        get:
+            displayName: get static resource
+            responses:
+                "200":
+                    description: Success
+                    body:
+                        application/json:
