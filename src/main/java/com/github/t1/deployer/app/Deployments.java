@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.Deployment.*;
+import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 import java.io.*;
@@ -26,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Boundary
 @Path("/deployments")
 @Slf4j
-public class Deployments {
+public class Deployments implements DeploymentsResource {
     public static class NoCheckSum extends ValidationFailed {}
 
     public static class NoContextRoot extends ValidationFailed {}
@@ -70,14 +71,13 @@ public class Deployments {
     @Context
     UriInfo uriInfo;
 
-    @GET
+    @Override
     @ApiOperation("list all deployments")
-    public List<Deployment> getAllDeployments() {
-        List<Deployment> deployments = new ArrayList<>();
-        for (Deployment deployment : container.getAllDeployments()) {
-            deployments.add(withVersion(deployment));
-        }
-        return deployments;
+    public Response getAllDeployments() {
+        List<Deployment> deployments = container.getAllDeployments().stream()
+                .map(deployment -> withVersion(deployment))
+                .collect(toList());
+        return Response.ok(new GenericEntity<List<Deployment>>(deployments) {}).build();
     }
 
     private Deployment withVersion(Deployment deployment) {

@@ -4,17 +4,15 @@ import static java.util.Arrays.*;
 
 import java.util.List;
 
-import com.github.t1.deployer.app.Deployments;
-import com.github.t1.deployer.app.html.DeployerPage;
-import com.github.t1.deployer.tools.*;
+import com.github.t1.deployer.tools.AbstractPackageDependenciesTest;
 
 public class PackageDependenciesTest extends AbstractPackageDependenciesTest {
     @Override
     public List<Class<?>> getDependencyEntryPoints() {
         return asList( //
-                Deployments.class, // app
-                DeployerPage.class, // app.html
-                ConfigProducer.class // tools
+                com.github.t1.deployer.app.Deployments.class, //
+                com.github.t1.deployer.app.html.DeployerPage.class, //
+                com.github.t1.deployer.tools.ConfigProducer.class //
         );
     }
 }

@@ -1,0 +1,9 @@
+#%RAML 0.8
+title: test-api
+version: v1
+baseUri: "http://localhost:8080/deployer"
+/deployments:
+  description: Manages the deployments in the container
+  get:
+    displayName: getAllDeployments
+    description: list all deployments

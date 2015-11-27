@@ -85,7 +85,8 @@ public class DeploymentsTest {
         givenDeployment(FOO);
         givenDeployment(BAR);
 
-        List<Deployment> list = deployments.getAllDeployments();
+        @SuppressWarnings("unchecked")
+        List<Deployment> list = (List<Deployment>) deployments.getAllDeployments().getEntity();
 
         assertEquals(2, list.size());
         assertDeployment(FOO, list.get(0));
