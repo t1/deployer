@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import static com.github.t1.deployer.model.DataSourceConfig.*;
-import io.swagger.annotations.*;
 
 import java.net.URI;
 import java.util.List;
@@ -13,6 +12,8 @@ import javax.ws.rs.core.*;
 
 import com.github.t1.deployer.container.DataSourceContainer;
 import com.github.t1.deployer.model.DataSourceConfig;
+
+import io.swagger.annotations.*;
 
 @Api(tags = "datasources")
 @Boundary

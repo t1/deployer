@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.github.t1.ramlap.ApiExample;
+import com.github.t1.ramlap.annotations.ApiExample;
 
 import lombok.*;
 

@@ -24,7 +24,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.t1.deployer.TestData;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.ramlap.ProblemDetail;
+import com.github.t1.ramlap.tools.ProblemDetail;
 
 import lombok.SneakyThrows;
 

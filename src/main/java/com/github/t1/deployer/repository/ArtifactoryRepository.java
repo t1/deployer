@@ -2,7 +2,7 @@ package com.github.t1.deployer.repository;
 
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
-import static com.github.t1.ramlap.ProblemDetail.*;
+import static com.github.t1.ramlap.tools.ProblemDetail.*;
 import static java.util.Collections.*;
 import static javax.ws.rs.core.Response.Status.*;
 

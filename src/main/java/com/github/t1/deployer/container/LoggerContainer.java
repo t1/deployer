@@ -2,7 +2,7 @@ package com.github.t1.deployer.container;
 
 import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.ramlap.ProblemDetail.*;
+import static com.github.t1.ramlap.tools.ProblemDetail.*;
 import static java.util.stream.Collectors.*;
 
 import java.util.*;

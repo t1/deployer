@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
-import com.github.t1.ramlap.ProblemDetail;
+import com.github.t1.ramlap.tools.ProblemDetail;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoggersTest {

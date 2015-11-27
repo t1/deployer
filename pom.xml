@@ -94,25 +94,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>com.sebastian-daschner</groupId>
-                <artifactId>jaxrs-analyzer-maven-plugin</artifactId>
-                <version>0.9</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>analyze-jaxrs</goal>
-                        </goals>
-                        <configuration>
-                            <!-- <backend>plaintext</backend> -->
-                            <backend>swagger</backend>
-                            <!-- <backend>asciidoc</backend> -->
-                            <!-- Domain of the deployed project, defaults to example.com -->
-                            <deployedDomain>localhost:8080/deployer</deployedDomain>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 

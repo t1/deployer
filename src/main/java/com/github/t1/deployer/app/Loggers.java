@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import static com.github.t1.deployer.model.LoggerConfig.*;
 import static com.github.t1.deployer.model.LoggerPatch.*;
 import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.ramlap.ProblemDetail.*;
+import static com.github.t1.ramlap.tools.ProblemDetail.*;
 
 import java.net.URI;
 import java.util.List;
@@ -17,6 +17,7 @@ import javax.ws.rs.core.*;
 import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
+
 import io.swagger.annotations.*;
 import io.swagger.jaxrs.PATCH;
 
@@ -142,11 +143,11 @@ public class Loggers {
         if (action == null)
             throw badRequest("missing action form param");
         switch (action) {
-            case patch:
-                return patch(category, loggerPatch().logLevel(level).build());
-            case delete:
-                delete(category);
-                return Response.seeOther(Loggers.base(uriInfo)).build();
+        case patch:
+            return patch(category, loggerPatch().logLevel(level).build());
+        case delete:
+            delete(category);
+            return Response.seeOther(Loggers.base(uriInfo)).build();
         }
         throw new RuntimeException("unreachable code");
     }

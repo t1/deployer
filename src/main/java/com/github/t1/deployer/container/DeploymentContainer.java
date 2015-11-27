@@ -1,7 +1,7 @@
 package com.github.t1.deployer.container;
 
 import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.ramlap.ProblemDetail.*;
+import static com.github.t1.ramlap.tools.ProblemDetail.*;
 import static java.util.concurrent.TimeUnit.*;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -17,7 +17,8 @@ import org.jboss.dmr.ModelNode;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
-import com.github.t1.ramlap.*;
+import com.github.t1.ramlap.annotations.ApiResponse;
+import com.github.t1.ramlap.tools.ProblemDetail;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

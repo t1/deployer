@@ -6,7 +6,8 @@ import javax.ejb.EJBAccessException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.*;
 
-import com.github.t1.ramlap.*;
+import com.github.t1.ramlap.annotations.ApiResponse;
+import com.github.t1.ramlap.tools.ProblemDetail;
 
 @Provider
 public class EJBAccessExceptionMapper implements ExceptionMapper<EJBAccessException> {
