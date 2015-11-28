@@ -32,7 +32,7 @@ public class HtmlAcceptanceIT {
     private final WebDriver driver = driver();
 
     public WebDriver driver() {
-        HtmlUnitDriver driver = new HtmlUnitDriver(FIREFOX_24);
+        HtmlUnitDriver driver = new HtmlUnitDriver(FIREFOX_38);
         driver.setJavascriptEnabled(true);
         return driver;
     }
