@@ -93,7 +93,6 @@ public class DeployerPage implements Component {
         private NavBarBuilder navigation() {
             NavBarBuilder navbar = navBar().brand("Deployer");
             raml(navbar);
-            swagger(navbar);
             for (final Navigation navigation : Navigation.values())
                 nav(navbar, navigation);
             return navbar;
@@ -104,16 +103,6 @@ public class DeployerPage implements Component {
                     .classes("raml") //
                     .href(baseUri("doc/api-console.html")) //
                     .img(baseUri("img/raml.png")) //
-                    .build();
-        }
-
-        private void swagger(NavBarBuilder navbar) {
-            navbar.item() //
-                    .classes("swagger") //
-                    .href(baseUri("swagger-ui/index.html") //
-                            .queryParam("url", "/deployer/swagger.yaml") //
-                            .fragment(context -> "!/" + context.get(Navigation.class).name()))
-                    .img(baseUri("swagger-ui/images/logo_small.png")) //
                     .build();
         }
 

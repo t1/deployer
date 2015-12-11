@@ -12,10 +12,8 @@ import javax.xml.bind.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
-import io.swagger.annotations.ApiModel;
 import lombok.*;
 
-@ApiModel("The sha-1 or md5 checksum of a byte[]")
 @Value
 @RequiredArgsConstructor(access = PRIVATE)
 @XmlAccessorType(XmlAccessType.NONE)

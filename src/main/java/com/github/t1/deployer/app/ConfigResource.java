@@ -12,9 +12,6 @@ import com.github.t1.deployer.model.Config;
 import com.github.t1.deployer.model.Config.ConfigBuilder;
 import com.github.t1.deployer.model.Config.DeploymentListFileConfig.DeploymentListFileConfigBuilder;
 
-import io.swagger.annotations.*;
-
-@Api(tags = "config")
 @Boundary
 @Path("/config")
 public class ConfigResource {
@@ -35,7 +32,6 @@ public class ConfigResource {
     Boolean autoUndeploy;
 
     @GET
-    @ApiOperation("read the current config")
     public Config getConfig() {
         ConfigBuilder result = config.toBuilder();
         DeploymentListFileConfigBuilder deploymentListFileConfig = //

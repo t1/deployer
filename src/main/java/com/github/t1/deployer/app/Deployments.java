@@ -19,7 +19,6 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.ramlap.annotations.ApiResponse;
 import com.github.t1.ramlap.tools.ProblemDetail.*;
 
-import io.swagger.annotations.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,7 +90,6 @@ public class Deployments implements DeploymentsResource {
 
     @GET
     @Path("/{contextRoot}")
-    @ApiOperation("get a deployment")
     public Deployment getByContextRoot(@PathParam("contextRoot") ContextRoot contextRoot) {
         Deployment deployment = container.getDeploymentFor(contextRoot);
         if (deployment == null)
@@ -102,12 +100,11 @@ public class Deployments implements DeploymentsResource {
     }
 
     @POST
-    @ApiOperation("post a new deployment")
     @ApiResponse(type = DeploymentOperationFailed.class)
     public Response post( //
             @Context UriInfo uriInfo, //
-            @FormParam("checksum") @ApiParam(required = true) CheckSum checkSum, //
-            @FormParam("name") @ApiParam("optional name; defaults to the name in the repository") DeploymentName name //
+            @FormParam("checksum") CheckSum checkSum, //
+            @FormParam("name") DeploymentName name //
     ) {
         Deployment newDeployment = deploy(checkSum, name);
         ContextRoot contextRoot = newDeployment.getContextRoot();
@@ -116,16 +113,13 @@ public class Deployments implements DeploymentsResource {
 
     @POST
     @Path("/{contextRoot}")
-    @ApiOperation("post an action on an existing deployment")
-    @ApiResponses({ //
-            @io.swagger.annotations.ApiResponse(code = 400, message = "action or checksum form parameter is missing"), //
-            @io.swagger.annotations.ApiResponse(code = 303, message = "redirect to redeployed deployment") //
-    })
+    @ApiResponse(status = BAD_REQUEST, title = "action or checksum form parameter is missing") //
+    @ApiResponse(status = SEE_OTHER, title = "redirect to redeployed deployment") //
     public Response postToContextRoot( //
             @Context UriInfo uriInfo, //
             @PathParam("contextRoot") ContextRoot contextRoot, //
-            @FormParam("action") @ApiParam(required = true) PostDeploymentAction action, //
-            @FormParam("checksum") @ApiParam(required = true) CheckSum checkSum //
+            @FormParam("action") PostDeploymentAction action, //
+            @FormParam("checksum") CheckSum checkSum //
     ) {
         if (action == null)
             return Response.status(BAD_REQUEST).entity("action form parameter is missing").build();
@@ -152,7 +146,6 @@ public class Deployments implements DeploymentsResource {
 
     @PUT
     @Path("/{contextRoot}")
-    @ApiOperation("create or update a deployment")
     public Response put( //
             @Context UriInfo uriInfo, //
             @PathParam("contextRoot") ContextRoot contextRoot, //
@@ -217,7 +210,6 @@ public class Deployments implements DeploymentsResource {
 
     @DELETE
     @Path("/{contextRoot}")
-    @ApiOperation("delete a deployment")
     public void delete(@PathParam("contextRoot") ContextRoot contextRoot) {
         Deployment deployment = container.getDeploymentFor(contextRoot);
         container.undeploy(deployment.getName());
@@ -225,14 +217,12 @@ public class Deployments implements DeploymentsResource {
 
     @GET
     @Path("/{contextRoot}/name")
-    @ApiOperation("get the name of a deployment")
     public DeploymentName getName(@PathParam("contextRoot") ContextRoot contextRoot) {
         return container.getDeploymentFor(contextRoot).getName();
     }
 
     @GET
     @Path("/{contextRoot}/version")
-    @ApiOperation("get the version of a deployment")
     public Version getVersion(@PathParam("contextRoot") ContextRoot contextRoot) {
         return withVersion(container.getDeploymentFor(contextRoot)).getVersion();
     }
@@ -258,14 +248,12 @@ public class Deployments implements DeploymentsResource {
 
     @GET
     @Path("/{contextRoot}/checksum")
-    @ApiOperation("get the checksum of a deployment")
     public CheckSum getCheckSum(@PathParam("contextRoot") ContextRoot contextRoot) {
         return container.getDeploymentFor(contextRoot).getCheckSum();
     }
 
     @GET
     @Path("/{contextRoot}/releases")
-    @ApiOperation("get the releases of a deployment")
     public List<Release> getReleases(@PathParam("contextRoot") ContextRoot contextRoot) {
         Deployment deployment = container.getDeploymentFor(contextRoot);
         List<Release> releases = repository.releasesFor(deployment.getCheckSum());

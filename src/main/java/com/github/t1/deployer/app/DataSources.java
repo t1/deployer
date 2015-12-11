@@ -13,9 +13,7 @@ import javax.ws.rs.core.*;
 import com.github.t1.deployer.container.DataSourceContainer;
 import com.github.t1.deployer.model.DataSourceConfig;
 
-import io.swagger.annotations.*;
 
-@Api(tags = "datasources")
 @Boundary
 @Path("/datasources")
 public class DataSources {
@@ -41,15 +39,12 @@ public class DataSources {
     DataSourceContainer container;
 
     @GET
-    @ApiOperation("list of all data sources")
     public List<DataSourceConfig> getAllDataSources() {
         return container.getDataSources();
     }
 
     @GET
     @Path("{dataSourceName}")
-    @ApiOperation(value = "a data source by name",
-            notes = "The data source name `!` creates a new data source; useful to render a html form.")
     public DataSourceConfig getDataSource(@PathParam("dataSourceName") String dataSourceName) {
         if (NEW_DATA_SOURCE.equals(dataSourceName))
             return DataSourceConfig.builder().name(NEW_DATA_SOURCE).build();
@@ -57,7 +52,6 @@ public class DataSources {
     }
 
     @POST
-    @ApiOperation("post a new data source")
     public Response postNew(@Context UriInfo uriInfo, @NotNull @FormParam("name") String name) {
         DataSourceConfig newDataSource = DataSourceConfig.builder().name(name).build();
         container.add(newDataSource);
@@ -66,7 +60,6 @@ public class DataSources {
 
     @POST
     @Path("{dataSourceName}")
-    @ApiOperation("actions on a data source by name")
     public Response postAction( //
             @Context UriInfo uriInfo, //
             @PathParam("dataSourceName") String dataSourceName, //
@@ -84,7 +77,6 @@ public class DataSources {
 
     @DELETE
     @Path("{dataSourceName}")
-    @ApiOperation("delete a data source by name")
     public void delete(@PathParam("dataSourceName") String dataSourceName) {
         container.remove(dataSourceName);
     }

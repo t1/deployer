@@ -21,9 +21,6 @@
             <li class="raml">
               <a href="http://localhost:8080/deployer/doc/api-console.html"><img src="http://localhost:8080/deployer/img/raml.png"/></a>
             </li>
-            <li class="swagger">
-              <a href="http://localhost:8080/deployer/swagger-ui/index.html?url=%2Fdeployer%2Fswagger.yaml#%21%2F${swagger-tag}"><img src="http://localhost:8080/deployer/swagger-ui/images/logo_small.png"/></a>
-            </li>
             <li class="deployments${deployments-classes}"><a href="http://localhost:8080/deployer/deployments">Deployments</a></li>
             <li class="loggers${loggers-classes}"><a href="http://localhost:8080/deployer/loggers">Loggers</a></li>
             <li class="datasources${datasources-classes}"><a href="http://localhost:8080/deployer/datasources">Data-Sources</a></li>

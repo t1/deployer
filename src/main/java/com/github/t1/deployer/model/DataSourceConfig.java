@@ -6,7 +6,6 @@ import java.net.URI;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.swagger.annotations.ApiModel;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -17,7 +16,6 @@ import lombok.experimental.Accessors;
 @Builder
 @AllArgsConstructor(access = PRIVATE)
 @Accessors(chain = true)
-@ApiModel
 public class DataSourceConfig implements Comparable<DataSourceConfig> {
     public static final String NEW_DATA_SOURCE = "!";
 

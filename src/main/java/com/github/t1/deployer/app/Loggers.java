@@ -18,14 +18,9 @@ import com.github.t1.deployer.container.LoggerContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 
-import io.swagger.annotations.*;
-import io.swagger.jaxrs.PATCH;
-
-@Api(tags = "loggers")
 @Boundary
 @Path("/loggers")
 public class Loggers {
-    @ApiModel
     public enum PostLoggerAction {
         patch,
         delete;
@@ -55,45 +50,39 @@ public class Loggers {
     UriInfo uriInfo;
 
     @GET
-    @ApiOperation("list of all loggers")
     public List<LoggerConfig> getAllLoggers() {
         return container.getLoggers();
     }
 
     @GET
     @Path(NEW_LOGGER)
-    @ApiOperation(hidden = true, value = "return a form for new loggers")
     public LoggerConfig newLogger() {
         return new LoggerConfig(NEW_LOGGER, OFF);
     }
 
     @GET
     @Path("{category}")
-    @ApiOperation("a logger by category")
     public LoggerConfig getLogger(@PathParam("category") String category) {
         return (NEW_LOGGER.equals(category)) ? newLogger() : container.getLogger(category);
     }
 
     @GET
     @Path("{category}/level")
-    @ApiOperation(value = "the level of a logger", notes = "**Note**: Doesn't work in Swagger; seems to be a bug.")
     public LogLevel getLevel(@PathParam("category") String category) {
         return getLogger(category).getLevel();
     }
 
     @PUT
     @Path("{category}/level")
-    @ApiOperation("set the category of a logger")
     public void putLevel( //
             @PathParam("category") String category, //
-            @ApiParam(value = "must be a valid log level as string, i.e. in quotes.", required = true) LogLevel level) {
+            LogLevel level) {
         LoggerConfig patched = getLogger(category).toBuilder().level(level).build();
         container.update(patched);
     }
 
     @POST
     @Path("/")
-    @ApiOperation("create new logger")
     public Response postNew( //
             @Context UriInfo uriInfo, //
             @NotNull @FormParam("category") String category, //
@@ -106,7 +95,6 @@ public class Loggers {
 
     @PUT
     @Path("/{category}")
-    @ApiOperation("create or update a logger")
     public Response put( //
             @Context UriInfo uriInfo, //
             @NotNull @PathParam("category") String category, //
@@ -129,15 +117,10 @@ public class Loggers {
 
     @POST
     @Path("{category}")
-    @ApiOperation(value = "patch level or delete logger", //
-            notes = "form field `action` can be:\n" //
-                    + "* `patch` to patch the level of the logger (form param `level`) or \n" //
-                    + "* `delete` to delete the logger" //
-    )
     public Response post( //
             @Context UriInfo uriInfo, //
             @NotNull @PathParam("category") String category, //
-            @ApiParam(required = true) @NotNull @FormParam("action") PostLoggerAction action, //
+            @NotNull @FormParam("action") PostLoggerAction action, //
             @FormParam("level") LogLevel level //
     ) {
         if (action == null)
@@ -154,7 +137,6 @@ public class Loggers {
 
     @PATCH
     @Path("{category}")
-    @ApiOperation("patch the level of a logger")
     public Response patch( //
             @NotNull @PathParam("category") String category, //
             @Valid LoggerPatch patch //
@@ -167,7 +149,6 @@ public class Loggers {
 
     @DELETE
     @Path("{category}")
-    @ApiOperation("delete a logger")
     public void delete(@PathParam("category") String category) {
         container.remove(getLogger(category));
     }
