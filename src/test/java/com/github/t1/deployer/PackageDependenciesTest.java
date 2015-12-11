@@ -12,7 +12,7 @@ public class PackageDependenciesTest extends AbstractPackageDependenciesTest {
         return asList( //
                 com.github.t1.deployer.app.Deployments.class, //
                 com.github.t1.deployer.app.html.DeployerPage.class, //
-                com.github.t1.deployer.tools.ConfigProducer.class //
+                com.github.t1.deployer.tools.HttpFilter.class //
         );
     }
 }

@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import static com.github.t1.deployer.model.Config.DeploymentListFileConfig.*;
+import static com.github.t1.deployer.model.ConfigModel.DeploymentListFileConfig.*;
 
 import java.net.URI;
 
@@ -8,9 +8,9 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Config.ConfigBuilder;
-import com.github.t1.deployer.model.Config.DeploymentListFileConfig.DeploymentListFileConfigBuilder;
+import com.github.t1.deployer.model.ConfigModel;
+import com.github.t1.deployer.model.ConfigModel.ConfigModelBuilder;
+import com.github.t1.deployer.model.ConfigModel.DeploymentListFileConfig.DeploymentListFileConfigBuilder;
 
 @Boundary
 @Path("/config")
@@ -24,7 +24,7 @@ public class ConfigResource {
     }
 
     @Inject
-    Config config;
+    ConfigModel config;
 
     @com.github.t1.config.Config(
             description = "Automatically delete all deployments not found in the deployments list.",
@@ -32,8 +32,8 @@ public class ConfigResource {
     Boolean autoUndeploy;
 
     @GET
-    public Config getConfig() {
-        ConfigBuilder result = config.toBuilder();
+    public ConfigModel getConfig() {
+        ConfigModelBuilder result = config.toBuilder();
         DeploymentListFileConfigBuilder deploymentListFileConfig = //
                 (config.deploymentListFileConfig() == null) //
                         ? deploymentListFileConfig() //

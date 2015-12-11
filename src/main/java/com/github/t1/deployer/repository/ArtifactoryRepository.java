@@ -11,9 +11,9 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 
-import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 
+import com.github.t1.config.Config;
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
 
@@ -37,14 +37,31 @@ public class ArtifactoryRepository extends Repository {
         return path.getName(n).toString();
     }
 
-    @Inject
-    @Artifactory
-    private RestContext rest;
+    @Config(defaultValue = "http://localhost:8081/artifactory")
+    URI artifactory;
+    @Config(defaultValue = "")
+    String artifactoryUserName;
+    @Config(defaultValue = "")
+    String artifactoryPassword;
+
+    private RestContext restContext;
+
+    private RestContext rest() {
+        if (restContext == null) {
+            restContext = RestContext.REST.register("repository", artifactory);
+            if (artifactoryUserName != null && artifactoryPassword != null) {
+                log.debug("put {} credentials for {}", artifactoryUserName, artifactory);
+                Credentials credentials = new Credentials(artifactoryUserName, artifactoryPassword);
+                restContext = restContext.register(artifactory, credentials);
+            }
+        }
+        return restContext;
+    }
 
     public ArtifactoryRepository() {}
 
-    public ArtifactoryRepository(RestContext rest) {
-        this.rest = rest;
+    public ArtifactoryRepository(RestContext restContext) {
+        this.restContext = restContext;
     }
 
     /**
@@ -95,11 +112,11 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
-        UriTemplate uri = rest //
+        UriTemplate uri = rest() //
                 .nonQueryUri("repository") //
                 .path("api/search/checksum") //
                 .query("sha1", "{checkSum}");
-        RestRequest<ChecksumSearchResult> searchByChecksum = rest //
+        RestRequest<ChecksumSearchResult> searchByChecksum = rest() //
                 .createResource(uri) //
                 .header("X-Result-Detail", "info") //
                 .accept(ChecksumSearchResult.class);
@@ -214,7 +231,7 @@ public class ArtifactoryRepository extends Repository {
         log.trace("get deployments in {} (fileName: {})", uri, fileName);
         // TODO eventually it would be more efficient to use the Artifactory Pro feature 'List File':
         // /api/storage/{repoKey}/{folder-path}?list[&deep=0/1][&depth=n][&listFolders=0/1][&mdTimestamps=0/1][&includeRootPath=0/1]
-        FolderInfo folderInfo = rest.createResource(uri).GET(FolderInfo.class);
+        FolderInfo folderInfo = rest().createResource(uri).GET(FolderInfo.class);
         log.trace("got {}", folderInfo);
         return releasesIn(fileName, folderInfo);
     }
@@ -238,7 +255,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private Deployment deploymentIn(URI uri) {
-        FileInfo file = rest.createResource(uri).GET(FileInfo.class);
+        FileInfo file = rest().createResource(uri).GET(FileInfo.class);
         return file.deployment();
     }
 
@@ -255,6 +272,6 @@ public class ArtifactoryRepository extends Repository {
         }
         URI uri = found.getDownloadUri();
         log.info("found {} for checksum {}", uri, checkSum);
-        return rest.createResource(uri).GET(InputStream.class);
+        return rest().createResource(uri).GET(InputStream.class);
     }
 }

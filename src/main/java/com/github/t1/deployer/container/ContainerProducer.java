@@ -1,10 +1,6 @@
-package com.github.t1.deployer.tools;
+package com.github.t1.deployer.container;
 
-import static com.github.t1.deployer.model.Config.ContainerConfig.*;
-import static com.github.t1.deployer.model.Config.RepositoryConfig.*;
 import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.rest.RestContext.*;
-import static com.github.t1.rest.fallback.JsonMessageBodyReader.*;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -17,23 +13,15 @@ import javax.management.*;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
-import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Config.Authentication;
-import com.github.t1.deployer.repository.Artifactory;
 import com.github.t1.log.Logged;
-import com.github.t1.rest.*;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Logged(level = DEBUG)
 @ApplicationScoped
-public class ConfigProducer implements Serializable {
+public class ContainerProducer implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    private static final String REPOSITORY_URI_PROPERTY = "deployer.repository.uri";
-    private static final String CONTAINER_URI_PROPERTY = "deployer.container.uri";
 
     private static final String JBOSS_SERVER_CONFIG = System.getProperty("jboss.server.config.dir");
     static Path CONFIG_FILE = Paths.get(JBOSS_SERVER_CONFIG, "deployer.war").resolve("config.json").toAbsolutePath();
@@ -59,11 +47,7 @@ public class ConfigProducer implements Serializable {
 
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
-        URI uri = config().container().uri();
-        if (uri == null)
-            uri = getContainerUriFromMBeans();
-        if (uri == null)
-            throw new RuntimeException("no container configured and no appropriate MBean found");
+        URI uri = getContainerUriFromMBeans();
         log.info("connect to JBoss AS on: {}", uri);
         return createModelControllerClient(uri);
     }
@@ -71,7 +55,7 @@ public class ConfigProducer implements Serializable {
     private URI getContainerUriFromMBeans() {
         ObjectName managementInterface = findManagementInterface();
         if (managementInterface == null)
-            return null;
+            throw new RuntimeException("no appropriate MBean found");
         return URI.create(boundScheme(managementInterface) //
                 + "://" + getAttribute(managementInterface, "boundAddress", "localhost") //
                 + ":" + getAttribute(managementInterface, "boundPort", "9990") //
@@ -122,65 +106,5 @@ public class ConfigProducer implements Serializable {
 
     void disposeModelControllerClient(@Disposes ModelControllerClient client) throws IOException {
         client.close();
-    }
-
-    @Produces
-    @Artifactory
-    public RestContext produceRepositoryRestContext() {
-        RestContext rest = REST;
-        URI baseUri = config().repository().uri();
-        if (baseUri == null)
-            baseUri = URI.create("http://localhost:8081/artifactory");
-        rest = rest.register("repository", baseUri);
-        Credentials credentials = getRepositoryCredentials();
-        if (credentials != null) {
-            log.debug("put {} credentials for {}", credentials.userName(), baseUri);
-            rest = rest.register(baseUri, credentials);
-        }
-        return rest;
-    }
-
-    private Config config;
-
-    @Produces
-    @SneakyThrows(IOException.class)
-    Config config() {
-        if (config == null)
-            if (CONFIG_FILE != null && Files.isReadable(CONFIG_FILE)) {
-                log.debug("read config from {}", CONFIG_FILE);
-                config = MAPPER.readValue(Files.newBufferedReader(CONFIG_FILE), Config.class);
-            } else {
-                log.debug("no config file found at {}; use defaults", CONFIG_FILE);
-                config = Config.config() //
-                        .container(container() //
-                                .uri(getUriSystemProperty(CONTAINER_URI_PROPERTY)) //
-                                .build()) //
-                        .repository(repository() //
-                                .uri(getUriSystemProperty(REPOSITORY_URI_PROPERTY)) //
-                                // no authorization from system properties...
-                                // not secure
-                                .build()) //
-                        .build();
-            }
-        return config;
-    }
-
-    private URI getUriSystemProperty(String name) {
-        if (System.getProperty(name) == null)
-            return null;
-        return URI.create(System.getProperty(name));
-    }
-
-    private Credentials getRepositoryCredentials() {
-        Authentication authentication = config().repository().authentication();
-        if (authentication == null)
-            return null;
-        String username = authentication.username();
-        if (username == null)
-            return null;
-        String password = authentication.password();
-        if (password == null)
-            return null;
-        return new Credentials(username, password);
     }
 }

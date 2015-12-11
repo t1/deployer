@@ -1,9 +1,9 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.model.Config.Authentication.*;
-import static com.github.t1.deployer.model.Config.ContainerConfig.*;
-import static com.github.t1.deployer.model.Config.DeploymentListFileConfig.*;
-import static com.github.t1.deployer.model.Config.RepositoryConfig.*;
+import static com.github.t1.deployer.model.ConfigModel.Authentication.*;
+import static com.github.t1.deployer.model.ConfigModel.ContainerConfig.*;
+import static com.github.t1.deployer.model.ConfigModel.DeploymentListFileConfig.*;
+import static com.github.t1.deployer.model.ConfigModel.RepositoryConfig.*;
 import static org.junit.Assert.*;
 
 import java.net.URI;
@@ -12,17 +12,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.t1.deployer.model.Config;
+import com.github.t1.deployer.model.ConfigModel;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<Config> {
+public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<ConfigModel> {
     public ConfigHtmlWriterTest() {
         super(new ConfigHtmlWriter());
     }
 
     @Test
     public void shouldWriteEmptyConfigForm() throws Exception {
-        Config config = Config.config().build();
+        ConfigModel config = ConfigModel.config().build();
 
         String entity = write(config);
 
@@ -31,7 +31,7 @@ public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<Config> {
 
     @Test
     public void shouldWriteConfiguredConfigForm() throws Exception {
-        Config config = Config.config() //
+        ConfigModel config = ConfigModel.config() //
                 .container(container() //
                         .uri(URI.create("http://uri.container.example.net")) //
                         .build()) //

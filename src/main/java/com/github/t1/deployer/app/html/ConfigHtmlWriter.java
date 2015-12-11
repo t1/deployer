@@ -9,7 +9,7 @@ import static com.github.t1.deployer.app.html.builder.Input.*;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.StyleVariation.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
-import static com.github.t1.deployer.model.ConfigProperties.*;
+import static com.github.t1.deployer.model.ConfigModelProperties.*;
 
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
@@ -22,7 +22,7 @@ import com.github.t1.deployer.app.html.builder.Form.FormBuilder;
 import com.github.t1.deployer.model.*;
 
 @Provider
-public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<Config> {
+public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<ConfigModel> {
     private static final String MAIN_FORM_ID = "main";
 
     private static final Component CONFIG_LINK = append(context -> ConfigResource.base(context.get(UriInfo.class)));
@@ -39,21 +39,21 @@ public class ConfigHtmlWriter extends TextHtmlMessageBodyWriter<Config> {
     @Override
     protected Component component() {
         return out -> {
-            ConfigProperties<Config> config = configProperties();
+            ConfigModelProperties<ConfigModel> config = configModelProperties();
             DeployerPageBuilder page = deployerPage().title(text(config.$title()));
-            Config_RepositoryConfigProperties<Config> repository = config.repository();
-            Config_ContainerConfigProperties<Config> container = config.container();
-            Config_DeploymentListFileConfigProperties<Config> deploymentListFileConfig =
+            ConfigModel_RepositoryConfigProperties<ConfigModel> repository = config.repository();
+            ConfigModel_ContainerConfigProperties<ConfigModel> container = config.container();
+            ConfigModel_DeploymentListFileConfigProperties<ConfigModel> deploymentListFileConfig =
                     config.deploymentListFileConfig();
             FormBuilder form = form(MAIN_FORM_ID).horizontal().action(CONFIG_LINK) //
                     .fieldset(repository.$title(), //
-                            input(repository.uri(), Config.class).autofocus(), //
-                            input(repository.authentication().username(), Config.class), //
-                            input(repository.authentication().password(), Config.class)) //
+                            input(repository.uri(), ConfigModel.class).autofocus(), //
+                            input(repository.authentication().username(), ConfigModel.class), //
+                            input(repository.authentication().password(), ConfigModel.class)) //
                     .fieldset(container.$title(), //
-                            input(container.uri(), Config.class)) //
+                            input(container.uri(), ConfigModel.class)) //
                     .fieldset(deploymentListFileConfig.$title(), //
-                            input(deploymentListFileConfig.autoUndeploy(), Config.class).required()) //
+                            input(deploymentListFileConfig.autoUndeploy(), ConfigModel.class).required()) //
                             ;
             page.panelBody(compound( //
                     form, //

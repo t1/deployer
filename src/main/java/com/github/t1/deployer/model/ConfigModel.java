@@ -5,20 +5,18 @@ import static lombok.AccessLevel.*;
 import java.net.URI;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.t1.deployer.tools.Never;
 import com.github.t1.meta.GenerateMeta;
 
 import lombok.*;
 import lombok.experimental.Accessors;
 
-@Never
 @Value
 @Builder(builderMethodName = "config", toBuilder = true)
 @AllArgsConstructor(access = PRIVATE)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @Accessors(fluent = true)
 @GenerateMeta
-public class Config {
+public class ConfigModel {
     @Value
     @Builder(builderMethodName = "authentication", toBuilder = true)
     @AllArgsConstructor(access = PRIVATE)
