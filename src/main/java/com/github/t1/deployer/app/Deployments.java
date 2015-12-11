@@ -88,6 +88,12 @@ public class Deployments implements DeploymentsResource {
         return NEW_DEPLOYMENT;
     }
 
+    // FIXME merge
+    @Override
+    public Response getByContextRoot() {
+        return null;
+    }
+
     @GET
     @Path("/{contextRoot}")
     public Deployment getByContextRoot(@PathParam("contextRoot") ContextRoot contextRoot) {
