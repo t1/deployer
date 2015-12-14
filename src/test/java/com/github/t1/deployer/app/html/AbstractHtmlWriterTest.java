@@ -48,7 +48,8 @@ public abstract class AbstractHtmlWriterTest<T> {
 
     protected String write(T target) throws IOException {
         Type generic = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
-        assertTrue(writer.isWriteable(target.getClass(), generic, null, TEXT_HTML_TYPE));
+        assertTrue("is writeable: " + generic,
+                writer.isWriteable(target.getClass(), generic, null, TEXT_HTML_TYPE));
 
         MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
         ByteArrayOutputStream entityStream = new ByteArrayOutputStream();

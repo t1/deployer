@@ -1,28 +1,31 @@
 package com.github.t1.deployer.app.html;
 
-import static com.github.t1.deployer.model.ConfigModel.Authentication.*;
-import static com.github.t1.deployer.model.ConfigModel.ContainerConfig.*;
-import static com.github.t1.deployer.model.ConfigModel.DeploymentListFileConfig.*;
-import static com.github.t1.deployer.model.ConfigModel.RepositoryConfig.*;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
 import static org.junit.Assert.*;
 
+import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.t1.deployer.model.ConfigModel;
+import com.github.t1.config.*;
+import com.github.t1.deployer.app.file.DeploymentListFile;
+import com.github.t1.deployer.model.Password;
+import com.github.t1.deployer.repository.ArtifactoryRepository;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<ConfigModel> {
+public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<List<ConfigInfo>> {
     public ConfigHtmlWriterTest() {
         super(new ConfigHtmlWriter());
     }
 
     @Test
     public void shouldWriteEmptyConfigForm() throws Exception {
-        ConfigModel config = ConfigModel.config().build();
+        List<ConfigInfo> config = emptyList();
 
         String entity = write(config);
 
@@ -31,24 +34,29 @@ public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<ConfigModel> {
 
     @Test
     public void shouldWriteConfiguredConfigForm() throws Exception {
-        ConfigModel config = ConfigModel.config() //
-                .container(container() //
-                        .uri(URI.create("http://uri.container.example.net")) //
-                        .build()) //
-                .repository(repository() //
-                        .uri(URI.create("http://uri.repository.example.net")) //
-                        .authentication(authentication() //
-                                .username("joe") //
-                                .password("doe") //
-                                .build()) //
-                        .build()) //
-                .deploymentListFileConfig(deploymentListFileConfig() //
-                        .autoUndeploy(true) //
-                        .build()) //
-                .build();
+        List<ConfigInfo> config = asList(
+                configInfo(DeploymentListFile.class, "autoUndeploy", true),
+                configInfo(ArtifactoryRepository.class, "artifactory", URI.create("http://uri.repository.example.net")),
+                configInfo(ArtifactoryRepository.class, "artifactoryUserName", "joe"),
+                configInfo(ArtifactoryRepository.class, "artifactoryPassword", new Password("doe")));
 
         String entity = write(config);
 
         assertEquals(readFile(), entity);
+    }
+
+    private ConfigInfo configInfo(Class<?> container, String name, Object value) throws ReflectiveOperationException {
+        Field field = container.getDeclaredField(name);
+        field.setAccessible(true);
+        Config config = field.getAnnotation(Config.class);
+        return ConfigInfo.builder()
+                .name(name)
+                .container(container)
+                .defaultValue(config.defaultValue())
+                .description(config.description())
+                .meta(ConfigInfoProducer.toJson(config.meta()))
+                .type(value.getClass())
+                .value(value)
+                .build();
     }
 }

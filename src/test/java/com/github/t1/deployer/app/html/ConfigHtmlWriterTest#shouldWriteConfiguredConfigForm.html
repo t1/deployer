@@ -1,37 +1,28 @@
-@include prefix title="Config Model" config-classes=" active" swagger-tag="config"
+@include prefix title="Config" config-classes=" active" swagger-tag="config"
 
     <div class="panel panel-default">
-      <div class="panel-heading"><h1>Config Model</h1></div>
+      <div class="panel-heading"><h1>Config</h1></div>
 
       <div class="panel-body">
         <form method="POST" id="main" class="form-horizontal" action="http://localhost:8080/deployer/config">
           <fieldset>
-            <legend>Repository Config</legend>
+            <legend>Artifactory Repository Config</legend>
             <div class="form-group">
-              <label class="control-label col-sm-2" for="uri">Uri</label>
+              <label class="control-label col-sm-2" for="artifactory">URI</label>
               <div class="col-sm-10">
-                <input type="uri" class="form-control" name="uri" id="uri" value="http://uri.repository.example.net" autofocus/>
+                <input type="uri" class="form-control" name="artifactory" id="artifactory" value="http://uri.repository.example.net" autofocus>The base URI where the Artifactory instance can be reached</input>
               </div>
             </div>
             <div class="form-group">
-              <label class="control-label col-sm-2" for="username">Username</label>
+              <label class="control-label col-sm-2" for="artifactoryUserName">User Name</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="username" id="username" value="joe"/>
+                <input type="text" class="form-control" name="artifactoryUserName" id="artifactoryUserName" value="joe">The user name used to authenticate on the Artifactory server. Leave empty to use Artifactory without authenticating.</input>
               </div>
             </div>
             <div class="form-group">
-              <label class="control-label col-sm-2" for="password">Password</label>
+              <label class="control-label col-sm-2" for="artifactoryPassword">Password</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="password" id="password" value="doe"/>
-              </div>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>Container Config</legend>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="uri">Uri</label>
-              <div class="col-sm-10">
-                <input type="uri" class="form-control" name="uri" id="uri" value="http://uri.container.example.net"/>
+                <input type="password" class="form-control" name="artifactoryPassword" id="artifactoryPassword" value="undisclosed password">The password used to authenticate on the Artifactory server.</input>
               </div>
             </div>
           </fieldset>

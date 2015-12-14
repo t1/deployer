@@ -115,12 +115,12 @@ public class Input extends DelegateComponent {
             return this;
         }
 
-        private InputBuilder attr(Component name) {
+        public InputBuilder attr(Component name) {
             input.attr(name);
             return this;
         }
 
-        private InputBuilder attr(String name, Component value) {
+        public InputBuilder attr(String name, Component value) {
             input.attr(name, value);
             return this;
         }

@@ -37,12 +37,17 @@ public class ArtifactoryRepository extends Repository {
         return path.getName(n).toString();
     }
 
-    @Config(defaultValue = "http://localhost:8081/artifactory")
+    @Config(defaultValue = "http://localhost:8081/artifactory", meta = "{'label':'URI'}",
+            description = "The base URI where the Artifactory instance can be reached")
     URI artifactory;
-    @Config(defaultValue = "")
+
+    @Config(defaultValue = "", meta = "{'label':'User Name'}",
+            description = "The user name used to authenticate on the Artifactory server. Leave empty to use Artifactory without authenticating.")
     String artifactoryUserName;
-    @Config(defaultValue = "")
-    String artifactoryPassword;
+
+    @Config(defaultValue = "", meta = "{'label':'Password'}",
+            description = "The password used to authenticate on the Artifactory server.")
+    Password artifactoryPassword;
 
     private RestContext restContext;
 
@@ -51,7 +56,7 @@ public class ArtifactoryRepository extends Repository {
             restContext = RestContext.REST.register("repository", artifactory);
             if (artifactoryUserName != null && artifactoryPassword != null) {
                 log.debug("put {} credentials for {}", artifactoryUserName, artifactory);
-                Credentials credentials = new Credentials(artifactoryUserName, artifactoryPassword);
+                Credentials credentials = new Credentials(artifactoryUserName, artifactoryPassword.getValue());
                 restContext = restContext.register(artifactory, credentials);
             }
         }

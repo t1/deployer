@@ -89,8 +89,8 @@ public class DeploymentListFile {
     @Inject
     Repository repository;
 
-    @Config(description = "Automatically delete all deployments not found in the deployments list.",
-            defaultValue = "false")
+    @Config(defaultValue = "false",
+            description = "Automatically delete all deployments not found in the deployments list.")
     private Boolean autoUndeploy;
 
     private final Path configDir = Paths.get(System.getProperty("jboss.server.config.dir", "."));

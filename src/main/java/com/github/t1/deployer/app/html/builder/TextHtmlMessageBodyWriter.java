@@ -39,9 +39,11 @@ public abstract class TextHtmlMessageBodyWriter<T> implements MessageBodyWriter<
 
     protected Class<?> getType() {
         Type generic = getClass().getGenericSuperclass();
-        if (generic instanceof Class)
-            return (Class<?>) generic;
-        return (Class<?>) ((ParameterizedType) generic).getActualTypeArguments()[0];
+        while (true) {
+            if (generic instanceof Class)
+                return (Class<?>) generic;
+            generic = ((ParameterizedType) generic).getActualTypeArguments()[0];
+        }
     }
 
     @Override
