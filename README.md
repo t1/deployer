@@ -66,3 +66,59 @@ If you want to use management users instead, you'll have to:
 	    <security-domain>deployer</security-domain>
 	</jboss-web>
 	```
+
+### jboss sso
+
+If you need a security-domain `spp` instead of the default `other`, create a file `jboss-web.xml`:
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<jboss-web xmlns="http://www.jboss.org/j2ee/schema/jboss-web_7_2.xsd">
+	   <security-domain>spp</security-domain>
+	</jboss-web>
+
+Create a custom `web.xml`:
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+	    <servlet>
+	        <servlet-name>javax.ws.rs.core.Application</servlet-name>
+	    </servlet>
+	    <servlet-mapping>
+	        <servlet-name>javax.ws.rs.core.Application</servlet-name>
+	        <url-pattern>/*</url-pattern>
+	    </servlet-mapping>
+
+	    <context-param>
+	        <param-name>resteasy.scan</param-name>
+	        <param-value>true</param-value>
+	    </context-param>
+
+	    <context-param>
+	        <!-- prevent XXE attacks: -->
+	        <param-name>resteasy.document.expand.entity.references</param-name>
+	        <param-value>false</param-value>
+	    </context-param>
+
+	    <security-constraint>
+	        <web-resource-collection>
+	            <web-resource-name>protected-resource</web-resource-name>
+	            <url-pattern>/*</url-pattern>
+	        </web-resource-collection>
+	        <auth-constraint>
+	            <role-name>*</role-name>
+	        </auth-constraint>
+	    </security-constraint>
+
+	    <login-config>
+	        <auth-method>SSO</auth-method>
+	    </login-config>
+
+	    <security-role>
+	        <role-name>*</role-name>
+	    </security-role>
+	 </web-app>
+
+Finally execute this cli:
+
+	deployment-overlay add --name=deployer-sso --content=/WEB-INF/web.xml=web.xml,/WEB-INF/jboss-web.xml=jboss-web.xml --deployments=deployer.war --redeploy-affected
