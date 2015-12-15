@@ -37,15 +37,15 @@ public class ArtifactoryRepository extends Repository {
         return path.getName(n).toString();
     }
 
-    @Config(defaultValue = "http://localhost:8081/artifactory", meta = "{'label':'URI'}",
+    @Config(defaultValue = "http://localhost:8081/artifactory", meta = "{'label':'URI','order':100}",
             description = "The base URI where the Artifactory instance can be reached")
     URI artifactory;
 
-    @Config(defaultValue = "", meta = "{'label':'User Name'}",
+    @Config(defaultValue = "", meta = "{'label':'User Name','order':110}",
             description = "The user name used to authenticate on the Artifactory server. Leave empty to use Artifactory without authenticating.")
     String artifactoryUserName;
 
-    @Config(defaultValue = "", meta = "{'label':'Password'}",
+    @Config(defaultValue = "", meta = "{'label':'Password','order':120}",
             description = "The password used to authenticate on the Artifactory server.")
     Password artifactoryPassword;
 

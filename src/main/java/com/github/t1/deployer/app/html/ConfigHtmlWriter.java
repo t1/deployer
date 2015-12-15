@@ -63,7 +63,7 @@ public class ConfigHtmlWriter extends TextHtmlListMessageBodyWriter<ConfigInfo> 
     private Map<Class<?>, List<ConfigInfo>> configsByContainer(BuildContext context) {
         @SuppressWarnings("unchecked")
         List<ConfigInfo> configs = context.get(List.class);
-        return configs.stream().collect(groupingBy(ConfigInfo::getContainer));
+        return configs.stream().collect(groupingBy(ConfigInfo::getContainer, LinkedHashMap::new, toList()));
     }
 
     private static String camelToTitle(String in) {

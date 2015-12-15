@@ -1,12 +1,13 @@
 package com.github.t1.deployer.app.html;
 
+import static com.github.t1.deployer.app.ConfigResource.*;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.junit.Assert.*;
 
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.List;
+import java.util.*;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +40,7 @@ public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<List<ConfigInfo
                 configInfo(ArtifactoryRepository.class, "artifactory", URI.create("http://uri.repository.example.net")),
                 configInfo(ArtifactoryRepository.class, "artifactoryUserName", "joe"),
                 configInfo(ArtifactoryRepository.class, "artifactoryPassword", new Password("doe")));
+        Collections.sort(config, BY_ORDER);
 
         String entity = write(config);
 

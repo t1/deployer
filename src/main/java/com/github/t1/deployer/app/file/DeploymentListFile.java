@@ -89,7 +89,7 @@ public class DeploymentListFile {
     @Inject
     Repository repository;
 
-    @Config(defaultValue = "false",
+    @Config(defaultValue = "false", meta = "{'order':1000}",
             description = "Automatically delete all deployments not found in the deployments list.")
     private Boolean autoUndeploy;
 
