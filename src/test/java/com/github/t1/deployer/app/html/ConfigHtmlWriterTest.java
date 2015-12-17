@@ -9,6 +9,8 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.*;
 
+import javax.json.JsonObject;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -51,14 +53,51 @@ public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<List<ConfigInfo
         Field field = container.getDeclaredField(name);
         field.setAccessible(true);
         Config config = field.getAnnotation(Config.class);
-        return ConfigInfo.builder()
-                .name(name)
-                .container(container)
-                .defaultValue(config.defaultValue())
-                .description(config.description())
-                .meta(ConfigInfoProducer.toJson(config.meta()))
-                .type(value.getClass())
-                .value(value)
-                .build();
+        return new ConfigInfo() {
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public String getDescription() {
+                return config.description();
+            }
+
+            @Override
+            public String getDefaultValue() {
+                return config.defaultValue();
+            }
+
+            @Override
+            public Object getValue() {
+                return value;
+            }
+
+            @Override
+            public Class<?> getType() {
+                return value.getClass();
+            }
+
+            @Override
+            public Class<?> getContainer() {
+                return container;
+            }
+
+            @Override
+            public JsonObject getMeta() {
+                return ConfigInfoProducer.toJson(config.meta());
+            }
+
+            @Override
+            public boolean isUpdatable() {
+                return false;
+            }
+
+            @Override
+            public void updateTo(String value) {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

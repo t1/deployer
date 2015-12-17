@@ -95,10 +95,10 @@ public class ConfigHtmlWriter extends TextHtmlListMessageBodyWriter<ConfigInfo> 
             return new InputBuilder() // not form-control!
                     .idAndName(configInfo.getName())
                     .type("checkbox")
-                    .required()
-                    .value(configInfo.getName())
+                    .value("true")
                     .label(label(configInfo))
                     .description(configInfo.getDescription())
+                    .required()
                     .attr(append(context -> ((Boolean) configInfo.getValue()) ? "checked" : ""));
         else
             return Input.input(configInfo.getName())

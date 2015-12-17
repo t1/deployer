@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import static com.github.t1.config.ConfigInfo.*;
 import static java.util.stream.Collectors.*;
 
 import java.net.URI;
@@ -10,6 +11,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import com.github.t1.config.ConfigInfo;
+import com.github.t1.ramlap.annotations.ApiResponse;
 import com.github.t1.ramlap.tools.ProblemDetail.BadRequest;
 
 import lombok.extern.slf4j.Slf4j;
@@ -45,11 +47,17 @@ public class ConfigResource {
     }
 
     @POST
+    @ApiResponse(type = InvalidDuplicationOfFormParameters.class)
+    @ApiResponse(type = InvalidFormParameter.class)
     public Response postConfig(Form form) {
         form.asMap().forEach((key, values) -> {
             String value = singleString(values);
-            log.debug("update {}: {}", key, value);
-            singleConfig(key).updateTo(value);
+            log.debug("update {} to {}", key, value);
+            configs.stream()
+                    .filter(byName(key))
+                    .findAny()
+                    .orElseThrow(() -> new InvalidFormParameter().toWebException())
+                    .updateTo(value);
         });
         return Response.noContent().build();
     }
@@ -58,14 +66,5 @@ public class ConfigResource {
         if (values.size() != 1)
             throw new InvalidDuplicationOfFormParameters().toWebException();
         return values.get(0);
-    }
-
-    private ConfigInfo singleConfig(String key) {
-        List<ConfigInfo> configs = this.configs.stream()
-                .filter(config -> config.getName().equals(key))
-                .collect(toList());
-        if (configs.isEmpty())
-            throw new InvalidFormParameter().toWebException();
-        return configs.get(0);
     }
 }

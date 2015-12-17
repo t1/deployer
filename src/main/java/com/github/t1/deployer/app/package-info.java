@@ -7,4 +7,4 @@
 @com.github.t1.ramlap.annotations.ApiGenerate(from = "src/main/resources/doc/deployer.raml")
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.tools.DependsUpon;
+import com.github.t1.testtools.DependsUpon;

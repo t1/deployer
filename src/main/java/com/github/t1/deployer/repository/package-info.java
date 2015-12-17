@@ -5,4 +5,4 @@
 })
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.tools.DependsUpon;
+import com.github.t1.testtools.DependsUpon;

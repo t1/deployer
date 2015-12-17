@@ -4,3 +4,5 @@
         com.github.t1.rest.fallback.ConverterTools.class //
 })
 package com.github.t1.deployer.tools;
+
+import com.github.t1.testtools.DependsUpon;

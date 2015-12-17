@@ -7,4 +7,4 @@
 })
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.tools.DependsUpon;
+import com.github.t1.testtools.DependsUpon;

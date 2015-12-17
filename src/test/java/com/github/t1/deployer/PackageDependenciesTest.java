@@ -4,7 +4,7 @@ import static java.util.Arrays.*;
 
 import java.util.List;
 
-import com.github.t1.deployer.tools.AbstractPackageDependenciesTest;
+import com.github.t1.testtools.AbstractPackageDependenciesTest;
 
 public class PackageDependenciesTest extends AbstractPackageDependenciesTest {
     @Override

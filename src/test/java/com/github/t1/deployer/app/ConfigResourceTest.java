@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app;
 
-import static com.github.t1.config.ConfigInfo.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -20,8 +19,8 @@ import com.github.t1.ramlap.tools.ProblemDetail;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ConfigResourceTest {
-    private static final ConfigInfo CONFIG_0 = config("config0").value("value0").build();
-    private static final ConfigInfo CONFIG_1 = config("config1").value("value1").build();
+    private static final ConfigInfo CONFIG_0 = new DummyConfigInfo("config0", "value0");
+    private static final ConfigInfo CONFIG_1 = new DummyConfigInfo("config1", "value1");
 
     ConfigResource resource = new ConfigResource();
 
