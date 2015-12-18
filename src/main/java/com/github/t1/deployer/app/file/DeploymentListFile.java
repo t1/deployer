@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app.file;
 
 import static com.github.t1.deployer.container.DeploymentContainer.*;
-import static java.lang.Boolean.*;
 import static java.util.concurrent.TimeUnit.*;
 
 import java.io.*;
@@ -91,7 +90,7 @@ public class DeploymentListFile {
 
     @Config(defaultValue = "false", meta = "{'order':1000}",
             description = "Automatically delete all deployments not found in the deployments list.")
-    private Boolean autoUndeploy;
+    private boolean autoUndeploy;
 
     private final Path configDir = Paths.get(System.getProperty("jboss.server.config.dir", "."));
     private final Path deploymentsList = configDir.resolve("deployments.properties");
@@ -126,7 +125,7 @@ public class DeploymentListFile {
                 ContextRoot contextRoot = actual.getContextRoot();
                 Version expectedVersion = expected.get(contextRoot);
                 if (expectedVersion == null) {
-                    if (TRUE == autoUndeploy) {
+                    if (autoUndeploy) {
                         log.info("expected version of {} is null -> undeploy", contextRoot);
                         container.undeploy(actual.getName());
                     } else {

@@ -10,6 +10,8 @@ import lombok.Value;
 @Value
 @JsonSerialize(using = ToStringSerializer.class)
 public class Password {
+    public static final String UNDISCLOSED_PASSWORD = "undisclosed password";
+
     String value;
 
     @FromString
@@ -20,6 +22,6 @@ public class Password {
     @Override
     @ToString
     public String toString() {
-        return "undisclosed password";
+        return UNDISCLOSED_PASSWORD;
     }
 }

@@ -45,7 +45,11 @@ public class ArtifactoryRepository extends Repository {
             description = "The user name used to authenticate on the Artifactory server. Leave empty to use Artifactory without authenticating.")
     String artifactoryUserName;
 
-    @Config(defaultValue = "", meta = "{'label':'Password','order':120}",
+    @Config(defaultValue = "", meta = "{"
+            + "'label':'Password',"
+            + "'order':120,"
+            + "'confidential':true"
+            + "}",
             description = "The password used to authenticate on the Artifactory server.")
     Password artifactoryPassword;
 

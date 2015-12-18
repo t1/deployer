@@ -91,7 +91,7 @@ public class ConfigHtmlWriter extends TextHtmlListMessageBodyWriter<ConfigInfo> 
     }
 
     private InputBuilder input(ConfigInfo configInfo) {
-        if (Boolean.class.isAssignableFrom(configInfo.getType()))
+        if (Boolean.class == configInfo.getType() || boolean.class == configInfo.getType())
             return new InputBuilder() // not form-control!
                     .idAndName(configInfo.getName())
                     .type("checkbox")

@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app;
 
-import static com.github.t1.config.ConfigInfo.*;
 import static java.util.stream.Collectors.*;
 
 import java.net.URI;
@@ -42,7 +41,7 @@ public class ConfigResource {
     List<ConfigInfo> configs;
 
     @GET
-    public List<ConfigInfo> getConfig() {
+    public List<ConfigInfo> getConfigs() {
         return configs.stream().sorted(BY_ORDER).collect(toList());
     }
 
@@ -50,21 +49,39 @@ public class ConfigResource {
     @ApiResponse(type = InvalidDuplicationOfFormParameters.class)
     @ApiResponse(type = InvalidFormParameter.class)
     public Response postConfig(Form form) {
-        form.asMap().forEach((key, values) -> {
-            String value = singleString(values);
-            log.debug("update {} to {}", key, value);
-            configs.stream()
-                    .filter(byName(key))
-                    .findAny()
-                    .orElseThrow(() -> new InvalidFormParameter().toWebException())
-                    .updateTo(value);
-        });
+        configs.forEach(config -> update(config, formValue(form, config.getName())));
+        if (!form.asMap().isEmpty())
+            return new InvalidFormParameter().toResponse();
         return Response.noContent().build();
     }
 
+    private String formValue(Form form, String name) {
+        return singleString(form.asMap().remove(name));
+    }
+
     private String singleString(List<String> values) {
+        if (values == null)
+            return null;
         if (values.size() != 1)
             throw new InvalidDuplicationOfFormParameters().toWebException();
         return values.get(0);
+    }
+
+    private void update(ConfigInfo configInfo, String value) {
+        if (Objects.equals(value, stringValue(configInfo))) {
+            log.debug("don't update {} to old value", configInfo.getName());
+        } else {
+            log.debug("update {} to {}: [{}]", configInfo.getName(), configInfo.getType().getName(),
+                    isConfidential(configInfo) ? "?" : value);
+            configInfo.updateTo(value);
+        }
+    }
+
+    private String stringValue(ConfigInfo configInfo) {
+        return (configInfo.getValue() == null) ? null : configInfo.getValue().toString();
+    }
+
+    private boolean isConfidential(ConfigInfo configInfo) {
+        return configInfo.getMeta().getBoolean("confidential", false);
     }
 }
