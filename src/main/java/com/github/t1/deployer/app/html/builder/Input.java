@@ -3,12 +3,10 @@ package com.github.t1.deployer.app.html.builder;
 import static com.github.t1.deployer.app.html.builder.Static.*;
 import static com.github.t1.deployer.app.html.builder.Tag.*;
 import static com.github.t1.deployer.app.html.builder.Tags.*;
-import static java.lang.Boolean.*;
 
 import java.util.function.Function;
 
 import com.github.t1.deployer.app.html.builder.Tag.TagBuilder;
-import com.github.t1.meta.*;
 
 import lombok.*;
 
@@ -25,29 +23,6 @@ public class Input extends DelegateComponent {
 
     public static Input hiddenInput(String name, String value) {
         return new InputBuilder().type("hidden").name(name).value(value).build();
-    }
-
-    public static <T> InputBuilder input(StringProperty<T> property, Class<T> type) {
-        return input(property.id()) //
-                .label(property.title()) //
-                .value(append(c -> property.get(c.get(type)).orElse(null)));
-    }
-
-    public static <T> InputBuilder input(UriProperty<T> property, Class<T> type) {
-        return input(property.id()) //
-                .type("uri") //
-                .label(property.title()) //
-                .value(append(c -> property.get(c.get(type)).orElse(null)));
-    }
-
-    public static <T> InputBuilder input(BooleanProperty<T> property, Class<T> type) {
-        return new InputBuilder() // not form-control!
-                .idAndName(property.id()) //
-                .type("checkbox") //
-                .value(property.id()) //
-                .label(property.title()) //
-                .description(property.description()) //
-                .attr(append(c -> property.get(c.get(type)).orElse(FALSE) ? "checked" : ""));
     }
 
     public static InputBuilder input(String idAndName) {
