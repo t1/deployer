@@ -86,7 +86,7 @@ public class ConfigHtmlWriterTest extends AbstractHtmlWriterTest<List<ConfigInfo
 
             @Override
             public JsonObject getMeta() {
-                return ConfigInfoProducer.toJson(config.meta());
+                return CdiProducers.toJson(config.meta());
             }
 
             @Override
