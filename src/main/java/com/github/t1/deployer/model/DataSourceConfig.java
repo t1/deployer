@@ -1,13 +1,12 @@
 package com.github.t1.deployer.model;
 
-import static lombok.AccessLevel.*;
+import lombok.*;
+import lombok.experimental.Accessors;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import lombok.*;
-import lombok.experimental.Accessors;
+import static lombok.AccessLevel.*;
 
 /**
  * @see javax.annotation.sql.DataSourceDefinition
@@ -20,13 +19,10 @@ public class DataSourceConfig implements Comparable<DataSourceConfig> {
     public static final String NEW_DATA_SOURCE = "!";
 
     @NonNull
-    @JsonProperty
     String name;
 
-    @JsonProperty
     String driver;
 
-    @JsonProperty
     String jndiName;
 
     /**
@@ -35,13 +31,10 @@ public class DataSourceConfig implements Comparable<DataSourceConfig> {
      */
     // String className();
 
-    @JsonProperty
     URI uri;
 
-    @JsonProperty
     String user;
 
-    @JsonProperty
     String password;
 
     /**
@@ -130,7 +123,7 @@ public class DataSourceConfig implements Comparable<DataSourceConfig> {
     // int loginTimeout() default 0;
 
     @Override
-    public int compareTo(DataSourceConfig that) {
+    public int compareTo(@NotNull DataSourceConfig that) {
         return this.name.compareToIgnoreCase(that.name);
     }
 

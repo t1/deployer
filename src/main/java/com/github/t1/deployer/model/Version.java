@@ -1,26 +1,20 @@
 package com.github.t1.deployer.model;
 
-import static lombok.AccessLevel.*;
-
-import java.util.Comparator;
+import lombok.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.*;
+import java.util.Comparator;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.github.t1.ramlap.annotations.ApiExample;
-
-import lombok.*;
+import static lombok.AccessLevel.*;
 
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
 @RequiredArgsConstructor
 @XmlAccessorType(XmlAccessType.NONE)
-@JsonSerialize(using = ToStringSerializer.class)
 public class Version implements Comparable<Version> {
     @NonNull
     @XmlValue
-    @ApiExample("1.12.3")
     private String version;
 
     @Override
@@ -29,9 +23,7 @@ public class Version implements Comparable<Version> {
     }
 
     @Override
-    public int compareTo(Version that) {
-        return COMPARATOR.compare(this, that);
-    }
+    public int compareTo(@NotNull Version that) { return COMPARATOR.compare(this, that); }
 
     public static final Comparator<Version> COMPARATOR = new Comparator<Version>() {
         @Override

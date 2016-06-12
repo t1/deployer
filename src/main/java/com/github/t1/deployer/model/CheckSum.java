@@ -1,23 +1,18 @@
 package com.github.t1.deployer.model;
 
-import static javax.xml.bind.DatatypeConverter.*;
-import static lombok.AccessLevel.*;
+import lombok.*;
 
+import javax.xml.bind.annotation.*;
 import java.io.IOException;
 import java.nio.file.*;
 import java.security.*;
 
-import javax.xml.bind.annotation.*;
-
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-
-import lombok.*;
+import static javax.xml.bind.DatatypeConverter.*;
+import static lombok.AccessLevel.*;
 
 @Value
 @RequiredArgsConstructor(access = PRIVATE)
 @XmlAccessorType(XmlAccessType.NONE)
-@JsonSerialize(using = ToStringSerializer.class)
 public class CheckSum {
     public static CheckSum of(byte[] bytes) {
         return new CheckSum(bytes);
@@ -44,7 +39,7 @@ public class CheckSum {
     }
 
     @SneakyThrows(IOException.class)
-    public static CheckSum of(Path path, String algorithm) {
+    private static CheckSum of(Path path, String algorithm) {
         return of(Files.readAllBytes(path), algorithm);
     }
 
@@ -57,7 +52,7 @@ public class CheckSum {
     }
 
     @SneakyThrows(NoSuchAlgorithmException.class)
-    public static CheckSum of(byte[] bytes, String algorithm) {
+    private static CheckSum of(byte[] bytes, String algorithm) {
         MessageDigest hash = MessageDigest.getInstance(algorithm);
         return of(hash.digest(bytes));
     }

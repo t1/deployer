@@ -1,8 +1,14 @@
-package com.github.t1.deployer.app.file;
+package com.github.t1.deployer.app;
 
-import static com.github.t1.deployer.container.DeploymentContainer.*;
-import static java.util.concurrent.TimeUnit.*;
+import com.github.t1.deployer.container.DeploymentContainer;
+import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.repository.Repository;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.*;
+import javax.ejb.*;
+import javax.inject.Inject;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.*;
@@ -10,17 +16,8 @@ import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.*;
 
-import javax.annotation.*;
-import javax.ejb.*;
-import javax.inject.Inject;
-
-import com.github.t1.config.Config;
-import com.github.t1.deployer.container.DeploymentContainer;
-import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.Repository;
-
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
+import static com.github.t1.deployer.container.DeploymentContainer.*;
+import static java.util.concurrent.TimeUnit.*;
 
 @Slf4j
 @Startup
@@ -45,7 +42,7 @@ public class DeploymentListFile {
                     boolean isNew = (lastModified == null);
                     lastModified = lastModified();
                     if (isNew)
-                        // PostConstruct is too early: delay until the starup
+                        // PostConstruct is too early: delay until the startup
                         // has completed
                         writeDeploymentsList();
                     else
@@ -71,7 +68,7 @@ public class DeploymentListFile {
         final ContextRoot contextRoot;
         final Version version;
 
-        DeploymentInfo(Deployment deployment) {
+        private DeploymentInfo(Deployment deployment) {
             this.contextRoot = deployment.getContextRoot();
             this.version = deployment.getVersion();
         }
@@ -88,10 +85,6 @@ public class DeploymentListFile {
     @Inject
     Repository repository;
 
-    @Config(defaultValue = "false", meta = "{'order':1000}",
-            description = "Automatically delete all deployments not found in the deployments list.")
-    private boolean autoUndeploy;
-
     private final Path configDir = Paths.get(System.getProperty("jboss.server.config.dir", "."));
     private final Path deploymentsList = configDir.resolve("deployments.properties");
 
@@ -99,7 +92,7 @@ public class DeploymentListFile {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + ": " + deploymentsList + "; autoUndeploy=" + autoUndeploy;
+        return getClass().getSimpleName() + ": " + deploymentsList;
     }
 
     @PostConstruct
@@ -116,33 +109,26 @@ public class DeploymentListFile {
 
     private void updateFromList() {
         log.info("deployment list file has changed");
-        try {
-            // FIXME User.setCurrent(new User("-file").withPrivilege("deploy",
-            // "redeploy", "undeploy"));
-
-            Map<ContextRoot, Version> expected = readDeploymentsListFile();
-            for (Deployment actual : deployments()) {
-                ContextRoot contextRoot = actual.getContextRoot();
-                Version expectedVersion = expected.get(contextRoot);
-                if (expectedVersion == null) {
-                    if (autoUndeploy) {
-                        log.info("expected version of {} is null -> undeploy", contextRoot);
-                        container.undeploy(actual.getName());
-                    } else {
-                        log.info("expected version of {} is null -> would undeploy but autoUndeploy is disabled",
-                                contextRoot);
-                    }
-                } else if (expectedVersion.equals(actual.getVersion()))
-                    log.debug("expected version of {} equals actual {} -> skip", contextRoot, expectedVersion);
-                else {
-                    log.info("version of {} changed from {} to {} -> redeploy", //
-                            contextRoot, actual.getVersion(), expectedVersion);
-                    CheckSum checksum = repository.getChecksumForVersion(actual, expectedVersion);
-                    redeploy(repository.getByChecksum(checksum));
+        Map<ContextRoot, Version> expected = readDeploymentsListFile();
+        for (Deployment actual : deployments()) {
+            ContextRoot contextRoot = actual.getContextRoot();
+            Version expectedVersion = expected.get(contextRoot);
+            if (expectedVersion == null) {
+                if (false) {
+                    log.info("expected version of {} is null -> undeploy", contextRoot);
+                    container.undeploy(actual.getName());
+                } else {
+                    log.info("expected version of {} is null -> would undeploy but autoUndeploy is disabled",
+                            contextRoot);
                 }
+            } else if (expectedVersion.equals(actual.getVersion()))
+                log.debug("expected version of {} equals actual {} -> skip", contextRoot, expectedVersion);
+            else {
+                log.info("version of {} changed from {} to {} -> redeploy", //
+                        contextRoot, actual.getVersion(), expectedVersion);
+                CheckSum checksum = repository.getChecksumForVersion(actual, expectedVersion);
+                redeploy(repository.getByChecksum(checksum));
             }
-        } finally {
-            // User.setCurrent(null);
         }
         log.info("deployment list file update done");
     }

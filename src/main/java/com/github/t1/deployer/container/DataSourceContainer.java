@@ -1,25 +1,21 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.ramlap.tools.ProblemDetail.*;
+import com.github.t1.deployer.model.DataSourceConfig;
+import com.github.t1.log.Logged;
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.dmr.ModelNode;
 
+import javax.ejb.Stateless;
 import java.net.URI;
 import java.util.*;
 
-import javax.ejb.Stateless;
-
-import org.jboss.dmr.ModelNode;
-
-import com.github.t1.deployer.model.DataSourceConfig;
-import com.github.t1.log.Logged;
-
-import lombok.extern.slf4j.Slf4j;
+import static com.github.t1.log.LogLevel.*;
 
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-public class DataSourceContainer extends AbstractContainer {
-    public List<DataSourceConfig> getDataSources() {
+class DataSourceContainer extends AbstractContainer {
+    List<DataSourceConfig> getDataSources() {
         List<DataSourceConfig> dataSources = new ArrayList<>();
         for (ModelNode cliDataSourceMatch : readAllDataSources()) {
             String name = cliDataSourceMatch.get("address").asObject().get("data-source").asString();
@@ -49,7 +45,7 @@ public class DataSourceContainer extends AbstractContainer {
                 .build();
     }
 
-    public boolean hasDataSource(String dataSourceName) {
+    boolean hasDataSource(String dataSourceName) {
         ModelNode result = executeRaw(readDataSource(dataSourceName));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
@@ -68,7 +64,7 @@ public class DataSourceContainer extends AbstractContainer {
         if ("success".equals(outcome)) {
             return toDataSource(dataSourceName, result.get("result"));
         } else if (isNotFoundMessage(result)) {
-            throw notFound("no data source '" + dataSourceName + "'");
+            throw new RuntimeException("no data source '" + dataSourceName + "'");
         } else {
             log.error("failed: {}", result);
             throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));

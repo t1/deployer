@@ -1,27 +1,22 @@
 package com.github.t1.deployer.repository;
 
-import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
-import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
-import static com.github.t1.ramlap.tools.ProblemDetail.*;
-import static java.util.Collections.*;
-import static javax.ws.rs.core.Response.Status.*;
+import com.github.t1.deployer.model.*;
+import com.github.t1.rest.*;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.core.UriBuilder;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 
-import javax.ws.rs.core.UriBuilder;
-
-import com.github.t1.config.Config;
-import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
-
-import lombok.extern.slf4j.Slf4j;
+import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
+import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
+import static java.util.Collections.*;
 
 @Slf4j
 public class ArtifactoryRepository extends Repository {
-    public static ContextRoot contextRoot(Path path) {
+    private static ContextRoot contextRoot(Path path) {
         // this is not perfect... we should read it from the container and pass it in
         return new ContextRoot(element(-3, path));
     }
@@ -31,27 +26,17 @@ public class ArtifactoryRepository extends Repository {
         return new Version(string);
     }
 
-    public static String element(int n, Path path) {
+    private static String element(int n, Path path) {
         if (n < 0)
             n += path.getNameCount();
         return path.getName(n).toString();
     }
 
-    @Config(defaultValue = "http://localhost:8081/artifactory", meta = "{'label':'URI','order':100}",
-            description = "The base URI where the Artifactory instance can be reached")
-    URI artifactory;
+    private URI artifactory;
 
-    @Config(defaultValue = "", meta = "{'label':'User Name','order':110}",
-            description = "The user name used to authenticate on the Artifactory server. Leave empty to use Artifactory without authenticating.")
-    String artifactoryUserName;
+    private String artifactoryUserName;
 
-    @Config(defaultValue = "", meta = "{"
-            + "'label':'Password',"
-            + "'order':120,"
-            + "'confidential':true"
-            + "}",
-            description = "The password used to authenticate on the Artifactory server.")
-    Password artifactoryPassword;
+    private Password artifactoryPassword;
 
     private RestContext restContext;
 
@@ -67,9 +52,7 @@ public class ArtifactoryRepository extends Repository {
         return restContext;
     }
 
-    public ArtifactoryRepository() {}
-
-    public ArtifactoryRepository(RestContext restContext) {
+    ArtifactoryRepository(RestContext restContext) {
         this.restContext = restContext;
     }
 
@@ -133,15 +116,15 @@ public class ArtifactoryRepository extends Repository {
         return searchByChecksum;
     }
 
-    public enum SearchResultStatus {
+    enum SearchResultStatus {
         ok,
         unknown,
-        error;
+        error
     }
 
     @lombok.Value
     @lombok.Builder(builderMethodName = "searchResult")
-    protected static class SearchResult {
+    static class SearchResult {
         SearchResultStatus status;
         URI uri;
         URI downloadUri;
@@ -197,8 +180,8 @@ public class ArtifactoryRepository extends Repository {
         List<FileInfo> children;
         URI uri;
 
-        public List<FileInfo> getChildren() {
-            return (children == null) ? Collections.<FileInfo> emptyList() : children;
+        private List<FileInfo> getChildren() {
+            return (children == null) ? Collections.emptyList() : children;
         }
     }
 
@@ -273,9 +256,9 @@ public class ArtifactoryRepository extends Repository {
         SearchResult found = searchByChecksum(checkSum);
         switch (found.getStatus()) {
         case error:
-            throw webException(BAD_GATEWAY, "error while finding checksum " + checkSum);
+            throw new RuntimeException("error while finding checksum " + checkSum);
         case unknown:
-            throw notFound("checksum " + checkSum + " not found to fetch input stream");
+            throw new RuntimeException("checksum " + checkSum + " not found to fetch input stream");
         case ok:
             break;
         }

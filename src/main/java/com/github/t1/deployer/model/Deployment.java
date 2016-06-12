@@ -1,15 +1,13 @@
 package com.github.t1.deployer.model;
 
-import static javax.xml.bind.annotation.XmlAccessType.*;
-
-import java.util.List;
-
-import javax.xml.bind.annotation.*;
-
-import com.fasterxml.jackson.annotation.*;
-
 import lombok.*;
 import lombok.experimental.Wither;
+import org.jetbrains.annotations.NotNull;
+
+import javax.xml.bind.annotation.*;
+import java.util.List;
+
+import static javax.xml.bind.annotation.XmlAccessType.*;
 
 /** This is the artifact returned by Artifactory as well as the deployment installed in the container. */
 @Value
@@ -23,19 +21,14 @@ public class Deployment implements Comparable<Deployment> {
     private static final DeploymentName NEW_DEPLOYMENT_NAME = new DeploymentName(NEW_DEPLOYMENT_PATH);
     public static final Deployment NEW_DEPLOYMENT = new Deployment(NEW_DEPLOYMENT_NAME, null, null, null, null);
 
-    @JsonProperty
     DeploymentName name;
 
-    @JsonProperty
     ContextRoot contextRoot;
 
-    @JsonProperty
     CheckSum checkSum;
 
-    @JsonProperty
     Version version;
 
-    @JsonProperty
     @XmlElement(name = "release")
     @XmlElementWrapper
     List<Release> releases;
@@ -49,19 +42,17 @@ public class Deployment implements Comparable<Deployment> {
     }
 
     @Override
-    public int compareTo(Deployment that) {
+    public int compareTo(@NotNull Deployment that) {
         return this.name.getValue().compareToIgnoreCase(that.name.getValue());
     }
 
-    @JsonIgnore
     public boolean isNew() {
         return NEW_DEPLOYMENT_NAME.equals(name);
     }
 
     /** Is the name of the deployment equal to the context-root plus '.war'? */
-    @JsonIgnore
-    public boolean isDefaultName() {
-        return (name == null) ? false : name.getValue().equals(contextRoot + ".war");
+    private boolean isDefaultName() {
+        return name != null && name.getValue().equals(contextRoot + ".war");
     }
 
     @Override

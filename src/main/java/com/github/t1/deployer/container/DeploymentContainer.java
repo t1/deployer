@@ -1,39 +1,26 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.ramlap.tools.ProblemDetail.*;
-import static java.util.concurrent.TimeUnit.*;
-import static javax.ws.rs.core.Response.Status.*;
+import com.github.t1.deployer.model.*;
+import com.github.t1.log.Logged;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.as.controller.client.helpers.standalone.*;
+import org.jboss.dmr.ModelNode;
 
+import javax.annotation.security.PermitAll;
+import javax.ejb.Stateless;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import javax.annotation.security.*;
-import javax.ejb.Stateless;
-
-import org.jboss.as.controller.client.helpers.standalone.*;
-import org.jboss.dmr.ModelNode;
-
-import com.github.t1.deployer.model.*;
-import com.github.t1.log.Logged;
-import com.github.t1.ramlap.annotations.ApiResponse;
-import com.github.t1.ramlap.tools.ProblemDetail;
-
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.github.t1.log.LogLevel.*;
+import static java.util.concurrent.TimeUnit.*;
 
 @Slf4j
 @Logged(level = INFO)
 @Stateless
 public class DeploymentContainer extends AbstractContainer {
-    @ApiResponse(status = INTERNAL_SERVER_ERROR,
-            detail = "The deployment operation has failed. "
-                    + "Look into the server logs for details about the reason. "
-                    + "Common problems are that the deployment requires resources (queues, data source, etc.) "
-                    + "that have not been configured; " //
-                    + "or the deployment file is corrupt or built for a different server environment.")
-    public static class DeploymentOperationFailed extends ProblemDetail {}
+    private static final int TIMEOUT = 30;
 
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
 
@@ -46,12 +33,12 @@ public class DeploymentContainer extends AbstractContainer {
                 logDeployPlan(plan);
                 Future<ServerDeploymentPlanResult> future = deploymentManager.execute(plan);
                 log.debug("wait for {}", getClass().getSimpleName());
-                ServerDeploymentPlanResult result = future.get(30, SECONDS);
+                ServerDeploymentPlanResult result = future.get(TIMEOUT, SECONDS);
                 log.debug("done executing {}", getClass().getSimpleName());
 
                 checkOutcome(plan, result);
             } catch (IOException | ExecutionException | TimeoutException | InterruptedException e) {
-                throw new DeploymentOperationFailed().toWebException().causedBy(e);
+                throw new RuntimeException("deployment failed", e);
             }
         }
 
@@ -76,7 +63,7 @@ public class DeploymentContainer extends AbstractContainer {
                     firstThrowable = deploymentException;
                 switch (actionResult.getResult()) {
                 case CONFIGURATION_MODIFIED_REQUIRES_RESTART:
-                    log.warn("requries restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                    log.warn("requires restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
                     break;
                 case EXECUTED:
                     log.debug("executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
@@ -107,8 +94,8 @@ public class DeploymentContainer extends AbstractContainer {
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
             return plan //
-                    .add(deploymentName.getValue(), inputStream) //
-                    .deploy(deploymentName.getValue()) //
+                        .add(deploymentName.getValue(), inputStream) //
+                        .deploy(deploymentName.getValue()) //
                     ;
         }
     }
@@ -131,8 +118,8 @@ public class DeploymentContainer extends AbstractContainer {
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
             return plan //
-                    .undeploy(deploymentName.getValue()) //
-                    .remove(deploymentName.getValue()) //
+                        .undeploy(deploymentName.getValue()) //
+                        .remove(deploymentName.getValue()) //
                     ;
         }
     }
@@ -161,7 +148,7 @@ public class DeploymentContainer extends AbstractContainer {
                 return deployment;
             }
         }
-        throw notFound("no deployment with context root [" + contextRoot + "]");
+        throw new RuntimeException("no deployment with context root [" + contextRoot + "]");
     }
 
     @PermitAll
@@ -178,7 +165,7 @@ public class DeploymentContainer extends AbstractContainer {
                 return deployment;
             }
         }
-        throw notFound("no deployment with context root [" + checkSum + "]");
+        throw new RuntimeException("no deployment with context root [" + checkSum + "]");
     }
 
     @PermitAll
@@ -226,20 +213,14 @@ public class DeploymentContainer extends AbstractContainer {
         return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
     }
 
-    @DeploymentOperation
-    @RolesAllowed("deployer")
     public void deploy(DeploymentName deploymentName, InputStream inputStream) {
         new DeployPlan(deploymentName, inputStream).execute();
     }
 
-    @DeploymentOperation
-    @RolesAllowed("deployer")
     public void redeploy(DeploymentName deploymentName, InputStream inputStream) {
         new ReplacePlan(deploymentName, inputStream).execute();
     }
 
-    @DeploymentOperation
-    @RolesAllowed("deployer")
     public void undeploy(DeploymentName deploymentName) {
         new UndeployPlan(deploymentName).execute();
     }

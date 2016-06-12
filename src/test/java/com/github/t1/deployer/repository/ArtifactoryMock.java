@@ -1,11 +1,12 @@
 package com.github.t1.deployer.repository;
 
-import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
-import static com.github.t1.ramlap.tools.ProblemDetail.*;
-import static java.util.Arrays.*;
-import static javax.ws.rs.core.MediaType.*;
-import static javax.ws.rs.core.Response.Status.*;
+import com.github.t1.deployer.model.*;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.*;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.*;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -13,13 +14,10 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import javax.ws.rs.*;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.*;
-
-import com.github.t1.deployer.model.*;
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
+import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
+import static java.util.Arrays.*;
+import static javax.ws.rs.core.MediaType.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 /**
  * @see ArtifactoryMockLauncher
@@ -30,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ArtifactoryMock {
     private static final String BASIC_FOO_BAR_AUTHORIZATION = "Basic Zm9vOmJhcg==";
 
-    public static boolean FAKES = false;
+    static boolean FAKES = false;
 
     private static final MediaType FILE_INFO = vendorTypeJFrog("FileInfo");
     private static final MediaType FOLDER_INFO = vendorTypeJFrog("FolderInfo");
@@ -41,7 +39,7 @@ public class ArtifactoryMock {
 
     static final Charset UTF_8 = Charset.forName("UTF-8");
 
-    static final java.nio.file.Path MAVEN_HOME = Paths.get(System.getProperty("user.home"), ".m2");
+    private static final java.nio.file.Path MAVEN_HOME = Paths.get(System.getProperty("user.home"), ".m2");
     static final java.nio.file.Path MAVEN_REPOSITORY = MAVEN_HOME.resolve("repository");
     static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
 
@@ -73,20 +71,20 @@ public class ArtifactoryMock {
 
     private static final java.nio.file.Path REPO_NAME = Paths.get("libs-release-local");
 
-    public static final CheckSum FAILING_CHECKSUM = CheckSum.ofHexString("1111111111111111111111111111111111111111");
-    public static final CheckSum AMBIGUOUS_CHECKSUM = CheckSum.ofHexString("2222222222222222222222222222222222222222");
-    public static final CheckSum UNKNOWN_CHECKSUM = CheckSum.ofHexString("3333333333333333333333333333333333333333");
+    static final CheckSum FAILING_CHECKSUM = CheckSum.ofHexString("1111111111111111111111111111111111111111");
+    static final CheckSum AMBIGUOUS_CHECKSUM = CheckSum.ofHexString("2222222222222222222222222222222222222222");
+    static final CheckSum UNKNOWN_CHECKSUM = CheckSum.ofHexString("3333333333333333333333333333333333333333");
 
     public static final ContextRoot FOO = new ContextRoot("foo");
     public static final ContextRoot BAR = new ContextRoot("bar");
 
-    public static final DeploymentName FOO_WAR = new DeploymentName(FOO + ".war");
+    static final DeploymentName FOO_WAR = new DeploymentName(FOO + ".war");
     public static final DeploymentName BAR_WAR = new DeploymentName(BAR + ".war");
 
-    public static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
-    public static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
+    private static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
+    static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
 
-    public static final List<Version> FOO_VERSIONS = asList(//
+    static final List<Version> FOO_VERSIONS = asList(//
             NEWEST_FOO_VERSION, //
             new Version("1.3.12"), //
             new Version("1.3.2"), //
@@ -98,9 +96,9 @@ public class ArtifactoryMock {
             new Version("1.2.0") //
     );
 
-    public static final Version CURRENT_BAR_VERSION = new Version("0.3");
+    private static final Version CURRENT_BAR_VERSION = new Version("0.3");
 
-    public static final List<Version> BAR_VERSIONS = asList(//
+    private static final List<Version> BAR_VERSIONS = asList(//
             CURRENT_BAR_VERSION, //
             new Version("0.2") //
     );
@@ -152,7 +150,7 @@ public class ArtifactoryMock {
         checkAuthorization(authorization);
         log.info("search by checksum: {}", checkSum);
         if (checkSum == null)
-            throw validationFailed("Required query parameter 'sha1' is missing.");
+            throw new RuntimeException("Required query parameter 'sha1' is missing.");
         String results = searchResultsFor(checkSum);
         log.info("found {}", results);
         return "{\"results\": [" + results + "]}";
@@ -162,9 +160,9 @@ public class ArtifactoryMock {
         if (!requireAuthorization)
             return;
         if (authorization == null)
-            throw unauthorized("missing authorization");
+            throw new RuntimeException("missing authorization");
         if (!BASIC_FOO_BAR_AUTHORIZATION.equals(authorization))
-            throw unauthorized("wrong credentials");
+            throw new RuntimeException("wrong credentials");
     }
 
     private String searchResultsFor(CheckSum checkSum) {
@@ -219,7 +217,7 @@ public class ArtifactoryMock {
         return fileSearchResult(pathFor(contextRoot, version).toString());
     }
 
-    public static java.nio.file.Path pathFor(ContextRoot contextRoot, Version version) {
+    private static java.nio.file.Path pathFor(ContextRoot contextRoot, Version version) {
         return REPO_NAME.resolve(contextRoot.toString()).resolve(version.toString())
                 .resolve(contextRoot + "-" + version + ".war");
     }
@@ -237,12 +235,12 @@ public class ArtifactoryMock {
 
     private static ContextRoot fakeContextRootFor(CheckSum checkSum) {
         if (checkSum.hexString().length() < 6)
-            throw badRequest("checkSum too short. must be at least 6 characters for fake context root: ["
+            throw new RuntimeException("checkSum too short. must be at least 6 characters for fake context root: ["
                     + checkSum.hexString() + "]");
         return new ContextRoot("fake-" + checkSum.hexString().substring(0, 6));
     }
 
-    public static Version fakeVersionFor(CheckSum checkSum) {
+    private static Version fakeVersionFor(CheckSum checkSum) {
         return fakeVersionFor(checkSum.getBytes());
     }
 

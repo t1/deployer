@@ -1,14 +1,9 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.deployer.TestData.*;
-import static com.github.t1.log.LogLevel.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
-
-import java.io.IOException;
-import java.util.List;
-
+import com.github.t1.deployer.model.LoggerConfig;
+import com.github.t1.deployer.repository.Repository;
+import com.github.t1.log.LogLevel;
+import lombok.SneakyThrows;
 import org.assertj.core.api.JUnitSoftAssertions;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
@@ -17,11 +12,15 @@ import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.t1.deployer.model.LoggerConfig;
-import com.github.t1.deployer.repository.Repository;
-import com.github.t1.log.LogLevel;
+import java.io.IOException;
+import java.util.List;
 
-import lombok.SneakyThrows;
+import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.log.LogLevel.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoggerContainerTest {
@@ -42,17 +41,17 @@ public class LoggerContainerTest {
     @Before
     @SneakyThrows(IOException.class)
     public void setupRootLogger() {
-        when(client.execute(any(ModelNode.class), any(OperationMessageHandler.class))) //
+        when(client.execute(any(ModelNode.class), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString("{\"outcome\" => \"success\"}"));
-        when(client.execute(eq(readRootLoggerCli()), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString(successCli("{\n" //
-                        + "        \"filter\" => undefined,\n" //
-                        + "        \"filter-spec\" => undefined,\n" //
-                        + "        \"handlers\" => [\n" //
-                        + "            \"CONSOLE\",\n" //
-                        + "            \"FILE\"\n" //
-                        + "        ],\n" //
-                        + "        \"level\" => \"" + ROOT.getLevel() + "\"\n" //
+        when(client.execute(eq(readRootLoggerCli()), any(OperationMessageHandler.class)))
+                .thenReturn(ModelNode.fromString(successCli("{\n"
+                        + "        \"filter\" => undefined,\n"
+                        + "        \"filter-spec\" => undefined,\n"
+                        + "        \"handlers\" => [\n"
+                        + "            \"CONSOLE\",\n"
+                        + "            \"FILE\"\n"
+                        + "        ],\n"
+                        + "        \"level\" => \"" + ROOT.getLevel() + "\"\n"
                         + "    }")));
     }
 
@@ -66,24 +65,24 @@ public class LoggerContainerTest {
 
     @SneakyThrows(IOException.class)
     private void givenLoggers(LoggerConfig... loggers) {
-        when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString(successCli(readLoggersCliResult(loggers))));
         for (LoggerConfig logger : loggers) {
-            when(client.execute(eq(readLoggersCli(logger.getCategory())), any(OperationMessageHandler.class))) //
+            when(client.execute(eq(readLoggersCli(logger.getCategory())), any(OperationMessageHandler.class)))
                     .thenReturn(ModelNode.fromString(successCli("{" + logger(logger) + "}")));
         }
     }
 
     @SneakyThrows(IOException.class)
     private void givenNoLogger(LoggerConfig logger) {
-        when(client.execute(eq(readLoggersCli(logger.getCategory())), any(OperationMessageHandler.class))) //
-                .thenReturn(ModelNode.fromString("{\n" //
-                        + "    \"outcome\" => \"failed\",\n" //
-                        + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n" //
-                        + "    (\\\"subsystem\\\" => \\\"logging\\\"),\n" //
-                        + "    (\\\"logger\\\" => \\\"" + logger.getCategory() + "\\\")\n" //
-                        + "]' not found\",\n" //
-                        + "    \"rolled-back\" => true\n" //
+        when(client.execute(eq(readLoggersCli(logger.getCategory())), any(OperationMessageHandler.class)))
+                .thenReturn(ModelNode.fromString("{\n"
+                        + "    \"outcome\" => \"failed\",\n"
+                        + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
+                        + "    (\\\"subsystem\\\" => \\\"logging\\\"),\n"
+                        + "    (\\\"logger\\\" => \\\"" + logger.getCategory() + "\\\")\n"
+                        + "]' not found\",\n"
+                        + "    \"rolled-back\" => true\n"
                         + "}"));
     }
 
@@ -101,11 +100,11 @@ public class LoggerContainerTest {
         for (LoggerConfig logger : loggers) {
             if (out.length() > 1)
                 out.append(", ");
-            out.append("{") //
-                    .append("\"address\" => [") //
-                    .append("(\"subsystem\" => \"logging\"),") //
-                    .append("(\"logger\" => \"").append(logger.getCategory()).append("\")") //
-                    .append("],");
+            out.append("{")
+               .append("\"address\" => [")
+               .append("(\"subsystem\" => \"logging\"),")
+               .append("(\"logger\" => \"").append(logger.getCategory()).append("\")")
+               .append("],");
             out.append("\"outcome\" => \"success\",\"result\" => {").append(logger(logger)).append("}\n");
             out.append("}");
         }
@@ -114,33 +113,33 @@ public class LoggerContainerTest {
     }
 
     private String logger(LoggerConfig logger) {
-        return "" //
-                + "\"category\" => undefined," // \"" + logger.getCategory() + "\"," //
-                + "\"filter\" => undefined," //
-                + "\"filter-spec\" => undefined," //
-                + "\"handlers\" => undefined," //
-                + "\"level\" => \"" + logger.getLevel() + "\"," //
+        return ""
+                + "\"category\" => undefined," // \"" + logger.getCategory() + "\","
+                + "\"filter\" => undefined,"
+                + "\"filter-spec\" => undefined,"
+                + "\"handlers\" => undefined,"
+                + "\"level\" => \"" + logger.getLevel() + "\","
                 + "\"use-parent-handlers\" => true" + "\n";
     }
 
     private ModelNode addLogger(String categoryType, String category, LogLevel logLevel) {
-        return ModelNode.fromString("{" //
-                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")]," //
-                + "\"operation\" => \"add\",\"level\" => \"" + logLevel + "\"\n" //
+        return ModelNode.fromString("{"
+                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
+                + "\"operation\" => \"add\",\"level\" => \"" + logLevel + "\"\n"
                 + "}");
     }
 
     private ModelNode updateLogLevel(String categoryType, String category, LogLevel logLevel) {
-        return ModelNode.fromString("{" //
-                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")]," //
-                + "\"operation\" => \"write-attribute\",\"name\" => \"level\",\"value\" => \"" + logLevel + "\"\n" //
+        return ModelNode.fromString("{"
+                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
+                + "\"operation\" => \"write-attribute\",\"name\" => \"level\",\"value\" => \"" + logLevel + "\"\n"
                 + "}");
     }
 
     private ModelNode removeLogger(String categoryType, String category) {
-        return ModelNode.fromString("{" //
-                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")]," //
-                + "\"operation\" => \"remove\"\n" //
+        return ModelNode.fromString("{"
+                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
+                + "\"operation\" => \"remove\"\n"
                 + "}");
     }
 
@@ -186,8 +185,8 @@ public class LoggerContainerTest {
 
         softly.assertThat(container.hasLogger(BAR)).isFalse();
         softly.assertThat(container.hasLogger("bar")).isFalse();
-        softly.assertThatThrownBy(() -> container.getLogger("bar")) //
-                .hasMessage("HTTP 404 Not Found");
+        softly.assertThatThrownBy(() -> container.getLogger("bar"))
+              .hasMessage("no logger 'bar'");
     }
 
     @Test
@@ -203,7 +202,7 @@ public class LoggerContainerTest {
     public void shouldFailToAddRootLogger() throws IOException {
         givenLoggers(FOO);
 
-        assertThatThrownBy(() -> container.add(ROOT)) //
+        assertThatThrownBy(() -> container.add(ROOT))
                 .hasMessage("can't add root logger");
 
         verify(client, never()).execute(eq(addLogger("root-logger", "ROOT", ERROR)),
@@ -241,7 +240,7 @@ public class LoggerContainerTest {
     public void shouldFailToRemoveRootLogger() throws IOException {
         givenLoggers(FOO);
 
-        assertThatThrownBy(() -> container.remove(ROOT)) //
+        assertThatThrownBy(() -> container.remove(ROOT))
                 .hasMessage("can't remove root logger");
 
         verify(client, never()).execute(eq(removeLogger("root-logger", "ROOT")), any(OperationMessageHandler.class));

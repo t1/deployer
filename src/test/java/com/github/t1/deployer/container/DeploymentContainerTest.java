@@ -1,19 +1,9 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.deployer.TestData.*;
-import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static javax.ws.rs.core.Response.Status.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
-
-import java.io.IOException;
-import java.util.List;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
+import com.github.t1.deployer.TestData;
+import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.repository.Repository;
+import lombok.SneakyThrows;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.Test;
@@ -21,12 +11,15 @@ import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.t1.deployer.TestData;
-import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.Repository;
-import com.github.t1.ramlap.tools.ProblemDetail;
+import java.io.IOException;
+import java.util.List;
 
-import lombok.SneakyThrows;
+import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeploymentContainerTest {
@@ -53,14 +46,6 @@ public class DeploymentContainerTest {
         node.get("operation").set("read-resource");
         node.get("recursive").set(true);
         return node;
-    }
-
-    public static void assertStatusDetails(Status status, String detail, WebApplicationException e) {
-        Response response = e.getResponse();
-        assertThat(response.getStatusInfo()).isEqualTo(status);
-        ProblemDetail error = (ProblemDetail) response.getEntity();
-        assertThat(error.status()).isEqualTo(status);
-        assertThat(error.detail()).isEqualTo(detail);
     }
 
     public static String readDeploymentsCliResult(ContextRoot... contextRoots) {
@@ -113,12 +98,9 @@ public class DeploymentContainerTest {
         when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
                 .thenReturn(ModelNode.fromString(successCli("[]")));
 
-        try {
-            container.getDeploymentFor(new ContextRoot("unknown"));
-            fail("WebException expected");
-        } catch (WebApplicationException e) {
-            assertStatusDetails(NOT_FOUND, "no deployment with context root [unknown]", e);
-        }
+        Throwable thrown = catchThrowable(() -> container.getDeploymentFor(new ContextRoot("unknown")));
+
+        assertThat(thrown).hasMessage("no deployment with context root [unknown]");
     }
 
     @Test

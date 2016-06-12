@@ -1,11 +1,10 @@
 package com.github.t1.deployer.model;
 
-import static lombok.AccessLevel.*;
-
-import com.fasterxml.jackson.annotation.*;
 import com.github.t1.log.LogLevel;
-
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
+
+import static lombok.AccessLevel.*;
 
 @Value
 @Builder(toBuilder = true)
@@ -17,19 +16,16 @@ public class LoggerConfig implements Comparable<LoggerConfig> {
     public static final String NEW_LOGGER = "!";
 
     @NonNull
-    @JsonProperty
     String category;
 
     @NonNull
-    @JsonProperty
     LogLevel level;
 
     @Override
-    public int compareTo(LoggerConfig that) {
+    public int compareTo(@NotNull LoggerConfig that) {
         return this.category.compareToIgnoreCase(that.category);
     }
 
-    @JsonIgnore
     public boolean isNew() {
         return NEW_LOGGER.equals(category);
     }
