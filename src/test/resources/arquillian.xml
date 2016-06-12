@@ -1,17 +1,22 @@
 <arquillian xmlns="http://jboss.org/schema/arquillian" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="
-            http://jboss.org/schema/arquillian
-            http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
-    <container qualifier="jboss-7" default="true">
+            xsi:schemaLocation="
+        http://jboss.org/schema/arquillian
+        http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+    <container qualifier="chameleon" default="true">
         <configuration>
-            <property name="jbossHome">target/jboss-as-7.1.1.Final</property>
+            <!-- <property name="chameleonTarget">glassfish:4.1.1:embedded</property> -->
+            <!--<property name="chameleonTarget">wildfly:10.0.0.Final:embedded</property>-->
+            <!--<property name="modulePath">target/server/wildfly-dist_10.0.0.Final/wildfly-10.0.0.Final/modules/</property>-->
+            <property name="chameleonTarget">wildfly:10.0.0.Final:managed</property>
+            <property name="serverConfig">standalone.xml</property>
+            <property name="allowConnectingToRunningServer">true</property>
         </configuration>
     </container>
-    <container qualifier="proxy" default="false">
-        <configuration>
-            <!-- <property name="target">wildfly:8.0.0.Final:managed</property> -->
-            <property name="target">wildfly:9.0.0.CR1:embedded</property>
-            <property name="serverConfig">standalone-full.xml</property>
-        </configuration>
-    </container>
+
+    <extension qualifier="webdriver">
+        <!--<property name="browser">chrome</property>-->
+        <!--<property name="browser">firefox</property>-->
+        <!--<property name="remoteReusable">true</property>-->
+        <!--<property name="remoteAddress">http://localhost:4444/wd/hub/</property>-->
+    </extension>
 </arquillian>
