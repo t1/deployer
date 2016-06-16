@@ -114,4 +114,8 @@ public class LoggerContainer extends AbstractContainer {
         ModelNode result = execute(request);
         log.debug("result: {}", result);
     }
+
+    public LogHandler getHandler(String name) {
+        return new LogHandler(name, this::execute);
+    }
 }

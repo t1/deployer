@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.container.DeploymentContainer;
+import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.testtools.*;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.groups.Tuple;
@@ -12,17 +13,20 @@ import org.junit.runner.RunWith;
 import javax.inject.Inject;
 import java.io.StringReader;
 
+import static com.github.t1.log.LogLevel.*;
+import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
 @RunWith(Arquillian.class)
+@SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
-    private static final String DEPLOYMENT_NAME = "deployer-it.war";
-    private static final Tuple SELF = tuple(DEPLOYMENT_NAME, null);
+    private static final String DEPLOYER_IT_WAR = "deployer-it.war";
+    private static final Tuple SELF = tuple(DEPLOYER_IT_WAR, null);
 
     @org.jboss.arquillian.container.test.api.Deployment
     public static WebArchive createDeployment() {
-        return new WebArchiveBuilder(DEPLOYMENT_NAME)
+        return new WebArchiveBuilder(DEPLOYER_IT_WAR)
                 .with(Deployer.class.getPackage())
                 .with(TestLoggerRule.class, FileMemento.class)
                 .library("org.assertj", "assertj-core")
@@ -36,13 +40,20 @@ public class DeployerIT {
 
     @Inject Deployer deployer;
     @Inject DeploymentContainer container;
+    @Inject LoggerContainer loggerContainer;
 
     @Before
-    public void checkContainerIsClean() throws Exception {
+    public void setup() throws Exception {
         if (first) {
             first = false;
 
-            jbossConfig = new FileMemento(System.getProperty("jboss.server.config.dir") + "/standalone.xml");
+            jbossConfig = new FileMemento(System.getProperty("jboss.server.config.dir") + "/standalone.xml").setup();
+            // TODO remove DEPLOYER_IT_WAR from <deployments>
+            // restore after JBoss is down
+            jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
+
+            loggerContainer.getHandler("CONSOLE").setLevel(ALL);
+            loggerContainer.add(new LoggerConfig("com.github.t1.deployer", DEBUG));
 
             log.info("deployments: {}", container.getAllDeployments());
             assertDeployments(SELF);
@@ -54,18 +65,6 @@ public class DeployerIT {
                 deployment -> deployment.getName().getValue(),
                 deployment -> (deployment.getVersion() == null) ? null : deployment.getVersion().getVersion()
         ).contains(tuples);
-    }
-
-    @AfterClass
-    public static void checkAndRestoreJbossConfig() throws Exception {
-        if (jbossConfig == null) {
-            log.warn("running on client?");
-        } else {
-            String before = jbossConfig.getOrig();
-            String now = jbossConfig.read();
-            jbossConfig.restore();
-            assertThat(now).isEqualTo(before);
-        }
     }
 
 
@@ -84,9 +83,9 @@ public class DeployerIT {
 
 
     @Test
-    @InSequence(value = 150)
+    @InSequence(value = 200)
     @Ignore
-    public void shouldDeployTwoWebArchives() throws Exception {
+    public void shouldDeploySecondWebArchive() throws Exception {
         ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
@@ -97,12 +96,13 @@ public class DeployerIT {
 
         deployer.run(plan);
 
+        // TODO check that jolokia was not redeployed
         assertDeployments(SELF, tuple("jolokia-war", "1.3.2"), tuple("mockserver-war", "3.10.4"));
     }
 
 
     @Test
-    @InSequence(value = 200)
+    @InSequence(value = 300)
     @Ignore
     public void shouldReplaceExistingWebArchiveByChecksum() throws Exception {
         ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
@@ -127,11 +127,12 @@ public class DeployerIT {
     @Test
     @InSequence(value = Integer.MAX_VALUE)
     public void shouldUndeployEverything() throws Exception {
-        // TODO pin DEPLOYMENT_NAME & manage configs
+        // TODO pin DEPLOYER_IT_WAR & manage configs
         ConfigurationPlan plan = ConfigurationPlan.load(new StringReader("---\n"));
 
         deployer.run(plan);
 
         assertDeployments(SELF);
+        // TODO assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
     }
 }

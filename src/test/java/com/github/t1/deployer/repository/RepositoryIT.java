@@ -34,7 +34,7 @@ public class RepositoryIT {
     @Before
     public void init() {
         setLogLevel("org.apache.http.wire", DEBUG);
-        setLogLevel("com.github.t1.rest", DEBUG);
+        // setLogLevel("com.github.t1.rest", DEBUG);
         setLogLevel("com.github.t1.deployer", DEBUG);
     }
 
