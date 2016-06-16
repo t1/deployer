@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
-import javax.annotation.security.PermitAll;
 import javax.ejb.Stateless;
 import java.io.*;
 import java.util.*;
@@ -58,6 +57,7 @@ public class DeploymentContainer extends AbstractContainer {
             Throwable firstThrowable = null;
             for (DeploymentAction action : plan.getDeploymentActions()) {
                 ServerDeploymentActionResult actionResult = result.getDeploymentActionResult(action.getId());
+                @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
                 Throwable deploymentException = actionResult.getDeploymentException();
                 if (deploymentException != null)
                     firstThrowable = deploymentException;
@@ -124,7 +124,6 @@ public class DeploymentContainer extends AbstractContainer {
         }
     }
 
-    @PermitAll
     public boolean hasDeploymentWith(ContextRoot contextRoot) {
         for (Deployment deployment : getAllDeployments()) {
             if (deployment.getContextRoot().equals(contextRoot)) {
@@ -134,7 +133,6 @@ public class DeploymentContainer extends AbstractContainer {
         return false;
     }
 
-    @PermitAll
     public Deployment getDeploymentFor(ContextRoot contextRoot) {
         List<Deployment> all = getAllDeployments();
         Deployment deployment = find(all, contextRoot);
@@ -151,7 +149,6 @@ public class DeploymentContainer extends AbstractContainer {
         throw new RuntimeException("no deployment with context root [" + contextRoot + "]");
     }
 
-    @PermitAll
     public Deployment getDeploymentWith(CheckSum checkSum) {
         List<Deployment> all = getAllDeployments();
         Deployment deployment = find(all, checkSum);
@@ -168,7 +165,6 @@ public class DeploymentContainer extends AbstractContainer {
         throw new RuntimeException("no deployment with context root [" + checkSum + "]");
     }
 
-    @PermitAll
     public List<Deployment> getAllDeployments() {
         List<Deployment> list = new ArrayList<>();
         for (ModelNode cliDeploymentMatch : execute(readDeployments()).asList())

@@ -1,10 +1,10 @@
 package com.github.t1.deployer.repository;
 
-import java.io.InputStream;
-import java.util.List;
-
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
+
+import java.io.InputStream;
+import java.util.List;
 
 @Logged
 public abstract class Repository {
@@ -24,4 +24,6 @@ public abstract class Repository {
                 return release.getCheckSum();
         throw new IllegalArgumentException("no version " + version + " for " + deployment.getName());
     }
+
+    public abstract Artifact fetchArtifact(GroupId groupId, ArtifactId artifactId, Version version);
 }

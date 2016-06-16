@@ -12,6 +12,7 @@ import static lombok.AccessLevel.*;
 
 @Value
 @RequiredArgsConstructor(access = PRIVATE)
+@NoArgsConstructor(access = PRIVATE, force = true)
 @XmlAccessorType(XmlAccessType.NONE)
 public class CheckSum {
     public static CheckSum of(byte[] bytes) {
@@ -62,11 +63,6 @@ public class CheckSum {
     @XmlSchemaType(name = "hexBinary")
     private final byte[] bytes;
 
-    /** required by JAXB, etc.; but lombok NoArgConstructor doesn't work with byte[] */
-    private CheckSum() {
-        this.bytes = null;
-    }
-
     public String hexString() {
         return printHexBinary(bytes);
     }
@@ -91,6 +87,6 @@ public class CheckSum {
 
     @Override
     public String toString() {
-        return hexString();
+        return hexString().toLowerCase();
     }
 }

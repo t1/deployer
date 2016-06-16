@@ -1,35 +1,29 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.log.LogLevel.*;
-
-import java.io.IOException;
-
-import javax.inject.Inject;
-
+import com.github.t1.log.Logged;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
-import com.github.t1.log.Logged;
+import javax.inject.Inject;
+import java.io.IOException;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import static com.github.t1.log.LogLevel.*;
 
 @Slf4j
 @Logged(level = INFO)
 abstract class AbstractContainer {
-    private static final OperationMessageHandler LOGGING = new OperationMessageHandler() {
-        @Override
-        public void handleReport(MessageSeverity severity, String message) {
-            switch (severity) {
-            case ERROR:
-                log.error(message);
-            case WARN:
-                log.warn(message);
-                break;
-            case INFO:
-                log.info(message);
-                break;
-            }
+    private static final OperationMessageHandler LOGGING = (severity, message) -> {
+        switch (severity) {
+        case ERROR:
+            log.error(message);
+        case WARN:
+            log.warn(message);
+            break;
+        case INFO:
+            log.info(message);
+            break;
         }
     };
 
@@ -70,6 +64,18 @@ abstract class AbstractContainer {
     protected void checkOutcome(ModelNode result) {
         String outcome = result.get("outcome").asString();
         if (!"success".equals(outcome)) {
+            log.error("failed: {}", result);
+            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
+        }
+    }
+
+    protected boolean isOutcomeFound(ModelNode result) {
+        String outcome = result.get("outcome").asString();
+        if ("success".equals(outcome)) {
+            return true;
+        } else if (isNotFoundMessage(result)) {
+            return false;
+        } else {
             log.error("failed: {}", result);
             throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
         }

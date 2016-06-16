@@ -1,25 +1,23 @@
 package com.github.t1.deployer.repository;
 
-import static ch.qos.logback.classic.Level.*;
-import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static com.github.t1.rest.RestContext.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import ch.qos.logback.classic.*;
+import com.github.t1.deployer.model.*;
+import com.github.t1.rest.*;
+import io.dropwizard.testing.junit.DropwizardClientRule;
+import lombok.SneakyThrows;
+import org.junit.*;
+import org.junit.rules.ExpectedException;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
 import java.util.List;
 
-import org.junit.*;
-import org.junit.rules.ExpectedException;
-import org.slf4j.LoggerFactory;
-
-import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
-
-import ch.qos.logback.classic.*;
-import io.dropwizard.testing.junit.DropwizardClientRule;
-import lombok.SneakyThrows;
+import static ch.qos.logback.classic.Level.*;
+import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static com.github.t1.rest.RestContext.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 public class RepositoryIT {
     private static ArtifactoryMock ARTIFACTORY_MOCK = new ArtifactoryMock();
@@ -154,5 +152,19 @@ public class RepositoryIT {
             out.append(line).append('\n');
         }
         return out.toString().trim();
+    }
+
+    @Test
+    public void shouldFetchArtifact() throws Exception {
+        GroupId groupId = new GroupId("org.jolokia");
+        ArtifactId artifactId = new ArtifactId("jolokia-war");
+        Version version = new Version("1.3.3");
+
+        Artifact artifact = repository.fetchArtifact(groupId, artifactId, version);
+
+        assertThat(artifact.getGroupId()).isEqualTo(groupId);
+        assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
+        assertThat(artifact.getVersion()).isEqualTo(version);
+        assertThat(artifact.getSha1()).isEqualTo(CheckSum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259"));
     }
 }

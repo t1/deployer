@@ -1,22 +1,21 @@
 package com.github.t1.deployer;
 
-import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
-
-import java.io.InputStream;
-import java.util.*;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import com.github.t1.deployer.container.DeploymentContainer;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import java.io.InputStream;
+import java.util.*;
+
+import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static java.util.stream.Collectors.*;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class TestData {
     public static Deployment deploymentFor(ContextRoot contextRoot, Version version) {
@@ -45,15 +44,15 @@ public class TestData {
     }
 
     public static String failedCli(String message) {
-        return "{\"outcome\" => \"failed\",\n" //
-                + "\"failure-description\" => \"" + message + "\n" //
+        return "{\"outcome\" => \"failed\",\n"
+                + "\"failure-description\" => \"" + message + "\n"
                 + "}\n";
     }
 
     public static String successCli(String result) {
-        return "{\n" //
-                + "\"outcome\" => \"success\",\n" //
-                + "\"result\" => " + result + "\n" //
+        return "{\n"
+                + "\"outcome\" => \"success\",\n"
+                + "\"result\" => " + result + "\n"
                 + "}\n";
     }
 
@@ -65,7 +64,7 @@ public class TestData {
                 CheckSum checksum = fakeChecksumFor(contextRoot, version);
                 when(repository.getByChecksum(checksum)).thenReturn(deploymentFor(contextRoot, version));
                 when(repository.releasesFor(checksum)).thenReturn(releases);
-                when(repository.getArtifactInputStream(checksum)) //
+                when(repository.getArtifactInputStream(checksum))
                         .thenReturn(inputStreamFor(contextRoot, version));
             }
         }
@@ -77,11 +76,9 @@ public class TestData {
     }
 
     private static List<Release> releases(ContextRoot contextRoot, List<Version> versions) {
-        List<Release> result = new ArrayList<>();
-        for (Version version : versions) {
-            result.add(new Release(version, fakeChecksumFor(contextRoot, version)));
-        }
-        return result;
+        return versions.stream()
+                       .map(version -> new Release(version, fakeChecksumFor(contextRoot, version)))
+                       .collect(toList());
     }
 
     public static void givenDeployments(final DeploymentContainer container, ContextRoot... contextRoots) {
@@ -117,11 +114,11 @@ public class TestData {
     }
 
     public static String deploymentJson(ContextRoot contextRoot, Version version) {
-        return "{" //
-                + "\"name\":\"" + nameFor(contextRoot) + "\"," //
-                + "\"contextRoot\":\"" + contextRoot + "\"," //
-                + "\"checkSum\":\"" + fakeChecksumFor(contextRoot, version) + "\"," //
-                + "\"version\":\"" + version + "\"" //
+        return "{"
+                + "\"name\":\"" + nameFor(contextRoot) + "\","
+                + "\"contextRoot\":\"" + contextRoot + "\","
+                + "\"checkSum\":\"" + fakeChecksumFor(contextRoot, version) + "\","
+                + "\"version\":\"" + version + "\""
                 + "}";
     }
 
@@ -135,7 +132,7 @@ public class TestData {
 
             String entity = response.readEntity(String.class);
             if (entity != null)
-                message.append(":\n" + entity);
+                message.append(":\n").append(entity);
 
             fail(message.toString());
         }

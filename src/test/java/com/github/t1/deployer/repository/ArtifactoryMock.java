@@ -85,22 +85,22 @@ public class ArtifactoryMock {
     static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
 
     static final List<Version> FOO_VERSIONS = asList(//
-            NEWEST_FOO_VERSION, //
-            new Version("1.3.12"), //
-            new Version("1.3.2"), //
-            CURRENT_FOO_VERSION, //
-            new Version("1.3.0"), //
-            new Version("1.2.1"), //
-            new Version("1.2.1.1"), //
-            new Version("1.2.1-SNAPSHOT"), //
-            new Version("1.2.0") //
+            NEWEST_FOO_VERSION,
+            new Version("1.3.12"),
+            new Version("1.3.2"),
+            CURRENT_FOO_VERSION,
+            new Version("1.3.0"),
+            new Version("1.2.1"),
+            new Version("1.2.1.1"),
+            new Version("1.2.1-SNAPSHOT"),
+            new Version("1.2.0")
     );
 
     private static final Version CURRENT_BAR_VERSION = new Version("0.3");
 
-    private static final List<Version> BAR_VERSIONS = asList(//
-            CURRENT_BAR_VERSION, //
-            new Version("0.2") //
+    private static final List<Version> BAR_VERSIONS = asList(
+            CURRENT_BAR_VERSION,
+            new Version("0.2")
     );
 
     private static final class StringInputStream extends ByteArrayInputStream {
@@ -145,7 +145,7 @@ public class ArtifactoryMock {
     @GET
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
-    public String searchByChecksum(@HeaderParam("Authorization") String authorization, //
+    public String searchByChecksum(@HeaderParam("Authorization") String authorization,
             @QueryParam("sha1") CheckSum checkSum) {
         checkAuthorization(authorization);
         log.info("search by checksum: {}", checkSum);
@@ -219,13 +219,13 @@ public class ArtifactoryMock {
 
     private static java.nio.file.Path pathFor(ContextRoot contextRoot, Version version) {
         return REPO_NAME.resolve(contextRoot.toString()).resolve(version.toString())
-                .resolve(contextRoot + "-" + version + ".war");
+                        .resolve(contextRoot + "-" + version + ".war");
     }
 
     private String fileSearchResult(String path) {
-        return "{" //
-                + "\"uri\":\"" + base("api/storage/" + path) + "\",\n" //
-                + "\"downloadUri\" : \"" + base(path) + "\"\n" //
+        return "{"
+                + "\"uri\":\"" + base("api/storage/" + path) + "\",\n"
+                + "\"downloadUri\" : \"" + base(path) + "\"\n"
                 + "}";
     }
 
@@ -257,20 +257,22 @@ public class ArtifactoryMock {
 
     @GET
     @Path("/api/storage/{repoKey}/{path:.*}")
-    public Response fileOrFolderInfo(@HeaderParam("Authorization") String authorization, //
+    public Response fileOrFolderInfo(@HeaderParam("Authorization") String authorization,
             @PathParam("repoKey") String repoKey, @PathParam("path") String path) throws IOException {
         checkAuthorization(authorization);
         log.info("get file/folder info for {} in {}", path, repoKey);
-        String info = "{\n" //
-                + "   \"repo\" : \"" + repoKey + "\",\n" //
-                + "   \"path\" : \"" + path + "\",\n" //
-                + "   \"created\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
-                + "   \"createdBy\" : \"kirk\",\n" //
-                + "   \"modifiedBy\" : \"spock\",\n" //
-                + "   \"lastModified\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
-                + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n" //
-                + info(Paths.get(path)) //
-                + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n" //
+        String info = "{\n"
+                + "   \"repo\" : \"" + repoKey + "\",\n"
+                + "   \"path\" : \"/" + path + "\",\n"
+                + "   \"created\" : \"2014-04-02T16:21:31.385+02:00\",\n"
+                + "   \"createdBy\" : \"kirk\",\n"
+                + "   \"modifiedBy\" : \"spock\",\n"
+                + "   \"lastModified\" : \"2014-04-02T16:21:31.385+02:00\",\n"
+                + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n"
+                + info(Paths.get(path))
+                + "   \"downloadUri\": \"http://localhost:8081/artifactory/" + repoKey + "/" + path + "\",\n"
+                + "   \"remoteUrl\": \"http://jcenter.bintray.com/" + path + "\",\n"
+                + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n"
                 + "}\n";
         return Response.ok(info, info.contains("\"children\"") ? FOLDER_INFO : FILE_INFO).build();
     }
@@ -302,12 +304,14 @@ public class ArtifactoryMock {
             CheckSum checksum = fakeChecksumFor(new ContextRoot(path.getFileName().toString()));
             return fileInfo(12345, checksum, checksum);
         }
-        throw new WebApplicationException(Response.status(NOT_FOUND).type(APPLICATION_JSON)
-                .entity("{\n" //
-                        + "  \"errors\" : [ {\n" //
-                        + "    \"status\" : 404,\n" //
-                        + "    \"message\" : \"Unable to find item\"\n" //
-                        + "  } ]\n" //
+        throw new WebApplicationException(Response
+                .status(NOT_FOUND)
+                .type(APPLICATION_JSON)
+                .entity("{\n"
+                        + "  \"errors\" : [ {\n"
+                        + "    \"status\" : 404,\n"
+                        + "    \"message\" : \"Unable to find item\"\n"
+                        + "  } ]\n"
                         + "}")
                 .build());
     }
@@ -386,18 +390,18 @@ public class ArtifactoryMock {
     }
 
     private String folderChild(String fileName) {
-        return "      {\n" //
-                + "         \"folder\" : true,\n" //
-                + "         \"uri\" : \"/" + fileName + "\"\n" //
-                + "      },\n" //
+        return "      {\n"
+                + "         \"folder\" : true,\n"
+                + "         \"uri\" : \"/" + fileName + "\"\n"
+                + "      },\n"
                 ;
     }
 
     private String fileChild(String fileName) {
-        return "      {\n" //
-                + "         \"folder\" : false,\n" //
-                + "         \"uri\" : \"/" + fileName + "\"\n" //
-                + "      },\n" //
+        return "      {\n"
+                + "         \"folder\" : false,\n"
+                + "         \"uri\" : \"/" + fileName + "\"\n"
+                + "      },\n"
                 ;
     }
 
@@ -410,24 +414,24 @@ public class ArtifactoryMock {
     }
 
     private String fileInfo(long size, CheckSum sha1, CheckSum md5) {
-        return "  \"mimeType\" : \"application/java-archive\",\n" //
-                + "  \"size\" : \"" + size + "\",\n" //
-                + "  \"checksums\" : {\n" //
-                + "    \"sha1\" : \"" + sha1 + "\",\n" //
-                + "    \"md5\" : \"" + md5 + "\"\n" //
-                + "  },\n" //
-                + "  \"originalChecksums\" : {\n" //
-                + "    \"sha1\" : \"" + sha1 + "\",\n" //
-                + "    \"md5\" : \"" + md5 + "\"\n" //
+        return "  \"mimeType\" : \"application/java-archive\",\n"
+                + "  \"size\" : \"" + size + "\",\n"
+                + "  \"checksums\" : {\n"
+                + "    \"sha1\" : \"" + sha1 + "\",\n"
+                + "    \"md5\" : \"" + md5 + "\"\n"
+                + "  },\n"
+                + "  \"originalChecksums\" : {\n"
+                + "    \"sha1\" : \"" + sha1 + "\"\n"
+                // + "    \"md5\" : \"" + md5 + "\"\n"
                 + "  },\n";
     }
 
     @GET
     @Path("/{repoKey}/{path:.*}")
     @Produces("application/java-archive")
-    public InputStream getFileStream(@HeaderParam("Authorization") String authorization, //
+    public InputStream getFileStream(@HeaderParam("Authorization") String authorization,
             @SuppressWarnings("unused") @PathParam("repoKey") String repoKey, @PathParam("path") String pathString)
-                    throws IOException {
+            throws IOException {
         checkAuthorization(authorization);
         java.nio.file.Path path = Paths.get(pathString);
         if (isIndexed(path)) {

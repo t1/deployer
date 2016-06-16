@@ -12,6 +12,7 @@ import java.util.*;
 
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
+import static com.github.t1.rest.RestContext.*;
 import static java.util.Collections.*;
 
 @Slf4j
@@ -42,7 +43,7 @@ public class ArtifactoryRepository extends Repository {
 
     private RestContext rest() {
         if (restContext == null) {
-            restContext = RestContext.REST.register("repository", artifactory);
+            restContext = REST.register("repository", artifactory);
             if (artifactoryUserName != null && artifactoryPassword != null) {
                 log.debug("put {} credentials for {}", artifactoryUserName, artifactory);
                 Credentials credentials = new Credentials(artifactoryUserName, artifactoryPassword.getValue());
@@ -50,6 +51,14 @@ public class ArtifactoryRepository extends Repository {
             }
         }
         return restContext;
+    }
+
+    ArtifactoryRepository() {
+        // TODO make configurable:
+        this.artifactory = URI.create("http://localhost:8081/artifactory");
+        // this.artifactory = URI.create("https://artifactory.1and1.org/artifactory");
+        // this.artifactoryUserName = "xxx";
+        // this.artifactoryPassword = new Password("xxx");
     }
 
     ArtifactoryRepository(RestContext restContext) {
@@ -87,9 +96,7 @@ public class ArtifactoryRepository extends Repository {
         RestRequest<ChecksumSearchResult> request = searchByChecksumRequest();
         try {
             log.debug("searchByChecksum({})", checkSum);
-            List<ChecksumSearchResultItem> results = request.with("checkSum", checkSum.hexString()) //
-                    .GET() //
-                    .getResults();
+            List<ChecksumSearchResultItem> results = request.with("checkSum", checkSum.hexString()).GET().getResults();
             if (results.size() == 0)
                 return searchResult().status(SearchResultStatus.unknown).build();
             if (results.size() > 1)
@@ -104,13 +111,13 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
-        UriTemplate uri = rest() //
-                .nonQueryUri("repository") //
-                .path("api/search/checksum") //
+        UriTemplate uri = rest()
+                .nonQueryUri("repository")
+                .path("api/search/checksum")
                 .query("sha1", "{checkSum}");
-        RestRequest<ChecksumSearchResult> searchByChecksum = rest() //
-                .createResource(uri) //
-                .header("X-Result-Detail", "info") //
+        RestRequest<ChecksumSearchResult> searchByChecksum = rest()
+                .createResource(uri)
+                .header("X-Result-Detail", "info")
                 .accept(ChecksumSearchResult.class);
         log.debug("configured searchByChecksum request: {}", searchByChecksum);
         return searchByChecksum;
@@ -190,7 +197,7 @@ public class ArtifactoryRepository extends Repository {
     @VendorType("org.jfrog.artifactory.storage.FileInfo")
     private static class FileInfo {
         boolean folder;
-        URI uri;
+        URI uri, downloadUri;
         Map<String, CheckSum> checksums;
 
         public Deployment deployment() {
@@ -249,6 +256,44 @@ public class ArtifactoryRepository extends Repository {
     private Deployment deploymentIn(URI uri) {
         FileInfo file = rest().createResource(uri).GET(FileInfo.class);
         return file.deployment();
+    }
+
+    @Override
+    public Artifact fetchArtifact(GroupId groupId, ArtifactId artifactId, Version version) {
+        UriTemplate template = rest()
+                .nonQueryUri("repository")
+                .path("api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/{module}-{baseRev}.{ext}");
+        UriTemplate uri = template
+                .with("repoKey", "remote-repos") // TODO make configurable
+                .with("org", groupId)
+                .with("orgPath", groupId.asPath())
+                .with("baseRev", version)
+                .with("module", artifactId)
+                // (-{folderItegRev})
+                // (-{fileItegRev})
+                // (-{classifier})
+                .with("ext", "war") // TODO where do we get this from?
+                // .with("type", "war") ???
+                // customTokenName<customTokenRegex>
+                ;
+        log.debug("fetch artifact info from {}", uri);
+        FileInfo fileInfo = rest().createResource(uri).GET(FileInfo.class);
+        log.debug("found artifact info: {}", fileInfo);
+        return Artifact
+                .builder()
+                .groupId(groupId)
+                .artifactId(artifactId)
+                .version(version)
+                .sha1(fileInfo.getChecksum())
+                .inputStreamSupplier(() -> download(fileInfo))
+                .build();
+    }
+
+    private InputStream download(FileInfo fileInfo) {
+        URI uri = fileInfo.getDownloadUri();
+        if (uri == null)
+            throw new RuntimeException("no download uri from repository for " + fileInfo.getUri());
+        return rest().createResource(uri).GET(InputStream.class);
     }
 
     @Override

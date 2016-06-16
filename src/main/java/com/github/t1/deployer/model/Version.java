@@ -1,5 +1,6 @@
 package com.github.t1.deployer.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,12 +11,14 @@ import static lombok.AccessLevel.*;
 
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
-@RequiredArgsConstructor
 @XmlAccessorType(XmlAccessType.NONE)
 public class Version implements Comparable<Version> {
     @NonNull
     @XmlValue
-    private String version;
+    private final String version;
+
+    @JsonCreator
+    public Version(String version) { this.version = version; }
 
     @Override
     public String toString() {

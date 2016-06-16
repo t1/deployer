@@ -15,7 +15,7 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-class LoggerContainer extends AbstractContainer {
+public class LoggerContainer extends AbstractContainer {
     List<LoggerConfig> getLoggers() {
         List<LoggerConfig> loggers =
                 execute(readLogger("*")).asList().stream().map(node -> toLogger(node, "")).collect(toList());
@@ -64,15 +64,7 @@ class LoggerContainer extends AbstractContainer {
 
     boolean hasLogger(String category) {
         ModelNode result = executeRaw(readLogger(category));
-        String outcome = result.get("outcome").asString();
-        if ("success".equals(outcome)) {
-            return true;
-        } else if (isNotFoundMessage(result)) {
-            return false;
-        } else {
-            log.error("failed: {}", result);
-            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
-        }
+        return isOutcomeFound(result);
     }
 
     LoggerConfig getLogger(String category) {

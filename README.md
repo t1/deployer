@@ -6,18 +6,19 @@ Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCo
 
 ## 1-Minute-Tutorial
 
-- Put this into a file `$JBOSS_CONFIG_DIR/root-deployment.yaml`:
+- Put this into a file `$JBOSS_CONFIG_DIR/root-deployments.yaml`:
 
       org.jolokia:
         jolokia-war:
           version: 1.3.2
 
 - Deploy the `deployer.war` to your container.
-On startup, it will find the `root-deployment.yaml`, pull jolokia from the maven central, and deploy it to the container.
-If there is a different version of jolokia deployed, it will replace it.
+On startup, it will find the `root-deployments.yaml`, pull jolokia from maven central, and deploy it to the container.
+If there is already a different version of jolokia deployed, it will replace it.
 
 - Change the file to version `1.3.3` and the deployer will pick up the change and upgrade jolokia.
 
 ## History
 
-Version 1.0.0 (which was never released) provided a rest api and html ui to manage deployments manually on each node. As this didn't scale for many instances and stages, 2.0 was initiated.
+Version 1.0.0 (which was never released) provided a rest api and html ui to manage deployments manually on each node.
+As this didn't scale for many instances and stages, 2.0 was initiated.

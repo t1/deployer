@@ -14,7 +14,7 @@ import static com.github.t1.log.LogLevel.*;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-class DataSourceContainer extends AbstractContainer {
+public class DataSourceContainer extends AbstractContainer {
     List<DataSourceConfig> getDataSources() {
         List<DataSourceConfig> dataSources = new ArrayList<>();
         for (ModelNode cliDataSourceMatch : readAllDataSources()) {
@@ -47,15 +47,7 @@ class DataSourceContainer extends AbstractContainer {
 
     boolean hasDataSource(String dataSourceName) {
         ModelNode result = executeRaw(readDataSource(dataSourceName));
-        String outcome = result.get("outcome").asString();
-        if ("success".equals(outcome)) {
-            return true;
-        } else if (isNotFoundMessage(result)) {
-            return false;
-        } else {
-            log.error("failed: {}", result);
-            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
-        }
+        return isOutcomeFound(result);
     }
 
     public DataSourceConfig getDataSource(String dataSourceName) {
