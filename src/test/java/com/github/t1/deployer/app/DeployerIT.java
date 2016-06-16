@@ -48,7 +48,10 @@ public class DeployerIT {
             first = false;
 
             jbossConfig = new FileMemento(System.getProperty("jboss.server.config.dir") + "/standalone.xml").setup();
-            // TODO remove DEPLOYER_IT_WAR from <deployments>
+            jbossConfig.setOrig(jbossConfig.getOrig().replaceFirst(""
+                    + "        <deployment name=\"" + DEPLOYER_IT_WAR + "\" runtime-name=\"" + DEPLOYER_IT_WAR + "\">\n"
+                    + "            <content sha1=\"[0-9a-f]{40}\"/>\n"
+                    + "        </deployment>\n", ""));
             // restore after JBoss is down
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
