@@ -18,4 +18,6 @@ public class DeploymentName {
     public String toString() {
         return value;
     }
+
+    public boolean matches(@NonNull Deployment deployment) { return this.equals(deployment.getName()); }
 }

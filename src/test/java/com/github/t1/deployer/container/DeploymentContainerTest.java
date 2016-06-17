@@ -98,7 +98,7 @@ public class DeploymentContainerTest {
         when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
                 .thenReturn(ModelNode.fromString(successCli("[]")));
 
-        Throwable thrown = catchThrowable(() -> container.getDeploymentFor(new ContextRoot("unknown")));
+        Throwable thrown = catchThrowable(() -> container.getDeployment(new ContextRoot("unknown")));
 
         assertThat(thrown).hasMessage("no deployment with context root [unknown]");
     }
@@ -117,7 +117,7 @@ public class DeploymentContainerTest {
     public void shouldGetNoDeployment() {
         givenDeployments();
 
-        boolean exists = container.hasDeploymentWith(FOO);
+        boolean exists = container.hasDeployment(FOO);
 
         assertThat(exists).isFalse();
     }
@@ -126,7 +126,7 @@ public class DeploymentContainerTest {
     public void shouldGetOneDeployment() {
         givenDeployments(FOO);
 
-        Deployment deployment = container.getDeploymentFor(FOO);
+        Deployment deployment = container.getDeployment(FOO);
 
         assertDeployment(FOO, NO_VERSION, deployment);
     }
@@ -135,7 +135,7 @@ public class DeploymentContainerTest {
     public void shouldGetOneOfTwoDeployments() {
         givenDeployments(FOO, BAR);
 
-        Deployment deployment = container.getDeploymentFor(FOO);
+        Deployment deployment = container.getDeployment(FOO);
 
         assertDeployment(FOO, NO_VERSION, deployment);
     }
@@ -144,7 +144,7 @@ public class DeploymentContainerTest {
     public void shouldGetTheOtherOfTwoDeployments() {
         givenDeployments(FOO, BAR);
 
-        Deployment deployment = container.getDeploymentFor(BAR);
+        Deployment deployment = container.getDeployment(BAR);
 
         assertDeployment(BAR, NO_VERSION, deployment);
     }

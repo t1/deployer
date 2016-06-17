@@ -9,11 +9,13 @@ import org.jboss.dmr.ModelNode;
 
 import javax.ejb.Stateless;
 import java.io.*;
-import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Stream;
 
 import static com.github.t1.log.LogLevel.*;
 import static java.util.concurrent.TimeUnit.*;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 @Logged(level = INFO)
@@ -93,10 +95,9 @@ public class DeploymentContainer extends AbstractContainer {
 
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            return plan //
-                        .add(deploymentName.getValue(), inputStream) //
-                        .deploy(deploymentName.getValue()) //
-                    ;
+            return plan
+                    .add(deploymentName.getValue(), inputStream)
+                    .deploy(deploymentName.getValue());
         }
     }
 
@@ -117,59 +118,40 @@ public class DeploymentContainer extends AbstractContainer {
 
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            return plan //
-                        .undeploy(deploymentName.getValue()) //
-                        .remove(deploymentName.getValue()) //
-                    ;
+            return plan
+                    .undeploy(deploymentName.getValue())
+                    .remove(deploymentName.getValue());
         }
     }
 
-    public boolean hasDeploymentWith(ContextRoot contextRoot) {
-        for (Deployment deployment : getAllDeployments()) {
-            if (deployment.getContextRoot().equals(contextRoot)) {
-                return true;
-            }
-        }
-        return false;
+    public boolean hasDeployment(ContextRoot contextRoot) { return all().anyMatch(contextRoot::matches); }
+
+    public boolean hasDeployment(DeploymentName deploymentName) { return all().anyMatch(deploymentName::matches); }
+
+    public boolean hasDeployment(CheckSum checkSum) { return all().anyMatch(checkSum::matches); }
+
+    public Deployment getDeployment(ContextRoot contextRoot) {
+        return all().filter(contextRoot::matches).findAny()
+                    .orElseThrow(() -> new RuntimeException("no deployment with context root [" + contextRoot + "]"));
     }
 
-    public Deployment getDeploymentFor(ContextRoot contextRoot) {
-        List<Deployment> all = getAllDeployments();
-        Deployment deployment = find(all, contextRoot);
-        log.debug("found deployment {}", deployment);
-        return deployment;
+    public Deployment getDeployment(DeploymentName name) {
+        return all().filter(name::matches).findAny()
+                    .orElseThrow(() -> new RuntimeException("no deployment with name [" + name + "]"));
     }
 
-    private Deployment find(List<Deployment> all, ContextRoot contextRoot) {
-        for (Deployment deployment : all) {
-            if (deployment.getContextRoot().equals(contextRoot)) {
-                return deployment;
-            }
-        }
-        throw new RuntimeException("no deployment with context root [" + contextRoot + "]");
+    public Deployment getDeployment(CheckSum checkSum) {
+        return all().filter(checkSum::matches).findAny()
+                    .orElseThrow(() -> new RuntimeException("no deployment with checksum [" + checkSum + "]"));
     }
 
-    public Deployment getDeploymentWith(CheckSum checkSum) {
-        List<Deployment> all = getAllDeployments();
-        Deployment deployment = find(all, checkSum);
-        log.debug("found deployment {}", deployment);
-        return deployment;
-    }
-
-    private Deployment find(List<Deployment> all, CheckSum checkSum) {
-        for (Deployment deployment : all) {
-            if (deployment.getCheckSum().equals(checkSum)) {
-                return deployment;
-            }
-        }
-        throw new RuntimeException("no deployment with context root [" + checkSum + "]");
-    }
+    private Stream<Deployment> all() { return getAllDeployments().stream(); }
 
     public List<Deployment> getAllDeployments() {
-        List<Deployment> list = new ArrayList<>();
-        for (ModelNode cliDeploymentMatch : execute(readDeployments()).asList())
-            list.add(toDeployment(cliDeploymentMatch.get("result")));
-        return list;
+        return execute(readDeployments())
+                .asList().stream()
+                .map(cliDeploymentMatch -> toDeployment(cliDeploymentMatch.get("result")))
+                .collect(toList());
     }
 
     private static ModelNode readDeployments() {

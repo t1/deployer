@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.LoggerConfig;
+import com.github.t1.deployer.model.*;
 import com.github.t1.testtools.*;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.groups.Tuple;
@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 import java.io.StringReader;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.t1.log.LogLevel.*;
 import static java.util.concurrent.TimeUnit.*;
@@ -21,8 +22,18 @@ import static org.assertj.core.api.Assertions.*;
 @RunWith(Arquillian.class)
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
-    private static final String DEPLOYER_IT_WAR = "deployer-it.war";
-    private static final Tuple SELF = tuple(DEPLOYER_IT_WAR, null);
+    private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it");
+    private static final String DEPLOYER_IT_WAR = DEPLOYER_IT + ".war";
+
+    private static final DeploymentName JOLOKIA_WAR = new DeploymentName("jolokia-war");
+    private static final CheckSum JOLOKIA_1_3_2_CHECKSUM =
+            CheckSum.fromString("9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330");
+    private static final CheckSum JOLOKIA_1_3_3_CHECKSUM =
+            CheckSum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259");
+
+    private static final DeploymentName MOCKSERVER_WAR = new DeploymentName("mockserver-war");
+    private static final CheckSum MOCKSERVER_3_10_4_CHECKSUM =
+            CheckSum.fromString("CD60FEDE66361C2001629B8D6A8427372641EF81");
 
     @org.jboss.arquillian.container.test.api.Deployment
     public static WebArchive createDeployment() {
@@ -59,15 +70,17 @@ public class DeployerIT {
             loggerContainer.add(new LoggerConfig("com.github.t1.deployer", DEBUG));
 
             log.info("deployments: {}", container.getAllDeployments());
-            assertDeployments(SELF);
+            assertDeployments();
         }
     }
 
     private void assertDeployments(Tuple... tuples) {
-        assertThat(container.getAllDeployments()).extracting(
-                deployment -> deployment.getName().getValue(),
-                deployment -> (deployment.getVersion() == null) ? null : deployment.getVersion().getVersion()
-        ).contains(tuples);
+        AtomicInteger i = new AtomicInteger(0);
+        container.getAllDeployments().stream().filter(DEPLOYER_IT::matches).forEach(deployment -> {
+            Object[] tuple = tuples[i.getAndIncrement()].toArray();
+            assertThat(deployment.getName()).isEqualTo(tuple[0]);
+            assertThat(deployment.getCheckSum()).isEqualTo(tuple[1]);
+        });
     }
 
 
@@ -81,12 +94,38 @@ public class DeployerIT {
 
         deployer.run(plan);
 
-        assertDeployments(SELF, tuple("jolokia-war", null));
+        assertDeployments(tuple(JOLOKIA_WAR, JOLOKIA_1_3_2_CHECKSUM));
     }
-
 
     @Test
     @InSequence(value = 200)
+    public void shouldUpdateExistingWebArchive() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+                + "org.jolokia:\n"
+                + "  jolokia-war:\n"
+                + "    version: 1.3.3\n"));
+
+        deployer.run(plan);
+
+        assertDeployments(tuple(JOLOKIA_WAR, JOLOKIA_1_3_3_CHECKSUM));
+    }
+
+    @Test
+    @InSequence(value = 300)
+    public void shouldNotRedeployWebArchiveWithSameNameAndChecksum() {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+                + "org.jolokia:\n"
+                + "  jolokia-war:\n"
+                + "    version: 1.3.3\n"));
+
+        deployer.run(plan);
+
+        // TODO check that jolokia was not redeployed
+        assertDeployments(tuple(JOLOKIA_WAR, JOLOKIA_1_3_3_CHECKSUM));
+    }
+
+    @Test
+    @InSequence(value = 1000)
     @Ignore
     public void shouldDeploySecondWebArchive() throws Exception {
         ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
@@ -100,27 +139,11 @@ public class DeployerIT {
         deployer.run(plan);
 
         // TODO check that jolokia was not redeployed
-        assertDeployments(SELF, tuple("jolokia-war", "1.3.2"), tuple("mockserver-war", "3.10.4"));
+        assertDeployments(tuple(JOLOKIA_WAR, JOLOKIA_1_3_2_CHECKSUM),
+                tuple(MOCKSERVER_WAR, MOCKSERVER_3_10_4_CHECKSUM));
     }
 
-
-    @Test
-    @InSequence(value = 300)
-    @Ignore
-    public void shouldReplaceExistingWebArchiveByChecksum() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
-                + "org.jolokia:\n"
-                + "  jolokia-war:\n"
-                + "    version: 1.3.3\n"));
-
-        deployer.run(plan);
-
-        assertDeployments(SELF, tuple("jolokia-war", "1.3.3"));
-    }
-
-    // TODO shouldNotRedeployWebArchiveWithSameNameAndChecksum
     // TODO shouldUndeployWebArchiveWhenStateIsUndeployed
-    // TODO shouldRedeployWebArchiveWhenStateIsRedeployed
     // TODO shouldNotUndeployUnspecifiedWebArchiveWhenUnmanaged
     // TODO shouldUndeployUnspecifiedWebArchiveWhenManaged
     // TODO shouldDeployJdbcDriver
@@ -135,7 +158,7 @@ public class DeployerIT {
 
         deployer.run(plan);
 
-        assertDeployments(SELF);
+        assertDeployments();
         // TODO assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
     }
 }

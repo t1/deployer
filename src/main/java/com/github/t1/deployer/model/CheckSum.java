@@ -89,4 +89,6 @@ public class CheckSum {
     public String toString() {
         return hexString().toLowerCase();
     }
+
+    public boolean matches(@NonNull Deployment deployment) { return this.equals(deployment.getCheckSum()); }
 }
