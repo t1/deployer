@@ -2,8 +2,10 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
 import com.github.t1.testtools.*;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
 import org.jboss.arquillian.junit.*;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -25,15 +27,21 @@ public class DeployerIT {
     private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it");
     private static final String DEPLOYER_IT_WAR = DEPLOYER_IT + ".war";
 
-    private static final DeploymentName JOLOKIA_WAR = new DeploymentName("jolokia-war");
-    private static final CheckSum JOLOKIA_1_3_2_CHECKSUM =
-            CheckSum.fromString("9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330");
-    private static final CheckSum JOLOKIA_1_3_3_CHECKSUM =
-            CheckSum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259");
+    private static Condition<Deployment> deployment(String name) { return deployment(new DeploymentName(name)); }
 
-    private static final DeploymentName MOCKSERVER_WAR = new DeploymentName("mockserver-war");
-    private static final CheckSum MOCKSERVER_3_10_4_CHECKSUM =
-            CheckSum.fromString("CD60FEDE66361C2001629B8D6A8427372641EF81");
+    private static Condition<Deployment> deployment(DeploymentName name) {
+        return new Condition<>(name::matches, "deployment with name '" + name + "'");
+    }
+
+    private static Condition<Deployment> checksum(String checksum) { return checksum(CheckSum.fromString(checksum)); }
+
+    private static Condition<Deployment> checksum(CheckSum checksum) {
+        return new Condition<>(checksum::matches, "deployment with checksum '" + checksum + "'");
+    }
+
+    private static Condition<Deployment> jolokia_1_3_2() {
+        return allOf(deployment("jolokia-war"), checksum("9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330"));
+    }
 
     @org.jboss.arquillian.container.test.api.Deployment
     public static WebArchive createDeployment() {
@@ -44,6 +52,18 @@ public class DeployerIT {
                 .print()
                 .build();
     }
+
+    static {
+        if (runningOnClient())
+            try {
+                ArtifactoryMockLauncher.main("server");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+    private static boolean runningOnClient() { return System.getProperty("jboss.server.config.dir") == null; }
+
 
     @Rule public TestLoggerRule logger = new TestLoggerRule();
     private static FileMemento jbossConfig;
@@ -94,7 +114,10 @@ public class DeployerIT {
 
         deployer.run(plan);
 
-        assertDeployments(tuple(JOLOKIA_WAR, JOLOKIA_1_3_2_CHECKSUM));
+        assertThat(container.getAllDeployments())
+                .hasSize(2)
+                .haveExactly(1, jolokia_1_3_2())
+                .haveExactly(1, deployment(DEPLOYER_IT_WAR));
     }
 
     @Test
