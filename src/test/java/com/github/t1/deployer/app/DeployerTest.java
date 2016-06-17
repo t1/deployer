@@ -78,6 +78,7 @@ public class DeployerTest extends AbstractDeployerTest {
 
         deployer.run(plan);
 
+        // #after(): jolokia not undeployed
         mockserver.verifyDeployed();
     }
 
@@ -97,15 +98,30 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldNotUndeployUnspecifiedWebArchiveWhenUnmanaged
-    // TODO shouldUndeployUnspecifiedWebArchiveWhenManaged
+    @Test
+    public void shouldUndeployUnspecifiedWebArchiveWhenManaged() {
+        VersionFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        VersionFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
+        deployer.setManaged(true);
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+                + "org.jolokia:\n"
+                + "  jolokia-war:\n"
+                + "    version: 1.3.2\n"));
+
+        deployer.run(plan);
+
+        // #after(): jolokia not undeployed
+        mockserver.verifyUndeployed();
+    }
+
+
     // TODO shouldDeployJdbcDriver
     // TODO shouldDeployBundle
     // TODO shouldDeployTemplate
 
     // @Test
     // public void shouldUndeployEverything() throws Exception {
-    //     // TODO pin DEPLOYER_IT_WAR & manage configs
+    //     // TODO manage configs
     //     ConfigurationPlan plan = ConfigurationPlan.load(new StringReader("---\n"));
     //
     //     deployer.run(plan);

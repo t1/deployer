@@ -5,10 +5,11 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.*;
 import org.mockito.Mock;
 
 import java.io.InputStream;
+import java.util.*;
 
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.mockito.Mockito.*;
@@ -17,6 +18,24 @@ import static org.mockito.Mockito.*;
 public class AbstractDeployerTest {
     @Mock DeploymentContainer container;
     @Mock Repository repository;
+
+    private final List<Deployment> allDeployments = new ArrayList<>();
+
+
+    @Before
+    public void before() {
+        when(container.getAllDeployments()).then(invocation -> allDeployments);
+    }
+
+    @After
+    public void after() {
+        verify(container, atLeast(0)).getAllDeployments();
+        verify(container, atLeast(0)).hasDeployment(any(DeploymentName.class));
+        verify(container, atLeast(0)).getDeployment(any(DeploymentName.class));
+
+        verifyNoMoreInteractions(container);
+    }
+
 
     protected ArtifactFixture givenArtifact(String groupId, String artifactId) {
         return new ArtifactFixture(groupId, artifactId);
@@ -60,9 +79,10 @@ public class AbstractDeployerTest {
             }
 
             public VersionFixture deployed() {
+                Deployment deployment = new Deployment(deploymentName(), contextRoot(), checkSum(), version);
+                allDeployments.add(deployment);
                 when(container.hasDeployment(deploymentName())).thenReturn(true);
-                when(container.getDeployment(deploymentName()))
-                        .thenReturn(new Deployment(deploymentName(), contextRoot(), checkSum(), version));
+                when(container.getDeployment(deploymentName())).thenReturn(deployment);
                 return this;
             }
 
@@ -81,13 +101,5 @@ public class AbstractDeployerTest {
 
             public void verifyUndeployed() { verify(container).undeploy(deploymentName()); }
         }
-    }
-
-    @After
-    public void after() {
-        verify(container, atLeast(0)).hasDeployment(any(DeploymentName.class));
-        verify(container, atLeast(0)).getDeployment(any(DeploymentName.class));
-
-        verifyNoMoreInteractions(container);
     }
 }
