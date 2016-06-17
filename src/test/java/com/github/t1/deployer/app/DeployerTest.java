@@ -42,6 +42,7 @@ public class DeployerTest extends AbstractDeployerTest {
         // #after(): no deploy operations
     }
 
+
     @Test
     public void shouldUpdateExistingWebArchive() throws Exception {
         VersionFixture foo2 = givenArtifact("foo")
@@ -57,6 +58,7 @@ public class DeployerTest extends AbstractDeployerTest {
 
         foo2.verifyRedeployed();
     }
+
 
     @Test
     public void shouldDeploySecondWebArchive() throws Exception {
@@ -79,13 +81,28 @@ public class DeployerTest extends AbstractDeployerTest {
         mockserver.verifyDeployed();
     }
 
-    // // TODO shouldUndeployWebArchiveWhenStateIsUndeployed
-    // // TODO shouldNotUndeployUnspecifiedWebArchiveWhenUnmanaged
-    // // TODO shouldUndeployUnspecifiedWebArchiveWhenManaged
-    // // TODO shouldDeployJdbcDriver
-    // // TODO shouldDeployBundle
-    // // TODO shouldDeployTemplate
-    //
+
+    @Test
+    public void shouldUndeployWebArchiveWhenStateIsUndeployed() {
+        VersionFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+                + "org.foo:\n"
+                + "  foo-war:\n"
+                + "    version: 1.3.2\n"
+                + "    state: undeployed\n"));
+
+        deployer.run(plan);
+
+        foo.verifyUndeployed();
+    }
+
+
+    // TODO shouldNotUndeployUnspecifiedWebArchiveWhenUnmanaged
+    // TODO shouldUndeployUnspecifiedWebArchiveWhenManaged
+    // TODO shouldDeployJdbcDriver
+    // TODO shouldDeployBundle
+    // TODO shouldDeployTemplate
+
     // @Test
     // public void shouldUndeployEverything() throws Exception {
     //     // TODO pin DEPLOYER_IT_WAR & manage configs

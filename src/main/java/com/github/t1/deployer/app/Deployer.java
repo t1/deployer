@@ -22,14 +22,23 @@ public class Deployer {
                 Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion());
                 log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
                 DeploymentName name = new DeploymentName(artifactId.toString());
-                if (container.hasDeployment(name)) {
-                    if (container.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
-                        log.info("already deployed with same checksum: {}", name);
+                switch (item.state) {
+                case deployed:
+                    if (container.hasDeployment(name)) {
+                        if (container.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
+                            log.info("already deployed with same checksum: {}", name);
+                        } else {
+                            container.redeploy(name, artifact.getInputStream());
+                        }
                     } else {
-                        container.redeploy(name, artifact.getInputStream());
+                        container.deploy(name, artifact.getInputStream());
                     }
-                } else {
-                    container.deploy(name, artifact.getInputStream());
+                    break;
+                case undeployed:
+                    if (container.hasDeployment(name))
+                        container.undeploy(name);
+                    else
+                        log.info("already undeployed: {}", name);
                 }
             });
         });
