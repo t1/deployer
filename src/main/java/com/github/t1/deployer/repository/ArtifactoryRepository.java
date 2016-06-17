@@ -259,7 +259,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override
-    public Artifact buildArtifact(GroupId groupId, ArtifactId artifactId, Version version) {
+    public Artifact buildArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
         UriTemplate template = rest()
                 .nonQueryUri("repository")
                 .path("api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/{module}-{baseRev}.{ext}");
@@ -267,13 +267,13 @@ public class ArtifactoryRepository extends Repository {
                 .with("repoKey", "remote-repos") // TODO make configurable
                 .with("org", groupId)
                 .with("orgPath", groupId.asPath())
-                .with("baseRev", version)
+                .with("baseRev", (version == null) ? "" : version)
                 .with("module", artifactId)
                 // (-{folderItegRev})
                 // (-{fileItegRev})
                 // (-{classifier})
-                .with("ext", "war") // TODO where do we get this from?
-                // .with("type", "war") ???
+                .with("ext", type)
+                .with("type", type)
                 // customTokenName<customTokenRegex>
                 ;
         log.debug("fetch artifact info from {}", uri);

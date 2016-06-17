@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.github.t1.deployer.model.Version;
+import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +15,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.State.*;
+import static com.github.t1.deployer.model.ArtifactType.*;
 import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
 
@@ -43,8 +44,9 @@ public class ConfigurationPlan {
 
     @Data
     public static class Item {
-        Version version;
-        State state = deployed;
+        private Version version;
+        private ArtifactType type = war;
+        private State state = deployed;
     }
 
     public enum State {

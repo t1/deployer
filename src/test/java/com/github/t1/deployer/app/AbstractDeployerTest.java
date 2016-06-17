@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import java.io.InputStream;
 import java.util.*;
 
+import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.mockito.Mockito.*;
 
@@ -75,7 +76,7 @@ public class AbstractDeployerTest {
                         .inputStreamSupplier(() -> inputStreamFor(contextRoot(), version))
                         .build();
                 log.debug("given artifact: {}", artifact);
-                when(repository.buildArtifact(groupId(), artifactId(), version)).thenReturn(artifact);
+                when(repository.buildArtifact(groupId(), artifactId(), version, war)).thenReturn(artifact);
             }
 
             public VersionFixture deployed() {

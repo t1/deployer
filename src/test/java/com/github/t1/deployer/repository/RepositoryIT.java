@@ -14,6 +14,7 @@ import java.net.URI;
 import java.util.List;
 
 import static ch.qos.logback.classic.Level.*;
+import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -160,7 +161,7 @@ public class RepositoryIT {
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.3");
 
-        Artifact artifact = repository.buildArtifact(groupId, artifactId, version);
+        Artifact artifact = repository.buildArtifact(groupId, artifactId, version, war);
 
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);

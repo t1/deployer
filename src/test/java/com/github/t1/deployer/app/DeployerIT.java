@@ -121,6 +121,38 @@ public class DeployerIT {
     }
 
     @Test
+    @InSequence(value = 200)
+    public void shouldUndeployWebArchive() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+                + "org.jolokia:\n"
+                + "  jolokia-war:\n"
+                + "    state: undeployed\n"));
+
+        deployer.run(plan);
+
+        assertThat(container.getAllDeployments())
+                .hasSize(1)
+                .haveExactly(1, deployment(DEPLOYER_IT_WAR));
+    }
+
+    @Test
+    @InSequence(value = 300)
+    public void shouldDeployJdbcDriver() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+                + "org.postgresql:\n"
+                + "  postgresql:\n"
+                + "    type: jar\n"
+                + "    version: \"9.4.1207\"\n"));
+
+        deployer.run(plan);
+
+        assertThat(container.getAllDeployments())
+                .hasSize(2)
+                .haveExactly(1, allOf(deployment("postgresql"), checksum("f2ea471fbe4446057991e284a6b4b3263731f319")))
+                .haveExactly(1, deployment(DEPLOYER_IT_WAR));
+    }
+
+    @Test
     @InSequence(value = Integer.MAX_VALUE)
     public void shouldUndeployEverything() throws Exception {
         // TODO pin DEPLOYER_IT_WAR & manage configs

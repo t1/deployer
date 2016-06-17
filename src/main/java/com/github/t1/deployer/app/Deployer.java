@@ -27,31 +27,41 @@ public class Deployer {
                 ArtifactId artifactId = artifactEntry.getKey();
                 ConfigurationPlan.Item item = artifactEntry.getValue();
 
-                Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion());
-                log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
                 DeploymentName name = new DeploymentName(artifactId.toString());
-                switch (item.state) {
+                log.debug("check '{}' -> {}", name, item.getState());
+                switch (item.getState()) {
                 case deployed:
-                    if (other.removeIf(name::matches)) {
-                        if (container.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
-                            log.info("already deployed with same checksum: {}", name);
-                        } else {
-                            container.redeploy(name, artifact.getInputStream());
-                        }
-                    } else {
-                        container.deploy(name, artifact.getInputStream());
-                    }
+                    Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion(),
+                            item.getType());
+                    log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
+                    deploy(other, name, artifact);
                     break;
                 case undeployed:
-                    if (other.removeIf(name::matches))
-                        container.undeploy(name);
-                    else
-                        log.info("already undeployed: {}", name);
+                    undeploy(other, name);
                 }
             });
         });
 
         if (managed)
             other.forEach(deployment -> container.undeploy(deployment.getName()));
+    }
+
+    private void deploy(List<Deployment> other, DeploymentName name, Artifact artifact) {
+        if (other.removeIf(name::matches)) {
+            if (container.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
+                log.info("already deployed with same checksum: {}", name);
+            } else {
+                container.redeploy(name, artifact.getInputStream());
+            }
+        } else {
+            container.deploy(name, artifact.getInputStream());
+        }
+    }
+
+    private void undeploy(List<Deployment> other, DeploymentName name) {
+        if (other.removeIf(name::matches))
+            container.undeploy(name);
+        else
+            log.info("already undeployed: {}", name);
     }
 }
