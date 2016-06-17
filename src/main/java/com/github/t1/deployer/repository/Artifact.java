@@ -21,4 +21,6 @@ public class Artifact {
     public InputStream getInputStream() {
         return inputStreamSupplier.get();
     }
+
+    @Override public String toString() { return groupId + ":" + artifactId + ":" + version + "=" + sha1;}
 }

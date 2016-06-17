@@ -25,5 +25,5 @@ public abstract class Repository {
         throw new IllegalArgumentException("no version " + version + " for " + deployment.getName());
     }
 
-    public abstract Artifact fetchArtifact(GroupId groupId, ArtifactId artifactId, Version version);
+    public abstract Artifact buildArtifact(GroupId groupId, ArtifactId artifactId, Version version);
 }

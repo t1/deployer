@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 
 @Slf4j
+@SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
     @Inject DeploymentContainer container;
     @Inject Repository repository;
@@ -18,7 +19,8 @@ public class Deployer {
             groupEntry.getValue().entrySet().stream().forEach(artifactEntry -> {
                 ArtifactId artifactId = artifactEntry.getKey();
                 ConfigurationPlan.Item item = artifactEntry.getValue();
-                Artifact artifact = repository.fetchArtifact(groupId, artifactId, item.getVersion());
+                Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion());
+                log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
                 DeploymentName name = new DeploymentName(artifactId.toString());
                 if (container.hasDeployment(name)) {
                     if (container.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {

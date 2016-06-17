@@ -160,7 +160,7 @@ public class RepositoryIT {
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.3");
 
-        Artifact artifact = repository.fetchArtifact(groupId, artifactId, version);
+        Artifact artifact = repository.buildArtifact(groupId, artifactId, version);
 
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
