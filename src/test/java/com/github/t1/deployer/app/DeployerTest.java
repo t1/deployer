@@ -1,12 +1,15 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixture.VersionFixture;
+import com.github.t1.deployer.model.DeploymentName;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.StringReader;
+
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeployerTest extends AbstractDeployerTest {
@@ -40,6 +43,21 @@ public class DeployerTest extends AbstractDeployerTest {
         deployer.run(plan);
 
         // #after(): no deploy operations
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithOtherName() {
+        VersionFixture foo = givenArtifact("foo").version("1.3.2");
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+                + "org.foo:\n"
+                + "  foo-war:\n"
+                + "    version: 1.3.2\n"
+                + "    name: bar"));
+
+        deployer.run(plan);
+
+        verify(container).deploy(new DeploymentName("bar"), foo.inputStream());
     }
 
 
@@ -100,7 +118,7 @@ public class DeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldUndeployUnspecifiedWebArchiveWhenManaged() {
-        VersionFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        givenArtifact("jolokia").version("1.3.2").deployed();
         VersionFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
         deployer.setManaged(true);
         ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
@@ -115,18 +133,22 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldDeployJdbcDriver
+    // TODO shouldDeployLogger
     // TODO shouldDeployBundle
-    // TODO shouldDeployTemplate
+    // TODO shouldDeployBundleWithParams
+    // TODO shouldDeployDataSource
+    // TODO shouldDeployXADataSource
 
-    // @Test
-    // public void shouldUndeployEverything() throws Exception {
-    //     // TODO manage configs
-    //     ConfigurationPlan plan = ConfigurationPlan.load(new StringReader("---\n"));
-    //
-    //     deployer.run(plan);
-    //
-    //     assertDeployments();
-    //     // TODO assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
-    // }
+    @Test
+    public void shouldUndeployEverythingWhenManagedAndEmptyPlan() throws Exception {
+        VersionFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        VersionFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
+        deployer.setManaged(true);
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader("---\n"));
+
+        deployer.run(plan);
+
+        jolokia.verifyUndeployed();
+        mockserver.verifyUndeployed();
+    }
 }

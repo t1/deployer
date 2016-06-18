@@ -27,7 +27,7 @@ public class Deployer {
                 ArtifactId artifactId = artifactEntry.getKey();
                 ConfigurationPlan.Item item = artifactEntry.getValue();
 
-                DeploymentName name = new DeploymentName(artifactId.toString());
+                DeploymentName name = toDeploymentName(item, artifactId);
                 log.debug("check '{}' -> {}", name, item.getState());
                 switch (item.getState()) {
                 case deployed:
@@ -44,6 +44,10 @@ public class Deployer {
 
         if (managed)
             other.forEach(deployment -> container.undeploy(deployment.getName()));
+    }
+
+    private DeploymentName toDeploymentName(ConfigurationPlan.Item item, ArtifactId artifactId) {
+        return new DeploymentName((item.getName() == null) ? artifactId.toString() : item.getName());
     }
 
     private void deploy(List<Deployment> other, DeploymentName name, Artifact artifact) {

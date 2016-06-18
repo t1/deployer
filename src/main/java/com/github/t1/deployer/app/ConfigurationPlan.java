@@ -45,6 +45,7 @@ public class ConfigurationPlan {
     @Data
     public static class Item {
         private Version version;
+        private String name;
         private ArtifactType type = war;
         private State state = deployed;
     }
