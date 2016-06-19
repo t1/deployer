@@ -22,6 +22,10 @@ public class Deployer {
     @Getter @Setter
     private boolean managed;
 
+    public void run(String plan) {
+        run(ConfigurationPlan.load(plan));
+    }
+
     public void run(ConfigurationPlan plan) {
         List<Deployment> other = deploymentContainer.getAllDeployments();
 
