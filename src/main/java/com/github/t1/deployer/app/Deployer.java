@@ -15,8 +15,8 @@ import java.util.List;
 public class Deployer {
     private static final GroupId LOGGERS = new GroupId("loggers");
 
-    @Inject DeploymentContainer deploymentContainer;
-    @Inject LoggerContainer loggerContainer;
+    @Inject DeploymentContainer deployments;
+    @Inject LoggerContainer loggers;
     @Inject Repository repository;
 
     @Getter @Setter
@@ -27,7 +27,7 @@ public class Deployer {
     }
 
     public void run(ConfigurationPlan plan) {
-        List<Deployment> other = deploymentContainer.getAllDeployments();
+        List<Deployment> other = deployments.getAllDeployments();
 
         plan.getGroupMap().entrySet().stream().forEach(groupEntry -> {
             GroupId groupId = groupEntry.getKey();
@@ -44,19 +44,19 @@ public class Deployer {
         });
 
         if (managed)
-            other.forEach(deployment -> deploymentContainer.undeploy(deployment.getName()));
+            other.forEach(deployment -> deployments.undeploy(deployment.getName()));
     }
 
     private void applyLogger(ArtifactId artifactId, Item item) {
         String category = artifactId.toString();
-        if (loggerContainer.hasLogger(category)) {
-            if (loggerContainer.getLogger(category).getLevel().equals(item.getLevel())) {
+        if (loggers.hasLogger(category)) {
+            if (loggers.getLogger(category).getLevel().equals(item.getLevel())) {
                 log.info("logger already configured: {}: {}", category, item.getLevel());
             } else {
-                loggerContainer.update(new LoggerConfig(category, item.getLevel()));
+                loggers.setLogLevel(category, item.getLevel());
             }
         } else {
-            loggerContainer.add(new LoggerConfig(category, item.getLevel()));
+            loggers.add(new LoggerConfig(category, item.getLevel()));
         }
     }
 
@@ -82,19 +82,19 @@ public class Deployer {
 
     private void deploy(List<Deployment> other, DeploymentName name, Artifact artifact) {
         if (other.removeIf(name::matches)) {
-            if (deploymentContainer.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
+            if (deployments.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
                 log.info("already deployed with same checksum: {}", name);
             } else {
-                deploymentContainer.redeploy(name, artifact.getInputStream());
+                deployments.redeploy(name, artifact.getInputStream());
             }
         } else {
-            deploymentContainer.deploy(name, artifact.getInputStream());
+            deployments.deploy(name, artifact.getInputStream());
         }
     }
 
     private void undeploy(List<Deployment> other, DeploymentName name) {
         if (other.removeIf(name::matches))
-            deploymentContainer.undeploy(name);
+            deployments.undeploy(name);
         else
             log.info("already undeployed: {}", name);
     }

@@ -4,7 +4,7 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
 import org.mockito.Mock;
@@ -19,24 +19,32 @@ import static org.mockito.Mockito.*;
 @Slf4j
 public class AbstractDeployerTest {
     @Mock Repository repository;
-    @Mock DeploymentContainer deploymentContainer;
-    @Mock LoggerContainer loggerContainer;
+    @Mock DeploymentContainer deployments;
+    @Mock LoggerContainer loggers;
 
     private final List<Deployment> allDeployments = new ArrayList<>();
 
 
     @Before
     public void before() {
-        when(deploymentContainer.getAllDeployments()).then(invocation -> allDeployments);
+        when(deployments.getAllDeployments()).then(invocation -> allDeployments);
     }
 
     @After
-    public void after() {
-        verify(deploymentContainer, atLeast(0)).getAllDeployments();
-        verify(deploymentContainer, atLeast(0)).hasDeployment(any(DeploymentName.class));
-        verify(deploymentContainer, atLeast(0)).getDeployment(any(DeploymentName.class));
+    public void afterDeployments() {
+        verify(deployments, atLeast(0)).getAllDeployments();
+        verify(deployments, atLeast(0)).hasDeployment(any(DeploymentName.class));
+        verify(deployments, atLeast(0)).getDeployment(any(DeploymentName.class));
 
-        verifyNoMoreInteractions(deploymentContainer);
+        verifyNoMoreInteractions(deployments);
+    }
+
+    @After
+    public void afterLoggers() {
+        verify(loggers, atLeast(0)).hasLogger(anyString());
+        verify(loggers, atLeast(0)).getLogger(anyString());
+
+        verifyNoMoreInteractions(loggers);
     }
 
 
@@ -84,8 +92,8 @@ public class AbstractDeployerTest {
             public VersionFixture deployed() {
                 Deployment deployment = new Deployment(deploymentName(), contextRoot(), checkSum(), version);
                 allDeployments.add(deployment);
-                when(deploymentContainer.hasDeployment(deploymentName())).thenReturn(true);
-                when(deploymentContainer.getDeployment(deploymentName())).thenReturn(deployment);
+                when(deployments.hasDeployment(deploymentName())).thenReturn(true);
+                when(deployments.getDeployment(deploymentName())).thenReturn(deployment);
                 return this;
             }
 
@@ -98,16 +106,17 @@ public class AbstractDeployerTest {
             public ArtifactFixture and() { return ArtifactFixture.this; }
 
 
-            public void verifyDeployed() { verify(deploymentContainer).deploy(deploymentName(), inputStream()); }
+            public void verifyDeployed() { verify(deployments).deploy(deploymentName(), inputStream()); }
 
-            public void verifyRedeployed() { verify(deploymentContainer).redeploy(deploymentName(), inputStream()); }
+            public void verifyRedeployed() { verify(deployments).redeploy(deploymentName(), inputStream()); }
 
-            public void verifyUndeployed() { verify(deploymentContainer).undeploy(deploymentName()); }
+            public void verifyUndeployed() { verify(deployments).undeploy(deploymentName()); }
         }
     }
 
     public LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
 
+    @Getter
     public class LoggerFixture {
         private final String category;
         private LogLevel level;
@@ -115,8 +124,8 @@ public class AbstractDeployerTest {
         public LoggerFixture(String category) {
             this.category = category;
 
-            when(loggerContainer.hasLogger(category)).thenReturn(true);
-            when(loggerContainer.getLogger(category)).then(invocation -> getConfig());
+            when(loggers.hasLogger(category)).thenReturn(true);
+            when(loggers.getLogger(category)).then(invocation -> getConfig());
         }
 
         public LoggerFixture level(LogLevel level) {

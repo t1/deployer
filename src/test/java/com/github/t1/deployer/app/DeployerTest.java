@@ -53,7 +53,7 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    version: 1.3.2\n"
                 + "    name: bar");
 
-        verify(deploymentContainer).deploy(new DeploymentName("bar"), foo.inputStream());
+        verify(deployments).deploy(new DeploymentName("bar"), foo.inputStream());
     }
 
 
@@ -132,25 +132,37 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
 
-        verify(loggerContainer).add(new LoggerConfig("com.github.t1.deployer.app", DEBUG));
+        verify(loggers).add(new LoggerConfig("com.github.t1.deployer.app", DEBUG));
     }
 
 
     @Test
     public void shouldNotAddExistingLogger() {
-        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
+        givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
 
-        verify(loggerContainer, never()).add(fixture.getConfig());
-        verify(loggerContainer, never()).update(fixture.getConfig());
+        // #after(): no add nor update
     }
 
 
-    // TODO shouldUpdateLogLevel
+    @Test
+    public void shouldUpdateLogLevel() {
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
+
+        deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: INFO\n");
+
+        // #after(): no add
+        verify(loggers).setLogLevel(fixture.getCategory(), INFO);
+    }
+
+
     // TODO shouldAddHandler
     // TODO shouldRemoveLoggerWhenStateIsUndeployed
     // TODO shouldRemoveLoggerWhenManaged

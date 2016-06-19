@@ -2,12 +2,14 @@ package com.github.t1.deployer.model;
 
 import com.github.t1.log.LogLevel;
 import lombok.*;
+import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
 import static lombok.AccessLevel.*;
 
 @Value
 @Builder(toBuilder = true)
+@Wither
 @NoArgsConstructor(access = PRIVATE, force = true)
 @RequiredArgsConstructor
 @ToString(of = { "category", "level" })

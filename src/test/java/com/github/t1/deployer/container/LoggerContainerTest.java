@@ -213,7 +213,7 @@ public class LoggerContainerTest {
     public void shouldUpdateLogLevel() throws IOException {
         givenLoggers(FOO);
 
-        container.update(LoggerConfig.builder().category(FOO.getCategory()).level(ERROR).build());
+        container.setLogLevel(FOO.getCategory(), ERROR);
 
         verify(client).execute(eq(updateLogLevel("logger", "foo", ERROR)), any(OperationMessageHandler.class));
     }
@@ -222,7 +222,7 @@ public class LoggerContainerTest {
     public void shouldUpdateRootLogLevel() throws IOException {
         givenLoggers(FOO);
 
-        container.update(LoggerConfig.builder().category("").level(ERROR).build());
+        container.setLogLevel("", ERROR);
 
         verify(client).execute(eq(updateLogLevel("root-logger", "ROOT", ERROR)), any(OperationMessageHandler.class));
     }

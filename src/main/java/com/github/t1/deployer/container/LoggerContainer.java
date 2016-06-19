@@ -101,11 +101,11 @@ public class LoggerContainer extends AbstractContainer {
         return request;
     }
 
-    public void update(LoggerConfig logger) {
-        ModelNode request = loggerAddress(logger.getCategory());
+    public void setLogLevel(String category, LogLevel level) {
+        ModelNode request = loggerAddress(category);
         request.get("operation").set("write-attribute");
         request.get("name").set("level");
-        request.get("value").set(logger.getLevel().name());
+        request.get("value").set(level.name());
 
         ModelNode result = execute(request);
         log.debug("result: {}", result);
