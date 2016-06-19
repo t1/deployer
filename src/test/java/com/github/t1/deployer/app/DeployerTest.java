@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.mockito.Mockito.*;
 
@@ -163,11 +164,40 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldAddHandler
     // TODO shouldRemoveLoggerWhenStateIsUndeployed
     // TODO shouldRemoveLoggerWhenManaged
+
+
+    @Test
+    public void shouldAddPeriodicRotatingFileHandlerAsDefault() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO");
+
+        deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n");
+
+        fixture.verifyAdded();
+    }
+
+
+    @Test
+    public void shouldAddPeriodicRotatingFileHandler() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO");
+
+        deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n");
+
+        fixture.verifyAdded();
+    }
+
+
     // TODO shouldRemoveHandlerWhenStateIsUndeployed
     // TODO shouldRemoveHandlerWhenManaged
+    // TODO shouldAddConsoleHandler
 
 
     // TODO shouldDeployBundle

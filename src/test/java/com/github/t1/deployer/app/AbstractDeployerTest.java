@@ -43,6 +43,7 @@ public class AbstractDeployerTest {
     public void afterLoggers() {
         verify(loggers, atLeast(0)).hasLogger(anyString());
         verify(loggers, atLeast(0)).getLogger(anyString());
+        verify(loggers, atLeast(0)).getHandler(any(LoggingHandlerType.class), anyString());
 
         verifyNoMoreInteractions(loggers);
     }
@@ -114,6 +115,7 @@ public class AbstractDeployerTest {
         }
     }
 
+
     public LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
 
     @Getter
@@ -135,6 +137,29 @@ public class AbstractDeployerTest {
 
         public LoggerConfig getConfig() {
             return new LoggerConfig(category, level);
+        }
+    }
+
+
+    public LogHandlerFixture givenLogHandler(LoggingHandlerType type, String name) {
+        return new LogHandlerFixture(type, name);
+    }
+
+    public class LogHandlerFixture {
+        private final LoggingHandlerType type;
+        private final String name;
+
+        private final LogHandler logHandlerMock = mock(LogHandler.class);
+
+        public LogHandlerFixture(LoggingHandlerType type, String name) {
+            this.type = type;
+            this.name = name;
+
+            when(loggers.getHandler(type, name)).thenReturn(logHandlerMock);
+        }
+
+        public void verifyAdded() {
+            verify(logHandlerMock).add();
         }
     }
 }

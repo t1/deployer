@@ -14,6 +14,7 @@ import java.util.List;
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
     private static final GroupId LOGGERS = new GroupId("loggers");
+    private static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
 
     @Inject DeploymentContainer deployments;
     @Inject LoggerContainer loggers;
@@ -37,6 +38,8 @@ public class Deployer {
 
                 if (LOGGERS.equals(groupId)) {
                     applyLogger(artifactId, item);
+                } else if (LOG_HANDLERS.equals(groupId)) {
+                    applyLogHandler(artifactId, item);
                 } else {
                     applyDeployment(groupId, artifactId, item, other);
                 }
@@ -58,6 +61,12 @@ public class Deployer {
         } else {
             loggers.add(new LoggerConfig(category, item.getLevel()));
         }
+    }
+
+    private void applyLogHandler(ArtifactId artifactId, Item item) {
+        String name = artifactId.toString();
+        LoggingHandlerType type = item.getHandlerType();
+        loggers.getHandler(type, name).add();
     }
 
     private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item,

@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -17,6 +18,7 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.State.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
 
@@ -55,8 +57,9 @@ public class ConfigurationPlan {
         private String name;
         private ArtifactType type = war;
 
-        // logger
+        // logger/hadler
         private LogLevel level;
+        @JsonProperty("handler-type") private LoggingHandlerType handlerType = periodicRotatingFile;
     }
 
     public enum State {

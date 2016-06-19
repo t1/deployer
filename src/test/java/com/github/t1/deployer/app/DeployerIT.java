@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
@@ -86,7 +87,7 @@ public class DeployerIT {
             // restore after JBoss is down
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
-            loggerContainer.getHandler("CONSOLE").setLevel(ALL);
+            loggerContainer.getHandler(console, "CONSOLE").writeLevel(ALL);
             loggerContainer.add(new LoggerConfig("com.github.t1.deployer", DEBUG));
 
             log.info("deployments: {}", container.getAllDeployments());

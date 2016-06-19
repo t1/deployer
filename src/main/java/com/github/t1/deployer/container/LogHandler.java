@@ -1,10 +1,10 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.LoggingHandlerType;
 import com.github.t1.log.LogLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
@@ -12,26 +12,34 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class LogHandler {
     private final String name;
+    private final LoggingHandlerType type;
     private final Function<ModelNode, ModelNode> execute;
 
-    public void setLevel(LogLevel level) {
-        ModelNode request = newModelNode();
+    public LogHandler writeLevel(LogLevel level) {
+        ModelNode request = address();
 
         request.get("operation").set("write-attribute");
         request.get("name").set("level");
         request.get("value").set(level.name());
 
-        ModelNode result = execute.apply(request);
-        log.debug("result: {}", result);
+        execute.apply(request);
+
+        return this;
     }
 
-    @NotNull private ModelNode newModelNode() {
-        ModelNode request = new ModelNode();
-        ModelNode logging = request.get("address").add("subsystem", "logging");
-        if ("CONSOLE".equals(name))
-            logging.add("console-handler", "CONSOLE");
-        else
-            logging.add("periodic-rotating-file-handler", name);
-        return request;
+    private ModelNode address() {
+        return new ModelNode()
+                .get("address")
+                .add("subsystem", "logging")
+                .add(type.getTypeName(), name);
+    }
+
+    public LogHandler add() {
+        ModelNode request = address();
+
+        request.get("operation").set("add");
+        execute.apply(request);
+
+        return this;
     }
 }
