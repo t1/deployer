@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
+import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,6 +32,8 @@ public class ConfigurationPlan {
     public static final TypeReference<Map<GroupId, Map<ArtifactId, Item>>>
             ARTIFACT_MAP_TYPE = new TypeReference<Map<GroupId, Map<ArtifactId, Item>>>() {};
 
+    public static ConfigurationPlan load(String plan) { return load(new StringReader(plan)); }
+
     @SneakyThrows(IOException.class)
     public static ConfigurationPlan load(Reader reader) {
         Map<GroupId, Map<ArtifactId, Item>> map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
@@ -44,10 +47,16 @@ public class ConfigurationPlan {
 
     @Data
     public static class Item {
+        // general
+        private State state = deployed;
+
+        // deployment
         private Version version;
         private String name;
         private ArtifactType type = war;
-        private State state = deployed;
+
+        // logger
+        private LogLevel level;
     }
 
     public enum State {

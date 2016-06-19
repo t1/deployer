@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.container.DeploymentContainer;
+import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -17,24 +17,25 @@ import static org.mockito.Mockito.*;
 
 @Slf4j
 public class AbstractDeployerTest {
-    @Mock DeploymentContainer container;
     @Mock Repository repository;
+    @Mock DeploymentContainer deploymentContainer;
+    @Mock LoggerContainer loggerContainer;
 
     private final List<Deployment> allDeployments = new ArrayList<>();
 
 
     @Before
     public void before() {
-        when(container.getAllDeployments()).then(invocation -> allDeployments);
+        when(deploymentContainer.getAllDeployments()).then(invocation -> allDeployments);
     }
 
     @After
     public void after() {
-        verify(container, atLeast(0)).getAllDeployments();
-        verify(container, atLeast(0)).hasDeployment(any(DeploymentName.class));
-        verify(container, atLeast(0)).getDeployment(any(DeploymentName.class));
+        verify(deploymentContainer, atLeast(0)).getAllDeployments();
+        verify(deploymentContainer, atLeast(0)).hasDeployment(any(DeploymentName.class));
+        verify(deploymentContainer, atLeast(0)).getDeployment(any(DeploymentName.class));
 
-        verifyNoMoreInteractions(container);
+        verifyNoMoreInteractions(deploymentContainer);
     }
 
 
@@ -82,8 +83,8 @@ public class AbstractDeployerTest {
             public VersionFixture deployed() {
                 Deployment deployment = new Deployment(deploymentName(), contextRoot(), checkSum(), version);
                 allDeployments.add(deployment);
-                when(container.hasDeployment(deploymentName())).thenReturn(true);
-                when(container.getDeployment(deploymentName())).thenReturn(deployment);
+                when(deploymentContainer.hasDeployment(deploymentName())).thenReturn(true);
+                when(deploymentContainer.getDeployment(deploymentName())).thenReturn(deployment);
                 return this;
             }
 
@@ -96,11 +97,11 @@ public class AbstractDeployerTest {
             public ArtifactFixture and() { return ArtifactFixture.this; }
 
 
-            public void verifyDeployed() { verify(container).deploy(deploymentName(), inputStream()); }
+            public void verifyDeployed() { verify(deploymentContainer).deploy(deploymentName(), inputStream()); }
 
-            public void verifyRedeployed() { verify(container).redeploy(deploymentName(), inputStream()); }
+            public void verifyRedeployed() { verify(deploymentContainer).redeploy(deploymentName(), inputStream()); }
 
-            public void verifyUndeployed() { verify(container).undeploy(deploymentName()); }
+            public void verifyUndeployed() { verify(deploymentContainer).undeploy(deploymentName()); }
         }
     }
 }
