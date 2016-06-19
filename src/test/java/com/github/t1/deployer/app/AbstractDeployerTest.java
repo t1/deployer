@@ -3,6 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
+import com.github.t1.log.LogLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
@@ -39,11 +40,11 @@ public class AbstractDeployerTest {
     }
 
 
-    protected ArtifactFixture givenArtifact(String groupId, String artifactId) {
+    public ArtifactFixture givenArtifact(String groupId, String artifactId) {
         return new ArtifactFixture(groupId, artifactId);
     }
 
-    protected ArtifactFixture givenArtifact(String name) { return new ArtifactFixture("org." + name, name + "-war"); }
+    public ArtifactFixture givenArtifact(String name) { return new ArtifactFixture("org." + name, name + "-war"); }
 
     @RequiredArgsConstructor
     public class ArtifactFixture {
@@ -102,6 +103,29 @@ public class AbstractDeployerTest {
             public void verifyRedeployed() { verify(deploymentContainer).redeploy(deploymentName(), inputStream()); }
 
             public void verifyUndeployed() { verify(deploymentContainer).undeploy(deploymentName()); }
+        }
+    }
+
+    public LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
+
+    public class LoggerFixture {
+        private final String category;
+        private LogLevel level;
+
+        public LoggerFixture(String category) {
+            this.category = category;
+
+            when(loggerContainer.hasLogger(category)).thenReturn(true);
+            when(loggerContainer.getLogger(category)).then(invocation -> getConfig());
+        }
+
+        public LoggerFixture level(LogLevel level) {
+            this.level = level;
+            return this;
+        }
+
+        public LoggerConfig getConfig() {
+            return new LoggerConfig(category, level);
         }
     }
 }

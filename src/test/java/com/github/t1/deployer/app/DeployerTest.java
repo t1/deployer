@@ -136,6 +136,20 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
+    @Test
+    public void shouldNotAddExistingLogger() {
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
+
+        deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n");
+
+        verify(loggerContainer, never()).add(fixture.getConfig());
+        verify(loggerContainer, never()).update(fixture.getConfig());
+    }
+
+
     // TODO shouldUpdateLogLevel
     // TODO shouldAddHandler
     // TODO shouldRemoveLoggerWhenStateIsUndeployed

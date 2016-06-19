@@ -16,7 +16,7 @@ import static java.util.stream.Collectors.*;
 @Logged(level = INFO)
 @Stateless
 public class LoggerContainer extends AbstractContainer {
-    List<LoggerConfig> getLoggers() {
+    public List<LoggerConfig> getLoggers() {
         List<LoggerConfig> loggers =
                 execute(readLogger("*")).asList().stream().map(node -> toLogger(node, "")).collect(toList());
         Collections.sort(loggers);
@@ -58,16 +58,12 @@ public class LoggerContainer extends AbstractContainer {
         return response.get("address").asList().get(1).get("logger");
     }
 
-    boolean hasLogger(LoggerConfig logger) {
-        return hasLogger(logger.getCategory());
-    }
-
-    boolean hasLogger(String category) {
+    public boolean hasLogger(String category) {
         ModelNode result = executeRaw(readLogger(category));
         return isOutcomeFound(result);
     }
 
-    LoggerConfig getLogger(String category) {
+    public LoggerConfig getLogger(String category) {
         ModelNode result = executeRaw(readLogger(category));
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
@@ -93,7 +89,7 @@ public class LoggerContainer extends AbstractContainer {
         return request;
     }
 
-    void remove(LoggerConfig logger) {
+    public void remove(LoggerConfig logger) {
         if (logger.isRoot())
             throw new RuntimeException("can't remove root logger");
         execute(removeLogger(logger));
@@ -105,7 +101,7 @@ public class LoggerContainer extends AbstractContainer {
         return request;
     }
 
-    void update(LoggerConfig logger) {
+    public void update(LoggerConfig logger) {
         ModelNode request = loggerAddress(logger.getCategory());
         request.get("operation").set("write-attribute");
         request.get("name").set("level");

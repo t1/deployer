@@ -175,15 +175,15 @@ public class LoggerContainerTest {
         givenLoggers(FOO);
         givenNoLogger(BAR);
 
-        softly.assertThat(container.hasLogger(ROOT)).isTrue();
+        softly.assertThat(container.hasLogger(ROOT.getCategory())).isTrue();
         softly.assertThat(container.hasLogger("")).isTrue();
         softly.assertThat(container.getLogger("")).isEqualTo(ROOT);
 
-        softly.assertThat(container.hasLogger(FOO)).isTrue();
+        softly.assertThat(container.hasLogger(FOO.getCategory())).isTrue();
         softly.assertThat(container.hasLogger("foo")).isTrue();
         softly.assertThat(container.getLogger("foo")).isEqualTo(FOO);
 
-        softly.assertThat(container.hasLogger(BAR)).isFalse();
+        softly.assertThat(container.hasLogger(BAR.getCategory())).isFalse();
         softly.assertThat(container.hasLogger("bar")).isFalse();
         softly.assertThatThrownBy(() -> container.getLogger("bar"))
               .hasMessage("no logger 'bar'");

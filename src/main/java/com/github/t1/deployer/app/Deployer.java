@@ -48,7 +48,16 @@ public class Deployer {
     }
 
     private void applyLogger(ArtifactId artifactId, Item item) {
-        loggerContainer.add(new LoggerConfig(artifactId.toString(), item.getLevel()));
+        String category = artifactId.toString();
+        if (loggerContainer.hasLogger(category)) {
+            if (loggerContainer.getLogger(category).getLevel().equals(item.getLevel())) {
+                log.info("logger already configured: {}: {}", category, item.getLevel());
+            } else {
+                loggerContainer.update(new LoggerConfig(category, item.getLevel()));
+            }
+        } else {
+            loggerContainer.add(new LoggerConfig(category, item.getLevel()));
+        }
     }
 
     private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item,
