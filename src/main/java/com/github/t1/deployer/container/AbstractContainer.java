@@ -13,7 +13,7 @@ import static com.github.t1.log.LogLevel.*;
 
 @Slf4j
 @Logged(level = INFO)
-abstract class AbstractContainer {
+public abstract class AbstractContainer {
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
         switch (severity) {
         case ERROR:
@@ -34,7 +34,7 @@ abstract class AbstractContainer {
     }
 
     @Inject
-    ModelControllerClient client;
+    public ModelControllerClient client;
 
     protected ModelNode execute(ModelNode request) {
         ModelNode result = executeRaw(request);

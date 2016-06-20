@@ -3,13 +3,14 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
-import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.as.controller.client.*;
+import org.jboss.dmr.ModelNode;
 import org.junit.*;
-import org.mockito.Mock;
+import org.mockito.*;
 
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
@@ -19,9 +20,10 @@ import static org.mockito.Mockito.*;
 @Slf4j
 public class AbstractDeployerTest {
     @Mock Repository repository;
+    @Mock ModelControllerClient jboss;
 
     @Mock DeploymentContainer deployments;
-    @Mock LoggerContainer loggers;
+    @InjectMocks LoggerContainer loggers;
 
     @Mock LogHandler logHandlerMock;
 
@@ -31,10 +33,7 @@ public class AbstractDeployerTest {
     public void before() {
         when(deployments.getAllDeployments()).then(invocation -> allDeployments);
 
-        when(loggers.getHandler(any(LoggingHandlerType.class), anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.file(anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.suffix(anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.formatter(anyString())).thenReturn(logHandlerMock);
+        loggers.client = jboss;
     }
 
     @After
@@ -44,15 +43,6 @@ public class AbstractDeployerTest {
         verify(deployments, atLeast(0)).getDeployment(any(DeploymentName.class));
 
         verifyNoMoreInteractions(deployments);
-    }
-
-    @After
-    public void afterLoggers() {
-        verify(loggers, atLeast(0)).hasLogger(anyString());
-        verify(loggers, atLeast(0)).getLogger(anyString());
-        verify(loggers, atLeast(0)).getHandler(any(LoggingHandlerType.class), anyString());
-
-        verifyNoMoreInteractions(loggers);
     }
 
 
@@ -123,68 +113,81 @@ public class AbstractDeployerTest {
     }
 
 
-    public LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
-
-    @Getter
-    public class LoggerFixture {
-        private final String category;
-        private LogLevel level;
-
-        public LoggerFixture(String category) {
-            this.category = category;
-
-            when(loggers.hasLogger(category)).thenReturn(true);
-            when(loggers.getLogger(category)).then(invocation -> getConfig());
-        }
-
-        public LoggerFixture level(LogLevel level) {
-            this.level = level;
-            return this;
-        }
-
-        public LoggerConfig getConfig() {
-            return new LoggerConfig(category, level);
-        }
+    public CliFixture givenLogger(String name) {
+        return givenResource().at("subsystem", "logging").at("logger", name);
     }
 
-
-    public LogHandlerFixture givenLogHandler(LoggingHandlerType type, String name) {
-        return new LogHandlerFixture(type, name);
+    public CliFixture givenLogHandler(LoggingHandlerType handlerType, String name) {
+        return givenResource().at("subsystem", "logging").at(handlerType.getTypeName(), name);
     }
 
-    public class LogHandlerFixture {
-        private final LoggingHandlerType type;
-        private final String name;
-        private String file;
-        private String suffix;
-        private String formatter;
+    public CliFixture givenResource() { return new CliFixture(); }
 
-        public LogHandlerFixture(LoggingHandlerType type, String name) {
-            this.type = type;
-            this.name = name;
-        }
+    public class CliFixture {
+        private final ModelNode request = new ModelNode();
+        private final ModelNode response = new ModelNode();
 
-        public LogHandlerFixture file(String file) {
-            this.file = file;
+        public CliFixture at(String name, String value) {
+            request.get("address").add(name, value);
             return this;
         }
 
-        public LogHandlerFixture suffix(String suffix) {
-            this.suffix = suffix;
+        public CliFixture readResource() {
+            return operation("read-resource").param("recursive", true);
+        }
+
+        public CliFixture operation(String name) {
+            request.get("operation").set(name);
             return this;
         }
 
-        public LogHandlerFixture formatter(String formatter) {
-            this.formatter = formatter;
+        public CliFixture param(String name, Object value) {
+            param(request, name, value);
             return this;
         }
 
-        public void verifyAdded() {
-            verify(loggers).getHandler(type, name);
-            verify(logHandlerMock).file(file);
-            verify(logHandlerMock).suffix(suffix);
-            verify(logHandlerMock).formatter(formatter);
-            verify(logHandlerMock).add();
+        public CliFixture result(String name, Object value) {
+            param(response.get("result"), name, value);
+            return this;
+        }
+
+        private void param(ModelNode node, String name, Object value) {
+            //noinspection ChainOfInstanceofChecks
+            if (value instanceof Boolean)
+                node.get(name).set((Boolean) value);
+            else if (value instanceof String)
+                node.get(name).set((String) value);
+            else if (value instanceof ModelNode)
+                node.get(name).set((ModelNode) value);
+            else
+                throw new IllegalArgumentException("unknown object type for param: " + value.getClass());
+        }
+
+        public CliFixture notFound() {
+            response.get("outcome").set("failed");
+            response.get("failure-description")
+                    .set("WFLYCTL0216: Management resource '" + request.get("address") + "' not found");
+            response.get("rolled-back").set(true);
+
+            return execute();
+        }
+
+        public CliFixture success() {
+            response.get("outcome").set("success");
+
+            return execute();
+        }
+
+        @SneakyThrows(IOException.class)
+        private CliFixture execute() {
+            // System.out.println("---------------------------------------------------------");
+            // System.out.println(request);
+            // System.out.println("---------------------------------------------------------");
+            // System.out.println(response);
+            // System.out.println("---------------------------------------------------------");
+            when(jboss.execute(eq(request), any(OperationMessageHandler.class)))
+                    .thenReturn(response);
+            return this;
         }
     }
 }

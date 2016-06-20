@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.*;
 import lombok.extern.slf4j.Slf4j;
@@ -111,7 +112,7 @@ public class LoggerContainer extends AbstractContainer {
         log.debug("result: {}", result);
     }
 
-    public LogHandler getHandler(LoggingHandlerType type, String name) {
-        return new LogHandler(name, type, this::execute);
+    public LogHandlerBuilder buildHandler(LoggingHandlerType type, String name) {
+        return new LogHandlerBuilder(name, type, this::execute);
     }
 }
