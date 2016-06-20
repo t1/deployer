@@ -19,15 +19,22 @@ import static org.mockito.Mockito.*;
 @Slf4j
 public class AbstractDeployerTest {
     @Mock Repository repository;
+
     @Mock DeploymentContainer deployments;
     @Mock LoggerContainer loggers;
 
-    private final List<Deployment> allDeployments = new ArrayList<>();
+    @Mock LogHandler logHandlerMock;
 
+    private final List<Deployment> allDeployments = new ArrayList<>();
 
     @Before
     public void before() {
         when(deployments.getAllDeployments()).then(invocation -> allDeployments);
+
+        when(loggers.getHandler(any(LoggingHandlerType.class), anyString())).thenReturn(logHandlerMock);
+        when(logHandlerMock.file(anyString())).thenReturn(logHandlerMock);
+        when(logHandlerMock.suffix(anyString())).thenReturn(logHandlerMock);
+        when(logHandlerMock.formatter(anyString())).thenReturn(logHandlerMock);
     }
 
     @After
@@ -148,17 +155,35 @@ public class AbstractDeployerTest {
     public class LogHandlerFixture {
         private final LoggingHandlerType type;
         private final String name;
-
-        private final LogHandler logHandlerMock = mock(LogHandler.class);
+        private String file;
+        private String suffix;
+        private String formatter;
 
         public LogHandlerFixture(LoggingHandlerType type, String name) {
             this.type = type;
             this.name = name;
+        }
 
-            when(loggers.getHandler(type, name)).thenReturn(logHandlerMock);
+        public LogHandlerFixture file(String file) {
+            this.file = file;
+            return this;
+        }
+
+        public LogHandlerFixture suffix(String suffix) {
+            this.suffix = suffix;
+            return this;
+        }
+
+        public LogHandlerFixture formatter(String formatter) {
+            this.formatter = formatter;
+            return this;
         }
 
         public void verifyAdded() {
+            verify(loggers).getHandler(type, name);
+            verify(logHandlerMock).file(file);
+            verify(logHandlerMock).suffix(suffix);
+            verify(logHandlerMock).formatter(formatter);
             verify(logHandlerMock).add();
         }
     }

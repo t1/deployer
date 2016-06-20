@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
@@ -112,9 +113,13 @@ public class LoggerContainerTest {
         return out.toString();
     }
 
+    private ModelNode verifyExecute(ModelNode node) throws IOException {
+        return verify(client).execute(eq(node), any(OperationMessageHandler.class));
+    }
+
     private String logger(LoggerConfig logger) {
         return ""
-                + "\"category\" => undefined," // \"" + logger.getCategory() + "\","
+                + "\"category\" => undefined," // deprecated: \"" + logger.getCategory() + "\","
                 + "\"filter\" => undefined,"
                 + "\"filter-spec\" => undefined,"
                 + "\"handlers\" => undefined,"
@@ -125,14 +130,17 @@ public class LoggerContainerTest {
     private ModelNode addLogger(String categoryType, String category, LogLevel logLevel) {
         return ModelNode.fromString("{"
                 + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
-                + "\"operation\" => \"add\",\"level\" => \"" + logLevel + "\"\n"
+                + "\"operation\" => \"add\","
+                + "\"level\" => \"" + logLevel + "\"\n"
                 + "}");
     }
 
     private ModelNode updateLogLevel(String categoryType, String category, LogLevel logLevel) {
         return ModelNode.fromString("{"
                 + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
-                + "\"operation\" => \"write-attribute\",\"name\" => \"level\",\"value\" => \"" + logLevel + "\"\n"
+                + "\"operation\" => \"write-attribute\","
+                + "\"name\" => \"level\","
+                + "\"value\" => \"" + logLevel + "\"\n"
                 + "}");
     }
 
@@ -140,6 +148,19 @@ public class LoggerContainerTest {
         return ModelNode.fromString("{"
                 + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
                 + "\"operation\" => \"remove\"\n"
+                + "}");
+    }
+
+    private ModelNode addHandler(String type, String name) {
+        return ModelNode.fromString("{"
+                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + type + "\" => \"" + name + "\")],"
+                + "\"operation\" => \"add\","
+                + "\"file\" => {\n"
+                + "  \"path\" => \"the-file\",\n"
+                + "  \"relative-to\" => \"jboss.server.log.dir\"\n"
+                + "},\n"
+                + "\"suffix\" => \"the-suffix\",\n"
+                + "\"formatter\" => \"the-formatter\"\n"
                 + "}");
     }
 
@@ -195,7 +216,7 @@ public class LoggerContainerTest {
 
         container.add(BAR);
 
-        verify(client).execute(eq(addLogger("logger", "bar", INFO)), any(OperationMessageHandler.class));
+        verifyExecute(addLogger("logger", "bar", INFO));
     }
 
     @Test
@@ -215,7 +236,7 @@ public class LoggerContainerTest {
 
         container.setLogLevel(FOO.getCategory(), ERROR);
 
-        verify(client).execute(eq(updateLogLevel("logger", "foo", ERROR)), any(OperationMessageHandler.class));
+        verifyExecute(updateLogLevel("logger", "foo", ERROR));
     }
 
     @Test
@@ -224,7 +245,7 @@ public class LoggerContainerTest {
 
         container.setLogLevel("", ERROR);
 
-        verify(client).execute(eq(updateLogLevel("root-logger", "ROOT", ERROR)), any(OperationMessageHandler.class));
+        verifyExecute(updateLogLevel("root-logger", "ROOT", ERROR));
     }
 
     @Test
@@ -233,7 +254,7 @@ public class LoggerContainerTest {
 
         container.remove(FOO);
 
-        verify(client).execute(eq(removeLogger("logger", "foo")), any(OperationMessageHandler.class));
+        verifyExecute(removeLogger("logger", "foo"));
     }
 
     @Test
@@ -244,5 +265,18 @@ public class LoggerContainerTest {
                 .hasMessage("can't remove root logger");
 
         verify(client, never()).execute(eq(removeLogger("root-logger", "ROOT")), any(OperationMessageHandler.class));
+    }
+
+    @Test
+    public void shouldAddLogPeriodicRotatingFileHandler() throws Exception {
+        LogHandler foo = container
+                .getHandler(periodicRotatingFile, "FOO")
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter");
+
+        foo.add();
+
+        verifyExecute(addHandler("periodic-rotating-file-handler", "FOO"));
     }
 }

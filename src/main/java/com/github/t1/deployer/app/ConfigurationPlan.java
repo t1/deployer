@@ -11,6 +11,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.Map;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
@@ -19,6 +20,7 @@ import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.State.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
+import static java.nio.charset.StandardCharsets.*;
 import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
 
@@ -35,6 +37,11 @@ public class ConfigurationPlan {
             ARTIFACT_MAP_TYPE = new TypeReference<Map<GroupId, Map<ArtifactId, Item>>>() {};
 
     public static ConfigurationPlan load(String plan) { return load(new StringReader(plan)); }
+
+    @SneakyThrows(IOException.class)
+    public static ConfigurationPlan load(Path path) {
+        return load(Files.newBufferedReader(path, UTF_8));
+    }
 
     @SneakyThrows(IOException.class)
     public static ConfigurationPlan load(Reader reader) {
@@ -57,9 +64,12 @@ public class ConfigurationPlan {
         private String name;
         private ArtifactType type = war;
 
-        // logger/hadler
+        // logger/handler
         private LogLevel level;
         @JsonProperty("handler-type") private LoggingHandlerType handlerType = periodicRotatingFile;
+        private String file;
+        private String suffix = "";
+        private String formatter;
     }
 
     public enum State {

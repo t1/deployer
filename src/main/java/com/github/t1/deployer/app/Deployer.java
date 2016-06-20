@@ -66,7 +66,11 @@ public class Deployer {
     private void applyLogHandler(ArtifactId artifactId, Item item) {
         String name = artifactId.toString();
         LoggingHandlerType type = item.getHandlerType();
-        loggers.getHandler(type, name).add();
+        loggers.getHandler(type, name)
+               .file(item.getFile())
+               .suffix(item.getSuffix())
+               .formatter(item.getFormatter())
+               .add();
     }
 
     private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item,
