@@ -139,7 +139,7 @@ public class DeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldNotAddExistingLogger() {
-        givenLogger("com.github.t1.deployer.app").level(DEBUG);
+        givenLogger("com.github.t1.deployer.app").level(DEBUG).exists();
 
         deployer.run(""
                 + "loggers:\n"
@@ -152,19 +152,45 @@ public class DeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldUpdateLogLevel() {
-        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).exists();
 
         deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: INFO\n");
 
-        // #after(): no add
         verify(loggers).setLogLevel(fixture.getCategory(), INFO);
     }
 
 
-    // TODO shouldRemoveLoggerWhenStateIsUndeployed
+    @Test
+    public void shouldRemoveExistingLoggerWhenStateIsUndeployed() {
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).exists();
+
+        deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    state: undeployed\n");
+
+        verify(loggers).remove(new LoggerConfig(fixture.getCategory(), ALL));
+    }
+
+
+    @Test
+    public void shouldRemoveNonExistingLoggerWhenStateIsUndeployed() {
+        givenLogger("com.github.t1.deployer.app").level(DEBUG);
+
+        deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    state: undeployed\n");
+
+        // #after(): not undeployed
+    }
+
+
     // TODO shouldRemoveLoggerWhenManaged
 
 

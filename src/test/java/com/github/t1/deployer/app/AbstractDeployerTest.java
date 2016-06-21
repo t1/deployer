@@ -136,8 +136,7 @@ public class AbstractDeployerTest {
         public LoggerFixture(String category) {
             this.category = category;
 
-            when(loggers.hasLogger(category)).thenReturn(true);
-            when(loggers.getLogger(category)).then(invocation -> getConfig());
+            when(loggers.hasLogger(category)).thenReturn(false);
         }
 
         public LoggerFixture level(LogLevel level) {
@@ -147,6 +146,12 @@ public class AbstractDeployerTest {
 
         public LoggerConfig getConfig() {
             return new LoggerConfig(category, level);
+        }
+
+        public LoggerFixture exists() {
+            when(loggers.hasLogger(category)).thenReturn(true);
+            when(loggers.getLogger(category)).then(invocation -> getConfig());
+            return this;
         }
     }
 

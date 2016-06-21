@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import java.util.List;
 
+import static com.github.t1.log.LogLevel.*;
+
 @Slf4j
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
@@ -52,14 +54,25 @@ public class Deployer {
 
     private void applyLogger(ArtifactId artifactId, Item item) {
         String category = artifactId.toString();
-        if (loggers.hasLogger(category)) {
-            if (loggers.getLogger(category).getLevel().equals(item.getLevel())) {
-                log.info("logger already configured: {}: {}", category, item.getLevel());
+        log.debug("check '{}' -> {}", category, item.getState());
+        switch (item.getState()) {
+        case deployed:
+            if (loggers.hasLogger(category)) {
+                if (loggers.getLogger(category).getLevel().equals(item.getLevel())) {
+                    log.info("logger already configured: {}: {}", category, item.getLevel());
+                } else {
+                    loggers.setLogLevel(category, item.getLevel());
+                }
             } else {
-                loggers.setLogLevel(category, item.getLevel());
+                loggers.add(new LoggerConfig(category, item.getLevel()));
             }
-        } else {
-            loggers.add(new LoggerConfig(category, item.getLevel()));
+            break;
+        case undeployed:
+            if (loggers.hasLogger(category))
+                loggers.remove(new LoggerConfig(category, ALL));
+            else
+                log.info("logger already removed: {}", category);
+            break;
         }
     }
 
