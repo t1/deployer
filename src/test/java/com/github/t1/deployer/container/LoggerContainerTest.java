@@ -270,11 +270,10 @@ public class LoggerContainerTest {
     @Test
     public void shouldAddLogPeriodicRotatingFileHandler() throws Exception {
         LogHandler foo = container
-                .buildHandler(periodicRotatingFile, "FOO")
+                .handler(periodicRotatingFile, "FOO")
                 .file("the-file")
                 .suffix("the-suffix")
-                .formatter("the-formatter")
-                .build();
+                .formatter("the-formatter");
 
         foo.add();
 

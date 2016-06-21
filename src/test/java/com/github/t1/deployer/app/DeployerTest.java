@@ -197,6 +197,7 @@ public class DeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddPeriodicRotatingFileHandlerAsDefault() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
                 .file("the-file")
                 .suffix("the-suffix")
                 .formatter("the-formatter");
@@ -216,6 +217,7 @@ public class DeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddPeriodicRotatingFileHandler() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
                 .file("the-file")
                 .suffix("the-suffix")
                 .formatter("the-formatter");
@@ -236,6 +238,7 @@ public class DeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldNotAddExistingHandler() {
         givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
                 .file("the-file")
                 .suffix("the-suffix")
                 .formatter("the-formatter")
@@ -251,6 +254,28 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    formatter: the-formatter\n");
 
         // #after(): not added/updated
+    }
+
+
+    @Test
+    public void shouldUpdateHandlerLevel() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(DEBUG)
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter")
+                .deployed();
+
+        deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n"
+                + "    formatter: the-formatter\n");
+
+        fixture.verifyUpdated().level(ALL);
     }
 
 

@@ -3,27 +3,17 @@ package com.github.t1.deployer.container;
 import com.github.t1.deployer.model.LoggingHandlerType;
 import com.github.t1.log.LogLevel;
 import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
 import static com.github.t1.deployer.container.CLI.*;
-import static lombok.AccessLevel.*;
 
 @Slf4j
 @Data
-@Builder()
-@AllArgsConstructor(access = PRIVATE)
+@RequiredArgsConstructor
+@Accessors(fluent = true, chain = true)
 public class LogHandler {
-    public static class LogHandlerBuilder {
-        @SuppressWarnings("unused") public LogHandlerBuilder() {}
-
-        public LogHandlerBuilder(String name, LoggingHandlerType type, CLI cli) {
-            this.name = name;
-            this.type = type;
-            this.cli = cli;
-        }
-    }
-
     @NonNull private final String name;
     @NonNull private final LoggingHandlerType type;
 
@@ -37,20 +27,29 @@ public class LogHandler {
     public boolean isDeployed() {
         ModelNode request = readResource(createRequestWithAddress());
 
-        ModelNode result = cli.executeRaw(request);
-        return cli.isOutcomeFound(result);
+        ModelNode response = cli.executeRaw(request);
+        boolean isDeployed = cli.isOutcomeFound(response);
+        if (isDeployed) {
+            level(LogLevel.valueOf(response.get("result").get("level").asString()));
+        }
+        return isDeployed;
     }
 
     public LogHandler write() {
         ModelNode request = createRequestWithAddress();
 
-        request.get("operation").set("write-attribute");
-        request.get("name").set("level");
-        request.get("value").set(level.name());
+        if (level != null)
+            writeAttribute(request, "level", level.name());
 
         cli.execute(request);
 
         return this;
+    }
+
+    public void writeAttribute(ModelNode request, String name, String value) {
+        request.get("operation").set("write-attribute");
+        request.get("name").set(name);
+        request.get("value").set(value);
     }
 
     private ModelNode createRequestWithAddress() {

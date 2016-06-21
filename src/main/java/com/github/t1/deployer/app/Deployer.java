@@ -2,7 +2,6 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.ConfigurationPlan.Item;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import lombok.*;
@@ -80,16 +79,19 @@ public class Deployer {
     private void applyLogHandler(ArtifactId artifactId, Item item) {
         String name = artifactId.toString();
         LoggingHandlerType type = item.getHandlerType();
-        LogHandlerBuilder builder = loggers
-                .buildHandler(type, name);
-        if (builder.build().isDeployed())
-            log.info("log builder already deployed: {}", artifactId);
-        else
-            builder.file(item.getFile())
+        LogHandler handler = loggers.handler(type, name);
+        if (handler.isDeployed()) {
+            if (!handler.level().equals(item.getLevel()))
+                handler.level(item.getLevel()).write();
+            else
+                log.info("log handler already deployed: {}", artifactId);
+        } else {
+            handler.file(item.getFile())
+                   .level(item.getLevel())
                    .suffix(item.getSuffix())
                    .formatter(item.getFormatter())
-                   .build()
                    .add();
+        }
     }
 
     private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item,
