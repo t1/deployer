@@ -197,6 +197,7 @@ public class AbstractDeployerTest {
 
         public LogHandlerFixture formatter(String formatter) {
             this.formatter = formatter;
+            when(logHandlerMock.formatter()).thenReturn(formatter);
             return this;
         }
 

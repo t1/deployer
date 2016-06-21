@@ -92,6 +92,8 @@ public class Deployer {
             handler.file(item.getFile()).write();
         else if (!handler.suffix().equals(item.getSuffix()))
             handler.suffix(item.getSuffix()).write();
+        else if (!handler.formatter().equals(item.getFormatter()))
+            handler.formatter(item.getFormatter()).write();
         else
             log.info("log handler already deployed exactly as is: {}", artifactId);
     }
