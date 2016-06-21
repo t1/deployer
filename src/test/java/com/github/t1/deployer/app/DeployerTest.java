@@ -233,9 +233,36 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
+    @Test
+    public void shouldNotAddExistingHandler() {
+        givenLogHandler(periodicRotatingFile, "FOO")
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter")
+                .deployed();
+
+        deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n"
+                + "    formatter: the-formatter\n");
+
+        // #after(): not added/updated
+    }
+
+
+    // TODO shouldUpdateHandlerLevel
+    // TODO shouldUpdateHandlerFile
+    // TODO shouldUpdateHandlerSuffix
+    // TODO shouldUpdateHandlerFormatter
+    // TODO shouldUpdateHandlerFileAndSuffix
     // TODO shouldRemoveHandlerWhenStateIsUndeployed
     // TODO shouldRemoveHandlerWhenManaged
     // TODO shouldAddConsoleHandler
+    // TODO shouldAddCustomHandler
 
 
     // TODO shouldDeployBundle

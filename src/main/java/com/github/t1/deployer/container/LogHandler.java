@@ -6,8 +6,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
-import java.util.function.Function;
-
+import static com.github.t1.deployer.container.CLI.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
@@ -16,38 +15,45 @@ import static lombok.AccessLevel.*;
 @AllArgsConstructor(access = PRIVATE)
 public class LogHandler {
     public static class LogHandlerBuilder {
-        public LogHandlerBuilder() {}
+        @SuppressWarnings("unused") public LogHandlerBuilder() {}
 
-        public LogHandlerBuilder(String name, LoggingHandlerType type, Function<ModelNode, ModelNode> execute) {
+        public LogHandlerBuilder(String name, LoggingHandlerType type, CLI cli) {
             this.name = name;
             this.type = type;
-            this.execute = execute;
+            this.cli = cli;
         }
     }
 
     @NonNull private final String name;
     @NonNull private final LoggingHandlerType type;
 
-    @NonNull private final Function<ModelNode, ModelNode> execute;
+    @NonNull private final CLI cli;
 
     private LogLevel level;
     private String file;
     private String suffix;
     private String formatter;
 
+    public boolean isDeployed() {
+        ModelNode request = readResource(createRequestWithAddress());
+
+        ModelNode result = cli.executeRaw(request);
+        return cli.isOutcomeFound(result);
+    }
+
     public LogHandler write() {
-        ModelNode request = createRequastWithAddress();
+        ModelNode request = createRequestWithAddress();
 
         request.get("operation").set("write-attribute");
         request.get("name").set("level");
         request.get("value").set(level.name());
 
-        execute.apply(request);
+        cli.execute(request);
 
         return this;
     }
 
-    private ModelNode createRequastWithAddress() {
+    private ModelNode createRequestWithAddress() {
         ModelNode request = new ModelNode();
         request.get("address")
                .add("subsystem", "logging")
@@ -56,14 +62,14 @@ public class LogHandler {
     }
 
     public LogHandler add() {
-        ModelNode request = createRequastWithAddress();
+        ModelNode request = createRequestWithAddress();
         request.get("operation").set("add");
         request.get("file").get("path").set(file);
         request.get("file").get("relative-to").set("jboss.server.log.dir");
         request.get("suffix").set(suffix);
         request.get("formatter").set(formatter);
 
-        execute.apply(request);
+        cli.execute(request);
 
         return this;
     }

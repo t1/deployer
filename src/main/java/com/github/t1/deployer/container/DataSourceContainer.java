@@ -14,7 +14,7 @@ import static com.github.t1.log.LogLevel.*;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-public class DataSourceContainer extends AbstractContainer {
+public class DataSourceContainer extends CLI {
     List<DataSourceConfig> getDataSources() {
         List<DataSourceConfig> dataSources = new ArrayList<>();
         for (ModelNode cliDataSourceMatch : readAllDataSources()) {

@@ -16,7 +16,7 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-public class LoggerContainer extends AbstractContainer {
+public class LoggerContainer extends CLI {
     public List<LoggerConfig> getLoggers() {
         List<LoggerConfig> loggers =
                 execute(readLogger("*")).asList().stream().map(node -> toLogger(node, "")).collect(toList());
@@ -113,6 +113,6 @@ public class LoggerContainer extends AbstractContainer {
     }
 
     public LogHandlerBuilder buildHandler(LoggingHandlerType type, String name) {
-        return new LogHandlerBuilder(name, type, this::execute);
+        return new LogHandlerBuilder(name, type, this);
     }
 }

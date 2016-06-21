@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-public class DeploymentContainer extends AbstractContainer {
+public class DeploymentContainer extends CLI {
     private static final int TIMEOUT = 30;
 
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");

@@ -13,7 +13,7 @@ import static com.github.t1.log.LogLevel.*;
 
 @Slf4j
 @Logged(level = INFO)
-public abstract class AbstractContainer {
+public class CLI {
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
         switch (severity) {
         case ERROR:
@@ -27,7 +27,7 @@ public abstract class AbstractContainer {
         }
     };
 
-    protected static ModelNode readResource(ModelNode request) {
+    public static ModelNode readResource(ModelNode request) {
         request.get("operation").set("read-resource");
         request.get("recursive").set(true);
         return request;
@@ -36,21 +36,21 @@ public abstract class AbstractContainer {
     @Inject
     public ModelControllerClient client;
 
-    protected ModelNode execute(ModelNode request) {
+    public ModelNode execute(ModelNode request) {
         ModelNode result = executeRaw(request);
         checkOutcome(result);
         return result.get("result");
     }
 
     @SneakyThrows(IOException.class)
-    protected ModelNode executeRaw(ModelNode command) {
+    public ModelNode executeRaw(ModelNode command) {
         log.debug("execute command {}", command);
         ModelNode result = client.execute(command, LOGGING);
         log.trace("-> {}", result);
         return result;
     }
 
-    protected boolean isNotFoundMessage(ModelNode result) {
+    public boolean isNotFoundMessage(ModelNode result) {
         String message = result.get("failure-description").toString();
         boolean jboss7start = message.startsWith("\"JBAS014807: Management resource");
         boolean jboss8start = message.startsWith("\"WFLYCTL0216: Management resource");
@@ -61,7 +61,7 @@ public abstract class AbstractContainer {
         return isNotFound;
     }
 
-    protected void checkOutcome(ModelNode result) {
+    public void checkOutcome(ModelNode result) {
         String outcome = result.get("outcome").asString();
         if (!"success".equals(outcome)) {
             log.error("failed: {}", result);
@@ -69,7 +69,7 @@ public abstract class AbstractContainer {
         }
     }
 
-    protected boolean isOutcomeFound(ModelNode result) {
+    public boolean isOutcomeFound(ModelNode result) {
         String outcome = result.get("outcome").asString();
         if ("success".equals(outcome)) {
             return true;

@@ -54,8 +54,12 @@ public class AbstractDeployerTest {
         verify(loggers, atLeast(0)).hasLogger(anyString());
         verify(loggers, atLeast(0)).getLogger(anyString());
         verify(loggers, atLeast(0)).buildHandler(any(LoggingHandlerType.class), anyString());
+        verify(logHandlerBuilderMock, atLeast(0)).build();
+        verify(logHandlerMock, atLeast(0)).isDeployed();
 
         verifyNoMoreInteractions(loggers);
+        verifyNoMoreInteractions(logHandlerMock);
+        verifyNoMoreInteractions(logHandlerBuilderMock);
     }
 
 
@@ -187,12 +191,16 @@ public class AbstractDeployerTest {
             return this;
         }
 
+        public LogHandlerFixture deployed() {
+            when(logHandlerMock.isDeployed()).thenReturn(true);
+            return this;
+        }
+
         public void verifyAdded() {
             verify(loggers).buildHandler(type, name);
             verify(logHandlerBuilderMock).file(file);
             verify(logHandlerBuilderMock).suffix(suffix);
             verify(logHandlerBuilderMock).formatter(formatter);
-            verify(logHandlerBuilderMock).build();
             verify(logHandlerMock).add();
         }
     }
