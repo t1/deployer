@@ -54,6 +54,9 @@ public class AbstractDeployerTest {
         verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), anyString());
         verify(logHandlerMock, atLeast(0)).isDeployed();
         verify(logHandlerMock, atLeast(0)).level();
+        verify(logHandlerMock, atLeast(0)).file();
+        verify(logHandlerMock, atLeast(0)).suffix();
+        verify(logHandlerMock, atLeast(0)).formatter();
 
         verifyNoMoreInteractions(loggers);
         verifyNoMoreInteractions(logHandlerMock);
@@ -174,14 +177,15 @@ public class AbstractDeployerTest {
             this.name = name;
         }
 
-        public LogHandlerFixture file(String file) {
-            this.file = file;
-            return this;
-        }
-
         public LogHandlerFixture level(LogLevel level) {
             this.level = level;
             when(logHandlerMock.level()).thenReturn(level);
+            return this;
+        }
+
+        public LogHandlerFixture file(String file) {
+            this.file = file;
+            when(logHandlerMock.file()).thenReturn(file);
             return this;
         }
 

@@ -279,7 +279,28 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldUpdateHandlerLevel
+    @Test
+    public void shouldUpdateHandlerFile() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-old-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter")
+                .deployed();
+
+        deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-new-file\n"
+                + "    suffix: the-suffix\n"
+                + "    formatter: the-formatter\n");
+
+        fixture.verifyUpdated().file("the-new-file");
+    }
+
+
     // TODO shouldUpdateHandlerFile
     // TODO shouldUpdateHandlerSuffix
     // TODO shouldUpdateHandlerFormatter
