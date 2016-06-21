@@ -1,24 +1,19 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixture.VersionFixture;
-import com.github.t1.deployer.model.DeploymentName;
-import org.jboss.dmr.ModelNode;
-import org.junit.*;
+import com.github.t1.deployer.model.*;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
+import static com.github.t1.log.LogLevel.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeployerTest extends AbstractDeployerTest {
     @InjectMocks Deployer deployer;
-
-    @Before
-    public void setUp() throws Exception {
-        this.deployer.loggers = loggers;
-    }
 
     @Test
     public void shouldDeployWebArchive() {
@@ -133,47 +128,39 @@ public class DeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldAddLogger() {
-        givenLogger("com.github.t1.deployer.app").readResource().notFound();
-        givenLogger("com.github.t1.deployer.app").operation("add").param("level", "DEBUG").success();
-
         deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
+
+        verify(loggers).add(new LoggerConfig("com.github.t1.deployer.app", DEBUG));
     }
 
 
     @Test
     public void shouldNotAddExistingLogger() {
-        givenLogger("com.github.t1.deployer.app")
-                .readResource().success()
-                .result("category", "com.github.t1.deployer")
-                .result("level", "DEBUG")
-                .result("use-parent-handlers", true);
+        givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
+
+        // #after(): no add nor update
     }
 
 
     @Test
     public void shouldUpdateLogLevel() {
-        givenLogger("com.github.t1.deployer.app")
-                .readResource().success()
-                .result("category", "com.github.t1.deployer")
-                .result("level", "DEBUG")
-                .result("use-parent-handlers", true);
-        givenLogger("com.github.t1.deployer.app")
-                .param("name", "level")
-                .param("value", "INFO")
-                .operation("write-attribute").success();
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: INFO\n");
+
+        // #after(): no add
+        verify(loggers).setLogLevel(fixture.getCategory(), INFO);
     }
 
 
@@ -183,15 +170,10 @@ public class DeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldAddPeriodicRotatingFileHandlerAsDefault() {
-        givenLogHandler(periodicRotatingFile, "FOO")
-                .operation("add")
-                .param("file", ModelNode.fromString("{\n"
-                        + "        \"path\" => \"the-file\",\n"
-                        + "        \"relative-to\" => \"jboss.server.log.dir\"\n"
-                        + "    }"))
-                .param("suffix", "the-suffix")
-                .param("formatter", "the-formatter")
-                .success();
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter");
 
         deployer.run(""
                 + "log-handlers:\n"
@@ -200,20 +182,17 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
+
+        fixture.verifyAdded();
     }
 
 
     @Test
     public void shouldAddPeriodicRotatingFileHandler() {
-        givenLogHandler(periodicRotatingFile, "FOO")
-                .operation("add")
-                .param("file", ModelNode.fromString("{\n"
-                        + "        \"path\" => \"the-file\",\n"
-                        + "        \"relative-to\" => \"jboss.server.log.dir\"\n"
-                        + "    }"))
-                .param("suffix", "the-suffix")
-                .param("formatter", "the-formatter")
-                .success();
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter");
 
         deployer.run(""
                 + "log-handlers:\n"
@@ -223,6 +202,8 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
+
+        fixture.verifyAdded();
     }
 
 
