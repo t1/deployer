@@ -301,8 +301,28 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldUpdateHandlerFile
-    // TODO shouldUpdateHandlerSuffix
+    @Test
+    public void shouldUpdateHandlerSuffix() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-old-suffix")
+                .formatter("the-formatter")
+                .deployed();
+
+        deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-new-suffix\n"
+                + "    formatter: the-formatter\n");
+
+        fixture.verifyUpdated().suffix("the-new-suffix");
+    }
+
+
     // TODO shouldUpdateHandlerFormatter
     // TODO shouldUpdateHandlerFileAndSuffix
     // TODO shouldRemoveHandlerWhenStateIsUndeployed

@@ -191,6 +191,7 @@ public class AbstractDeployerTest {
 
         public LogHandlerFixture suffix(String suffix) {
             this.suffix = suffix;
+            when(logHandlerMock.suffix()).thenReturn(suffix);
             return this;
         }
 
