@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
@@ -24,6 +25,7 @@ public class AbstractDeployerTest {
     @Mock LoggerContainer loggers;
 
     @Mock LogHandler logHandlerMock;
+    @Mock LogHandlerBuilder logHandlerBuilderMock;
 
     private final List<Deployment> allDeployments = new ArrayList<>();
 
@@ -32,10 +34,20 @@ public class AbstractDeployerTest {
         when(deployments.getAllDeployments()).then(invocation -> allDeployments);
 
         when(loggers.handler(any(LoggingHandlerType.class), anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.level(any(LogLevel.class))).thenReturn(logHandlerMock);
-        when(logHandlerMock.file(anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.suffix(anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.formatter(anyString())).thenReturn(logHandlerMock);
+
+        when(logHandlerMock.toBuilder()).thenReturn(logHandlerBuilderMock);
+
+        when(logHandlerMock.correctLevel(any(LogLevel.class))).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctFile(anyString())).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctSuffix(anyString())).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctFormatter(anyString())).thenReturn(logHandlerMock);
+
+        when(logHandlerBuilderMock.level(any(LogLevel.class))).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.file(anyString())).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.suffix(anyString())).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.formatter(anyString())).thenReturn(logHandlerBuilderMock);
+
+        when(logHandlerBuilderMock.build()).thenReturn(logHandlerMock);
     }
 
     @After
@@ -52,11 +64,18 @@ public class AbstractDeployerTest {
         verify(loggers, atLeast(0)).hasLogger(anyString());
         verify(loggers, atLeast(0)).getLogger(anyString());
         verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), anyString());
+
         verify(logHandlerMock, atLeast(0)).isDeployed();
+
         verify(logHandlerMock, atLeast(0)).level();
         verify(logHandlerMock, atLeast(0)).file();
         verify(logHandlerMock, atLeast(0)).suffix();
         verify(logHandlerMock, atLeast(0)).formatter();
+
+        verify(logHandlerMock, atLeast(0)).correctLevel(any(LogLevel.class));
+        verify(logHandlerMock, atLeast(0)).correctFile(anyString());
+        verify(logHandlerMock, atLeast(0)).correctSuffix(anyString());
+        verify(logHandlerMock, atLeast(0)).correctFormatter(anyString());
 
         verifyNoMoreInteractions(loggers);
         verifyNoMoreInteractions(logHandlerMock);
@@ -208,17 +227,16 @@ public class AbstractDeployerTest {
 
         public LogHandler verifyUpdated() {
             verify(loggers).handler(type, name);
-            verify(logHandlerMock).write();
-
             return verify(logHandlerMock);
         }
 
         public void verifyAdded() {
             verify(loggers).handler(type, name);
-            verify(logHandlerMock).level(level);
-            verify(logHandlerMock).file(file);
-            verify(logHandlerMock).suffix(suffix);
-            verify(logHandlerMock).formatter(formatter);
+            verify(logHandlerMock).toBuilder();
+            verify(logHandlerBuilderMock).level(level);
+            verify(logHandlerBuilderMock).file(file);
+            verify(logHandlerBuilderMock).suffix(suffix);
+            verify(logHandlerBuilderMock).formatter(formatter);
             verify(logHandlerMock).add();
         }
     }

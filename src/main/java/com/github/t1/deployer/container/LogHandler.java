@@ -8,10 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
 import static com.github.t1.deployer.container.CLI.*;
+import static lombok.AccessLevel.*;
 
 @Slf4j
-@Data
+@Getter
+@Builder(toBuilder = true)
 @RequiredArgsConstructor
+@AllArgsConstructor(access = PRIVATE)
 @Accessors(fluent = true, chain = true)
 public class LogHandler {
     @NonNull private final String name;
@@ -30,26 +33,54 @@ public class LogHandler {
         ModelNode response = cli.executeRaw(request);
         boolean isDeployed = cli.isOutcomeFound(response);
         if (isDeployed) {
-            level(LogLevel.valueOf(response.get("result").get("level").asString()));
+            level = LogLevel.valueOf(response.get("result").get("level").asString());
+            file = response.get("result").get("file").asString();
+            suffix = response.get("result").get("suffix").asString();
+            formatter = response.get("result").get("formatter").asString();
         }
         return isDeployed;
     }
 
-    public LogHandler write() {
-        ModelNode request = createRequestWithAddress();
+    public LogHandler correctLevel(LogLevel newLevel) {
+        if (level.equals(newLevel))
+            return this;
+        return writeAttribute("level", newLevel.name());
+    }
 
-        if (level != null)
-            writeAttribute(request, "level", level.name());
+    public LogHandler correctFile(String newFile) {
+        if (file.equals(newFile))
+            return this;
+        ModelNode request = createRequestWithAddress();
+        request.get("operation").set("write-attribute");
+        request.get("name").set("file");
+        request.get("value").get("path").set(newFile);
 
         cli.execute(request);
 
         return this;
     }
 
-    public void writeAttribute(ModelNode request, String name, String value) {
+    public LogHandler correctSuffix(String newSuffix) {
+        if (suffix.equals(newSuffix))
+            return this;
+        return writeAttribute("suffix", newSuffix);
+    }
+
+    public LogHandler correctFormatter(String newFormatter) {
+        if (formatter.equals(newFormatter))
+            return this;
+        return writeAttribute("formatter", newFormatter);
+    }
+
+    private LogHandler writeAttribute(String name, String value) {
+        ModelNode request = createRequestWithAddress();
         request.get("operation").set("write-attribute");
         request.get("name").set(name);
         request.get("value").set(value);
+
+        cli.execute(request);
+
+        return this;
     }
 
     private ModelNode createRequestWithAddress() {

@@ -46,7 +46,7 @@ public class CLI {
     public ModelNode executeRaw(ModelNode command) {
         log.debug("execute command {}", command);
         ModelNode result = client.execute(command, LOGGING);
-        log.trace("-> {}", result);
+        log.debug("response {}", result);
         return result;
     }
 

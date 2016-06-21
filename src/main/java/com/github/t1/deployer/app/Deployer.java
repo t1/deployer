@@ -80,22 +80,19 @@ public class Deployer {
         String name = artifactId.toString();
         LoggingHandlerType type = item.getHandlerType();
         LogHandler handler = loggers.handler(type, name);
-        if (!handler.isDeployed())
-            handler.file(item.getFile())
+        if (handler.isDeployed())
+            handler.correctLevel(item.getLevel())
+                   .correctFile(item.getFile())
+                   .correctSuffix(item.getSuffix())
+                   .correctFormatter(item.getFormatter());
+        else
+            handler.toBuilder()
+                   .file(item.getFile())
                    .level(item.getLevel())
                    .suffix(item.getSuffix())
                    .formatter(item.getFormatter())
+                   .build()
                    .add();
-        else if (!handler.level().equals(item.getLevel()))
-            handler.level(item.getLevel()).write();
-        else if (!handler.file().equals(item.getFile()))
-            handler.file(item.getFile()).write();
-        else if (!handler.suffix().equals(item.getSuffix()))
-            handler.suffix(item.getSuffix()).write();
-        else if (!handler.formatter().equals(item.getFormatter()))
-            handler.formatter(item.getFormatter()).write();
-        else
-            log.info("log handler already deployed exactly as is: {}", artifactId);
     }
 
     private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item,

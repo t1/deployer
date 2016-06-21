@@ -163,6 +163,9 @@ public class DeployerTest extends AbstractDeployerTest {
     }
 
 
+    // TODO shouldUpdateLoggerHandlers
+
+
     @Test
     public void shouldRemoveExistingLoggerWhenStateIsUndeployed() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).exists();
@@ -275,7 +278,7 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyUpdated().level(ALL);
+        fixture.verifyUpdated().correctLevel(ALL);
     }
 
 
@@ -297,7 +300,7 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyUpdated().file("the-new-file");
+        fixture.verifyUpdated().correctFile("the-new-file");
     }
 
 
@@ -319,7 +322,7 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-new-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyUpdated().suffix("the-new-suffix");
+        fixture.verifyUpdated().correctSuffix("the-new-suffix");
     }
 
 
@@ -341,11 +344,33 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-new-formatter\n");
 
-        fixture.verifyUpdated().formatter("the-new-formatter");
+        fixture.verifyUpdated().correctFormatter("the-new-formatter");
     }
 
 
-    // TODO shouldUpdateHandlerFileAndSuffix
+    @Test
+    public void shouldUpdateHandlerFileAndFormatter() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-old-file")
+                .suffix("the-suffix")
+                .formatter("the-old-formatter")
+                .deployed();
+
+        deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-new-file\n"
+                + "    suffix: the-suffix\n"
+                + "    formatter: the-new-formatter\n");
+
+        fixture.verifyUpdated().correctFile("the-new-file");
+        fixture.verifyUpdated().correctFormatter("the-new-formatter");
+    }
+
+
     // TODO shouldRemoveHandlerWhenStateIsUndeployed
     // TODO shouldRemoveHandlerWhenManaged
     // TODO shouldAddConsoleHandler
