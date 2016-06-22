@@ -6,7 +6,6 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
 import org.mockito.Mock;
 
@@ -17,12 +16,13 @@ import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.mockito.Mockito.*;
 
-@Slf4j
 public class AbstractDeployerTest {
     @Mock Repository repository;
 
     @Mock DeploymentContainer deployments;
     @Mock LoggerContainer loggers;
+
+    @Mock LoggerResource loggerMock;
 
     @Mock LogHandler logHandlerMock;
     @Mock LogHandlerBuilder logHandlerBuilderMock;
@@ -32,8 +32,6 @@ public class AbstractDeployerTest {
     @Before
     public void before() {
         when(deployments.getAllDeployments()).then(invocation -> allDeployments);
-
-        when(loggers.handler(any(LoggingHandlerType.class), anyString())).thenReturn(logHandlerMock);
 
         when(logHandlerMock.toBuilder()).thenReturn(logHandlerBuilderMock);
 
@@ -61,8 +59,17 @@ public class AbstractDeployerTest {
 
     @After
     public void afterLoggers() {
-        verify(loggers, atLeast(0)).hasLogger(anyString());
-        verify(loggers, atLeast(0)).getLogger(anyString());
+        verify(loggers, atLeast(0)).logger(anyString());
+
+        verify(loggerMock, atLeast(0)).isDeployed();
+        verify(loggerMock, atLeast(0)).level();
+
+        verifyNoMoreInteractions(loggerMock);
+        verifyNoMoreInteractions(loggers);
+    }
+
+    @After
+    public void afterLogHandlers() {
         verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), anyString());
 
         verify(logHandlerMock, atLeast(0)).isDeployed();
@@ -77,7 +84,6 @@ public class AbstractDeployerTest {
         verify(logHandlerMock, atLeast(0)).correctSuffix(anyString());
         verify(logHandlerMock, atLeast(0)).correctFormatter(anyString());
 
-        verifyNoMoreInteractions(loggers);
         verifyNoMoreInteractions(logHandlerMock);
     }
 
@@ -119,7 +125,6 @@ public class AbstractDeployerTest {
                         .sha1(checkSum())
                         .inputStreamSupplier(() -> inputStreamFor(contextRoot(), version))
                         .build();
-                log.debug("given artifact: {}", artifact);
                 when(repository.buildArtifact(groupId(), artifactId(), version, war)).thenReturn(artifact);
             }
 
@@ -159,23 +164,23 @@ public class AbstractDeployerTest {
         public LoggerFixture(String category) {
             this.category = category;
 
-            when(loggers.hasLogger(category)).thenReturn(false);
+            when(loggers.logger(category)).thenReturn(loggerMock);
+            when(loggerMock.isDeployed()).thenReturn(false);
         }
 
         public LoggerFixture level(LogLevel level) {
+            when(loggerMock.level()).thenReturn(level);
             this.level = level;
             return this;
         }
 
-        public LoggerConfig getConfig() {
-            return new LoggerConfig(category, level);
-        }
-
         public LoggerFixture exists() {
-            when(loggers.hasLogger(category)).thenReturn(true);
-            when(loggers.getLogger(category)).then(invocation -> getConfig());
+            when(loggers.logger(category)).thenReturn(loggerMock);
+            when(loggerMock.isDeployed()).thenReturn(true);
             return this;
         }
+
+        public LoggerResource verifyLogger() { return verify(loggerMock); }
     }
 
 
@@ -194,6 +199,8 @@ public class AbstractDeployerTest {
         public LogHandlerFixture(LoggingHandlerType type, String name) {
             this.type = type;
             this.name = name;
+
+            when(loggers.handler(type, name)).thenReturn(logHandlerMock);
         }
 
         public LogHandlerFixture level(LogLevel level) {

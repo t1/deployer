@@ -1,10 +1,8 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.LoggerConfig;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
 import lombok.SneakyThrows;
-import org.assertj.core.api.JUnitSoftAssertions;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
@@ -13,7 +11,7 @@ import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
@@ -25,9 +23,9 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoggerContainerTest {
-    private static final LoggerConfig ROOT = LoggerConfig.builder().category("").level(DEBUG).build();
-    private static final LoggerConfig FOO = LoggerConfig.builder().category("foo").level(WARN).build();
-    private static final LoggerConfig BAR = LoggerConfig.builder().category("bar").level(INFO).build();
+    private static final LogLevel ROOT_LEVEL = DEBUG;
+    private static final LogLevel FOO_LEVEL = WARN;
+    private static final LogLevel BAR_LEVEL = INFO;
 
     @InjectMocks
     LoggerContainer container;
@@ -36,8 +34,7 @@ public class LoggerContainerTest {
     @Mock
     Repository repository;
 
-    @Rule
-    public JUnitSoftAssertions softly = new JUnitSoftAssertions();
+    private Map<String, LogLevel> loggers = new LinkedHashMap<>();
 
     @Before
     @SneakyThrows(IOException.class)
@@ -52,8 +49,10 @@ public class LoggerContainerTest {
                         + "            \"CONSOLE\",\n"
                         + "            \"FILE\"\n"
                         + "        ],\n"
-                        + "        \"level\" => \"" + ROOT.getLevel() + "\"\n"
+                        + "        \"level\" => \"" + ROOT_LEVEL + "\"\n"
                         + "    }")));
+        when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class)))
+                .then(invocation -> ModelNode.fromString(successCli(readLoggersCliResult(this.loggers))));
     }
 
     private static ModelNode readRootLoggerCli() {
@@ -65,26 +64,23 @@ public class LoggerContainerTest {
     }
 
     @SneakyThrows(IOException.class)
-    private void givenLoggers(LoggerConfig... loggers) {
-        when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class)))
-                .thenReturn(ModelNode.fromString(successCli(readLoggersCliResult(loggers))));
-        for (LoggerConfig logger : loggers) {
-            when(client.execute(eq(readLoggersCli(logger.getCategory())), any(OperationMessageHandler.class)))
-                    .thenReturn(ModelNode.fromString(successCli("{" + logger(logger) + "}")));
-        }
-    }
-
-    @SneakyThrows(IOException.class)
-    private void givenNoLogger(LoggerConfig logger) {
-        when(client.execute(eq(readLoggersCli(logger.getCategory())), any(OperationMessageHandler.class)))
+    private void givenNoLogger(String category) {
+        when(client.execute(eq(readLoggersCli(category)), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString("{\n"
                         + "    \"outcome\" => \"failed\",\n"
                         + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
                         + "    (\\\"subsystem\\\" => \\\"logging\\\"),\n"
-                        + "    (\\\"logger\\\" => \\\"" + logger.getCategory() + "\\\")\n"
+                        + "    (\\\"logger\\\" => \\\"" + category + "\\\")\n"
                         + "]' not found\",\n"
                         + "    \"rolled-back\" => true\n"
                         + "}"));
+    }
+
+    @SneakyThrows(IOException.class)
+    private void givenLogger(String category, LogLevel level) {
+        this.loggers.put(category, level);
+        when(client.execute(eq(readLoggersCli(category)), any(OperationMessageHandler.class)))
+                .thenReturn(ModelNode.fromString(successCli("{" + logger(level) + "}")));
     }
 
     private static ModelNode readLoggersCli(String loggerName) {
@@ -95,18 +91,19 @@ public class LoggerContainerTest {
         return node;
     }
 
-    private String readLoggersCliResult(LoggerConfig... loggers) {
+    private String readLoggersCliResult(Map<String, LogLevel> loggers) {
         StringBuilder out = new StringBuilder();
         out.append("[");
-        for (LoggerConfig logger : loggers) {
+        for (Map.Entry<String, LogLevel> logger : loggers.entrySet()) {
             if (out.length() > 1)
                 out.append(", ");
             out.append("{")
                .append("\"address\" => [")
                .append("(\"subsystem\" => \"logging\"),")
-               .append("(\"logger\" => \"").append(logger.getCategory()).append("\")")
+               .append("(\"logger\" => \"").append(logger.getKey()).append("\")")
                .append("],");
-            out.append("\"outcome\" => \"success\",\"result\" => {").append(logger(logger)).append("}\n");
+            out.append("\"outcome\" => \"success\","
+                    + "\"result\" => {").append(logger(logger.getValue())).append("}\n");
             out.append("}");
         }
         out.append("]");
@@ -117,13 +114,13 @@ public class LoggerContainerTest {
         return verify(client).execute(eq(node), any(OperationMessageHandler.class));
     }
 
-    private String logger(LoggerConfig logger) {
+    private String logger(LogLevel level) {
         return ""
                 + "\"category\" => undefined," // deprecated: \"" + logger.getCategory() + "\","
                 + "\"filter\" => undefined,"
                 + "\"filter-spec\" => undefined,"
                 + "\"handlers\" => undefined,"
-                + "\"level\" => \"" + logger.getLevel() + "\","
+                + "\"level\" => \"" + level + "\","
                 + "\"use-parent-handlers\" => true" + "\n";
     }
 
@@ -164,66 +161,95 @@ public class LoggerContainerTest {
                 + "}");
     }
 
+    public void assertIsRoot(LoggerResource logger) {
+        assertThat(logger.isDeployed()).isTrue();
+        assertThat(logger.isRoot()).isTrue();
+        assertThat(logger.category()).isEqualTo("ROOT");
+        assertThat(logger.level()).isEqualTo(DEBUG);
+    }
+
+    public void assertIsFoo(LoggerResource logger) {
+        assertThat(logger.isDeployed()).isTrue();
+        assertThat(logger.isRoot()).isFalse();
+        assertThat(logger.category()).isEqualTo("foo");
+        assertThat(logger.level()).isEqualTo(WARN);
+    }
+
+    public void assertIsBar(LoggerResource logger) {
+        assertThat(logger.isDeployed()).isTrue();
+        assertThat(logger.isRoot()).isFalse();
+        assertThat(logger.category()).isEqualTo("bar");
+        assertThat(logger.level()).isEqualTo(INFO);
+    }
+
     @Test
     public void shouldGetJustRootLogger() {
-        givenLoggers();
+        givenNoLogger("foo");
+        givenNoLogger("bar");
 
-        List<LoggerConfig> loggers = container.getLoggers();
+        List<LoggerResource> loggers = container.allLoggers();
 
-        assertThat(loggers).containsExactly(ROOT);
+        assertThat(loggers).hasSize(1);
+        assertIsRoot(loggers.get(0));
     }
 
     @Test
     public void shouldGetOneLogger() {
-        givenLoggers(FOO);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        List<LoggerConfig> loggers = container.getLoggers();
+        List<LoggerResource> loggers = container.allLoggers();
 
-        assertThat(loggers).containsExactly(ROOT, FOO);
+        assertThat(loggers).hasSize(2);
+        assertIsRoot(loggers.get(0));
+        assertIsFoo(loggers.get(1));
     }
 
     @Test
     public void shouldGetTwoLoggersSorted() {
-        givenLoggers(FOO, BAR);
+        givenLogger("foo", FOO_LEVEL);
+        givenLogger("bar", BAR_LEVEL);
 
-        List<LoggerConfig> loggers = container.getLoggers();
+        List<LoggerResource> loggers = container.allLoggers();
 
-        assertThat(loggers).containsExactly(ROOT, BAR, FOO);
+        assertThat(loggers).hasSize(3);
+        assertIsRoot(loggers.get(0));
+        assertIsBar(loggers.get(1));
+        assertIsFoo(loggers.get(2));
     }
 
     @Test
     public void shouldHaveOneLogger() {
-        givenLoggers(FOO);
-        givenNoLogger(BAR);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        softly.assertThat(container.hasLogger(ROOT.getCategory())).isTrue();
-        softly.assertThat(container.hasLogger("")).isTrue();
-        softly.assertThat(container.getLogger("")).isEqualTo(ROOT);
+        assertIsRoot(container.logger(""));
 
-        softly.assertThat(container.hasLogger(FOO.getCategory())).isTrue();
-        softly.assertThat(container.hasLogger("foo")).isTrue();
-        softly.assertThat(container.getLogger("foo")).isEqualTo(FOO);
+        assertIsFoo(container.logger("foo"));
 
-        softly.assertThat(container.hasLogger(BAR.getCategory())).isFalse();
-        softly.assertThat(container.hasLogger("bar")).isFalse();
-        softly.assertThatThrownBy(() -> container.getLogger("bar"))
-              .hasMessage("no logger 'bar'");
+        LoggerResource bar = container.logger("bar");
+        assertThat(bar.isDeployed()).isFalse();
+        assertThat(bar.isRoot()).isFalse();
+        assertThat(bar.category()).isEqualTo("bar");
+        assertThatThrownBy(bar::level).hasMessage("no logger 'bar'");
     }
 
     @Test
     public void shouldAddLogger() throws IOException {
-        givenLoggers(FOO);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        container.add(BAR);
+        container.buildLogger().category("bar").level(INFO).build().add();
 
         verifyExecute(addLogger("logger", "bar", INFO));
     }
 
     @Test
     public void shouldFailToAddRootLogger() throws IOException {
-        givenLoggers(FOO);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        assertThatThrownBy(() -> container.add(ROOT))
+        assertThatThrownBy(() -> container.buildLogger().category("").build().add())
                 .hasMessage("can't add root logger");
 
         verify(client, never()).execute(eq(addLogger("root-logger", "ROOT", ERROR)),
@@ -232,36 +258,40 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldUpdateLogLevel() throws IOException {
-        givenLoggers(FOO);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        container.setLogLevel(FOO.getCategory(), ERROR);
+        container.logger("foo").correctLevel(ERROR);
 
         verifyExecute(updateLogLevel("logger", "foo", ERROR));
     }
 
     @Test
     public void shouldUpdateRootLogLevel() throws IOException {
-        givenLoggers(FOO);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        container.setLogLevel("", ERROR);
+        container.logger("").correctLevel(ERROR);
 
         verifyExecute(updateLogLevel("root-logger", "ROOT", ERROR));
     }
 
     @Test
     public void shouldRemoveLogger() throws IOException {
-        givenLoggers(FOO);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        container.remove(FOO);
+        container.logger("foo").remove();
 
         verifyExecute(removeLogger("logger", "foo"));
     }
 
     @Test
     public void shouldFailToRemoveRootLogger() throws IOException {
-        givenLoggers(FOO);
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
 
-        assertThatThrownBy(() -> container.remove(ROOT))
+        assertThatThrownBy(() -> container.logger("").remove())
                 .hasMessage("can't remove root logger");
 
         verify(client, never()).execute(eq(removeLogger("root-logger", "ROOT")), any(OperationMessageHandler.class));

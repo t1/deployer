@@ -72,7 +72,7 @@ public class DeployerIT {
 
     @Inject Deployer deployer;
     @Inject DeploymentContainer container;
-    @Inject LoggerContainer loggerContainer;
+    @Inject LoggerContainer loggers;
 
     @Before
     public void setup() throws Exception {
@@ -87,8 +87,8 @@ public class DeployerIT {
             // restore after JBoss is down
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
-            loggerContainer.handler(console, "CONSOLE").correctLevel(ALL);
-            loggerContainer.add(new LoggerConfig("com.github.t1.deployer", DEBUG));
+            loggers.handler(console, "CONSOLE").correctLevel(ALL);
+            loggers.buildLogger().category("com.github.t1.deployer").level(DEBUG).build().add();
 
             log.info("deployments: {}", container.getAllDeployments());
             assertDeployments();

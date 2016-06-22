@@ -27,14 +27,24 @@ public class CLI {
         }
     };
 
+    @Inject
+    public ModelControllerClient client;
+
+
     public static ModelNode readResource(ModelNode request) {
         request.get("operation").set("read-resource");
         request.get("recursive").set(true);
         return request;
     }
 
-    @Inject
-    public ModelControllerClient client;
+    public void writeAttribute(ModelNode request, String name, String value) {
+        request.get("operation").set("write-attribute");
+        request.get("name").set(name);
+        request.get("value").set(value);
+
+        execute(request);
+    }
+
 
     public ModelNode execute(ModelNode request) {
         ModelNode result = executeRaw(request);

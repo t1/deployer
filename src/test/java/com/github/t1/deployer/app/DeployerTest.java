@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixture.VersionFixture;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.DeploymentName;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -128,12 +128,14 @@ public class DeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldAddLogger() {
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app");
+
         deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
 
-        verify(loggers).add(new LoggerConfig("com.github.t1.deployer.app", DEBUG));
+        fixture.verifyLogger().add();
     }
 
 
@@ -159,7 +161,7 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: INFO\n");
 
-        verify(loggers).setLogLevel(fixture.getCategory(), INFO);
+        fixture.verifyLogger().correctLevel(INFO);
     }
 
 
@@ -176,7 +178,7 @@ public class DeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    state: undeployed\n");
 
-        verify(loggers).remove(new LoggerConfig(fixture.getCategory(), ALL));
+        fixture.verifyLogger().remove();
     }
 
 
