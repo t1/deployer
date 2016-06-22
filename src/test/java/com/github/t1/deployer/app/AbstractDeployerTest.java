@@ -7,7 +7,7 @@ import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
 import lombok.*;
 import org.junit.*;
-import org.mockito.Mock;
+import org.mockito.*;
 
 import java.io.InputStream;
 import java.util.*;
@@ -17,6 +17,8 @@ import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.mockito.Mockito.*;
 
 public class AbstractDeployerTest {
+    @InjectMocks Deployer deployer;
+
     @Mock Repository repository;
 
     @Mock DeploymentContainer deployments;
