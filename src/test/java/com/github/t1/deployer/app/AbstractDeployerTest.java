@@ -5,6 +5,7 @@ import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
+import com.github.t1.testtools.SystemPropertiesRule;
 import lombok.*;
 import org.junit.*;
 import org.mockito.*;
@@ -17,6 +18,8 @@ import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static org.mockito.Mockito.*;
 
 public class AbstractDeployerTest {
+    @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
+
     @InjectMocks Deployer deployer;
 
     @Mock Repository repository;

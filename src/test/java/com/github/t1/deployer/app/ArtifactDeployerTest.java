@@ -25,6 +25,22 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldDeployWebArchiveWithVariables() {
+        systemProperties.given("fooGroupId", "org.foo");
+        systemProperties.given("fooArtifactId", "foo-war");
+        systemProperties.given("fooVersion", "1.3.2");
+        VersionFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployer.run(""
+                + "${fooGroupId}:\n"
+                + "  ${fooArtifactId}:\n"
+                + "    version: ${fooVersion}\n");
+
+        foo.verifyDeployed();
+    }
+
+
+    @Test
     public void shouldNotRedeployWebArchiveWithSameNameAndChecksum() {
         givenArtifact("foo")
                 .version("1").deployed()

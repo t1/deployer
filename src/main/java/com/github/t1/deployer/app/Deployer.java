@@ -25,12 +25,16 @@ public class Deployer {
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts, loggers, and handlers (and more in the future)
 
+    private Variables variables = new Variables();
+
     public void run(String plan) {
         run(ConfigurationPlan.load(plan));
     }
 
     public void run(ConfigurationPlan plan) {
         List<Deployment> other = deployments.getAllDeployments();
+
+        variables.resolve(plan);
 
         plan.getGroupMap().entrySet().stream().forEach(groupEntry -> {
             GroupId groupId = groupEntry.getKey();

@@ -24,7 +24,6 @@ import static java.nio.charset.StandardCharsets.*;
 import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
 
-@Data
 @AllArgsConstructor(access = PRIVATE)
 @Slf4j
 public class ConfigurationPlan {
@@ -52,7 +51,7 @@ public class ConfigurationPlan {
         return new ConfigurationPlan(map);
     }
 
-    @NonNull private final Map<GroupId, Map<ArtifactId, Item>> groupMap;
+    @NonNull @Getter private final Map<GroupId, Map<ArtifactId, Item>> groupMap;
 
     @Data
     public static class Item {

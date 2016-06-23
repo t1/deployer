@@ -15,20 +15,20 @@ import static lombok.AccessLevel.*;
 public class Version implements Comparable<Version> {
     @NonNull
     @XmlValue
-    private final String version;
+    private final String value;
 
     @JsonCreator
-    public Version(String version) { this.version = version; }
+    public Version(String value) { this.value = value; }
 
     /** this is called when YAML deserializes a version '1' */
-    public Version(int version) { this.version = Integer.toString(version); }
+    public Version(int value) { this.value = Integer.toString(value); }
 
     /** this is called when YAML deserializes a version '1.0' */
-    public Version(double version) { this.version = Double.toString(version); }
+    public Version(double value) { this.value = Double.toString(value); }
 
     @Override
     public String toString() {
-        return version;
+        return value;
     }
 
     @Override
@@ -37,8 +37,8 @@ public class Version implements Comparable<Version> {
     public static final Comparator<Version> COMPARATOR = new Comparator<Version>() {
         @Override
         public int compare(Version thisVersion, Version thatVersion) {
-            String[] thisParts = split(thisVersion.version);
-            String[] thatParts = split(thatVersion.version);
+            String[] thisParts = split(thisVersion.value);
+            String[] thatParts = split(thatVersion.value);
             int i;
             for (i = 0; i < thisParts.length; i++) {
                 String thisPart = thisParts[i];
