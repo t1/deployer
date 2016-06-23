@@ -111,12 +111,17 @@ public class AbstractDeployerTest {
 
         public VersionFixture version(String version) { return version(new Version(version)); }
 
-        public VersionFixture version(Version version) { return new VersionFixture(version); }
+        public VersionFixture version(Version version) { return new VersionFixture(version, war); }
+
+        public VersionFixture version(String version, ArtifactType type) { return version(new Version(version), type); }
+
+        public VersionFixture version(Version version, ArtifactType type) { return new VersionFixture(version, type); }
 
         public class VersionFixture {
             private final Version version;
+            private String contents;
 
-            public VersionFixture(Version version) {
+            public VersionFixture(Version version, ArtifactType type) {
                 this.version = version;
 
                 Artifact artifact = Artifact
@@ -124,10 +129,11 @@ public class AbstractDeployerTest {
                         .groupId(groupId())
                         .artifactId(artifactId())
                         .version(version)
+                        .type(type)
                         .sha1(checkSum())
-                        .inputStreamSupplier(() -> inputStreamFor(contextRoot(), version))
+                        .inputStreamSupplier(this::inputStream)
                         .build();
-                when(repository.buildArtifact(groupId(), artifactId(), version, war)).thenReturn(artifact);
+                when(repository.buildArtifact(groupId(), artifactId(), version, type)).thenReturn(artifact);
             }
 
             public VersionFixture deployed() {
@@ -138,11 +144,15 @@ public class AbstractDeployerTest {
                 return this;
             }
 
+            public void containing(String contents) { this.contents = contents; }
+
             public CheckSum checkSum() { return fakeChecksumFor(contextRoot(), version); }
 
-            public InputStream inputStream() { return inputStreamFor(contextRoot(), version); }
-
-            public DeploymentName deploymentName() { return ArtifactFixture.this.deploymentName(); }
+            public InputStream inputStream() {
+                return (contents == null)
+                        ? inputStreamFor(contextRoot(), version)
+                        : new StringInputStream(contents);
+            }
 
             public ArtifactFixture and() { return ArtifactFixture.this; }
 

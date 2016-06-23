@@ -283,6 +283,7 @@ public class ArtifactoryRepository extends Repository {
                 .builder()
                 .groupId(groupId)
                 .artifactId(artifactId)
+                .type(type)
                 .version(version)
                 .sha1(fileInfo.getChecksum())
                 .inputStreamSupplier(() -> download(fileInfo))

@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static com.github.t1.deployer.model.ArtifactType.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -33,7 +34,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
         deployer.run(""
                 + "org.foo:\n"
                 + "  foo-war:\n"
-                + "    version: \"1\"\n");
+                + "    version: 1\n");
 
         // #after(): no deploy operations
     }
@@ -63,7 +64,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
         deployer.run(""
                 + "org.foo:\n"
                 + "  foo-war:\n"
-                + "    version: \"2\"\n");
+                + "    version: 2\n");
 
         foo2.verifyRedeployed();
     }
@@ -121,7 +122,29 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldDeployBundle
+    @Test
+    public void shouldDeployBundle() {
+        VersionFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        VersionFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4");
+        givenArtifact("artifact-deployer-test", "should-deploy-bundle").version("1", bundle).containing(""
+                + "org.jolokia:\n"
+                + "  jolokia-war:\n"
+                + "    version: 1.3.2\n"
+                + "org.mock-server:\n"
+                + "  mockserver-war:\n"
+                + "    version: 3.10.4\n");
+
+        deployer.run(""
+                + "artifact-deployer-test:\n"
+                + "  should-deploy-bundle:\n"
+                + "    type: bundle\n"
+                + "    version: 1\n");
+
+        // #after(): jolokia not re-deployed
+        mockserver.verifyDeployed();
+    }
+
+
     // TODO shouldDeployBundleWithParams
     // TODO shouldDeployDataSource
     // TODO shouldDeployXADataSource

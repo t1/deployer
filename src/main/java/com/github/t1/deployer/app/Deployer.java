@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import java.util.List;
 
+import static com.github.t1.deployer.model.ArtifactType.*;
+
 @Slf4j
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
@@ -21,7 +23,7 @@ public class Deployer {
     @Inject Repository repository;
 
     @Getter @Setter
-    private boolean managed;
+    private boolean managed; // TODO make configurable for artifacts, loggers, and handlers (and more in the future)
 
     public void run(String plan) {
         run(ConfigurationPlan.load(plan));
@@ -115,7 +117,9 @@ public class Deployer {
     }
 
     private void deploy(List<Deployment> other, DeploymentName name, Artifact artifact) {
-        if (other.removeIf(name::matches)) {
+        if (artifact.getType() == bundle) {
+            run(ConfigurationPlan.load(artifact.getReader()));
+        } else if (other.removeIf(name::matches)) {
             if (deployments.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
                 log.info("already deployed with same checksum: {}", name);
             } else {

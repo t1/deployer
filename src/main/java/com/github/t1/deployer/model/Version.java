@@ -20,6 +20,12 @@ public class Version implements Comparable<Version> {
     @JsonCreator
     public Version(String version) { this.version = version; }
 
+    /** this is called when YAML deserializes a version '1' */
+    public Version(int version) { this.version = Integer.toString(version); }
+
+    /** this is called when YAML deserializes a version '1.0' */
+    public Version(double version) { this.version = Double.toString(version); }
+
     @Override
     public String toString() {
         return version;

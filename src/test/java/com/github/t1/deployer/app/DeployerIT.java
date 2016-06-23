@@ -76,7 +76,7 @@ public class DeployerIT {
 
     @Before
     public void setup() throws Exception {
-        if (first) {
+        if (first && !runningOnClient()) {
             first = false;
 
             jbossConfig = new FileMemento(System.getProperty("jboss.server.config.dir") + "/standalone.xml").setup();

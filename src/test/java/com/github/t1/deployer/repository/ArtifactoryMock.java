@@ -103,10 +103,10 @@ public class ArtifactoryMock {
             new Version("0.2")
     );
 
-    private static final class StringInputStream extends ByteArrayInputStream {
+    public static final class StringInputStream extends ByteArrayInputStream {
         private final String string;
 
-        private StringInputStream(String string) {
+        public StringInputStream(String string) {
             super(string.getBytes());
             this.string = string;
         }
