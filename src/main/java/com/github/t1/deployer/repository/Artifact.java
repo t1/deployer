@@ -6,6 +6,8 @@ import lombok.*;
 import java.io.*;
 import java.util.function.Supplier;
 
+import static java.nio.charset.StandardCharsets.*;
+
 @Builder
 @Getter
 @RequiredArgsConstructor
@@ -23,7 +25,7 @@ public class Artifact {
         return inputStreamSupplier.get();
     }
 
-    public Reader getReader() { return new InputStreamReader(getInputStream()); }
+    public Reader getReader() { return new InputStreamReader(getInputStream(), UTF_8); }
 
     @Override public String toString() { return groupId + ":" + artifactId + ":" + version + "=" + sha1;}
 }

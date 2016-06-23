@@ -3,6 +3,7 @@
         com.github.t1.deployer.repository.Repository.class,
         com.github.t1.deployer.model.Deployment.class,
 
+        com.github.t1.rest.fallback.ConverterTools.class,
         com.fasterxml.jackson.annotation.JsonProperty.class,
         com.fasterxml.jackson.core.JsonGenerator.class,
         com.fasterxml.jackson.core.type.TypeReference.class,

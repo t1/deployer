@@ -26,10 +26,10 @@ public class DeployerBoundary {
             return Response.status(NOT_FOUND).entity(ROOT_DEPLOYER_CONFIG + " not found").build();
 
         log.debug("load config plan from: {}", root);
-        ConfigurationPlan plan = ConfigurationPlan.load(root);
 
-        deployer.run(plan);
+        deployer.run(root);
 
+        // TODO collect and return what was changed and how long it took
         return Response.noContent().build();
     }
 }

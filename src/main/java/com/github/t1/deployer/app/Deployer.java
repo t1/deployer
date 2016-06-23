@@ -8,13 +8,19 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import java.util.List;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.regex.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.rest.fallback.ConverterTools.*;
 
 @Slf4j
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
+    private static final Pattern VAR = Pattern.compile("\\$\\{(.*)\\}");
+
     private static final GroupId LOGGERS = new GroupId("loggers");
     private static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
 
@@ -25,22 +31,41 @@ public class Deployer {
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts, loggers, and handlers (and more in the future)
 
-    private Variables variables = new Variables();
+    private Map<String, String> variables;
 
-    public void run(String plan) {
-        run(ConfigurationPlan.load(plan));
+    private Map<String, String> variables() {
+        if (variables == null)
+            //noinspection unchecked
+            variables = new HashMap<>((Map<String, String>) (Map) System.getProperties());
+        return variables;
     }
 
-    public void run(ConfigurationPlan plan) {
+    @SneakyThrows(IOException.class)
+    public void run(Path plan) { run(Files.newBufferedReader(plan)); }
+
+    public void run(String plan) { run(new StringReader(plan)); }
+
+    public void run(Reader reader) {
+        String raw = readStringFrom(reader);
+        String resolved = resolve(raw);
+        run(ConfigurationPlan.load(new StringReader(resolved)));
+    }
+
+    private String resolve(String in) {
+        Matcher matcher = VAR.matcher(in);
+        StringBuffer out = new StringBuffer();
+        while (matcher.find())
+            matcher.appendReplacement(out, variables().get(matcher.group(1)));
+        matcher.appendTail(out);
+        return out.toString();
+    }
+
+    private void run(ConfigurationPlan plan) {
         List<Deployment> other = deployments.getAllDeployments();
 
-        variables.resolve(plan);
-
-        plan.getGroupMap().entrySet().stream().forEach(groupEntry -> {
-            GroupId groupId = groupEntry.getKey();
-            groupEntry.getValue().entrySet().stream().forEach(artifactEntry -> {
-                ArtifactId artifactId = artifactEntry.getKey();
-                Item item = artifactEntry.getValue();
+        for (GroupId groupId : plan.getGroupIds()) {
+            for (ArtifactId artifactId : plan.getArtifactIds(groupId)) {
+                Item item = plan.getItem(groupId, artifactId);
 
                 if (LOGGERS.equals(groupId)) {
                     applyLogger(artifactId, item);
@@ -49,8 +74,8 @@ public class Deployer {
                 } else {
                     applyDeployment(groupId, artifactId, item, other);
                 }
-            });
-        });
+            }
+        }
 
         if (managed)
             other.forEach(deployment -> deployments.undeploy(deployment.getName()));
@@ -122,7 +147,7 @@ public class Deployer {
 
     private void deploy(List<Deployment> other, DeploymentName name, Artifact artifact) {
         if (artifact.getType() == bundle) {
-            run(ConfigurationPlan.load(artifact.getReader()));
+            run(artifact.getReader());
         } else if (other.removeIf(name::matches)) {
             if (deployments.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
                 log.info("already deployed with same checksum: {}", name);

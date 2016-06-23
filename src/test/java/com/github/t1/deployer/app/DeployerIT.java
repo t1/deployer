@@ -13,7 +13,6 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
-import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
@@ -57,7 +56,7 @@ public class DeployerIT {
     static {
         if (runningOnClient())
             try {
-                ArtifactoryMockLauncher.main("server");
+                ArtifactoryMockLauncher.main("server"); // TODO launch without console!
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -108,10 +107,10 @@ public class DeployerIT {
     @Test
     @InSequence(value = 100)
     public void shouldDeployWebArchive() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+        String plan = ""
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
-                + "    version: 1.3.2\n"));
+                + "    version: 1.3.2\n";
 
         deployer.run(plan);
 
@@ -124,10 +123,10 @@ public class DeployerIT {
     @Test
     @InSequence(value = 200)
     public void shouldUndeployWebArchive() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+        String plan = ""
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
-                + "    state: undeployed\n"));
+                + "    state: undeployed\n";
 
         deployer.run(plan);
 
@@ -139,11 +138,11 @@ public class DeployerIT {
     @Test
     @InSequence(value = 300)
     public void shouldDeployJdbcDriver() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(""
+        String plan = ""
                 + "org.postgresql:\n"
                 + "  postgresql:\n"
                 + "    type: jar\n"
-                + "    version: \"9.4.1207\"\n"));
+                + "    version: \"9.4.1207\"\n";
 
         deployer.run(plan);
 
@@ -157,7 +156,7 @@ public class DeployerIT {
     @InSequence(value = Integer.MAX_VALUE)
     public void shouldUndeployEverything() throws Exception {
         // TODO pin DEPLOYER_IT_WAR & manage configs
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader("---\n"));
+        String plan = "---\n";
 
         deployer.run(plan);
 

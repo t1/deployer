@@ -11,8 +11,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
-import java.nio.file.*;
-import java.util.Map;
+import java.util.*;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
@@ -20,7 +19,6 @@ import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.State.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
-import static java.nio.charset.StandardCharsets.*;
 import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
 
@@ -38,11 +36,6 @@ public class ConfigurationPlan {
     public static ConfigurationPlan load(String plan) { return load(new StringReader(plan)); }
 
     @SneakyThrows(IOException.class)
-    public static ConfigurationPlan load(Path path) {
-        return load(Files.newBufferedReader(path, UTF_8));
-    }
-
-    @SneakyThrows(IOException.class)
     public static ConfigurationPlan load(Reader reader) {
         Map<GroupId, Map<ArtifactId, Item>> map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
         if (map == null)
@@ -51,7 +44,13 @@ public class ConfigurationPlan {
         return new ConfigurationPlan(map);
     }
 
-    @NonNull @Getter private final Map<GroupId, Map<ArtifactId, Item>> groupMap;
+    @NonNull private final Map<GroupId, Map<ArtifactId, Item>> groupMap;
+
+    public Set<GroupId> getGroupIds() { return unmodifiableSet(groupMap.keySet()); }
+
+    public Set<ArtifactId> getArtifactIds(GroupId groupId) { return unmodifiableSet(groupMap.get(groupId).keySet()); }
+
+    public Item getItem(GroupId groupId, ArtifactId artifactId) { return groupMap.get(groupId).get(artifactId); }
 
     @Data
     public static class Item {
