@@ -56,7 +56,7 @@ public class DeployerIT {
     static {
         if (runningOnClient())
             try {
-                ArtifactoryMockLauncher.main("server"); // TODO launch without console!
+                new ArtifactoryMockLauncher().noConsole().run("server");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

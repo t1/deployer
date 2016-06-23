@@ -38,6 +38,13 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
 
     protected Server jettyServer;
 
+    private boolean console = true;
+
+    public ArtifactoryMockLauncher noConsole() {
+        console = false;
+        return this;
+    }
+
     @Override
     public void run(Configuration configuration, Environment environment) {
         SimpleServerFactory serverConfig = new SimpleServerFactory();
@@ -55,10 +62,11 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
         setLogLevel("com.github.t1.rest", DEBUG);
         setLogLevel("com.github.t1.deployer", DEBUG);
 
-        environment.lifecycle().addServerLifecycleListener(server -> {
-            jettyServer = server;
-            startConsole();
-        });
+        if (console)
+            environment.lifecycle().addServerLifecycleListener(server -> {
+                jettyServer = server;
+                startConsole();
+            });
     }
 
     private void setLogLevel(String loggerName, Level level) {
