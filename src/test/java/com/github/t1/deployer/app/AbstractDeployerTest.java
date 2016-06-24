@@ -101,8 +101,14 @@ public class AbstractDeployerTest {
 
     @RequiredArgsConstructor
     public class ArtifactFixture {
-        public final String groupId;
-        public final String artifactId;
+        private final String groupId;
+        private final String artifactId;
+        private String name;
+
+        public ArtifactFixture named(String name) {
+            this.name = name;
+            return this;
+        }
 
         public GroupId groupId() { return new GroupId(groupId); }
 
@@ -110,7 +116,7 @@ public class AbstractDeployerTest {
 
         public ContextRoot contextRoot() { return new ContextRoot(artifactId); }
 
-        public DeploymentName deploymentName() { return new DeploymentName(artifactId); }
+        public DeploymentName deploymentName() { return new DeploymentName((name == null) ? artifactId : name); }
 
         public VersionFixture version(String version) { return version(new Version(version)); }
 
@@ -127,29 +133,30 @@ public class AbstractDeployerTest {
             public VersionFixture(Version version, ArtifactType type) {
                 this.version = version;
 
-                Artifact artifact = Artifact
-                        .builder()
-                        .groupId(groupId())
-                        .artifactId(artifactId())
-                        .version(version)
-                        .type(type)
-                        .sha1(checkSum())
-                        .inputStreamSupplier(this::inputStream)
-                        .build();
-                when(repository.buildArtifact(groupId(), artifactId(), version, type)).thenReturn(artifact);
+                when(repository.buildArtifact(groupId(), artifactId(), version, type))
+                        .then(i -> Artifact
+                                .builder()
+                                .groupId(groupId())
+                                .artifactId(artifactId())
+                                .version(version)
+                                .type(type)
+                                .sha1(checksum())
+                                .inputStreamSupplier(this::inputStream)
+                                .build()
+                        );
             }
 
+            public CheckSum checksum() { return fakeChecksumFor(contextRoot(), version); }
+
+            public void containing(String contents) { this.contents = contents; }
+
             public VersionFixture deployed() {
-                Deployment deployment = new Deployment(deploymentName(), contextRoot(), checkSum(), version);
+                Deployment deployment = new Deployment(deploymentName(), contextRoot(), checksum(), version);
                 allDeployments.add(deployment);
                 when(deployments.hasDeployment(deploymentName())).thenReturn(true);
                 when(deployments.getDeployment(deploymentName())).thenReturn(deployment);
                 return this;
             }
-
-            public void containing(String contents) { this.contents = contents; }
-
-            public CheckSum checkSum() { return fakeChecksumFor(contextRoot(), version); }
 
             public InputStream inputStream() {
                 return (contents == null)

@@ -55,7 +55,7 @@ public class ConfigurationPlan {
     @Data
     public static class Item {
         // general
-        private State state = deployed;
+        @NonNull private State state = deployed;
 
         // deployment
         private Version version;
@@ -68,6 +68,19 @@ public class ConfigurationPlan {
         private String file;
         private String suffix = "";
         private String formatter;
+
+        @Override public String toString() {
+            return "«" + state
+                    + (version == null ? "" : ":" + version)
+                    + (name == null ? "" : ":" + name)
+                    + (type == war ? "" : ":" + type)
+                    + (level == null ? "" : ":" + level)
+                    + (handlerType == periodicRotatingFile ? "" : ":" + handlerType)
+                    + (file == null ? "" : ":" + file)
+                    + (suffix.isEmpty() ? "" : ":" + suffix)
+                    + (formatter == null ? "" : ":" + formatter)
+                    + "»";
+        }
     }
 
     public enum State {

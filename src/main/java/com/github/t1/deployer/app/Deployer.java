@@ -10,17 +10,13 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import java.io.*;
 import java.nio.file.*;
-import java.util.*;
-import java.util.regex.*;
+import java.util.List;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.rest.fallback.ConverterTools.*;
 
 @Slf4j
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
-    private static final Pattern VAR = Pattern.compile("\\$\\{(.*)\\}");
-
     private static final GroupId LOGGERS = new GroupId("loggers");
     private static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
 
@@ -31,14 +27,7 @@ public class Deployer {
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts, loggers, and handlers (and more in the future)
 
-    private Map<String, String> variables;
-
-    private Map<String, String> variables() {
-        if (variables == null)
-            //noinspection unchecked
-            variables = new HashMap<>((Map<String, String>) (Map) System.getProperties());
-        return variables;
-    }
+    private final Variables variables = new Variables();
 
     @SneakyThrows(IOException.class)
     public void run(Path plan) { run(Files.newBufferedReader(plan)); }
@@ -46,18 +35,7 @@ public class Deployer {
     public void run(String plan) { run(new StringReader(plan)); }
 
     public void run(Reader reader) {
-        String raw = readStringFrom(reader);
-        String resolved = resolve(raw);
-        run(ConfigurationPlan.load(new StringReader(resolved)));
-    }
-
-    private String resolve(String in) {
-        Matcher matcher = VAR.matcher(in);
-        StringBuffer out = new StringBuffer();
-        while (matcher.find())
-            matcher.appendReplacement(out, variables().get(matcher.group(1)));
-        matcher.appendTail(out);
-        return out.toString();
+        run(ConfigurationPlan.load(variables.resolve(reader)));
     }
 
     private void run(ConfigurationPlan plan) {
@@ -125,8 +103,7 @@ public class Deployer {
                    .add();
     }
 
-    private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item,
-            List<Deployment> other) {
+    private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item, List<Deployment> other) {
         DeploymentName name = toDeploymentName(item, artifactId);
         log.debug("check '{}' -> {}", name, item.getState());
         switch (item.getState()) {
@@ -145,7 +122,7 @@ public class Deployer {
         return new DeploymentName((item.getName() == null) ? artifactId.toString() : item.getName());
     }
 
-    private void deploy(List<Deployment> other, DeploymentName name, Artifact artifact) {
+    private void deploy(@NonNull List<Deployment> other, @NonNull DeploymentName name, @NonNull Artifact artifact) {
         if (artifact.getType() == bundle) {
             run(artifact.getReader());
         } else if (other.removeIf(name::matches)) {
