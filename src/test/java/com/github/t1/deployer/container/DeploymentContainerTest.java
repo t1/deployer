@@ -25,18 +25,15 @@ import static org.mockito.Mockito.*;
 public class DeploymentContainerTest {
     private static final Version NO_VERSION = null;
 
-    @InjectMocks
-    DeploymentContainer container;
-    @Mock
-    ModelControllerClient client;
-    @Mock
-    Repository repository;
+    @InjectMocks DeploymentContainer container;
+    @Mock ModelControllerClient client;
+    @Mock Repository repository;
 
     @SneakyThrows(IOException.class)
     private void givenDeployments(ContextRoot... contextRoots) {
         TestData.givenDeployments(repository, contextRoots);
 
-        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString(successCli(readDeploymentsCliResult(contextRoots))));
     }
 
@@ -54,11 +51,14 @@ public class DeploymentContainerTest {
         for (ContextRoot contextRoot : contextRoots) {
             if (out.length() > 1)
                 out.append(",");
-            out.append("{\n" //
-                    + "\"address\" => [(\"deployment\" => \"" + nameFor(contextRoot) + "\")],\n" //
-                    + "\"outcome\" => \"success\",\n" //
-                    + "\"result\" => " + deploymentCli(contextRoot) + "\n" //
-                    + "}\n");
+            out.append("{\n" + "\"address\" => [(\"deployment\" => \"")
+               .append(nameFor(contextRoot))
+               .append("\")],\n")
+               .append("\"outcome\" => \"success\",\n")
+               .append("\"result\" => ")
+               .append(deploymentCli(contextRoot))
+               .append("\n")
+               .append("}\n");
         }
         out.append("]");
         return out.toString();
@@ -73,29 +73,29 @@ public class DeploymentContainerTest {
     }
 
     public static String deploymentCli(ContextRoot contextRoot) {
-        return "{\n" //
-                + "\"content\" => [{\"hash\" => bytes {\n" //
-                + fakeChecksumFor(contextRoot).hexByteArray() //
-                + "}}],\n" //
-                + "\"enabled\" => true,\n" //
-                + ("\"name\" => \"" + nameFor(contextRoot) + "\",\n") //
-                + "\"persistent\" => true,\n" //
-                + ("\"runtime-name\" => \"" + nameFor(contextRoot) + "\",\n") //
-                + "\"subdeployment\" => undefined,\n" //
-                + "\"subsystem\" => {\"web\" => {\n" //
-                + ("\"context-root\" => \"/" + contextRoot + "\",\n") //
-                + "\"virtual-host\" => \"default-host\",\n" //
-                + "\"servlet\" => {\"javax.ws.rs.core.Application\" => {\n" //
-                + "\"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n" //
-                + "\"servlet-name\" => \"javax.ws.rs.core.Application\"\n" //
-                + "}}\n" //
-                + "}}\n" //
+        return "{\n"
+                + "\"content\" => [{\"hash\" => bytes {\n"
+                + fakeChecksumFor(contextRoot).hexByteArray()
+                + "}}],\n"
+                + "\"enabled\" => true,\n"
+                + ("\"name\" => \"" + nameFor(contextRoot) + "\",\n")
+                + "\"persistent\" => true,\n"
+                + ("\"runtime-name\" => \"" + nameFor(contextRoot) + "\",\n")
+                + "\"subdeployment\" => undefined,\n"
+                + "\"subsystem\" => {\"web\" => {\n"
+                + ("\"context-root\" => \"/" + contextRoot + "\",\n")
+                + "\"virtual-host\" => \"default-host\",\n"
+                + "\"servlet\" => {\"javax.ws.rs.core.Application\" => {\n"
+                + "\"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n"
+                + "\"servlet-name\" => \"javax.ws.rs.core.Application\"\n"
+                + "}}\n"
+                + "}}\n"
                 + "}";
     }
 
     @Test
     public void shouldFailToGetDeploymentByUnknownContextRoot() throws IOException {
-        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString(successCli("[]")));
 
         Throwable thrown = catchThrowable(() -> container.getDeployment(new ContextRoot("unknown")));
@@ -105,11 +105,11 @@ public class DeploymentContainerTest {
 
     @Test
     public void shouldFailToGetDeploymentFromFailingContainer() throws IOException {
-        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class)))
                 .thenThrow(new IOException("dummy"));
 
-        assertThatThrownBy(() -> container.getAllDeployments()) //
-                .isInstanceOf(IOException.class) //
+        assertThatThrownBy(() -> container.getAllDeployments())
+                .isInstanceOf(IOException.class)
                 .hasMessage("dummy");
     }
 
