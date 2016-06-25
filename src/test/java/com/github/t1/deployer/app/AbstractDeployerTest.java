@@ -140,13 +140,13 @@ public class AbstractDeployerTest {
                                 .artifactId(artifactId())
                                 .version(version)
                                 .type(type)
-                                .sha1(checksum())
+                                .checksum(checksum())
                                 .inputStreamSupplier(this::inputStream)
                                 .build()
                         );
             }
 
-            public CheckSum checksum() { return fakeChecksumFor(contextRoot(), version); }
+            public Checksum checksum() { return fakeChecksumFor(contextRoot(), version); }
 
             public void containing(String contents) { this.contents = contents; }
 

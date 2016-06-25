@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixture.VersionFixture;
-import com.github.t1.deployer.model.DeploymentName;
+import com.github.t1.deployer.container.DeploymentName;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -256,7 +256,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployBundle() {
-        VersionFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        givenArtifact("jolokia").version("1.3.2").deployed();
         VersionFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4");
         givenArtifact("artifact-deployer-test", "should-deploy-bundle").version("1", bundle).containing(""
                 + "org.jolokia:\n"

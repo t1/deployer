@@ -1,5 +1,6 @@
-package com.github.t1.deployer.model;
+package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.*;
 import lombok.*;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public class Deployment implements Comparable<Deployment> {
 
     ContextRoot contextRoot;
 
-    CheckSum checkSum;
+    Checksum checksum;
 
     Version version;
 
@@ -37,8 +38,8 @@ public class Deployment implements Comparable<Deployment> {
         this(null, contextRoot, null, null, null);
     }
 
-    public Deployment(DeploymentName name, ContextRoot contextRoot, CheckSum checkSum, Version version) {
-        this(name, contextRoot, checkSum, version, null);
+    public Deployment(DeploymentName name, ContextRoot contextRoot, Checksum checksum, Version version) {
+        this(name, contextRoot, checksum, version, null);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.github.t1.deployer.repository;
+package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.*;

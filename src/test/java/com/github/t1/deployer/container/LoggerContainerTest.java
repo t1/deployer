@@ -17,8 +17,6 @@ import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)

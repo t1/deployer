@@ -7,6 +7,7 @@ import com.github.t1.deployer.repository.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ejb.Singleton;
 import javax.inject.Inject;
 import java.io.*;
 import java.nio.file.*;
@@ -15,6 +16,7 @@ import java.util.List;
 import static com.github.t1.deployer.model.ArtifactType.*;
 
 @Slf4j
+@Singleton
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
     private static final GroupId LOGGERS = new GroupId("loggers");
@@ -25,121 +27,123 @@ public class Deployer {
     @Inject Repository repository;
 
     @Getter @Setter
-    private boolean managed; // TODO make configurable for artifacts, loggers, and handlers (and more in the future)
-
-    private final Variables variables = new Variables();
+    private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
 
     @SneakyThrows(IOException.class)
     public void run(Path plan) { run(Files.newBufferedReader(plan)); }
 
     public void run(String plan) { run(new StringReader(plan)); }
 
-    public void run(Reader reader) {
-        run(ConfigurationPlan.load(variables.resolve(reader)));
-    }
+    public synchronized void run(Reader reader) { new Run(deployments.getAllDeployments()).run(reader); }
 
-    private void run(ConfigurationPlan plan) {
-        List<Deployment> other = deployments.getAllDeployments();
+    @RequiredArgsConstructor
+    private class Run {
+        private final Variables variables = new Variables();
+        private final List<Deployment> other;
 
-        for (GroupId groupId : plan.getGroupIds()) {
-            for (ArtifactId artifactId : plan.getArtifactIds(groupId)) {
-                Item item = plan.getItem(groupId, artifactId);
+        private void run(Reader reader) { this.run(ConfigurationPlan.load(variables.resolve(reader))); }
 
-                if (LOGGERS.equals(groupId)) {
-                    applyLogger(artifactId, item);
-                } else if (LOG_HANDLERS.equals(groupId)) {
-                    applyLogHandler(artifactId, item);
-                } else {
-                    applyDeployment(groupId, artifactId, item, other);
+        private void run(ConfigurationPlan plan) {
+            for (GroupId groupId : plan.getGroupIds()) {
+                for (ArtifactId artifactId : plan.getArtifactIds(groupId)) {
+                    Item item = plan.getItem(groupId, artifactId);
+
+                    if (LOGGERS.equals(groupId)) {
+                        applyLogger(artifactId, item);
+                    } else if (LOG_HANDLERS.equals(groupId)) {
+                        applyLogHandler(artifactId, item);
+                    } else {
+                        applyDeployment(groupId, artifactId, item);
+                    }
                 }
+            }
+
+            if (managed)
+                other.forEach(deployment -> deployments.undeploy(deployment.getName()));
+        }
+
+        private void applyLogger(ArtifactId artifactId, Item item) {
+            String category = artifactId.toString();
+            LoggerResource logger = loggers.logger(category);
+            log.debug("check '{}' -> {}", category, item.getState());
+            switch (item.getState()) {
+            case deployed:
+                if (logger.isDeployed()) {
+                    if (logger.level().equals(item.getLevel())) {
+                        log.info("logger already configured: {}: {}", category, item.getLevel());
+                    } else {
+                        logger.correctLevel(item.getLevel());
+                    }
+                } else {
+                    logger.add();
+                }
+                break;
+            case undeployed:
+                if (logger.isDeployed())
+                    logger.remove();
+                else
+                    log.info("logger already removed: {}", category);
+                break;
             }
         }
 
-        if (managed)
-            other.forEach(deployment -> deployments.undeploy(deployment.getName()));
-    }
-
-    private void applyLogger(ArtifactId artifactId, Item item) {
-        String category = artifactId.toString();
-        LoggerResource logger = loggers.logger(category);
-        log.debug("check '{}' -> {}", category, item.getState());
-        switch (item.getState()) {
-        case deployed:
-            if (logger.isDeployed()) {
-                if (logger.level().equals(item.getLevel())) {
-                    log.info("logger already configured: {}: {}", category, item.getLevel());
-                } else {
-                    logger.correctLevel(item.getLevel());
-                }
-            } else {
-                logger.add();
-            }
-            break;
-        case undeployed:
-            if (logger.isDeployed())
-                logger.remove();
+        private void applyLogHandler(ArtifactId artifactId, Item item) {
+            String name = artifactId.toString();
+            LoggingHandlerType type = item.getHandlerType();
+            LogHandler handler = loggers.handler(type, name);
+            if (handler.isDeployed())
+                handler.correctLevel(item.getLevel())
+                       .correctFile(item.getFile())
+                       .correctSuffix(item.getSuffix())
+                       .correctFormatter(item.getFormatter());
             else
-                log.info("logger already removed: {}", category);
-            break;
+                handler.toBuilder()
+                       .file(item.getFile())
+                       .level(item.getLevel())
+                       .suffix(item.getSuffix())
+                       .formatter(item.getFormatter())
+                       .build()
+                       .add();
         }
-    }
 
-    private void applyLogHandler(ArtifactId artifactId, Item item) {
-        String name = artifactId.toString();
-        LoggingHandlerType type = item.getHandlerType();
-        LogHandler handler = loggers.handler(type, name);
-        if (handler.isDeployed())
-            handler.correctLevel(item.getLevel())
-                   .correctFile(item.getFile())
-                   .correctSuffix(item.getSuffix())
-                   .correctFormatter(item.getFormatter());
-        else
-            handler.toBuilder()
-                   .file(item.getFile())
-                   .level(item.getLevel())
-                   .suffix(item.getSuffix())
-                   .formatter(item.getFormatter())
-                   .build()
-                   .add();
-    }
-
-    private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item, List<Deployment> other) {
-        DeploymentName name = toDeploymentName(item, artifactId);
-        log.debug("check '{}' -> {}", name, item.getState());
-        switch (item.getState()) {
-        case deployed:
-            Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion(),
-                    item.getType());
-            log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
-            deploy(other, name, artifact);
-            break;
-        case undeployed:
-            undeploy(other, name);
-        }
-    }
-
-    private DeploymentName toDeploymentName(Item item, ArtifactId artifactId) {
-        return new DeploymentName((item.getName() == null) ? artifactId.toString() : item.getName());
-    }
-
-    private void deploy(@NonNull List<Deployment> other, @NonNull DeploymentName name, @NonNull Artifact artifact) {
-        if (artifact.getType() == bundle) {
-            run(artifact.getReader());
-        } else if (other.removeIf(name::matches)) {
-            if (deployments.getDeployment(name).getCheckSum().equals(artifact.getSha1())) {
-                log.info("already deployed with same checksum: {}", name);
-            } else {
-                deployments.redeploy(name, artifact.getInputStream());
+        private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item) {
+            DeploymentName name = toDeploymentName(item, artifactId);
+            log.debug("check '{}' -> {}", name, item.getState());
+            switch (item.getState()) {
+            case deployed:
+                Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion(),
+                        item.getType());
+                log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
+                deploy(name, artifact);
+                break;
+            case undeployed:
+                undeploy(name);
             }
-        } else {
-            deployments.deploy(name, artifact.getInputStream());
         }
-    }
 
-    private void undeploy(List<Deployment> other, DeploymentName name) {
-        if (other.removeIf(name::matches))
-            deployments.undeploy(name);
-        else
-            log.info("already undeployed: {}", name);
+        private DeploymentName toDeploymentName(Item item, ArtifactId artifactId) {
+            return new DeploymentName((item.getName() == null) ? artifactId.toString() : item.getName());
+        }
+
+        private void deploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
+            if (artifact.getType() == bundle) {
+                this.run(artifact.getReader());
+            } else if (other.removeIf(name::matches)) {
+                if (deployments.getDeployment(name).getChecksum().equals(artifact.getChecksum())) {
+                    log.info("already deployed with same checksum: {}", name);
+                } else {
+                    deployments.redeploy(name, artifact.getInputStream());
+                }
+            } else {
+                deployments.deploy(name, artifact.getInputStream());
+            }
+        }
+
+        private void undeploy(DeploymentName name) {
+            if (other.removeIf(name::matches))
+                deployments.undeploy(name);
+            else
+                log.info("already undeployed: {}", name);
+        }
     }
 }

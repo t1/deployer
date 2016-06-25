@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +15,8 @@ import java.util.*;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
-import static com.github.t1.deployer.app.ConfigurationPlan.State.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
@@ -33,8 +32,6 @@ public class ConfigurationPlan {
     public static final TypeReference<Map<GroupId, Map<ArtifactId, Item>>>
             ARTIFACT_MAP_TYPE = new TypeReference<Map<GroupId, Map<ArtifactId, Item>>>() {};
 
-    public static ConfigurationPlan load(String plan) { return load(new StringReader(plan)); }
-
     @SneakyThrows(IOException.class)
     public static ConfigurationPlan load(Reader reader) {
         Map<GroupId, Map<ArtifactId, Item>> map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
@@ -44,7 +41,8 @@ public class ConfigurationPlan {
         return new ConfigurationPlan(map);
     }
 
-    @NonNull private final Map<GroupId, Map<ArtifactId, Item>> groupMap;
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") @NonNull
+    private final Map<GroupId, Map<ArtifactId, Item>> groupMap;
 
     public Set<GroupId> getGroupIds() { return unmodifiableSet(groupMap.keySet()); }
 
@@ -55,7 +53,7 @@ public class ConfigurationPlan {
     @Data
     public static class Item {
         // general
-        @NonNull private State state = deployed;
+        @NonNull private DeploymentState state = deployed;
 
         // deployment
         private Version version;
@@ -81,9 +79,5 @@ public class ConfigurationPlan {
                     + (formatter == null ? "" : ":" + formatter)
                     + "»";
         }
-    }
-
-    public enum State {
-        deployed, undeployed
     }
 }

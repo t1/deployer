@@ -1,6 +1,6 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.log.Logged;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +8,7 @@ import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
 import javax.ejb.Stateless;
+import javax.inject.Inject;
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -24,6 +25,8 @@ public class DeploymentContainer extends CLI {
     private static final int TIMEOUT = 30;
 
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
+
+    @Inject AuditLog auditLog;
 
     private abstract class AbstractPlan {
         public void execute() {
@@ -128,7 +131,9 @@ public class DeploymentContainer extends CLI {
 
     public boolean hasDeployment(DeploymentName deploymentName) { return all().anyMatch(deploymentName::matches); }
 
-    public boolean hasDeployment(CheckSum checkSum) { return all().anyMatch(checkSum::matches); }
+    public boolean hasDeployment(Checksum checksum) {
+        return all().anyMatch(deployment -> deployment.getChecksum().equals(checksum));
+    }
 
     public Deployment getDeployment(ContextRoot contextRoot) {
         return all().filter(contextRoot::matches).findAny()
@@ -140,9 +145,9 @@ public class DeploymentContainer extends CLI {
                     .orElseThrow(() -> new RuntimeException("no deployment with name [" + name + "]"));
     }
 
-    public Deployment getDeployment(CheckSum checkSum) {
-        return all().filter(checkSum::matches).findAny()
-                    .orElseThrow(() -> new RuntimeException("no deployment with checksum [" + checkSum + "]"));
+    public Deployment getDeployment(Checksum checksum) {
+        return all().filter(deployment -> deployment.getChecksum().equals(checksum)).findAny()
+                    .orElseThrow(() -> new RuntimeException("no deployment with checksum [" + checksum + "]"));
     }
 
     private Stream<Deployment> all() { return getAllDeployments().stream(); }
@@ -163,7 +168,7 @@ public class DeploymentContainer extends CLI {
     private Deployment toDeployment(ModelNode cliDeployment) {
         DeploymentName name = new DeploymentName(cliDeployment.get("name").asString());
         ContextRoot contextRoot = getContextRoot(cliDeployment);
-        CheckSum hash = CheckSum.of(hash(cliDeployment));
+        Checksum hash = Checksum.of(hash(cliDeployment));
         log.debug("{} -> {} -> {}", name, contextRoot, hash);
         return new Deployment(name, contextRoot, hash, null);
     }
@@ -191,15 +196,24 @@ public class DeploymentContainer extends CLI {
         return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
     }
 
+    public Checksum checksum(DeploymentName name) {
+        return null;
+    }
+
     public void deploy(DeploymentName deploymentName, InputStream inputStream) {
         new DeployPlan(deploymentName, inputStream).execute();
+        // auditLog.deployed(checksum(deploymentName));
     }
 
     public void redeploy(DeploymentName deploymentName, InputStream inputStream) {
+        // Checksum oldChecksum = checksum(deploymentName);
         new ReplacePlan(deploymentName, inputStream).execute();
+        // auditLog.undeployed(oldChecksum);
+        // auditLog.deployed(checksum(deploymentName));
     }
 
     public void undeploy(DeploymentName deploymentName) {
         new UndeployPlan(deploymentName).execute();
+        // auditLog.undeployed(checksum(deploymentName));
     }
 }

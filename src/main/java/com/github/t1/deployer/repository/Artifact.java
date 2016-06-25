@@ -17,7 +17,7 @@ public class Artifact {
     @NonNull private final Version version;
     @NonNull private final ArtifactType type;
 
-    @NonNull private final CheckSum sha1;
+    @NonNull private final Checksum checksum;
 
     @NonNull private final Supplier<InputStream> inputStreamSupplier;
 
@@ -27,5 +27,5 @@ public class Artifact {
 
     public Reader getReader() { return new InputStreamReader(getInputStream(), UTF_8); }
 
-    @Override public String toString() { return groupId + ":" + artifactId + ":" + version + "=" + sha1;}
+    @Override public String toString() { return groupId + ":" + artifactId + ":" + version + "=" + checksum;}
 }

@@ -1,24 +1,19 @@
 package com.github.t1.deployer.repository;
 
-import ch.qos.logback.classic.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
+import com.github.t1.testtools.LoggerMemento;
 import io.dropwizard.testing.junit.DropwizardClientRule;
-import lombok.SneakyThrows;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
-import org.slf4j.LoggerFactory;
 
-import java.io.*;
 import java.net.URI;
-import java.util.List;
 
-import static ch.qos.logback.classic.Level.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class RepositoryIT {
     private static ArtifactoryMock ARTIFACTORY_MOCK = new ArtifactoryMock();
@@ -32,16 +27,11 @@ public class RepositoryIT {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Before
-    public void init() {
-        setLogLevel("org.apache.http.wire", DEBUG);
-        // setLogLevel("com.github.t1.rest", DEBUG);
-        setLogLevel("com.github.t1.deployer", DEBUG);
-    }
-
-    private void setLogLevel(String loggerName, Level level) {
-        ((Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
-    }
+    @Rule
+    public LoggerMemento loggerMemento = new LoggerMemento()
+            .with("org.apache.http.wire", DEBUG)
+            // .with("com.github.t1.rest", DEBUG)
+            .with("com.github.t1.deployer", DEBUG);
 
     @Before
     public void before() {
@@ -53,68 +43,37 @@ public class RepositoryIT {
         ArtifactoryMock.FAKES = false;
     }
 
-    @Test
-    public void shouldGetReleases() {
-        List<Release> releases = repository.releasesFor(fakeChecksumFor(FOO));
-
-        assertEquals(FOO_VERSIONS.size(), releases.size());
-        for (Release entry : releases)
-            assertEquals(fakeChecksumFor(FOO, entry.getVersion()), entry.getCheckSum());
-        assertThat(releases).extracting(r -> r.getVersion().toString()) //
-                .containsOnly( //
-                        "1.3.12", //
-                        "1.3.10", //
-                        "1.3.2", //
-                        "1.3.1", //
-                        "1.3.0", //
-                        "1.2.1.1", //
-                        "1.2.1", //
-                        "1.2.1-SNAPSHOT", //
-                        "1.2.0" //
-        );
-    }
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        Deployment deployment = repository.getByChecksum(FAILING_CHECKSUM);
+        Throwable throwable = catchThrowable(() -> repository.getByChecksum(FAILING_CHECKSUM));
 
-        assertEquals("error", deployment.getVersion().toString());
-        assertEquals(FAILING_CHECKSUM, deployment.getCheckSum());
-        assertNull(deployment.getContextRoot());
-        assertNull(deployment.getName());
-        assertNull(deployment.getReleases());
+        assertThat(throwable).hasMessageContaining("error while searching for checksum: '" + FAILING_CHECKSUM + "'");
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
-        Deployment deployment = repository.getByChecksum(AMBIGUOUS_CHECKSUM);
+        Throwable throwable = catchThrowable(() -> repository.getByChecksum(AMBIGUOUS_CHECKSUM));
 
-        assertEquals("error", deployment.getVersion().toString());
-        assertEquals(AMBIGUOUS_CHECKSUM, deployment.getCheckSum());
-        assertNull(deployment.getContextRoot());
-        assertNull(deployment.getName());
-        assertNull(deployment.getReleases());
+        assertThat(throwable).hasMessageContaining("error while searching for checksum: '" + AMBIGUOUS_CHECKSUM + "'");
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnknown() {
-        Deployment deployment = repository.getByChecksum(UNKNOWN_CHECKSUM);
+        Throwable throwable = catchThrowable(() -> repository.getByChecksum(UNKNOWN_CHECKSUM));
 
-        assertEquals("unknown", deployment.getVersion().toString());
-        assertEquals(UNKNOWN_CHECKSUM, deployment.getCheckSum());
-        assertNull(deployment.getContextRoot());
-        assertNull(deployment.getName());
-        assertNull(deployment.getReleases());
+        assertThat(throwable).hasMessageContaining("unknown checksum: '" + UNKNOWN_CHECKSUM + "'");
     }
 
     @Test
     public void shouldSearchByChecksum() {
-        Deployment deployment = repository.getByChecksum(fakeChecksumFor(FOO));
+        Artifact artifact = repository.getByChecksum(fakeChecksumFor(FOO));
 
-        assertEquals(FOO, deployment.getContextRoot());
-        assertEquals(FOO_WAR, deployment.getName());
-        assertEquals(fakeChecksumFor(FOO, CURRENT_FOO_VERSION), deployment.getCheckSum());
-        assertEquals(CURRENT_FOO_VERSION, deployment.getVersion());
+        assertThat(artifact.getGroupId().getValue()).isEqualTo("org.foo");
+        assertThat(artifact.getArtifactId().getValue()).isEqualTo("foo-war");
+        assertThat(artifact.getVersion()).isEqualTo(CURRENT_FOO_VERSION);
+        assertThat(artifact.getChecksum()).isEqualTo(fakeChecksumFor(FOO));
+        assertThat(artifact.getType()).isEqualTo(war);
     }
 
     @Test
@@ -123,36 +82,16 @@ public class RepositoryIT {
             config = config.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
-            Deployment deployment = new ArtifactoryRepository(config).getByChecksum(fakeChecksumFor(FOO));
+            Artifact artifact = new ArtifactoryRepository(config).getByChecksum(fakeChecksumFor(FOO));
 
-            assertEquals(FOO, deployment.getContextRoot());
-            assertEquals(FOO_WAR, deployment.getName());
-            assertEquals(fakeChecksumFor(FOO, CURRENT_FOO_VERSION), deployment.getCheckSum());
-            assertEquals(CURRENT_FOO_VERSION, deployment.getVersion());
+            assertThat(artifact.getGroupId().getValue()).isEqualTo("org.foo");
+            assertThat(artifact.getArtifactId().getValue()).isEqualTo("foo-war");
+            assertThat(artifact.getVersion()).isEqualTo(CURRENT_FOO_VERSION);
+            assertThat(artifact.getChecksum()).isEqualTo(fakeChecksumFor(FOO));
+            assertThat(artifact.getType()).isEqualTo(war);
         } finally {
             ARTIFACTORY_MOCK.setRequireAuthorization(false);
         }
-    }
-
-    @Test
-    public void shouldGetArtifact() {
-        @SuppressWarnings("resource")
-        InputStream inputStream = repository.getArtifactInputStream(fakeChecksumFor(FOO));
-
-        assertEquals("foo-1.3.1.war@1.3.1", read(inputStream));
-    }
-
-    @SneakyThrows(IOException.class)
-    private String read(InputStream inputStream) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder out = new StringBuilder();
-        while (true) {
-            String line = reader.readLine();
-            if (line == null)
-                break;
-            out.append(line).append('\n');
-        }
-        return out.toString().trim();
     }
 
     @Test
@@ -166,6 +105,6 @@ public class RepositoryIT {
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
         assertThat(artifact.getVersion()).isEqualTo(version);
-        assertThat(artifact.getSha1()).isEqualTo(CheckSum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259"));
+        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259"));
     }
 }

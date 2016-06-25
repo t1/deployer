@@ -1,4 +1,4 @@
-package com.github.t1.deployer.model;
+package com.github.t1.deployer.container;
 
 import lombok.*;
 
@@ -9,7 +9,7 @@ import static lombok.AccessLevel.*;
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
 @RequiredArgsConstructor
-public class ContextRoot {
+public class DeploymentName {
     @NonNull
     @XmlValue
     String value;
@@ -19,5 +19,5 @@ public class ContextRoot {
         return value;
     }
 
-    public boolean matches(@NonNull Deployment deployment) { return this.equals(deployment.getContextRoot()); }
+    public boolean matches(@NonNull Deployment deployment) { return this.equals(deployment.getName()); }
 }

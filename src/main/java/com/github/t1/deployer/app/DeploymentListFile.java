@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.container.DeploymentContainer;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -114,7 +114,7 @@ public class DeploymentListFile {
             ContextRoot contextRoot = actual.getContextRoot();
             Version expectedVersion = expected.get(contextRoot);
             if (expectedVersion == null) {
-                if (false) {
+                if (contextRoot.getValue().isEmpty()) {
                     log.info("expected version of {} is null -> undeploy", contextRoot);
                     container.undeploy(actual.getName());
                 } else {
@@ -126,8 +126,8 @@ public class DeploymentListFile {
             else {
                 log.info("version of {} changed from {} to {} -> redeploy", //
                         contextRoot, actual.getVersion(), expectedVersion);
-                CheckSum checksum = repository.getChecksumForVersion(actual, expectedVersion);
-                redeploy(repository.getByChecksum(checksum));
+                // TODO Checksum checksum = repository.getChecksumForVersion(actual, expectedVersion);
+                // TODO redeploy(repository.getByChecksum(checksum));
             }
         }
         log.info("deployment list file update done");
@@ -147,11 +147,11 @@ public class DeploymentListFile {
     }
 
     private void redeploy(Deployment newDeployment) {
-        try (InputStream inputStream = repository.getArtifactInputStream(newDeployment.getCheckSum())) {
-            container.redeploy(newDeployment.getName(), inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        // try (InputStream inputStream = repository.getArtifactInputStream(newDeployment.getChecksum())) {
+        //     container.redeploy(newDeployment.getName(), inputStream);
+        // } catch (IOException e) {
+        //     throw new RuntimeException(e);
+        // }
     }
 
     public void writeDeploymentsList() {
@@ -172,10 +172,10 @@ public class DeploymentListFile {
             ContextRoot contextRoot = deployment.getContextRoot();
             if (UNDEFINED_CONTEXT_ROOT.equals(contextRoot))
                 continue;
-            Deployment versioned = repository.getByChecksum(deployment.getCheckSum());
-            if (versioned == null)
-                continue;
-            out.add(deployment.withVersion(versioned.getVersion()));
+            // TODO Deployment versioned = repository.getByChecksum(deployment.getChecksum());
+            // if (versioned == null)
+            //     continue;
+            // out.add(deployment.withVersion(versioned.getVersion()));
         }
         return out;
     }

@@ -22,7 +22,7 @@ public class Release implements Comparable<Release> {
 
     @NonNull
     @XmlAttribute
-    CheckSum checkSum;
+    Checksum checksum;
 
     @Override
     public int compareTo(@NotNull Release that) { return BY_VERSION.compare(this, that); }

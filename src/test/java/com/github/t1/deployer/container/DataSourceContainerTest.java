@@ -1,16 +1,8 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.deployer.TestData.*;
-import static java.util.Collections.*;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
-
-import java.io.IOException;
-import java.util.List;
-
+import com.github.t1.deployer.model.DataSourceConfig;
+import com.github.t1.deployer.repository.Repository;
 import lombok.SneakyThrows;
-
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
@@ -19,8 +11,14 @@ import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.t1.deployer.model.DataSourceConfig;
-import com.github.t1.deployer.repository.Repository;
+import java.io.IOException;
+import java.util.List;
+
+import static com.github.t1.deployer.TestData.*;
+import static java.util.Collections.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataSourceContainerTest {
@@ -47,7 +45,7 @@ public class DataSourceContainerTest {
     // },
     // "DefaultDS" => {
     // "allow-multiple-users" => false,
-    // "connection-url" => "jdbc:postgresql://localhost:5432/rdohna",
+    // "connection-url" => "jdbc:postgresql://localhost:5432/xxx",
     // "driver-name" => "postgresql-9.3-1101.jdbc41.jar",
     // "enabled" => true,
     // "jndi-name" => "java:jboss/datasources/DefaultDS",
@@ -109,7 +107,7 @@ public class DataSourceContainerTest {
     // "outcome" => "success",
     // "result" => {
     // "allow-multiple-users" => false,
-    // "connection-url" => "jdbc:postgresql://localhost:5432/rdohna",
+    // "connection-url" => "jdbc:postgresql://localhost:5432/xxx",
     // "driver-name" => "postgresql-9.3-1101.jdbc41.jar",
     // "enabled" => true,
     // "jndi-name" => "java:jboss/datasources/DefaultDS",
@@ -139,12 +137,12 @@ public class DataSourceContainerTest {
 
     @SneakyThrows(IOException.class)
     private void givenDataSources(String... dataSources) {
-        // when(client.execute(any(ModelNode.class), any(OperationMessageHandler.class))) //
+        // when(client.execute(any(ModelNode.class), any(OperationMessageHandler.class)))
         // .thenReturn(new ModelNode()); // fallback
-        when(client.execute(eq(readDataSourceCli("*")), any(OperationMessageHandler.class))) //
+        when(client.execute(eq(readDataSourceCli("*")), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString(successCli(readDataSourcesCliResult(dataSources))));
         for (String dataSource : dataSources) {
-            when(client.execute(eq(readDataSourceCli(dataSource)), any(OperationMessageHandler.class))) //
+            when(client.execute(eq(readDataSourceCli(dataSource)), any(OperationMessageHandler.class)))
                     .thenReturn(ModelNode.fromString("{" + dataSourceCliResult(dataSource) + "}"));
         }
     }
@@ -163,30 +161,28 @@ public class DataSourceContainerTest {
         for (String dataSource : dataSources) {
             if (out.length() > 1)
                 out.append(", ");
-            out.append("{") //
-                    .append("\"address\" => [") //
-                    .append("(\"subsystem\" => \"datasources\"),") //
-                    .append("(\"data-source\" => \"").append(dataSource).append("\")") //
-                    .append("],") //
-                    .append(dataSourceCliResult(dataSource)) //
-                    .append("}");
+            out.append("{")
+               .append("\"address\" => [")
+               .append("(\"subsystem\" => \"datasources\"),")
+               .append("(\"data-source\" => \"").append(dataSource).append("\")")
+               .append("],")
+               .append(dataSourceCliResult(dataSource))
+               .append("}");
         }
         out.append("]");
         return out.toString();
     }
 
     private String dataSourceCliResult(String dataSource) {
-        StringBuilder out = new StringBuilder();
-        // successCli(
-        out.append("")
-                .append("\"outcome\" => \"success\",")
-                .append("\"result\" => {")
-                .append("\"allow-multiple-users\" => false,")
-                .append("\"connection-url\" => \"jdbc:h2:mem:" + dataSource
-                        + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE\",") //
+        return "" +
+                "\"outcome\" => \"success\"," +
+                "\"result\" => {" +
+                "\"allow-multiple-users\" => false," +
+                "\"connection-url\" => \"jdbc:h2:mem:" + dataSource
+                + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE\"," +
                 // "driver-name" => "h2",
                 // "enabled" => true,
-                .append("\"jndi-name\" => \"java:jboss/datasources/" + dataSource + "\"") //
+                "\"jndi-name\" => \"java:jboss/datasources/" + dataSource + "\"" +
                 // "jta" => true,
                 // "user-name" => "sa",
                 // "password" => "sa",
@@ -198,8 +194,7 @@ public class DataSourceContainerTest {
                 // "use-fast-fail" => false,
                 // "use-java-context" => true,
                 // "validate-on-match" => false
-                .append("}");
-        return out.toString();
+                "}";
     }
 
     @Test
@@ -219,7 +214,8 @@ public class DataSourceContainerTest {
 
         assertEquals(1, dataSources.size());
         assertEquals("foo", dataSources.get(0).getName());
-        assertEquals("jdbc:h2:mem:foo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", dataSources.get(0).getUri().toString());
+        assertEquals("jdbc:h2:mem:foo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                dataSources.get(0).getUri().toString());
     }
 
     @Test
@@ -230,9 +226,11 @@ public class DataSourceContainerTest {
 
         assertEquals(2, dataSources.size());
         assertEquals("foo", dataSources.get(0).getName());
-        assertEquals("jdbc:h2:mem:foo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", dataSources.get(0).getUri().toString());
+        assertEquals("jdbc:h2:mem:foo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                dataSources.get(0).getUri().toString());
         assertEquals("bar", dataSources.get(1).getName());
-        assertEquals("jdbc:h2:mem:bar;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", dataSources.get(1).getUri().toString());
+        assertEquals("jdbc:h2:mem:bar;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                dataSources.get(1).getUri().toString());
     }
 
     @Test
