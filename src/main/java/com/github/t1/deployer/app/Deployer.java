@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.app.Audit.ArtifactAudit;
 import com.github.t1.deployer.app.ConfigurationPlan.Item;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
@@ -9,11 +10,17 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.Singleton;
 import javax.inject.Inject;
+import javax.validation.*;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import java.io.*;
 import java.nio.file.*;
-import java.util.List;
+import java.nio.file.Path;
+import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 @Slf4j
 @Singleton
@@ -25,23 +32,30 @@ public class Deployer {
     @Inject DeploymentContainer deployments;
     @Inject LoggerContainer loggers;
     @Inject Repository repository;
+    @Inject Validator validator;
 
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
 
     @SneakyThrows(IOException.class)
-    public void run(Path plan) { run(Files.newBufferedReader(plan)); }
+    public List<Audit> run(Path plan) {
+        return run(Files.newBufferedReader(plan));
+    }
 
-    public void run(String plan) { run(new StringReader(plan)); }
+    public List<Audit> run(String plan) { return run(new StringReader(plan)); }
 
-    public synchronized void run(Reader reader) { new Run(deployments.getAllDeployments()).run(reader); }
+    public synchronized List<Audit> run(Reader reader) { return new Run(deployments.getAllDeployments()).run(reader); }
 
     @RequiredArgsConstructor
     private class Run {
         private final Variables variables = new Variables();
         private final List<Deployment> other;
+        private final List<Audit> audits = new ArrayList<>();
 
-        private void run(Reader reader) { this.run(ConfigurationPlan.load(variables.resolve(reader))); }
+        private List<Audit> run(Reader reader) {
+            this.run(ConfigurationPlan.load(variables.resolve(reader)));
+            return audits;
+        }
 
         private void run(ConfigurationPlan plan) {
             for (GroupId groupId : plan.getGroupIds()) {
@@ -107,18 +121,38 @@ public class Deployer {
         }
 
         private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item) {
+            validate(item, deployment.class);
             DeploymentName name = toDeploymentName(item, artifactId);
             log.debug("check '{}' -> {}", name, item.getState());
+            Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion(), item.getType());
             switch (item.getState()) {
             case deployed:
-                Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion(),
-                        item.getType());
                 log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
                 deploy(name, artifact);
                 break;
             case undeployed:
-                undeploy(name);
+                undeploy(name, artifact);
             }
+        }
+
+        public <T> void validate(T object, Class<?>... validationGroups) {
+            Set<ConstraintViolation<T>> violations = (object == null)
+                    ? failValidationNotNull()
+                    : validator.validate(object, validationGroups);
+            if (violations.isEmpty())
+                return;
+            log.info("violations found: {}", violations);
+            throw new WebApplicationException(Response.status(BAD_REQUEST).entity(violations).build());
+        }
+
+        public <T> Set<ConstraintViolation<T>> failValidationNotNull() {
+            @Value
+            class NotNullContainer {
+                @NotNull Object value;
+            }
+            NotNullContainer notNullContainer = new NotNullContainer(null);
+            //noinspection unchecked
+            return (Set) validator.validate(notNullContainer);
         }
 
         private DeploymentName toDeploymentName(Item item, ArtifactId artifactId) {
@@ -133,17 +167,29 @@ public class Deployer {
                     log.info("already deployed with same checksum: {}", name);
                 } else {
                     deployments.redeploy(name, artifact.getInputStream());
+                    audits.add(audit(artifact).deployed());
                 }
             } else {
                 deployments.deploy(name, artifact.getInputStream());
+                audits.add(audit(artifact).name(name).deployed());
             }
         }
 
-        private void undeploy(DeploymentName name) {
-            if (other.removeIf(name::matches))
+        private ArtifactAudit.ArtifactAuditBuilder audit(@NonNull Artifact artifact) {
+            return ArtifactAudit
+                    .builder()
+                    .groupId(artifact.getGroupId())
+                    .artifactId(artifact.getArtifactId())
+                    .version(artifact.getVersion());
+        }
+
+        private void undeploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
+            if (other.removeIf(name::matches)) {
                 deployments.undeploy(name);
-            else
+                audits.add(audit(artifact).name(name).undeployed());
+            } else {
                 log.info("already undeployed: {}", name);
+            }
         }
     }
 }

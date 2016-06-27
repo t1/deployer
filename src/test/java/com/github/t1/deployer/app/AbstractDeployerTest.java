@@ -10,11 +10,15 @@ import lombok.*;
 import org.junit.*;
 import org.mockito.*;
 
+import javax.validation.*;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class AbstractDeployerTest {
@@ -22,13 +26,13 @@ public class AbstractDeployerTest {
 
     @InjectMocks Deployer deployer;
 
+    @Spy Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
     @Mock Repository repository;
 
     @Mock DeploymentContainer deployments;
     @Mock LoggerContainer loggers;
-
     @Mock LoggerResource loggerMock;
-
     @Mock LogHandler logHandlerMock;
     @Mock LogHandlerBuilder logHandlerBuilderMock;
 
@@ -128,25 +132,29 @@ public class AbstractDeployerTest {
 
         public class VersionFixture {
             private final Version version;
+            private final ArtifactType type;
+            private Checksum checksum;
             private String contents;
 
             public VersionFixture(Version version, ArtifactType type) {
                 this.version = version;
+                this.type = type;
 
-                when(repository.buildArtifact(groupId(), artifactId(), version, type))
-                        .then(i -> Artifact
-                                .builder()
-                                .groupId(groupId())
-                                .artifactId(artifactId())
-                                .version(version)
-                                .type(type)
-                                .checksum(checksum())
-                                .inputStreamSupplier(this::inputStream)
-                                .build()
-                        );
+                when(repository.buildArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
+                when(repository.buildArtifact(groupId(), artifactId(), Version.ANY, type))
+                        .then(i -> artifact(Version.ANY));
             }
 
-            public Checksum checksum() { return fakeChecksumFor(contextRoot(), version); }
+            public VersionFixture checksum(Checksum checksum) {
+                this.checksum = checksum;
+                return this;
+            }
+
+            public Checksum checksum() {
+                return (checksum == null)
+                        ? fakeChecksumFor(contextRoot(), version)
+                        : checksum;
+            }
 
             public void containing(String contents) { this.contents = contents; }
 
@@ -162,6 +170,22 @@ public class AbstractDeployerTest {
                 return (contents == null)
                         ? inputStreamFor(contextRoot(), version)
                         : new StringInputStream(contents);
+            }
+
+            public Artifact artifact() {
+                return artifact(this.version);
+            }
+
+            private Artifact artifact(Version version) {
+                return Artifact
+                        .builder()
+                        .groupId(groupId())
+                        .artifactId(artifactId())
+                        .version(version)
+                        .type(type)
+                        .checksum(checksum())
+                        .inputStreamSupplier(this::inputStream)
+                        .build();
             }
 
             public ArtifactFixture and() { return ArtifactFixture.this; }
@@ -269,4 +293,15 @@ public class AbstractDeployerTest {
             verify(logHandlerMock).add();
         }
     }
+
+
+    public static Set<ConstraintViolation<?>> unpackViolations(Throwable thrown) {
+        assertThat(thrown).isInstanceOf(WebApplicationException.class)
+                          .hasMessage("HTTP 400 Bad Request");
+        Response response = ((WebApplicationException) thrown).getResponse();
+        //noinspection unchecked
+        return (Set<ConstraintViolation<?>>) response.getEntity();
+    }
+
+    public static String pathString(ConstraintViolation<?> v) {return v.getPropertyPath().toString();}
 }

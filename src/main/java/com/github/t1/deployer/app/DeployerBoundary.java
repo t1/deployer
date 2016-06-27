@@ -1,7 +1,5 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.container.AuditLog;
-import com.github.t1.deployer.container.AuditLog.Watcher;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -9,7 +7,10 @@ import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import java.nio.file.*;
+import java.util.List;
 
+import static java.lang.String.*;
+import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Path("/api")
@@ -22,7 +23,6 @@ public class DeployerBoundary {
     }
 
     @Inject Deployer deployer;
-    @Inject AuditLog auditLog;
 
     @POST
     public Response post() {
@@ -33,10 +33,11 @@ public class DeployerBoundary {
 
         log.debug("load config plan from: {}", root);
 
-        try (Watcher audits = auditLog.watching()) {
-            deployer.run(root);
+        List<Audit> audits = deployer.run(root);
 
-            return Response.ok(audits.getAudits()).build();
-        }
+        if (log.isDebugEnabled())
+            log.debug("deployed:\n- {}", join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
+
+        return Response.ok(audits).build();
     }
 }

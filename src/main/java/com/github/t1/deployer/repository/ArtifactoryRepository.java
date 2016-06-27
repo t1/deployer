@@ -4,6 +4,9 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.*;
@@ -12,6 +15,7 @@ import java.util.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
 import static com.github.t1.rest.RestContext.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 @Slf4j
 public class ArtifactoryRepository extends Repository {
@@ -214,17 +218,28 @@ public class ArtifactoryRepository extends Repository {
                 // customTokenName<customTokenRegex>
                 ;
         log.debug("fetch artifact info from {}", uri);
-        FileInfo fileInfo = rest().createResource(uri).GET(FileInfo.class);
-        log.debug("found artifact info: {}", fileInfo);
-        return Artifact
-                .builder()
-                .groupId(groupId)
-                .artifactId(artifactId)
-                .type(type)
-                .version(version)
-                .checksum(fileInfo.getChecksum())
-                .inputStreamSupplier(() -> download(fileInfo))
-                .build();
+        EntityResponse<FileInfo> response = rest().createResource(uri).GET_Response(FileInfo.class);
+        switch ((Status) response.status()) {
+        case OK:
+            FileInfo fileInfo = response.getBody();
+            log.debug("found artifact info: {}", fileInfo);
+            return Artifact
+                    .builder()
+                    .groupId(groupId)
+                    .artifactId(artifactId)
+                    .type(type)
+                    .version(version)
+                    .checksum(fileInfo.getChecksum())
+                    .inputStreamSupplier(() -> download(fileInfo))
+                    .build();
+        case NOT_FOUND:
+            throw new WebApplicationException(Response
+                    .status(NOT_FOUND)
+                    .entity("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type)
+                    .build());
+        default:
+            throw new UnexpectedStatusException(response.status(), response.headers(), OK);
+        }
     }
 
     private InputStream download(FileInfo fileInfo) {

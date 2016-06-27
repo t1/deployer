@@ -5,7 +5,7 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
 import com.github.t1.log.LogLevel;
-import com.github.t1.rest.UriTemplate;
+import com.github.t1.rest.*;
 import com.github.t1.testtools.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -26,6 +27,7 @@ import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
 import static java.util.concurrent.TimeUnit.*;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
@@ -108,15 +110,20 @@ public class DeployerIT {
         }
     }
 
-    @SneakyThrows(IOException.class)
     public List<Audit> run(String plan) {
+        return run(plan, OK).getBody();
+    }
+
+    @SneakyThrows(IOException.class)
+    public EntityResponse<List<Audit>> run(String plan, Status status) {
         try (FileMemento memento = new FileMemento(DeployerBoundary.getConfigPath()).setup()) {
             memento.write(plan);
 
             return REST
                     .createResource(UriTemplate.fromString(baseUri + "api"))
                     .accept(new GenericType<List<Audit>>() {})
-                    .POST();
+                    .POST_Response()
+                    .expecting(status);
         }
     }
 
@@ -127,6 +134,23 @@ public class DeployerIT {
 
     @Test
     @InSequence(value = 100)
+    public void shouldFailToDeployWebArchiveWithUnknownVersion() throws Exception {
+        String plan = ""
+                + "org.jolokia:\n"
+                + "  jolokia-war:\n"
+                + "    version: 9999\n";
+
+        EntityResponse<List<Audit>> response = run(plan, NOT_FOUND);
+
+        assertThat(container.getAllDeployments())
+                .hasSize(1)
+                .haveExactly(1, deployment(DEPLOYER_IT_WAR));
+        assertThat(response.getBody(String.class))
+                .contains("artifact not in repository: org.jolokia:jolokia-war:9999:war");
+    }
+
+    @Test
+    @InSequence(value = 150)
     public void shouldDeployWebArchive() throws Exception {
         String plan = ""
                 + "org.jolokia:\n"
@@ -148,6 +172,7 @@ public class DeployerIT {
         String plan = ""
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
+                + "    version: 1.3.2\n"
                 + "    state: undeployed\n";
 
         List<Audit> audit = run(plan);

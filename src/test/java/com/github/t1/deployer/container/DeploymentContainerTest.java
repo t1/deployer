@@ -5,7 +5,7 @@ import com.github.t1.deployer.repository.Repository;
 import lombok.SneakyThrows;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
-import org.junit.*;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -25,7 +25,6 @@ public class DeploymentContainerTest {
     @InjectMocks DeploymentContainer container;
     @Mock ModelControllerClient client;
     @Mock Repository repository;
-    @Mock AuditLog auditLog;
 
     @SneakyThrows(IOException.class)
     private void givenDeployments(ContextRoot... contextRoots) {
@@ -89,11 +88,6 @@ public class DeploymentContainerTest {
                 + "}}\n"
                 + "}}\n"
                 + "}";
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        verifyNoMoreInteractions(auditLog);
     }
 
     @Test
@@ -161,13 +155,5 @@ public class DeploymentContainerTest {
         assertThat(deployments.size()).isEqualTo(2);
         assertDeployment(FOO, NO_VERSION, deployments.get(0));
         assertDeployment(BAR, NO_VERSION, deployments.get(1));
-    }
-
-    @Test
-    @Ignore // TODO
-    public void shouldDeploy() throws Exception {
-        container.deploy(nameFor(FOO), inputStreamFor(FOO, fakeVersionFor(FOO)));
-
-        verify(auditLog).deployed(fakeChecksumFor(FOO));
     }
 }

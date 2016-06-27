@@ -8,7 +8,6 @@ import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
 import javax.ejb.Stateless;
-import javax.inject.Inject;
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -25,8 +24,6 @@ public class DeploymentContainer extends CLI {
     private static final int TIMEOUT = 30;
 
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
-
-    @Inject AuditLog auditLog;
 
     private abstract class AbstractPlan {
         public void execute() {
@@ -196,24 +193,15 @@ public class DeploymentContainer extends CLI {
         return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
     }
 
-    public Checksum checksum(DeploymentName name) {
-        return null;
-    }
-
     public void deploy(DeploymentName deploymentName, InputStream inputStream) {
         new DeployPlan(deploymentName, inputStream).execute();
-        // auditLog.deployed(checksum(deploymentName));
     }
 
     public void redeploy(DeploymentName deploymentName, InputStream inputStream) {
-        // Checksum oldChecksum = checksum(deploymentName);
         new ReplacePlan(deploymentName, inputStream).execute();
-        // auditLog.undeployed(oldChecksum);
-        // auditLog.deployed(checksum(deploymentName));
     }
 
     public void undeploy(DeploymentName deploymentName) {
         new UndeployPlan(deploymentName).execute();
-        // auditLog.undeployed(checksum(deploymentName));
     }
 }

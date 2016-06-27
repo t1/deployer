@@ -9,6 +9,7 @@ import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.validation.constraints.NotNull;
 import java.io.*;
 import java.util.*;
 
@@ -56,9 +57,14 @@ public class ConfigurationPlan {
         @NonNull private DeploymentState state = deployed;
 
         // deployment
+        @NotNull(groups = deployment.class)
         private Version version;
+
         private String name;
+
+        @NotNull(groups = deployment.class)
         private ArtifactType type = war;
+
 
         // logger/handler
         private LogLevel level;

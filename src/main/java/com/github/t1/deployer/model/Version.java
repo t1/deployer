@@ -13,6 +13,8 @@ import static lombok.AccessLevel.*;
 @NoArgsConstructor(access = PRIVATE, force = true)
 @XmlAccessorType(XmlAccessType.NONE)
 public class Version implements Comparable<Version> {
+    public static final Version ANY = new Version("*");
+
     @NonNull
     @XmlValue
     private final String value;
