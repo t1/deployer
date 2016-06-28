@@ -4,27 +4,30 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import javax.validation.ConstraintViolation;
+
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
+import static org.assertj.core.api.Assertions.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddLogger() {
-        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app");
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
 
-        fixture.verifyLogger().add();
+        fixture.verifyAdded();
     }
 
 
     @Test
     public void shouldNotAddExistingLogger() {
-        givenLogger("com.github.t1.deployer.app").level(DEBUG).exists();
+        givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
         deployer.run(""
                 + "loggers:\n"
@@ -37,7 +40,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldUpdateLogLevel() {
-        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).exists();
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
         deployer.run(""
                 + "loggers:\n"
@@ -45,6 +48,35 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: INFO\n");
 
         fixture.verifyLogger().correctLevel(INFO);
+    }
+
+
+    @Test
+    public void shouldAddLoggerWithExplicitState() {
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
+
+        deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    state: deployed\n");
+
+        fixture.verifyAdded();
+    }
+
+
+    @Test
+    public void shouldFailToAddLoggerWithoutLevel() {
+        givenLogger("com.github.t1.deployer.app");
+
+        Throwable thrown = catchThrowable(() -> deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    state: deployed\n"));
+
+        assertThat(unpackViolations(thrown))
+                .extracting(ConstraintViolation::getMessage, ArtifactDeployerTest::pathString)
+                .containsExactly(tuple("may not be null", "level"));
     }
 
 
@@ -56,7 +88,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldRemoveExistingLoggerWhenStateIsUndeployed() {
-        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).exists();
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
         deployer.run(""
                 + "loggers:\n"

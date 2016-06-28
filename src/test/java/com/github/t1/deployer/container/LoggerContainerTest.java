@@ -237,7 +237,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL);
         givenNoLogger("bar");
 
-        container.buildLogger().category("bar").level(INFO).build().add();
+        container.logger("bar").toBuilder().level(INFO).build().add();
 
         verifyExecute(addLogger("logger", "bar", INFO));
     }
@@ -247,7 +247,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL);
         givenNoLogger("bar");
 
-        assertThatThrownBy(() -> container.buildLogger().category("").build().add())
+        assertThatThrownBy(() -> container.logger("").add())
                 .hasMessage("can't add root logger");
 
         verify(client, never()).execute(eq(addLogger("root-logger", "ROOT", ERROR)),

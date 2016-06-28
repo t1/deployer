@@ -26,33 +26,31 @@ import static javax.ws.rs.core.Response.Status.*;
 @Singleton
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
-    private static final GroupId LOGGERS = new GroupId("loggers");
-    private static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
+    public static final GroupId LOGGERS = new GroupId("loggers");
+    public static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
 
     @Inject DeploymentContainer deployments;
     @Inject LoggerContainer loggers;
     @Inject Repository repository;
     @Inject Validator validator;
+    @Inject Audits audits;
 
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
 
     @SneakyThrows(IOException.class)
-    public List<Audit> run(Path plan) {
-        return run(Files.newBufferedReader(plan));
-    }
+    public Audits run(Path plan) { return run(Files.newBufferedReader(plan)); }
 
-    public List<Audit> run(String plan) { return run(new StringReader(plan)); }
+    public Audits run(String plan) { return run(new StringReader(plan)); }
 
-    public synchronized List<Audit> run(Reader reader) { return new Run(deployments.getAllDeployments()).run(reader); }
+    public synchronized Audits run(Reader reader) { return new Run(deployments.getAllDeployments()).run(reader); }
 
     @RequiredArgsConstructor
     private class Run {
         private final Variables variables = new Variables();
         private final List<Deployment> other;
-        private final List<Audit> audits = new ArrayList<>();
 
-        private List<Audit> run(Reader reader) {
+        private Audits run(Reader reader) {
             this.run(ConfigurationPlan.load(variables.resolve(reader)));
             return audits;
         }
@@ -61,6 +59,8 @@ public class Deployer {
             for (GroupId groupId : plan.getGroupIds()) {
                 for (ArtifactId artifactId : plan.getArtifactIds(groupId)) {
                     Item item = plan.getItem(groupId, artifactId);
+
+                    log.debug("configure item: {}:{}:{}", groupId, artifactId, item);
 
                     if (LOGGERS.equals(groupId)) {
                         applyLogger(artifactId, item);
@@ -77,6 +77,7 @@ public class Deployer {
         }
 
         private void applyLogger(ArtifactId artifactId, Item item) {
+            validate(item, logger.class);
             String category = artifactId.toString();
             LoggerResource logger = loggers.logger(category);
             log.debug("check '{}' -> {}", category, item.getState());
@@ -89,7 +90,10 @@ public class Deployer {
                         logger.correctLevel(item.getLevel());
                     }
                 } else {
-                    logger.add();
+                    logger.toBuilder()
+                          .level(item.getLevel())
+                          .build()
+                          .add();
                 }
                 break;
             case undeployed:
@@ -102,6 +106,7 @@ public class Deployer {
         }
 
         private void applyLogHandler(ArtifactId artifactId, Item item) {
+            validate(item, loghandler.class);
             String name = artifactId.toString();
             LoggingHandlerType type = item.getHandlerType();
             LogHandler handler = loggers.handler(type, name);

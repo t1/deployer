@@ -13,7 +13,7 @@ import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
-@Builder
+@Builder(toBuilder = true)
 @RequiredArgsConstructor
 @AllArgsConstructor(access = PRIVATE)
 @Accessors(fluent = true, chain = true)
@@ -100,6 +100,8 @@ public class LoggerResource {
     public void add() {
         if (isRoot())
             throw new RuntimeException("can't add root logger");
+        if (level == null)
+            throw new RuntimeException("can't add logger '" + category + "' without level");
 
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("add");

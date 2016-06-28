@@ -2,6 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
+import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
@@ -18,6 +19,7 @@ import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -27,12 +29,14 @@ public class AbstractDeployerTest {
     @InjectMocks Deployer deployer;
 
     @Spy Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+    @Spy Audits audits;
 
     @Mock Repository repository;
 
     @Mock DeploymentContainer deployments;
     @Mock LoggerContainer loggers;
     @Mock LoggerResource loggerMock;
+    @Mock LoggerResourceBuilder loggerBuilderMock;
     @Mock LogHandler logHandlerMock;
     @Mock LogHandlerBuilder logHandlerBuilderMock;
 
@@ -41,6 +45,13 @@ public class AbstractDeployerTest {
     @Before
     public void before() {
         when(deployments.getAllDeployments()).then(invocation -> allDeployments);
+
+
+        when(loggerMock.toBuilder()).thenReturn(loggerBuilderMock);
+        when(loggerBuilderMock.level(any(LogLevel.class))).thenReturn(loggerBuilderMock);
+        when(loggerBuilderMock.level(any(LogLevel.class))).thenReturn(loggerBuilderMock);
+        when(loggerBuilderMock.build()).thenReturn(loggerMock);
+
 
         when(logHandlerMock.toBuilder()).thenReturn(logHandlerBuilderMock);
 
@@ -220,13 +231,20 @@ public class AbstractDeployerTest {
             return this;
         }
 
-        public LoggerFixture exists() {
+        public LoggerFixture deployed() {
             when(loggers.logger(category)).thenReturn(loggerMock);
             when(loggerMock.isDeployed()).thenReturn(true);
             return this;
         }
 
         public LoggerResource verifyLogger() { return verify(loggerMock); }
+
+        public void verifyAdded() {
+            verify(loggerMock).toBuilder();
+            verify(loggerBuilderMock).level(level);
+            verify(loggerBuilderMock).build();
+            verify(loggerMock).add();
+        }
     }
 
 
@@ -290,15 +308,16 @@ public class AbstractDeployerTest {
             verify(logHandlerBuilderMock).file(file);
             verify(logHandlerBuilderMock).suffix(suffix);
             verify(logHandlerBuilderMock).formatter(formatter);
+            verify(logHandlerBuilderMock).build();
             verify(logHandlerMock).add();
         }
     }
 
 
     public static Set<ConstraintViolation<?>> unpackViolations(Throwable thrown) {
-        assertThat(thrown).isInstanceOf(WebApplicationException.class)
-                          .hasMessage("HTTP 400 Bad Request");
+        assertThat(thrown).isInstanceOf(WebApplicationException.class);
         Response response = ((WebApplicationException) thrown).getResponse();
+        assertThat(response.getStatusInfo()).isEqualTo(BAD_REQUEST);
         //noinspection unchecked
         return (Set<ConstraintViolation<?>>) response.getEntity();
     }

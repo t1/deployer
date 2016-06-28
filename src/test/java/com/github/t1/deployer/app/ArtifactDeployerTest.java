@@ -25,7 +25,8 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
         List<Audit> audits = deployer.run(""
                 + "org.foo:\n"
                 + "  foo-war:\n"
-                + "    version: 1.3.2\n");
+                + "    version: 1.3.2\n"
+        ).asList();
 
         foo.verifyDeployed();
         assertThat(audits).containsExactly(
@@ -66,7 +67,8 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "org.foo:\n"
                 + "  foo-war:\n"
                 + "    version: 1.3.2\n"
-                + "    name: bar");
+                + "    name: bar"
+        ).asList();
 
         verify(deployments).deploy(new DeploymentName("bar"), foo.inputStream());
         assertThat(audits).containsExactly(ArtifactAudit.of(foo.artifact()).name("bar").deployed());
@@ -237,7 +239,8 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "org.mock-server:\n"
                 + "  mockserver-war:\n"
                 + "    name: mockserver\n"
-                + "    version: 3.10.4\n");
+                + "    version: 3.10.4\n"
+        ).asList();
 
         // #after(): jolokia not undeployed
         mockserver.verifyDeployed();
@@ -253,7 +256,8 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "org.foo:\n"
                 + "  foo-war:\n"
                 + "    version: 1.3.2\n"
-                + "    state: undeployed\n");
+                + "    state: undeployed\n"
+        ).asList();
 
         foo.verifyUndeployed();
         assertThat(audits).containsExactly(ArtifactAudit.of(foo.artifact()).name("foo-war").undeployed());
@@ -281,7 +285,8 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "org.foo:\n"
                 + "  foo-war:\n"
                 + "    version: '*'\n"
-                + "    state: undeployed\n");
+                + "    state: undeployed\n"
+        ).asList();
 
         foo.verifyUndeployed();
         Artifact artifact = foo.artifact();

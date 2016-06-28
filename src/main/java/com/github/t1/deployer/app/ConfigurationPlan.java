@@ -22,8 +22,8 @@ import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
 
-@AllArgsConstructor(access = PRIVATE)
 @Slf4j
+@AllArgsConstructor(access = PRIVATE)
 public class ConfigurationPlan {
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory()
             .enable(MINIMIZE_QUOTES).disable(WRITE_DOC_START_MARKER))
@@ -38,8 +38,9 @@ public class ConfigurationPlan {
         Map<GroupId, Map<ArtifactId, Item>> map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
         if (map == null)
             map = emptyMap();
-        log.debug("config plan loaded:\n{}", map);
-        return new ConfigurationPlan(map);
+        ConfigurationPlan plan = new ConfigurationPlan(map);
+        log.debug("config plan loaded:\n{}", plan);
+        return plan;
     }
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") @NonNull
@@ -67,10 +68,15 @@ public class ConfigurationPlan {
 
 
         // logger/handler
+        @NotNull(groups = { logger.class, loghandler.class })
         private LogLevel level;
+        @NotNull(groups = { loghandler.class })
         @JsonProperty("handler-type") private LoggingHandlerType handlerType = periodicRotatingFile;
+        @NotNull(groups = { loghandler.class })
         private String file;
+        @NotNull(groups = { loghandler.class })
         private String suffix = "";
+        @NotNull(groups = { loghandler.class })
         private String formatter;
 
         @Override public String toString() {
@@ -85,5 +91,16 @@ public class ConfigurationPlan {
                     + (formatter == null ? "" : ":" + formatter)
                     + "»";
         }
+    }
+
+    @Override public String toString() {
+        StringBuilder out = new StringBuilder();
+        for (GroupId groupId : getGroupIds()) {
+            out.append(groupId).append(":\n");
+            for (ArtifactId artifactId : getArtifactIds(groupId)) {
+                out.append("  ").append(artifactId).append(": ").append(getItem(groupId, artifactId)).append("\n");
+            }
+        }
+        return out.toString();
     }
 }

@@ -1,6 +1,5 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.LoggingHandlerType;
 import com.github.t1.log.Logged;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +16,6 @@ public class LoggerContainer extends CLI {
     public List<LoggerResource> allLoggers() { return LoggerResource.all(this); }
 
     public LoggerResource logger(String category) { return new LoggerResource(category, this); }
-
-    public LoggerResourceBuilder buildLogger() { return LoggerResource.builder().cli(this); }
 
     public LogHandler handler(LoggingHandlerType type, String name) { return new LogHandler(name, type, this); }
 }

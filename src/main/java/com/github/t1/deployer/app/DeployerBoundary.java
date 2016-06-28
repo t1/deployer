@@ -33,7 +33,7 @@ public class DeployerBoundary {
 
         log.debug("load config plan from: {}", root);
 
-        List<Audit> audits = deployer.run(root);
+        List<Audit> audits = deployer.run(root).asList();
 
         if (log.isDebugEnabled())
             log.debug("deployed:\n- {}", join("\n- ", audits.stream().map(Audit::toString).collect(toList())));

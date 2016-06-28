@@ -4,7 +4,6 @@ import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
-import com.github.t1.log.LogLevel;
 import com.github.t1.rest.*;
 import com.github.t1.testtools.*;
 import lombok.SneakyThrows;
@@ -103,7 +102,7 @@ public class DeployerIT {
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
             loggers.handler(console, "CONSOLE").correctLevel(ALL);
-            loggers.buildLogger().category("com.github.t1.deployer").level(LogLevel.DEBUG).build().add();
+            loggers.logger("com.github.t1.deployer").toBuilder().level(DEBUG).build().add();
 
             log.info("deployments: {}", container.getAllDeployments());
             assertNoOtherDeployments();
