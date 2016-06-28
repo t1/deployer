@@ -18,6 +18,10 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtifactDeployerTest extends AbstractDeployerTest {
+    private static final DeploymentName FOO_WAR = new DeploymentName("foo-war");
+    private static final DeploymentName BAR = new DeploymentName("bar");
+    private static final DeploymentName MOCKSERVER = new DeploymentName("mockserver");
+
     @Test
     public void shouldDeployWebArchive() {
         VersionFixture foo = givenArtifact("foo").version("1.3.2");
@@ -30,7 +34,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         foo.verifyDeployed();
         assertThat(audits).containsExactly(
-                ArtifactAudit.of(foo.artifact()).name("foo-war").deployed());
+                ArtifactAudit.of(foo.artifact()).name(FOO_WAR).deployed());
     }
 
     @Test
@@ -70,15 +74,15 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    name: bar"
         ).asList();
 
-        verify(deployments).deploy(new DeploymentName("bar"), foo.inputStream());
-        assertThat(audits).containsExactly(ArtifactAudit.of(foo.artifact()).name("bar").deployed());
+        verify(deployments).deploy(BAR, foo.inputStream());
+        assertThat(audits).containsExactly(ArtifactAudit.of(foo.artifact()).name(BAR).deployed());
     }
 
 
     @Test
     public void shouldDeployWebArchiveWithVariables() {
         systemProperties.given("fooGroupId", "org.foo");
-        systemProperties.given("fooArtifactId", "foo-war");
+        systemProperties.given("fooArtifactId", FOO_WAR);
         systemProperties.given("fooVersion", "1.3.2");
         VersionFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -209,7 +213,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldDeployWebArchiveWithSameChecksumButDifferentName() {
         VersionFixture foo = givenArtifact("foo").version("1").deployed();
-        VersionFixture bar = givenArtifact("foo").named("bar").version("1").checksum(foo.checksum());
+        VersionFixture bar = givenArtifact("foo").named(BAR.getValue()).version("1").checksum(foo.checksum());
 
         deployer.run(""
                 + "org.foo:\n"
@@ -244,7 +248,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         // #after(): jolokia not undeployed
         mockserver.verifyDeployed();
-        assertThat(audits).containsExactly(ArtifactAudit.of(mockserver.artifact()).name("mockserver").deployed());
+        assertThat(audits).containsExactly(ArtifactAudit.of(mockserver.artifact()).name(MOCKSERVER).deployed());
     }
 
 
@@ -260,7 +264,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
         ).asList();
 
         foo.verifyUndeployed();
-        assertThat(audits).containsExactly(ArtifactAudit.of(foo.artifact()).name("foo-war").undeployed());
+        assertThat(audits).containsExactly(ArtifactAudit.of(foo.artifact()).name(FOO_WAR).undeployed());
     }
 
 
@@ -295,7 +299,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 .groupId(artifact.getGroupId())
                 .artifactId(artifact.getArtifactId())
                 .version(Version.ANY)
-                .name("foo-war")
+                .name(FOO_WAR)
                 .undeployed());
     }
 
@@ -303,7 +307,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldUndeployManagedWebArchiveWithSameChecksumButDifferentName() {
         VersionFixture foo = givenArtifact("foo").version("1").deployed();
-        VersionFixture bar = givenArtifact("foo").named("bar").version("1");
+        VersionFixture bar = givenArtifact("foo").named(BAR.getValue()).version("1");
         deployer.setManaged(true);
 
         deployer.run(""

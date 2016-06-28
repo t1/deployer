@@ -1,10 +1,12 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.app.Audit.LoggerAudit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.validation.ConstraintViolation;
+import java.util.List;
 
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
@@ -16,12 +18,14 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldAddLogger() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
-        deployer.run(""
+        List<Audit> audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
-                + "    level: DEBUG\n");
+                + "    level: DEBUG\n"
+        ).asList();
 
         fixture.verifyAdded();
+        assertThat(audits).containsExactly(LoggerAudit.of(fixture.getCategory()).level(DEBUG).deployed());
     }
 
 

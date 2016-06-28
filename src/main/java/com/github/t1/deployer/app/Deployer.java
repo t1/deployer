@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Audit.ArtifactAudit;
+import com.github.t1.deployer.app.Audit.*;
+import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.Item;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
@@ -90,10 +91,9 @@ public class Deployer {
                         logger.correctLevel(item.getLevel());
                     }
                 } else {
-                    logger.toBuilder()
-                          .level(item.getLevel())
-                          .build()
-                          .add();
+                    logger = logger.toBuilder().level(item.getLevel()).build();
+                    logger.add();
+                    audits.add(audit(logger).deployed());
                 }
                 break;
             case undeployed:
@@ -103,6 +103,10 @@ public class Deployer {
                     log.info("logger already removed: {}", category);
                 break;
             }
+        }
+
+        private LoggerAuditBuilder audit(LoggerResource logger) {
+            return LoggerAudit.builder().category(logger.category()).level(logger.level());
         }
 
         private void applyLogHandler(ArtifactId artifactId, Item item) {
@@ -180,14 +184,6 @@ public class Deployer {
             }
         }
 
-        private ArtifactAudit.ArtifactAuditBuilder audit(@NonNull Artifact artifact) {
-            return ArtifactAudit
-                    .builder()
-                    .groupId(artifact.getGroupId())
-                    .artifactId(artifact.getArtifactId())
-                    .version(artifact.getVersion());
-        }
-
         private void undeploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
             if (other.removeIf(name::matches)) {
                 deployments.undeploy(name);
@@ -195,6 +191,14 @@ public class Deployer {
             } else {
                 log.info("already undeployed: {}", name);
             }
+        }
+
+        private ArtifactAudit.ArtifactAuditBuilder audit(@NonNull Artifact artifact) {
+            return ArtifactAudit
+                    .builder()
+                    .groupId(artifact.getGroupId())
+                    .artifactId(artifact.getArtifactId())
+                    .version(artifact.getVersion());
         }
     }
 }

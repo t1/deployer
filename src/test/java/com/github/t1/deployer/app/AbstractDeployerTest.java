@@ -82,6 +82,7 @@ public class AbstractDeployerTest {
         verify(loggers, atLeast(0)).logger(anyString());
 
         verify(loggerMock, atLeast(0)).isDeployed();
+        verify(loggerMock, atLeast(0)).category();
         verify(loggerMock, atLeast(0)).level();
 
         verifyNoMoreInteractions(loggerMock);
@@ -220,6 +221,8 @@ public class AbstractDeployerTest {
 
         public LoggerFixture(String category) {
             this.category = category;
+
+            when(loggerMock.category()).thenReturn(category);
 
             when(loggers.logger(category)).thenReturn(loggerMock);
             when(loggerMock.isDeployed()).thenReturn(false);

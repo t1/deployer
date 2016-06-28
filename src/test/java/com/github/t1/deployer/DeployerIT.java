@@ -1,6 +1,7 @@
 package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.*;
+import com.github.t1.deployer.app.Audit.ArtifactAudit;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
@@ -109,9 +110,7 @@ public class DeployerIT {
         }
     }
 
-    public List<Audit> run(String plan) {
-        return run(plan, OK).getBody();
-    }
+    public List<Audit> run(String plan) { return run(plan, OK).getBody(); }
 
     @SneakyThrows(IOException.class)
     public EntityResponse<List<Audit>> run(String plan, Status status) {
@@ -139,7 +138,7 @@ public class DeployerIT {
                 + "  jolokia-war:\n"
                 + "    version: 9999\n";
 
-        EntityResponse<List<Audit>> response = run(plan, NOT_FOUND);
+        EntityResponse<?> response = run(plan, NOT_FOUND);
 
         assertThat(container.getAllDeployments())
                 .hasSize(1)
@@ -156,13 +155,13 @@ public class DeployerIT {
                 + "  jolokia-war:\n"
                 + "    version: 1.3.2\n";
 
-        List<Audit> audit = run(plan);
+        List<Audit> audits = run(plan);
 
         assertThat(container.getAllDeployments())
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("jolokia-war"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        // assertThat(audit).containsExactly(ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").deployed());
+        // assertThat(audits).containsExactly(ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").deployed());
     }
 
     @Test
@@ -174,12 +173,12 @@ public class DeployerIT {
                 + "    version: 1.3.2\n"
                 + "    state: undeployed\n";
 
-        List<Audit> audit = run(plan);
+        List<Audit> audits = run(plan);
 
         assertThat(container.getAllDeployments())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        // assertThat(audit).containsExactly(ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").undeployed());
+        // assertThat(audits).containsExactly(ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").undeployed());
     }
 
     @Test
@@ -191,13 +190,13 @@ public class DeployerIT {
                 + "    type: jar\n"
                 + "    version: \"9.4.1207\"\n";
 
-        List<Audit> audit = run(plan);
+        List<Audit> audits = run(plan);
 
         assertThat(container.getAllDeployments())
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("postgresql"), checksum(POSTGRESQL_9_4_1207_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        // assertThat(audit).containsExactly(ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").deployed());
+        // assertThat(audits).containsExactly(ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").deployed());
     }
 
     // TODO shouldUpdateDeployer (WOW!)
@@ -208,10 +207,13 @@ public class DeployerIT {
         // TODO pin DEPLOYER_IT_WAR & manage all configs
         String plan = "---\n";
 
-        run(plan);
+        List<Audit> audits = run(plan);
 
         assertNoOtherDeployments();
-        if (plan.isEmpty()) // TODO make this run
+        if (plan.isEmpty()) { // TODO make this run
             assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
+            assertThat(audits).containsExactly(
+                    ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").undeployed());
+        }
     }
 }

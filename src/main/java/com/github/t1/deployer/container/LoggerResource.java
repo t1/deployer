@@ -108,6 +108,8 @@ public class LoggerResource {
         request.get("level").set(level.name());
 
         cli.execute(request);
+
+        this.deployed = true;
     }
 
     public static List<LoggerResource> all(CLI cli) {

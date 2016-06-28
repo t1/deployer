@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.t1.deployer.container.DeploymentName;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Artifact;
+import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.experimental.Accessors;
 
 import static com.github.t1.deployer.app.Audit.Type.*;
+import static com.github.t1.deployer.app.Audit.Type.logger;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static lombok.AccessLevel.*;
 
@@ -15,12 +17,20 @@ import static lombok.AccessLevel.*;
 @Accessors(fluent = true, chain = true)
 @RequiredArgsConstructor(access = PROTECTED)
 public abstract class Audit {
-    public enum Type {artifact}
+    public enum Type {artifact, logger}
+
+    @NonNull @JsonProperty private final Type type;
+    @NonNull @JsonProperty private final DeploymentState state;
 
     @Value
     @Builder
     @EqualsAndHashCode(callSuper = true)
     public static class ArtifactAudit extends Audit {
+        @NonNull @JsonProperty private final DeploymentName name;
+        @NonNull @JsonProperty private final GroupId groupId;
+        @NonNull @JsonProperty private final ArtifactId artifactId;
+        @NonNull @JsonProperty private final Version version;
+
         public static ArtifactAuditBuilder of(String groupId, String artifactId, String version) {
             return of(new GroupId(groupId), new ArtifactId(artifactId), new Version(version));
         }
@@ -37,30 +47,13 @@ public abstract class Audit {
                     .version(artifact.getVersion());
         }
 
-        public static class ArtifactAuditBuilder {
-            @Setter
-            private DeploymentState state;
+        public static class ArtifactAuditBuilder extends BuilderWithDeploymentState<ArtifactAudit> {
+            private ArtifactAuditBuilder() {}
 
-            public ArtifactAuditBuilder name(String name) {
-                return this.name(new DeploymentName(name));
+            @Override protected ArtifactAudit build() {
+                return new ArtifactAudit(state, name, groupId, artifactId, version);
             }
-
-            public ArtifactAuditBuilder name(DeploymentName name) {
-                this.name = name;
-                return this;
-            }
-
-            public ArtifactAudit deployed() { return state(deployed).build(); }
-
-            public ArtifactAudit undeployed() { return state(undeployed).build(); }
-
-            private ArtifactAudit build() { return new ArtifactAudit(state, name, groupId, artifactId, version); }
         }
-
-        @NonNull @JsonProperty DeploymentName name;
-        @NonNull @JsonProperty GroupId groupId;
-        @NonNull @JsonProperty ArtifactId artifactId;
-        @NonNull @JsonProperty Version version;
 
         public ArtifactAudit(DeploymentState state, DeploymentName name, GroupId groupId, ArtifactId artifactId,
                 Version version) {
@@ -72,6 +65,38 @@ public abstract class Audit {
         }
     }
 
-    @NonNull @JsonProperty private final Type type;
-    @NonNull @JsonProperty private final DeploymentState state;
+    @Value
+    @Builder
+    @EqualsAndHashCode(callSuper = true)
+    public static class LoggerAudit extends Audit {
+        @NonNull @JsonProperty private final String category;
+        @NonNull @JsonProperty private final LogLevel level;
+
+        public static LoggerAuditBuilder of(@NonNull String category) {
+            return LoggerAudit.builder().category(category);
+        }
+
+        public static class LoggerAuditBuilder extends BuilderWithDeploymentState<LoggerAudit> {
+            private LoggerAuditBuilder() {}
+
+            @Override protected LoggerAudit build() { return new LoggerAudit(state, category, level); }
+        }
+
+        private LoggerAudit(DeploymentState state, String category, LogLevel level) {
+            super(logger, state);
+            this.category = category;
+            this.level = level;
+        }
+    }
+
+    private static abstract class BuilderWithDeploymentState<T> {
+        @Setter
+        protected DeploymentState state;
+
+        public T deployed() { return state(deployed).build(); }
+
+        public T undeployed() { return state(undeployed).build(); }
+
+        protected abstract T build();
+    }
 }
