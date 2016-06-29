@@ -11,6 +11,7 @@ import lombok.*;
 import org.junit.*;
 import org.mockito.*;
 
+import javax.enterprise.inject.Instance;
 import javax.validation.*;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -30,6 +31,7 @@ public class AbstractDeployerTest {
 
     @Spy Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     @Spy Audits audits;
+    @Mock Instance<Audits> auditsInstance;
 
     @Mock Repository repository;
 
@@ -44,6 +46,9 @@ public class AbstractDeployerTest {
 
     @Before
     public void before() {
+        when(auditsInstance.get()).thenReturn(audits);
+
+
         when(deployments.getAllDeployments()).then(invocation -> allDeployments);
 
 

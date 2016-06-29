@@ -8,7 +8,7 @@ import java.io.StringReader;
 import static com.github.t1.deployer.app.Deployer.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class ConfigurationPlanMarshallingTest {
+public class ConfigurationPlanSeraializationTest {
     @Test
     public void shouldLoadInSequence() throws Exception {
         String A = "  A:\n"

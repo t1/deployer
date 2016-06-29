@@ -37,7 +37,7 @@ public class ConfigurationPlan {
             ARTIFACT_MAP_TYPE = new TypeReference<Map<GroupId, Map<ArtifactId, Item>>>() {};
 
     public static ConfigurationPlan load(Reader reader) {
-        Map<GroupId, Map<ArtifactId, Item>> map = null;
+        Map<GroupId, Map<ArtifactId, Item>> map;
         try {
             map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
         } catch (IOException e) {
@@ -60,6 +60,8 @@ public class ConfigurationPlan {
 
     public Item getItem(GroupId groupId, ArtifactId artifactId) { return groupMap.get(groupId).get(artifactId); }
 
+    // TODO split into DeploymentItem, LoggerItem, and LogHandlerItem sharing state and name from AbstractItem
+    // TODO more smart defaults for LogHandlers
     @Data
     public static class Item {
         // general
