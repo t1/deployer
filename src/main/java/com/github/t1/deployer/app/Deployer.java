@@ -10,6 +10,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.Singleton;
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.validation.*;
 import javax.validation.constraints.NotNull;
@@ -34,7 +35,7 @@ public class Deployer {
     @Inject LoggerContainer loggers;
     @Inject Repository repository;
     @Inject Validator validator;
-    @Inject Audits audits;
+    @Inject Instance<Audits> auditInstances;
 
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
@@ -49,10 +50,12 @@ public class Deployer {
     @RequiredArgsConstructor
     private class Run {
         private final Variables variables = new Variables();
+        private final Audits audits = auditInstances.get();
         private final List<Deployment> other;
 
         private Audits run(Reader reader) {
             this.run(ConfigurationPlan.load(variables.resolve(reader)));
+            auditInstances.destroy(audits);
             return audits;
         }
 

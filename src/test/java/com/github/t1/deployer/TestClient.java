@@ -1,6 +1,8 @@
 package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.Audit;
+import com.github.t1.deployer.app.Audit.ArtifactAudit;
+import com.github.t1.deployer.container.DeploymentName;
 import com.github.t1.rest.UriTemplate;
 import com.github.t1.testtools.FileMemento;
 import org.junit.*;
@@ -18,6 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 public class TestClient {
     private static final Path JBOSS_CONFIG = Paths.get(System.getProperty("user.home"),
             "Tools/JBoss/current/standalone/configuration");
+    private static final ArtifactAudit.ArtifactAuditBuilder JOLOKIA = ArtifactAudit.of("org.jolokia", "jolokia-war",
+            "1.3.2")
+                                                                                   .name(new DeploymentName("jolokia"));
 
     public List<Audit> run(String plan) throws IOException {
         try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_DEPLOYER_CONFIG)).setup()) {
@@ -35,12 +40,28 @@ public class TestClient {
         String plan = ""
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
+                + "    name: jolokia\n"
                 + "    version: 1.3.2\n";
 
         List<Audit> audits = run(plan);
 
-        assertThat(audits).containsExactly(Audit.ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").deployed());
+        assertThat(audits).containsExactly(JOLOKIA.deployed());
     }
+
+
+    @Test
+    public void shouldNotDeployJolokiaAgain() throws Exception {
+        String plan = ""
+                + "org.jolokia:\n"
+                + "  jolokia-war:\n"
+                + "    name: jolokia\n"
+                + "    version: 1.3.2\n";
+
+        List<Audit> audits = run(plan);
+
+        assertThat(audits).isEmpty();
+    }
+
 
     @Test
     public void shouldUndeployJolokia() throws Exception {
@@ -48,10 +69,11 @@ public class TestClient {
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
                 + "    version: 1.3.2\n"
+                + "    name: jolokia\n"
                 + "    state: undeployed";
 
         List<Audit> audits = run(plan);
 
-        assertThat(audits).containsExactly(Audit.ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").undeployed());
+        assertThat(audits).containsExactly(JOLOKIA.undeployed());
     }
 }

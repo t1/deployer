@@ -1,6 +1,8 @@
 package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +14,7 @@ import static lombok.AccessLevel.*;
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
 @XmlAccessorType(XmlAccessType.NONE)
+@JsonSerialize(using = ToStringSerializer.class)
 public class Version implements Comparable<Version> {
     public static final Version ANY = new Version("*");
 

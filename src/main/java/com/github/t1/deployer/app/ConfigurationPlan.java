@@ -10,6 +10,8 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import java.io.*;
 import java.util.*;
 
@@ -20,6 +22,7 @@ import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static java.util.Collections.*;
+import static javax.ws.rs.core.Response.Status.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
@@ -33,9 +36,14 @@ public class ConfigurationPlan {
     public static final TypeReference<Map<GroupId, Map<ArtifactId, Item>>>
             ARTIFACT_MAP_TYPE = new TypeReference<Map<GroupId, Map<ArtifactId, Item>>>() {};
 
-    @SneakyThrows(IOException.class)
     public static ConfigurationPlan load(Reader reader) {
-        Map<GroupId, Map<ArtifactId, Item>> map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
+        Map<GroupId, Map<ArtifactId, Item>> map = null;
+        try {
+            map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
+        } catch (IOException e) {
+            log.debug("exception while loading config plan", e);
+            throw new WebApplicationException(Response.status(BAD_REQUEST).entity(e.getMessage()).build());
+        }
         if (map == null)
             map = emptyMap();
         ConfigurationPlan plan = new ConfigurationPlan(map);
