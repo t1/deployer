@@ -45,7 +45,7 @@ public class TestClient {
 
         List<Audit> audits = run(plan);
 
-        assertThat(audits).containsExactly(JOLOKIA.deployed());
+        assertThat(audits).containsExactly(JOLOKIA.added());
     }
 
 
@@ -74,6 +74,6 @@ public class TestClient {
 
         List<Audit> audits = run(plan);
 
-        assertThat(audits).containsExactly(JOLOKIA.undeployed());
+        assertThat(audits).containsExactly(JOLOKIA.removed());
     }
 }

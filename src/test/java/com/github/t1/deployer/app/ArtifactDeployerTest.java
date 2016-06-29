@@ -10,6 +10,7 @@ import javax.validation.ConstraintViolation;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtifactDeployerTest extends AbstractDeployerTest {
@@ -281,7 +282,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: '*'\n"
                 + "    state: undeployed\n");
 
-        foo.verifyUndeployed(audits);
+        foo.version("*").verifyUndeployed(audits);
     }
 
 
@@ -297,8 +298,11 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: 1\n"
                 + "    name: bar\n");
 
-        foo.verifyUndeployed(audits);
-        bar.verifyDeployed(audits);
+        verify(deployments).undeploy(foo.deploymentName());
+        verify(deployments).deploy(bar.deploymentName(), bar.inputStream());
+        assertThat(audits.asList()).containsExactly(
+                bar.artifactAudit().added(),
+                foo.artifactAudit().removed());
     }
 
 
@@ -352,7 +356,10 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run("---\n");
 
-        jolokia.verifyUndeployed(audits);
-        mockserver.verifyUndeployed(audits);
+        verify(deployments).undeploy(jolokia.deploymentName());
+        verify(deployments).undeploy(mockserver.deploymentName());
+        assertThat(audits.asList()).containsExactly(
+                jolokia.artifactAudit().removed(),
+                mockserver.artifactAudit().removed());
     }
 }

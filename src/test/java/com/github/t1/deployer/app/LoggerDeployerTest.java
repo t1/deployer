@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Audit.LoggerAudit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -18,14 +17,12 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldAddLogger() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
-                + "    level: DEBUG\n"
-        ).asList();
+                + "    level: DEBUG\n");
 
-        fixture.verifyAdded();
-        assertThat(audits).containsExactly(LoggerAudit.of(fixture.getCategory()).level(DEBUG).deployed());
+        fixture.verifyAdded(audits);
     }
 
 
@@ -63,15 +60,13 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldAddLoggerWithExplicitState() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
-                + "    state: deployed\n"
-        ).asList();
+                + "    state: deployed\n");
 
-        fixture.verifyAdded();
-        assertThat(audits).containsExactly(LoggerAudit.of(fixture.getCategory()).level(DEBUG).deployed());
+        fixture.verifyAdded(audits);
     }
 
 

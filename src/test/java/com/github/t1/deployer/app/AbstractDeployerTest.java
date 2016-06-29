@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Audit.ArtifactAudit;
+import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
@@ -159,15 +159,20 @@ public class AbstractDeployerTest {
                 this.version = version;
                 this.type = type;
 
+                when(repository.getByChecksum(fakeChecksumFor(contextRoot(), version))).then(i -> artifact());
                 when(repository.buildArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
                 when(repository.buildArtifact(groupId(), artifactId(), Version.ANY, type))
                         .then(i -> artifact(Version.ANY));
             }
 
+            public VersionFixture version(String version) { return ArtifactFixture.this.version(version); }
+
             public VersionFixture named(String name) {
                 ArtifactFixture.this.named(name);
                 return this;
             }
+
+            public DeploymentName deploymentName() { return ArtifactFixture.this.deploymentName(); }
 
             public VersionFixture checksum(Checksum checksum) {
                 this.checksum = checksum;
@@ -221,17 +226,17 @@ public class AbstractDeployerTest {
 
             public void verifyDeployed(Audits audits) {
                 verify(deployments).deploy(deploymentName(), inputStream());
-                assertThat(audits.asList()).containsExactly(artifactAudit().deployed());
+                assertThat(audits.asList()).containsExactly(artifactAudit().added());
             }
 
             public void verifyRedeployed(Audits audits) {
                 verify(deployments).redeploy(deploymentName(), inputStream());
-                assertThat(audits.asList()).containsExactly(artifactAudit().deployed());
+                assertThat(audits.asList()).containsExactly(artifactAudit().updated());
             }
 
             public void verifyUndeployed(Audits audits) {
                 verify(deployments).undeploy(deploymentName());
-                assertThat(audits.asList()).containsExactly(artifactAudit().undeployed());
+                assertThat(audits.asList()).containsExactly(artifactAudit().removed());
             }
         }
     }
@@ -267,11 +272,12 @@ public class AbstractDeployerTest {
 
         public LoggerResource verifyLogger() { return verify(loggerMock); }
 
-        public void verifyAdded() {
+        public void verifyAdded(Audits audits) {
             verify(loggerMock).toBuilder();
             verify(loggerBuilderMock).level(level);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).added());
         }
     }
 

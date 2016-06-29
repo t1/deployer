@@ -47,12 +47,12 @@ public class AuditMarshallingTest {
             (""
                      + "[{"
                      + "'type':'logger',"
-                     + "'state':'deployed',"
+                     + "'change':'added',"
                      + "'category':'foo',"
                      + "'level':'DEBUG'"
                      + "},{"
                      + "'type':'logger',"
-                     + "'state':'undeployed',"
+                     + "'change':'removed',"
                      + "'category':'bar',"
                      + "'level':'INFO'"
                      + "}]"
@@ -61,11 +61,11 @@ public class AuditMarshallingTest {
 
     private static final String TWO_AUDITS_YAML = ""
             + "- type: logger\n"
-            + "  state: deployed\n"
+            + "  change: added\n"
             + "  category: com.github.t1.deployer\n"
             + "  level: DEBUG\n"
             + "- type: artifact\n"
-            + "  state: undeployed\n"
+            + "  change: removed\n"
             + "  name: mockserver\n"
             + "  groupId: org.mock-server\n"
             + "  artifactId: mockserver-war\n"
@@ -74,7 +74,7 @@ public class AuditMarshallingTest {
 
     @Test
     public void shouldFailToDeserializeUnknownArtifactType() throws Exception {
-        String json = "{'type':'xxx','state':'deployed'}";
+        String json = "{'type':'xxx','change':'added'}";
 
         assertThatThrownBy(() -> deserialize(json))
                 .hasMessageContaining("unsupported audit type: 'xxx'");
@@ -85,7 +85,7 @@ public class AuditMarshallingTest {
     public void shouldDeserializeDeployedArtifactAudit() throws Exception {
         String json = "{"
                 + "'type':'artifact',"
-                + "'state':'deployed',"
+                + "'change':'added',"
                 + "'name':'jolokia',"
                 + "'groupId':'org.jolokia',"
                 + "'artifactId':'jolokia-war',"
@@ -94,7 +94,7 @@ public class AuditMarshallingTest {
 
         Audit audit = deserialize(json);
 
-        assertThat(audit).isEqualTo(JOLOKIA.deployed());
+        assertThat(audit).isEqualTo(JOLOKIA.added());
     }
 
 
@@ -102,7 +102,7 @@ public class AuditMarshallingTest {
     public void shouldDeserializeUndeployedArtifactAudit() throws Exception {
         String json = "{"
                 + "'type':'artifact',"
-                + "'state':'undeployed',"
+                + "'change':'removed',"
                 + "'name':'mockserver',"
                 + "'groupId':'org.mock-server',"
                 + "'artifactId':'mockserver-war',"
@@ -111,7 +111,7 @@ public class AuditMarshallingTest {
 
         Audit audit = deserialize(json);
 
-        assertThat(audit).isEqualTo(MOCKSERVER.undeployed());
+        assertThat(audit).isEqualTo(MOCKSERVER.removed());
     }
 
 
@@ -119,7 +119,7 @@ public class AuditMarshallingTest {
     public void shouldFailToDeserializeArtifactAuditWithUnknownState() throws Exception {
         String json = "{"
                 + "'type':'artifact',"
-                + "'state':'xxx',"
+                + "'change':'xxx',"
                 + "'name':'mockserver',"
                 + "'groupId':'org.mock-server',"
                 + "'artifactId':'mockserver-war',"
@@ -127,7 +127,7 @@ public class AuditMarshallingTest {
                 + "}";
 
         assertThatThrownBy(() -> deserialize(json))
-                .hasMessageContaining("unsupported audit state: 'xxx'");
+                .hasMessageContaining("unsupported audit change: 'xxx'");
     }
 
 
@@ -135,14 +135,14 @@ public class AuditMarshallingTest {
     public void shouldDeserializeDeployedLoggerAudit() throws Exception {
         String json = "{"
                 + "'type':'logger',"
-                + "'state':'deployed',"
+                + "'change':'added',"
                 + "'category':'com.github.t1.deployer',"
                 + "'level':'DEBUG'"
                 + "}";
 
         Audit audit = deserialize(json);
 
-        assertThat(audit).isEqualTo(DEPLOYER_LOG.deployed());
+        assertThat(audit).isEqualTo(DEPLOYER_LOG.added());
     }
 
 
@@ -151,16 +151,16 @@ public class AuditMarshallingTest {
         List<Audit> audits = JSON.readValue(new StringReader(TWO_AUDITS_JSON), AUDITS);
 
         assertThat(audits).containsExactly(
-                LoggerAudit.of("foo").level(DEBUG).deployed(),
-                LoggerAudit.of("bar").level(INFO).undeployed());
+                LoggerAudit.of("foo").level(DEBUG).added(),
+                LoggerAudit.of("bar").level(INFO).removed());
     }
 
 
     @Test
     public void shouldSerializeTwoLoggerAudits() throws Exception {
         List<Audit> audits = asList(
-                LoggerAudit.of("foo").level(DEBUG).deployed(),
-                LoggerAudit.of("bar").level(INFO).undeployed());
+                LoggerAudit.of("foo").level(DEBUG).added(),
+                LoggerAudit.of("bar").level(INFO).removed());
         StringWriter out = new StringWriter();
 
         JSON.writeValue(out, audits);
@@ -173,13 +173,13 @@ public class AuditMarshallingTest {
     public void shouldDeserializeTwoAuditsFromYaml() throws Exception {
         List<Audit> audits = YAML.readValue(TWO_AUDITS_YAML, AUDITS);
 
-        assertThat(audits).containsExactly(DEPLOYER_LOG.deployed(), MOCKSERVER.undeployed());
+        assertThat(audits).containsExactly(DEPLOYER_LOG.added(), MOCKSERVER.removed());
     }
 
 
     @Test
     public void shouldSerializeTwoAuditsToYaml() throws Exception {
-        List<Audit> audits = asList(DEPLOYER_LOG.deployed(), MOCKSERVER.undeployed());
+        List<Audit> audits = asList(DEPLOYER_LOG.added(), MOCKSERVER.removed());
         StringWriter out = new StringWriter();
 
         YAML.writeValue(out, audits);

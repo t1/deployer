@@ -10,9 +10,9 @@ import lombok.experimental.Accessors;
 
 import java.util.Map;
 
+import static com.github.t1.deployer.app.Audit.ChangeType.*;
 import static com.github.t1.deployer.app.Audit.Type.*;
 import static com.github.t1.deployer.app.Audit.Type.logger;
-import static com.github.t1.deployer.model.DeploymentState.*;
 import static lombok.AccessLevel.*;
 
 @Data
@@ -21,8 +21,12 @@ import static lombok.AccessLevel.*;
 public abstract class Audit {
     public enum Type {artifact, logger}
 
+    public enum ChangeType {added, updated, removed}
+
     @NonNull @JsonProperty private final Type type;
-    @NonNull @JsonProperty private final DeploymentState state;
+    @NonNull @JsonProperty private final ChangeType change;
+
+    @Override public String toString() { return type + ":" + change; }
 
     @Value
     @Builder
@@ -32,6 +36,10 @@ public abstract class Audit {
         @NonNull @JsonProperty private final GroupId groupId;
         @NonNull @JsonProperty private final ArtifactId artifactId;
         @NonNull @JsonProperty private final Version version;
+
+        @Override public String toString() {
+            return super.toString() + ":" + name + "->" + groupId + ":" + artifactId + ":" + version;
+        }
 
         public static ArtifactAuditBuilder of(String groupId, String artifactId, String version) {
             return ArtifactAudit.of(new GroupId(groupId), new ArtifactId(artifactId), new Version(version));
@@ -49,17 +57,17 @@ public abstract class Audit {
                     .version(artifact.getVersion());
         }
 
-        public static class ArtifactAuditBuilder extends BuilderWithDeploymentState<ArtifactAudit> {
+        public static class ArtifactAuditBuilder extends ChangeBuilder<ArtifactAudit> {
             private ArtifactAuditBuilder() {}
 
             @Override protected ArtifactAudit build() {
-                return new ArtifactAudit(state, name, groupId, artifactId, version);
+                return new ArtifactAudit(change, name, groupId, artifactId, version);
             }
         }
 
-        public ArtifactAudit(DeploymentState state, DeploymentName name, GroupId groupId, ArtifactId artifactId,
+        public ArtifactAudit(ChangeType change, DeploymentName name, GroupId groupId, ArtifactId artifactId,
                 Version version) {
-            super(artifact, state);
+            super(artifact, change);
             this.name = name;
             this.groupId = groupId;
             this.artifactId = artifactId;
@@ -74,18 +82,20 @@ public abstract class Audit {
         @NonNull @JsonProperty private final String category;
         @NonNull @JsonProperty private final LogLevel level;
 
+        @Override public String toString() { return super.toString() + ":" + category + ":" + level; }
+
         public static LoggerAuditBuilder of(@NonNull String category) {
             return LoggerAudit.builder().category(category);
         }
 
-        public static class LoggerAuditBuilder extends BuilderWithDeploymentState<LoggerAudit> {
+        public static class LoggerAuditBuilder extends ChangeBuilder<LoggerAudit> {
             private LoggerAuditBuilder() {}
 
-            @Override protected LoggerAudit build() { return new LoggerAudit(state, category, level); }
+            @Override protected LoggerAudit build() { return new LoggerAudit(change, category, level); }
         }
 
-        private LoggerAudit(DeploymentState state, String category, LogLevel level) {
-            super(logger, state);
+        private LoggerAudit(ChangeType change, String category, LogLevel level) {
+            super(logger, change);
             this.category = category;
             this.level = level;
         }
@@ -96,39 +106,40 @@ public abstract class Audit {
         String type = map.get("type");
         switch (type) {
         case "artifact": {
-            ArtifactAudit.ArtifactAuditBuilder builder = ArtifactAudit.of(map.get("groupId"), map.get("artifactId"),
-                    map.get("version")).name(new DeploymentName(map.get("name")));
+            ArtifactAudit.ArtifactAuditBuilder builder = ArtifactAudit
+                    .of(map.get("groupId"), map.get("artifactId"), map.get("version"))
+                    .name(new DeploymentName(map.get("name")));
             return build(map, builder);
         }
         case "logger": {
-            LoggerAudit.LoggerAuditBuilder builder = LoggerAudit.of(map.get("category"))
-                                                                .level(LogLevel.valueOf(map.get("level")));
-            return map.get("state").equals("deployed") ? builder.deployed() : builder.undeployed();
+            LoggerAudit.LoggerAuditBuilder builder = LoggerAudit
+                    .of(map.get("category"))
+                    .level(LogLevel.valueOf(map.get("level")));
+            return build(map, builder);
         }
         default:
             throw new IllegalArgumentException("unsupported audit type: '" + type + "'");
         }
     }
 
-    private static Audit build(Map<String, String> map, BuilderWithDeploymentState<? extends Audit> builder) {
-        String state = map.get("state");
-        switch (state) {
-        case "deployed":
-            return builder.deployed();
-        case "undeployed":
-            return builder.undeployed();
-        default:
-            throw new IllegalArgumentException("unsupported audit state: '" + state + "'");
+    private static Audit build(Map<String, String> map, ChangeBuilder<? extends Audit> builder) {
+        String change = map.get("change");
+        try {
+            return builder.change(ChangeType.valueOf(change)).build();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("unsupported audit change: '" + change + "'");
         }
     }
 
-    private static abstract class BuilderWithDeploymentState<T> {
+    private static abstract class ChangeBuilder<T> {
         @Setter
-        protected DeploymentState state;
+        protected ChangeType change;
 
-        public T deployed() { return state(deployed).build(); }
+        public T added() { return change(added).build(); }
 
-        public T undeployed() { return state(undeployed).build(); }
+        public T updated() { return change(updated).build(); }
+
+        public T removed() { return change(removed).build(); }
 
         protected abstract T build();
     }

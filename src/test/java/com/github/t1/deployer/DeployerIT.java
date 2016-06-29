@@ -213,7 +213,7 @@ public class DeployerIT {
         if (plan.isEmpty()) { // TODO make this run
             assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
             assertThat(audits).containsExactly(
-                    ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").undeployed());
+                    ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").removed());
         }
     }
 }

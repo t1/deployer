@@ -52,7 +52,7 @@ public class Deployer {
     private class Run {
         private final Variables variables = new Variables();
         private final Audits audits = auditInstances.get();
-        private final List<Deployment> other;
+        private final List<Deployment> existing;
 
         private Audits run(Reader reader) {
             this.run(ConfigurationPlan.load(variables.resolve(reader)));
@@ -78,7 +78,8 @@ public class Deployer {
             }
 
             if (managed)
-                other.forEach(deployment -> deployments.undeploy(deployment.getName()));
+                for (Deployment deployment : existing)
+                    undeploy(deployment.getName(), repository.getByChecksum(deployment.getChecksum()));
         }
 
         private void applyLogger(ArtifactId artifactId, Item item) {
@@ -97,7 +98,7 @@ public class Deployer {
                 } else {
                     logger = logger.toBuilder().level(item.getLevel()).build();
                     logger.add();
-                    audits.add(audit(logger).deployed());
+                    audits.add(audit(logger).added());
                 }
                 break;
             case undeployed:
@@ -141,10 +142,10 @@ public class Deployer {
             switch (item.getState()) {
             case deployed:
                 log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
-                deploy(name, artifact);
+                deployIf(name, artifact);
                 break;
             case undeployed:
-                undeploy(name, artifact);
+                undeployIf(name, artifact);
             }
         }
 
@@ -172,30 +173,33 @@ public class Deployer {
             return new DeploymentName((item.getName() == null) ? artifactId.toString() : item.getName());
         }
 
-        private void deploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
-            ArtifactAuditBuilder audit = audit(artifact).name(name);
+        private void deployIf(@NonNull DeploymentName name, @NonNull Artifact artifact) {
             if (artifact.getType() == bundle) {
                 this.run(artifact.getReader());
-            } else if (other.removeIf(name::matches)) {
+            } else if (existing.removeIf(name::matches)) {
                 if (deployments.getDeployment(name).getChecksum().equals(artifact.getChecksum())) {
                     log.info("already deployed with same checksum: {}", name);
                 } else {
                     deployments.redeploy(name, artifact.getInputStream());
-                    audits.add(audit.deployed());
+                    audits.add(audit(artifact).name(name).updated());
                 }
             } else {
                 deployments.deploy(name, artifact.getInputStream());
-                audits.add(audit.deployed());
+                audits.add(audit(artifact).name(name).added());
+            }
+        }
+
+        private void undeployIf(@NonNull DeploymentName name, @NonNull Artifact artifact) {
+            if (existing.removeIf(name::matches)) {
+                undeploy(name, artifact);
+            } else {
+                log.info("already undeployed: {}", name);
             }
         }
 
         private void undeploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
-            if (other.removeIf(name::matches)) {
-                deployments.undeploy(name);
-                audits.add(audit(artifact).name(name).undeployed());
-            } else {
-                log.info("already undeployed: {}", name);
-            }
+            deployments.undeploy(name);
+            audits.add(audit(artifact).name(name).removed());
         }
 
         private ArtifactAuditBuilder audit(@NonNull Artifact artifact) {
