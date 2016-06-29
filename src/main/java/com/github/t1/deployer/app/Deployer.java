@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.*;
+import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.Item;
 import com.github.t1.deployer.container.*;
@@ -172,6 +173,7 @@ public class Deployer {
         }
 
         private void deploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
+            ArtifactAuditBuilder audit = audit(artifact).name(name);
             if (artifact.getType() == bundle) {
                 this.run(artifact.getReader());
             } else if (other.removeIf(name::matches)) {
@@ -179,11 +181,11 @@ public class Deployer {
                     log.info("already deployed with same checksum: {}", name);
                 } else {
                     deployments.redeploy(name, artifact.getInputStream());
-                    audits.add(audit(artifact).deployed());
+                    audits.add(audit.deployed());
                 }
             } else {
                 deployments.deploy(name, artifact.getInputStream());
-                audits.add(audit(artifact).name(name).deployed());
+                audits.add(audit.deployed());
             }
         }
 
@@ -196,7 +198,7 @@ public class Deployer {
             }
         }
 
-        private ArtifactAudit.ArtifactAuditBuilder audit(@NonNull Artifact artifact) {
+        private ArtifactAuditBuilder audit(@NonNull Artifact artifact) {
             return ArtifactAudit
                     .builder()
                     .groupId(artifact.getGroupId())

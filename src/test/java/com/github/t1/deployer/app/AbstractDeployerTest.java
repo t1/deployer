@@ -1,5 +1,7 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.app.Audit.ArtifactAudit;
+import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
@@ -30,7 +32,7 @@ public class AbstractDeployerTest {
     @InjectMocks Deployer deployer;
 
     @Spy Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-    @Spy Audits audits;
+    @Spy private Audits audits;
     @Mock Instance<Audits> auditsInstance;
 
     @Mock Repository repository;
@@ -162,6 +164,11 @@ public class AbstractDeployerTest {
                         .then(i -> artifact(Version.ANY));
             }
 
+            public VersionFixture named(String name) {
+                ArtifactFixture.this.named(name);
+                return this;
+            }
+
             public VersionFixture checksum(Checksum checksum) {
                 this.checksum = checksum;
                 return this;
@@ -205,14 +212,27 @@ public class AbstractDeployerTest {
                         .build();
             }
 
+
+            public ArtifactAuditBuilder artifactAudit() { return ArtifactAudit.of(artifact()).name(deploymentName()); }
+
+
             public ArtifactFixture and() { return ArtifactFixture.this; }
 
 
-            public void verifyDeployed() { verify(deployments).deploy(deploymentName(), inputStream()); }
+            public void verifyDeployed(Audits audits) {
+                verify(deployments).deploy(deploymentName(), inputStream());
+                assertThat(audits.asList()).containsExactly(artifactAudit().deployed());
+            }
 
-            public void verifyRedeployed() { verify(deployments).redeploy(deploymentName(), inputStream()); }
+            public void verifyRedeployed(Audits audits) {
+                verify(deployments).redeploy(deploymentName(), inputStream());
+                assertThat(audits.asList()).containsExactly(artifactAudit().deployed());
+            }
 
-            public void verifyUndeployed() { verify(deployments).undeploy(deploymentName()); }
+            public void verifyUndeployed(Audits audits) {
+                verify(deployments).undeploy(deploymentName());
+                assertThat(audits.asList()).containsExactly(artifactAudit().undeployed());
+            }
         }
     }
 
