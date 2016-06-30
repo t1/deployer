@@ -135,8 +135,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyAdded();
-        assertThat(audits.asList()).isEmpty();
+        fixture.verifyAdded(audits);
     }
 
 
@@ -157,8 +156,27 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyAdded();
-        assertThat(audits.asList()).isEmpty();
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddPeriodicRotatingFileHandlerWithDefaultFile() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("FOO")
+                .suffix("the-suffix")
+                .formatter("the-formatter");
+
+        Audits audits = deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    suffix: the-suffix\n"
+                + "    formatter: the-formatter\n");
+
+        fixture.verifyAdded(audits);
     }
 
 
@@ -178,8 +196,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    file: the-file\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyAdded();
-        assertThat(audits.asList()).isEmpty();
+        fixture.verifyAdded(audits);
     }
 
 

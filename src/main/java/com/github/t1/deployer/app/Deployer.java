@@ -121,15 +121,16 @@ public class Deployer {
             validate(item, loghandler.class);
             String name = artifactId.toString();
             LoggingHandlerType type = item.getHandlerType();
+            String file = (item.getFile() == null) ? name : item.getFile();
             LogHandler handler = loggers.handler(type, name);
             if (handler.isDeployed())
                 handler.correctLevel(item.getLevel())
-                       .correctFile(item.getFile())
+                       .correctFile(file)
                        .correctSuffix(item.getSuffix())
                        .correctFormatter(item.getFormatter());
             else
                 handler.toBuilder()
-                       .file(item.getFile())
+                       .file(file)
                        .level(item.getLevel())
                        .suffix(item.getSuffix())
                        .formatter(item.getFormatter())

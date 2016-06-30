@@ -65,12 +65,14 @@ public class ConfigurationPlan {
     @Data
     public static class Item {
         // general
-        @NonNull private DeploymentState state = deployed;
+        @NonNull
+        private DeploymentState state = deployed;
 
         // deployment
         @NotNull(groups = deployment.class)
         private Version version;
 
+        /** defaults to the artifact-id */
         private String name;
 
         @NotNull(groups = deployment.class)
@@ -80,12 +82,17 @@ public class ConfigurationPlan {
         // logger/handler
         @NotNull(groups = { logger.class, loghandler.class })
         private LogLevel level;
+
         @NotNull(groups = { loghandler.class })
-        @JsonProperty("handler-type") private LoggingHandlerType handlerType = periodicRotatingFile;
-        @NotNull(groups = { loghandler.class })
+        @JsonProperty("handler-type")
+        private LoggingHandlerType handlerType = periodicRotatingFile;
+
+        /** defaults to the handler name */
         private String file;
+
         @NotNull(groups = { loghandler.class })
         private String suffix = ".yyyy-MM-dd";
+
         @NotNull(groups = { loghandler.class })
         private String formatter;
 

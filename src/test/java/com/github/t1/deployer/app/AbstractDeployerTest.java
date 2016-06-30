@@ -365,7 +365,7 @@ public class AbstractDeployerTest {
             return verify(logHandlerMock);
         }
 
-        public void verifyAdded() {
+        public void verifyAdded(Audits audits) {
             verify(loggers).handler(type, name);
             verify(logHandlerMock).toBuilder();
             verify(logHandlerBuilderMock).level(level);
@@ -374,6 +374,8 @@ public class AbstractDeployerTest {
             verify(logHandlerBuilderMock).formatter(formatter);
             verify(logHandlerBuilderMock).build();
             verify(logHandlerMock).add();
+
+            assertThat(audits.asList()).isEmpty();
         }
     }
 
