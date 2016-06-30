@@ -94,6 +94,7 @@ public class Deployer {
                         log.info("logger already configured: {}: {}", category, item.getLevel());
                     } else {
                         logger.correctLevel(item.getLevel());
+                        audits.add(audit(logger).level(item.getLevel()).updated());
                     }
                 } else {
                     logger = logger.toBuilder().level(item.getLevel()).build();

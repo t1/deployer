@@ -280,7 +280,7 @@ public class AbstractDeployerTest {
 
         public void verifyChanged(Audits audits) {
             verify(loggerMock).correctLevel(level);
-            assertThat(audits.asList()).isEmpty();
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).updated());
         }
 
         public void verifyRemoved(Audits audits) {
