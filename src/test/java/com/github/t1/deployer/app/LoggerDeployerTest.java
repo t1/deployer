@@ -5,7 +5,6 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.validation.ConstraintViolation;
-import java.util.List;
 
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
@@ -30,14 +29,13 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldNotAddExistingLogger() {
         givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
-                + "    level: DEBUG\n"
-        ).asList();
+                + "    level: DEBUG\n");
 
         // #after(): no add nor update
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -45,14 +43,12 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldUpdateLogLevel() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
-                + "    level: INFO\n"
-        ).asList();
+                + "    level: INFO\n");
 
-        fixture.verifyLogger().correctLevel(INFO);
-        assertThat(audits).isEmpty();
+        fixture.level(INFO).verifyChanged(audits);
     }
 
 
@@ -95,15 +91,13 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldRemoveExistingLoggerWhenStateIsUndeployed() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
-                + "    state: undeployed\n"
-        ).asList();
+                + "    state: undeployed\n");
 
-        fixture.verifyLogger().remove();
-        assertThat(audits).isEmpty();
+        fixture.verifyRemoved(audits);
     }
 
 
@@ -111,15 +105,14 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldRemoveNonExistingLoggerWhenStateIsUndeployed() {
         givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
-                + "    state: undeployed\n"
-        ).asList();
+                + "    state: undeployed\n");
 
         // #after(): not undeployed
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -134,17 +127,16 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .formatter("the-formatter");
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
-                + "    formatter: the-formatter\n"
-        ).asList();
+                + "    formatter: the-formatter\n");
 
         fixture.verifyAdded();
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -156,18 +148,17 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .formatter("the-formatter");
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    handler-type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
-                + "    formatter: the-formatter\n"
-        ).asList();
+                + "    formatter: the-formatter\n");
 
         fixture.verifyAdded();
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -180,18 +171,17 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-formatter")
                 .deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    handler-type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
-                + "    formatter: the-formatter\n"
-        ).asList();
+                + "    formatter: the-formatter\n");
 
         // #after(): not added/updated
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -204,18 +194,17 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-formatter")
                 .deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    handler-type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
-                + "    formatter: the-formatter\n"
-        ).asList();
+                + "    formatter: the-formatter\n");
 
         fixture.verifyUpdated().correctLevel(ALL);
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -228,18 +217,17 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-formatter")
                 .deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    handler-type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-new-file\n"
                 + "    suffix: the-suffix\n"
-                + "    formatter: the-formatter\n"
-        ).asList();
+                + "    formatter: the-formatter\n");
 
         fixture.verifyUpdated().correctFile("the-new-file");
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -252,18 +240,17 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-formatter")
                 .deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    handler-type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-new-suffix\n"
-                + "    formatter: the-formatter\n"
-        ).asList();
+                + "    formatter: the-formatter\n");
 
         fixture.verifyUpdated().correctSuffix("the-new-suffix");
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -276,18 +263,17 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-old-formatter")
                 .deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    handler-type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
-                + "    formatter: the-new-formatter\n"
-        ).asList();
+                + "    formatter: the-new-formatter\n");
 
         fixture.verifyUpdated().correctFormatter("the-new-formatter");
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 
@@ -300,19 +286,18 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-old-formatter")
                 .deployed();
 
-        List<Audit> audits = deployer.run(""
+        Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    handler-type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-new-file\n"
                 + "    suffix: the-suffix\n"
-                + "    formatter: the-new-formatter\n"
-        ).asList();
+                + "    formatter: the-new-formatter\n");
 
         fixture.verifyUpdated().correctFile("the-new-file");
         fixture.verifyUpdated().correctFormatter("the-new-formatter");
-        assertThat(audits).isEmpty();
+        assertThat(audits.asList()).isEmpty();
     }
 
 

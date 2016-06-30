@@ -270,14 +270,22 @@ public class AbstractDeployerTest {
             return this;
         }
 
-        public LoggerResource verifyLogger() { return verify(loggerMock); }
-
         public void verifyAdded(Audits audits) {
             verify(loggerMock).toBuilder();
             verify(loggerBuilderMock).level(level);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
             assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).added());
+        }
+
+        public void verifyChanged(Audits audits) {
+            verify(loggerMock).correctLevel(level);
+            assertThat(audits.asList()).isEmpty();
+        }
+
+        public void verifyRemoved(Audits audits) {
+            verify(loggerMock).remove();
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).removed());
         }
     }
 

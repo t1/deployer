@@ -102,10 +102,12 @@ public class Deployer {
                 }
                 break;
             case undeployed:
-                if (logger.isDeployed())
+                if (logger.isDeployed()) {
                     logger.remove();
-                else
+                    audits.add(audit(logger).removed());
+                } else {
                     log.info("logger already removed: {}", category);
+                }
                 break;
             }
         }
