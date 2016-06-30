@@ -27,7 +27,7 @@ public class LogHandler {
     private LogLevel level;
     private String file;
     private String suffix;
-    private String formatter;
+    private String format;
 
     private void assertDeployed() {
         if (!isDeployed())
@@ -44,7 +44,7 @@ public class LogHandler {
                 level = LogLevel.valueOf(response.get("result").get("level").asString());
                 file = response.get("result").get("file").asString();
                 suffix = response.get("result").get("suffix").asString();
-                formatter = response.get("result").get("formatter").asString();
+                format = response.get("result").get("formatter").asString();
             }
         }
         return deployed;
@@ -78,11 +78,11 @@ public class LogHandler {
         return writeAttribute("suffix", newSuffix);
     }
 
-    public LogHandler correctFormatter(String newFormatter) {
+    public LogHandler correctFormat(String newFormat) {
         assertDeployed();
-        if (formatter.equals(newFormatter))
+        if (format.equals(newFormat))
             return this;
-        return writeAttribute("formatter", newFormatter);
+        return writeAttribute("formatter", newFormat);
     }
 
     private LogHandler writeAttribute(String name, String value) {
@@ -104,7 +104,7 @@ public class LogHandler {
         request.get("file").get("path").set(file);
         request.get("file").get("relative-to").set("jboss.server.log.dir");
         request.get("suffix").set(suffix);
-        request.get("formatter").set(formatter);
+        request.get("formatter").set(format);
 
         cli.execute(request);
 

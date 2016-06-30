@@ -302,7 +302,7 @@ public class LoggerContainerTest {
                 .toBuilder()
                 .file("the-file")
                 .suffix("the-suffix")
-                .formatter("the-formatter")
+                .format("the-formatter")
                 .build();
 
         foo.add();

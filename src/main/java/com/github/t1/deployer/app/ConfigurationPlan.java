@@ -60,7 +60,7 @@ public class ConfigurationPlan {
 
     public Item getItem(GroupId groupId, ArtifactId artifactId) { return groupMap.get(groupId).get(artifactId); }
 
-    // TODO split into DeploymentItem, LoggerItem, and LogHandlerItem sharing state and name from AbstractItem
+    // TODO split into DeploymentItem, LoggerItem, and LogHandlerItem sharing state and name from AbstractItem and rename `handler-type` to `type`
     // TODO more smart defaults for LogHandlers
     @Data
     public static class Item {
@@ -94,7 +94,7 @@ public class ConfigurationPlan {
         private String suffix = ".yyyy-MM-dd";
 
         @NotNull(groups = { loghandler.class })
-        private String formatter;
+        private String format;
 
         @Override public String toString() {
             return "«" + state
@@ -105,7 +105,7 @@ public class ConfigurationPlan {
                     + (handlerType == periodicRotatingFile ? "" : ":" + handlerType)
                     + (file == null ? "" : ":" + file)
                     + (suffix.isEmpty() ? "" : ":" + suffix)
-                    + (formatter == null ? "" : ":" + formatter)
+                    + (format == null ? "" : ":" + format)
                     + "»";
         }
     }

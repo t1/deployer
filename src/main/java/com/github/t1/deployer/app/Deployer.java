@@ -127,13 +127,13 @@ public class Deployer {
                 handler.correctLevel(item.getLevel())
                        .correctFile(file)
                        .correctSuffix(item.getSuffix())
-                       .correctFormatter(item.getFormatter());
+                       .correctFormat(item.getFormat());
             else
                 handler.toBuilder()
                        .file(file)
                        .level(item.getLevel())
                        .suffix(item.getSuffix())
-                       .formatter(item.getFormatter())
+                       .format(item.getFormat())
                        .build()
                        .add();
         }

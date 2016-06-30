@@ -65,12 +65,12 @@ public class AbstractDeployerTest {
         when(logHandlerMock.correctLevel(any(LogLevel.class))).thenReturn(logHandlerMock);
         when(logHandlerMock.correctFile(anyString())).thenReturn(logHandlerMock);
         when(logHandlerMock.correctSuffix(anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctFormatter(anyString())).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctFormat(anyString())).thenReturn(logHandlerMock);
 
         when(logHandlerBuilderMock.level(any(LogLevel.class))).thenReturn(logHandlerBuilderMock);
         when(logHandlerBuilderMock.file(anyString())).thenReturn(logHandlerBuilderMock);
         when(logHandlerBuilderMock.suffix(anyString())).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.formatter(anyString())).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.format(anyString())).thenReturn(logHandlerBuilderMock);
 
         when(logHandlerBuilderMock.build()).thenReturn(logHandlerMock);
     }
@@ -105,12 +105,12 @@ public class AbstractDeployerTest {
         verify(logHandlerMock, atLeast(0)).level();
         verify(logHandlerMock, atLeast(0)).file();
         verify(logHandlerMock, atLeast(0)).suffix();
-        verify(logHandlerMock, atLeast(0)).formatter();
+        verify(logHandlerMock, atLeast(0)).format();
 
         verify(logHandlerMock, atLeast(0)).correctLevel(any(LogLevel.class));
         verify(logHandlerMock, atLeast(0)).correctFile(anyString());
         verify(logHandlerMock, atLeast(0)).correctSuffix(anyString());
-        verify(logHandlerMock, atLeast(0)).correctFormatter(anyString());
+        verify(logHandlerMock, atLeast(0)).correctFormat(anyString());
 
         verifyNoMoreInteractions(logHandlerMock);
     }
@@ -301,7 +301,7 @@ public class AbstractDeployerTest {
         private LogLevel level;
         private String file;
         private String suffix = ".yyyy-MM-dd";
-        private String formatter;
+        private String format;
 
         public LogHandlerFixture(LoggingHandlerType type, String name) {
             this.type = type;
@@ -311,7 +311,7 @@ public class AbstractDeployerTest {
             when(logHandlerMock.level()).then(i -> level);
             when(logHandlerMock.file()).then(i -> file);
             when(logHandlerMock.suffix()).then(i -> suffix);
-            when(logHandlerMock.formatter()).then(i -> formatter);
+            when(logHandlerMock.format()).then(i -> format);
         }
 
         public LogHandlerFixture level(LogLevel level) {
@@ -329,8 +329,8 @@ public class AbstractDeployerTest {
             return this;
         }
 
-        public LogHandlerFixture formatter(String formatter) {
-            this.formatter = formatter;
+        public LogHandlerFixture format(String format) {
+            this.format = format;
             return this;
         }
 
@@ -355,8 +355,8 @@ public class AbstractDeployerTest {
             assertThat(audits.asList()).isEmpty();
         }
 
-        public void verifyUpdatedFormatter(Audits audits) {
-            verifyLogHandler().correctFormatter(formatter);
+        public void verifyUpdatedFormat(Audits audits) {
+            verifyLogHandler().correctFormat(format);
             assertThat(audits.asList()).isEmpty();
         }
 
@@ -366,12 +366,11 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAdded(Audits audits) {
-            verify(loggers).handler(type, name);
-            verify(logHandlerMock).toBuilder();
+            verifyLogHandler().toBuilder();
             verify(logHandlerBuilderMock).level(level);
             verify(logHandlerBuilderMock).file(file);
             verify(logHandlerBuilderMock).suffix(suffix);
-            verify(logHandlerBuilderMock).formatter(formatter);
+            verify(logHandlerBuilderMock).format(format);
             verify(logHandlerBuilderMock).build();
             verify(logHandlerMock).add();
 
