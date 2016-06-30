@@ -85,7 +85,7 @@ public class ConfigurationPlan {
         @NotNull(groups = { loghandler.class })
         private String file;
         @NotNull(groups = { loghandler.class })
-        private String suffix = "";
+        private String suffix = ".yyyy-MM-dd";
         @NotNull(groups = { loghandler.class })
         private String formatter;
 

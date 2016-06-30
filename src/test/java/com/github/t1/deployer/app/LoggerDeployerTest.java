@@ -163,6 +163,27 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldAddPeriodicRotatingFileHandlerWithDefaultSuffix() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix(".yyyy-MM-dd")
+                .formatter("the-formatter");
+
+        Audits audits = deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    handler-type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    formatter: the-formatter\n");
+
+        fixture.verifyAdded();
+        assertThat(audits.asList()).isEmpty();
+    }
+
+
+    @Test
     public void shouldNotAddExistingHandler() {
         givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
@@ -203,8 +224,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyUpdated().correctLevel(ALL);
-        assertThat(audits.asList()).isEmpty();
+        fixture.level(ALL).verifyUpdatedLogLevel(audits);
     }
 
 
@@ -226,8 +246,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyUpdated().correctFile("the-new-file");
-        assertThat(audits.asList()).isEmpty();
+        fixture.file("the-new-file").verifyUpdatedFile(audits);
     }
 
 
@@ -249,8 +268,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-new-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyUpdated().correctSuffix("the-new-suffix");
-        assertThat(audits.asList()).isEmpty();
+        fixture.suffix("the-new-suffix").verifyUpdatedSuffix(audits);
     }
 
 
@@ -272,8 +290,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-new-formatter\n");
 
-        fixture.verifyUpdated().correctFormatter("the-new-formatter");
-        assertThat(audits.asList()).isEmpty();
+        fixture.formatter("the-new-formatter").verifyUpdatedFormatter(audits);
     }
 
 
@@ -295,8 +312,9 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-new-formatter\n");
 
-        fixture.verifyUpdated().correctFile("the-new-file");
-        fixture.verifyUpdated().correctFormatter("the-new-formatter");
+        fixture.file("the-new-file").formatter("the-new-formatter");
+        fixture.verifyLogHandler().correctFile(fixture.getFile());
+        fixture.verifyLogHandler().correctFormatter(fixture.getFormatter());
         assertThat(audits.asList()).isEmpty();
     }
 

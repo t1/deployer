@@ -294,12 +294,13 @@ public class AbstractDeployerTest {
         return new LogHandlerFixture(type, name);
     }
 
+    @Getter
     public class LogHandlerFixture {
         private final LoggingHandlerType type;
         private final String name;
         private LogLevel level;
         private String file;
-        private String suffix;
+        private String suffix = ".yyyy-MM-dd";
         private String formatter;
 
         public LogHandlerFixture(LoggingHandlerType type, String name) {
@@ -307,29 +308,29 @@ public class AbstractDeployerTest {
             this.name = name;
 
             when(loggers.handler(type, name)).thenReturn(logHandlerMock);
+            when(logHandlerMock.level()).then(i -> level);
+            when(logHandlerMock.file()).then(i -> file);
+            when(logHandlerMock.suffix()).then(i -> suffix);
+            when(logHandlerMock.formatter()).then(i -> formatter);
         }
 
         public LogHandlerFixture level(LogLevel level) {
             this.level = level;
-            when(logHandlerMock.level()).thenReturn(level);
             return this;
         }
 
         public LogHandlerFixture file(String file) {
             this.file = file;
-            when(logHandlerMock.file()).thenReturn(file);
             return this;
         }
 
         public LogHandlerFixture suffix(String suffix) {
             this.suffix = suffix;
-            when(logHandlerMock.suffix()).thenReturn(suffix);
             return this;
         }
 
         public LogHandlerFixture formatter(String formatter) {
             this.formatter = formatter;
-            when(logHandlerMock.formatter()).thenReturn(formatter);
             return this;
         }
 
@@ -338,7 +339,28 @@ public class AbstractDeployerTest {
             return this;
         }
 
-        public LogHandler verifyUpdated() {
+
+        public void verifyUpdatedLogLevel(Audits audits) {
+            verifyLogHandler().correctLevel(level);
+            assertThat(audits.asList()).isEmpty();
+        }
+
+        public void verifyUpdatedFile(Audits audits) {
+            verifyLogHandler().correctFile(file);
+            assertThat(audits.asList()).isEmpty();
+        }
+
+        public void verifyUpdatedSuffix(Audits audits) {
+            verifyLogHandler().correctSuffix(suffix);
+            assertThat(audits.asList()).isEmpty();
+        }
+
+        public void verifyUpdatedFormatter(Audits audits) {
+            verifyLogHandler().correctFormatter(formatter);
+            assertThat(audits.asList()).isEmpty();
+        }
+
+        public LogHandler verifyLogHandler() {
             verify(loggers).handler(type, name);
             return verify(logHandlerMock);
         }
