@@ -2,7 +2,6 @@ package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.Audit;
 import com.github.t1.deployer.app.Audit.ArtifactAudit;
-import com.github.t1.deployer.container.DeploymentName;
 import com.github.t1.rest.UriTemplate;
 import com.github.t1.testtools.FileMemento;
 import org.junit.*;
@@ -20,9 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 public class TestClient {
     private static final Path JBOSS_CONFIG = Paths.get(System.getProperty("user.home"),
             "Tools/JBoss/current/standalone/configuration");
-    private static final ArtifactAudit.ArtifactAuditBuilder JOLOKIA = ArtifactAudit.of("org.jolokia", "jolokia-war",
-            "1.3.2")
-                                                                                   .name(new DeploymentName("jolokia"));
+    private static final ArtifactAudit.ArtifactAuditBuilder JOLOKIA =
+            ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
 
     public List<Audit> run(String plan) throws IOException {
         try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_DEPLOYER_CONFIG)).setup()) {

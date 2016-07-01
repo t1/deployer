@@ -10,7 +10,7 @@ public class Audits {
     private final List<Audit> audits = new ArrayList<>();
 
     @Logged(level = INFO)
-    public void add(Audit audit) { this.audits.add(audit); }
+    public void audit(Audit audit) { this.audits.add(audit); }
 
     public List<Audit> asList() { return audits; }
 }

@@ -36,7 +36,7 @@ public class DeployerBoundary {
         List<Audit> audits = deployer.run(root).asList();
 
         if (log.isDebugEnabled())
-            log.debug("deployed:\n- {}", join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
+            log.debug("audit:\n- {}", join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
 
         return Response.ok(audits).build();
     }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
-import com.github.t1.deployer.container.DeploymentName;
 import org.junit.Test;
 
 import java.io.*;
@@ -34,10 +33,10 @@ public class AuditMarshallingTest {
 
 
     private static final ArtifactAuditBuilder JOLOKIA =
-            ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name(new DeploymentName("jolokia"));
+            ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
 
     private static final ArtifactAuditBuilder MOCKSERVER =
-            ArtifactAudit.of("org.mock-server", "mockserver-war", "3.10.4").name(new DeploymentName("mockserver"));
+            ArtifactAudit.of("org.mock-server", "mockserver-war", "3.10.4").name("mockserver");
 
     private static final LoggerAudit.LoggerAuditBuilder DEPLOYER_LOG =
             LoggerAudit.of("com.github.t1.deployer").level(DEBUG);

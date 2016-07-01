@@ -81,7 +81,7 @@ public class Deployer {
                         log.info("logger already configured: {}: {}", item.getCategory(), item.getLevel());
                     } else {
                         logger.correctLevel(item.getLevel());
-                        audits.add(audit(logger).level(item.getLevel()).updated());
+                        audits.audit(audit(logger).level(item.getLevel()).updated());
                     }
                 } else {
                     logger = logger.toBuilder()
@@ -89,13 +89,13 @@ public class Deployer {
                                    .handlers(item.getHandlers())
                                    .build();
                     logger.add();
-                    audits.add(audit(logger).added());
+                    audits.audit(audit(logger).added());
                 }
                 break;
             case undeployed:
                 if (logger.isDeployed()) {
                     logger.remove();
-                    audits.add(audit(logger).removed());
+                    audits.audit(audit(logger).removed());
                 } else {
                     log.info("logger already removed: {}", item.getCategory());
                 }
@@ -172,11 +172,11 @@ public class Deployer {
                     log.info("already deployed with same checksum: {}", name);
                 } else {
                     deployments.redeploy(name, artifact.getInputStream());
-                    audits.add(audit(artifact).name(name).updated());
+                    audits.audit(audit(artifact).name(name).updated());
                 }
             } else {
                 deployments.deploy(name, artifact.getInputStream());
-                audits.add(audit(artifact).name(name).added());
+                audits.audit(audit(artifact).name(name).added());
             }
         }
 
@@ -190,7 +190,7 @@ public class Deployer {
 
         private void undeploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
             deployments.undeploy(name);
-            audits.add(audit(artifact).name(name).removed());
+            audits.audit(audit(artifact).name(name).removed());
         }
 
         private ArtifactAuditBuilder audit(@NonNull Artifact artifact) {

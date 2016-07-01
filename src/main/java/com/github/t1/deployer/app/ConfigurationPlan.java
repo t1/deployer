@@ -136,7 +136,7 @@ public class ConfigurationPlan {
 
         private static LoggerConfig fromJson(ArtifactId artifactId, JsonNode node) {
             LoggerConfigBuilder builder = builder();
-            apply(node, "state", "deployed", value -> builder.state(DeploymentState.valueOf(value)));
+            apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "name", artifactId.getValue(), builder::category);
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "handler", null, value -> {
@@ -175,7 +175,7 @@ public class ConfigurationPlan {
 
         private static LogHandlerConfig fromJson(ArtifactId artifactId, JsonNode node) {
             LogHandlerConfigBuilder builder = builder();
-            apply(node, "state", "deployed", value -> builder.state(DeploymentState.valueOf(value)));
+            apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "name", artifactId.getValue(), value -> builder.name(new LogHandlerName(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));

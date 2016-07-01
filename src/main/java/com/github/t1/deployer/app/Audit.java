@@ -60,6 +60,13 @@ public abstract class Audit {
         public static class ArtifactAuditBuilder extends ChangeBuilder<ArtifactAudit> {
             private ArtifactAuditBuilder() {}
 
+            public ArtifactAuditBuilder name(String name) { return name(new DeploymentName(name)); }
+
+            public ArtifactAuditBuilder name(DeploymentName name) {
+                this.name = name;
+                return this;
+            }
+
             @Override protected ArtifactAudit build() {
                 return new ArtifactAudit(change, name, groupId, artifactId, version);
             }
@@ -108,7 +115,7 @@ public abstract class Audit {
         case "artifact": {
             ArtifactAudit.ArtifactAuditBuilder builder = ArtifactAudit
                     .of(map.get("groupId"), map.get("artifactId"), map.get("version"))
-                    .name(new DeploymentName(map.get("name")));
+                    .name(map.get("name"));
             return build(map, builder);
         }
         case "logger": {

@@ -79,6 +79,7 @@ public class DeployerIT {
     public LoggerMemento loggerMemento = new LoggerMemento()
             .with("org.apache.http.wire", DEBUG)
             .with("com.github.t1.rest", DEBUG)
+            .with("com.github.t1.rest.ResponseConverter", INFO)
             .with("com.github.t1.deployer", DEBUG);
     @Rule public TestLoggerRule logger = new TestLoggerRule();
     private static FileMemento jbossConfig;
@@ -153,15 +154,18 @@ public class DeployerIT {
         String plan = ""
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
+                + "    name: jolokia\n"
                 + "    version: 1.3.2\n";
 
         List<Audit> audits = run(plan);
 
         assertThat(container.getAllDeployments())
                 .hasSize(2)
-                .haveExactly(1, allOf(deployment("jolokia-war"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
+                .haveExactly(1, allOf(deployment("jolokia"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        // assertThat(audits).containsExactly(ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").deployed());
+        if (plan.isEmpty()) // TODO fix deserialization
+            assertThat(audits).containsExactly(
+                    ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").added());
     }
 
     @Test
@@ -170,6 +174,7 @@ public class DeployerIT {
         String plan = ""
                 + "org.jolokia:\n"
                 + "  jolokia-war:\n"
+                + "    name: jolokia\n"
                 + "    version: 1.3.2\n"
                 + "    state: undeployed\n";
 
@@ -178,7 +183,9 @@ public class DeployerIT {
         assertThat(container.getAllDeployments())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        // assertThat(audits).containsExactly(ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").undeployed());
+        if (plan.isEmpty()) // TODO fix deserialization
+            assertThat(audits).containsExactly(
+                    ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").removed());
     }
 
     @Test
@@ -196,7 +203,9 @@ public class DeployerIT {
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("postgresql"), checksum(POSTGRESQL_9_4_1207_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        // assertThat(audits).containsExactly(ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").deployed());
+        if (plan.isEmpty()) // TODO fix deserialization
+            assertThat(audits).containsExactly(
+                    ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").name("postgresql").added());
     }
 
     // TODO shouldUpdateDeployer (WOW!)
