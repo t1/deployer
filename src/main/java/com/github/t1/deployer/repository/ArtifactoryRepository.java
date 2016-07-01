@@ -200,7 +200,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override
-    public Artifact buildArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+    public Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
         UriTemplate template = rest()
                 .nonQueryUri("repository")
                 .path("api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/{module}-{baseRev}.{ext}");

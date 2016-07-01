@@ -23,7 +23,7 @@ public class Version implements Comparable<Version> {
     private final String value;
 
     @JsonCreator
-    public Version(String value) { this.value = value; }
+    public Version(@NonNull String value) { this.value = value; }
 
     /** this is called when YAML deserializes a version '1' */
     public Version(int value) { this.value = Integer.toString(value); }

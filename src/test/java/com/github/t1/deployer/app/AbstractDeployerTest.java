@@ -160,8 +160,8 @@ public class AbstractDeployerTest {
                 this.type = type;
 
                 when(repository.getByChecksum(fakeChecksumFor(contextRoot(), version))).then(i -> artifact());
-                when(repository.buildArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
-                when(repository.buildArtifact(groupId(), artifactId(), Version.ANY, type))
+                when(repository.lookupArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
+                when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, type))
                         .then(i -> artifact(Version.ANY));
             }
 
@@ -383,6 +383,7 @@ public class AbstractDeployerTest {
         assertThat(thrown).isInstanceOf(WebApplicationException.class);
         Response response = ((WebApplicationException) thrown).getResponse();
         assertThat(response.getStatusInfo()).isEqualTo(BAD_REQUEST);
+        System.out.println("found violations: " + response.getEntity());
         //noinspection unchecked
         return (Set<ConstraintViolation<?>>) response.getEntity();
     }

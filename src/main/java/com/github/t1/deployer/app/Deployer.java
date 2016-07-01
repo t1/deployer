@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
-import com.github.t1.deployer.app.ConfigurationPlan.Item;
+import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
@@ -29,8 +29,6 @@ import static javax.ws.rs.core.Response.Status.*;
 @Singleton
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
-    public static final GroupId LOGGERS = new GroupId("loggers");
-    public static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
 
     @Inject DeploymentContainer deployments;
     @Inject LoggerContainer loggers;
@@ -61,37 +59,26 @@ public class Deployer {
         }
 
         private void run(ConfigurationPlan plan) {
-            for (GroupId groupId : plan.getGroupIds()) {
-                for (ArtifactId artifactId : plan.getArtifactIds(groupId)) {
-                    Item item = plan.getItem(groupId, artifactId);
+            plan.loggers().forEach(this::applyLogger);
 
-                    log.debug("configure item: {}:{}:{}", groupId, artifactId, item);
+            plan.logHandlers().forEach(this::applyLogHandler);
 
-                    if (LOGGERS.equals(groupId)) {
-                        applyLogger(artifactId, item);
-                    } else if (LOG_HANDLERS.equals(groupId)) {
-                        applyLogHandler(artifactId, item);
-                    } else {
-                        applyDeployment(groupId, artifactId, item);
-                    }
-                }
-            }
+            plan.deployments().forEach(this::applyDeployment);
 
             if (managed)
                 for (Deployment deployment : existing)
                     undeploy(deployment.getName(), repository.getByChecksum(deployment.getChecksum()));
         }
 
-        private void applyLogger(ArtifactId artifactId, Item item) {
+        private void applyLogger(LoggerConfig item) {
             validate(item, logger.class);
-            String category = artifactId.toString();
-            LoggerResource logger = loggers.logger(category);
-            log.debug("check '{}' -> {}", category, item.getState());
+            LoggerResource logger = loggers.logger(item.getCategory());
+            log.debug("check '{}' -> {}", item.getCategory(), item.getState());
             switch (item.getState()) {
             case deployed:
                 if (logger.isDeployed()) {
                     if (logger.level().equals(item.getLevel())) {
-                        log.info("logger already configured: {}: {}", category, item.getLevel());
+                        log.info("logger already configured: {}: {}", item.getCategory(), item.getLevel());
                     } else {
                         logger.correctLevel(item.getLevel());
                         audits.add(audit(logger).level(item.getLevel()).updated());
@@ -107,7 +94,7 @@ public class Deployer {
                     logger.remove();
                     audits.add(audit(logger).removed());
                 } else {
-                    log.info("logger already removed: {}", category);
+                    log.info("logger already removed: {}", item.getCategory());
                 }
                 break;
             }
@@ -117,10 +104,10 @@ public class Deployer {
             return LoggerAudit.builder().category(logger.category()).level(logger.level());
         }
 
-        private void applyLogHandler(ArtifactId artifactId, Item item) {
+        private void applyLogHandler(LogHandlerConfig item) {
             validate(item, loghandler.class);
-            String name = artifactId.toString();
-            LoggingHandlerType type = item.getHandlerType();
+            String name = item.getName();
+            LoggingHandlerType type = item.getType();
             String file = (item.getFile() == null) ? name : item.getFile();
             LogHandler handler = loggers.handler(type, name);
             if (handler.isDeployed())
@@ -138,14 +125,15 @@ public class Deployer {
                        .add();
         }
 
-        private void applyDeployment(GroupId groupId, ArtifactId artifactId, Item item) {
+        private void applyDeployment(DeploymentConfig item) {
             validate(item, deployment.class);
-            DeploymentName name = toDeploymentName(item, artifactId);
+            DeploymentName name = item.getDeploymentName();
             log.debug("check '{}' -> {}", name, item.getState());
-            Artifact artifact = repository.buildArtifact(groupId, artifactId, item.getVersion(), item.getType());
+            Artifact artifact = repository
+                    .lookupArtifact(item.getGroupId(), item.getArtifactId(), item.getVersion(), item.getType());
             switch (item.getState()) {
             case deployed:
-                log.debug("found {}:{}:{} => {}", groupId, artifactId, item.getVersion(), artifact);
+                log.debug("found {} => {}", item, artifact);
                 deployIf(name, artifact);
                 break;
             case undeployed:
@@ -171,10 +159,6 @@ public class Deployer {
             NotNullContainer notNullContainer = new NotNullContainer(null);
             //noinspection unchecked
             return (Set) validator.validate(notNullContainer);
-        }
-
-        private DeploymentName toDeploymentName(Item item, ArtifactId artifactId) {
-            return new DeploymentName((item.getName() == null) ? artifactId.toString() : item.getName());
         }
 
         private void deployIf(@NonNull DeploymentName name, @NonNull Artifact artifact) {

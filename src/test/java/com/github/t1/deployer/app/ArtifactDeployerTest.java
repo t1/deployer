@@ -6,8 +6,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.validation.ConstraintViolation;
-
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -33,14 +31,12 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToDeployWebArchiveWithEmptyItem() {
-        Throwable thrown = catchThrowable(() ->
-                deployer.run(""
-                        + "org.foo:\n"
-                        + "  foo-war:\n"));
+        Throwable thrown = catchThrowable(() -> deployer.run(""
+                + "org.foo:\n"
+                + "  foo-war:\n"));
 
-        assertThat(unpackViolations(thrown))
-                .extracting(ConstraintViolation::getMessage, v -> v.getRootBeanClass().getName())
-                .containsExactly(tuple("may not be null", "com.github.t1.deployer.app.Deployer$Run$1NotNullContainer"));
+        assertThat(thrown).isInstanceOf(NullPointerException.class)
+                          .hasMessageContaining("no config in org.foo:foo-war");
     }
 
 
@@ -51,9 +47,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "  foo-war:\n"
                 + "    state: deployed\n"));
 
-        assertThat(unpackViolations(thrown))
-                .extracting(ConstraintViolation::getMessage, ArtifactDeployerTest::pathString)
-                .containsExactly(tuple("may not be null", "version"));
+        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("version");
     }
 
 
@@ -266,9 +260,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "  foo-war:\n"
                 + "    state: undeployed\n"));
 
-        assertThat(unpackViolations(thrown))
-                .extracting(ConstraintViolation::getMessage, ArtifactDeployerTest::pathString)
-                .containsExactly(tuple("may not be null", "version"));
+        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("version");
     }
 
 

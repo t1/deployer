@@ -1,19 +1,20 @@
 package com.github.t1.deployer.app;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.github.t1.deployer.container.DeploymentName;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.*;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
@@ -21,88 +22,167 @@ import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
-import static java.util.Collections.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
+@Builder
 @AllArgsConstructor(access = PRIVATE)
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class ConfigurationPlan {
+    private static final GroupId LOGGERS = new GroupId("loggers");
+    private static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
+
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory()
             .enable(MINIMIZE_QUOTES).disable(WRITE_DOC_START_MARKER))
             .setSerializationInclusion(NON_EMPTY)
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    public static final TypeReference<Map<GroupId, Map<ArtifactId, Item>>>
-            ARTIFACT_MAP_TYPE = new TypeReference<Map<GroupId, Map<ArtifactId, Item>>>() {};
+    public static final TypeReference<Map<GroupId, Map<ArtifactId, JsonNode>>>
+            ARTIFACT_MAP_TYPE = new TypeReference<Map<GroupId, Map<ArtifactId, JsonNode>>>() {};
 
     public static ConfigurationPlan load(Reader reader) {
-        Map<GroupId, Map<ArtifactId, Item>> map;
-        try {
-            map = MAPPER.readValue(reader, ARTIFACT_MAP_TYPE);
-        } catch (IOException e) {
-            log.debug("exception while loading config plan", e);
-            throw new WebApplicationException(Response.status(BAD_REQUEST).entity(e.getMessage()).build());
-        }
-        if (map == null)
-            map = emptyMap();
-        ConfigurationPlan plan = new ConfigurationPlan(map);
+        ConfigurationPlan plan = ConfigurationPlan.from(loadJson(reader));
         log.debug("config plan loaded:\n{}", plan);
         return plan;
     }
 
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") @NonNull
-    private final Map<GroupId, Map<ArtifactId, Item>> groupMap;
+    public static JsonNode loadJson(Reader reader) {
+        try {
+            return MAPPER.readValue(reader, JsonNode.class);
+        } catch (IOException e) {
+            log.debug("exception while loading config plan", e);
+            throw new WebApplicationException(Response.status(BAD_REQUEST).entity(e.getMessage()).build());
+        }
+    }
 
-    public Set<GroupId> getGroupIds() { return unmodifiableSet(groupMap.keySet()); }
+    public static ConfigurationPlan from(JsonNode json) {
+        ConfigurationPlanBuilder builder = builder();
+        builder.load(json);
+        return builder.build();
+    }
 
-    public Set<ArtifactId> getArtifactIds(GroupId groupId) { return unmodifiableSet(groupMap.get(groupId).keySet()); }
+    public static class ConfigurationPlanBuilder {
+        public void load(JsonNode json) {
+            fieldNames(json).map(GroupId::new).forEach(groupId -> {
+                JsonNode artifactNode = json.get(groupId.getValue());
+                fieldNames(artifactNode).map(ArtifactId::new).forEach(artifactId -> {
+                    JsonNode node = artifactNode.get(artifactId.getValue());
+                    if (node.isNull())
+                        throw new NullPointerException("no config in " + groupId + ":" + artifactId);
+                    if (LOGGERS.equals(groupId)) {
+                        logger(LoggerConfig.fromJson(artifactId, node));
+                    } else if (LOG_HANDLERS.equals(groupId)) {
+                        logHandler(LogHandlerConfig.fromJson(artifactId, node));
+                    } else {
+                        deployment(DeploymentConfig.fromJson(groupId, artifactId, node));
+                    }
+                });
+            });
+        }
+    }
 
-    public Item getItem(GroupId groupId, ArtifactId artifactId) { return groupMap.get(groupId).get(artifactId); }
+    @Singular @NonNull private final List<LoggerConfig> loggers;
+    @Singular @NonNull private final List<LogHandlerConfig> logHandlers;
+    @Singular @NonNull private final List<DeploymentConfig> deployments;
 
-    // TODO split into DeploymentItem, LoggerItem, and LogHandlerItem sharing state and name from AbstractItem and rename `handler-type` to `type`
-    // TODO more smart defaults for LogHandlers
+    public Stream<LoggerConfig> loggers() { return loggers.stream(); }
+
+    public Stream<LogHandlerConfig> logHandlers() { return logHandlers.stream(); }
+
+    public Stream<DeploymentConfig> deployments() { return deployments.stream(); }
+
     @Data
-    public static class Item {
-        // general
-        @NonNull
-        private DeploymentState state = deployed;
-
-        // deployment
-        @NotNull(groups = deployment.class)
-        private Version version;
-
-        /** defaults to the artifact-id */
-        private String name;
-
-        @NotNull(groups = deployment.class)
-        private ArtifactType type = war;
+    @Builder
+    @AllArgsConstructor(access = PRIVATE)
+    public static class DeploymentConfig {
+        @NonNull private GroupId groupId;
+        @NonNull private ArtifactId artifactId;
+        @NonNull private DeploymentState state;
+        @NonNull private String name;
+        @NonNull private Version version;
+        @NonNull private ArtifactType type;
 
 
-        // logger/handler
-        @NotNull(groups = { logger.class, loghandler.class })
-        private LogLevel level;
+        public DeploymentName getDeploymentName() { return new DeploymentName(name); }
 
-        @NotNull(groups = { loghandler.class })
-        @JsonProperty("handler-type")
-        private LoggingHandlerType handlerType = periodicRotatingFile;
 
-        /** defaults to the handler name */
-        private String file;
-
-        @NotNull(groups = { loghandler.class })
-        private String suffix = ".yyyy-MM-dd";
-
-        @NotNull(groups = { loghandler.class })
-        private String format;
+        public static DeploymentConfig fromJson(GroupId groupId, ArtifactId artifactId, JsonNode node) {
+            DeploymentConfigBuilder builder = builder()
+                    .groupId(groupId)
+                    .artifactId(artifactId);
+            apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
+            apply(node, "name", artifactId.getValue(), builder::name);
+            apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
+            apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
+            return builder.build();
+        }
 
         @Override public String toString() {
-            return "«" + state
-                    + (version == null ? "" : ":" + version)
+            return "«deployment:" + state
                     + (name == null ? "" : ":" + name)
+                    + (version == null ? "" : ":" + version)
                     + (type == war ? "" : ":" + type)
+                    + "»";
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor(access = PRIVATE)
+    public static class LoggerConfig {
+        @NonNull private DeploymentState state;
+        @NonNull private String category;
+        @NonNull private LogLevel level;
+
+
+        private static LoggerConfig fromJson(ArtifactId artifactId, JsonNode node) {
+            LoggerConfigBuilder builder = builder();
+            apply(node, "state", "deployed", value -> builder.state(DeploymentState.valueOf(value)));
+            apply(node, "name", artifactId.getValue(), builder::category);
+            apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
+            return builder.build();
+        }
+
+        @Override public String toString() {
+            return "«logger:" + state
+                    + (category == null ? "" : ":" + category)
                     + (level == null ? "" : ":" + level)
-                    + (handlerType == periodicRotatingFile ? "" : ":" + handlerType)
+                    + "»";
+        }
+    }
+
+    // TODO more smart defaults for LogHandlers
+    @Data
+    @Builder
+    @AllArgsConstructor(access = PRIVATE)
+    public static class LogHandlerConfig {
+        @NonNull private DeploymentState state;
+        @NonNull private String name;
+        @NonNull private LogLevel level;
+        @NonNull private LoggingHandlerType type;
+        @NonNull private String file;
+        @NonNull private String suffix;
+        @NonNull private String format;
+
+
+        private static LogHandlerConfig fromJson(ArtifactId artifactId, JsonNode node) {
+            LogHandlerConfigBuilder builder = builder();
+            apply(node, "state", "deployed", value -> builder.state(DeploymentState.valueOf(value)));
+            apply(node, "name", artifactId.getValue(), builder::name);
+            apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
+            apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));
+            apply(node, "file", artifactId.getValue(), builder::file);
+            apply(node, "suffix", ".yyyy-MM-dd", builder::suffix);
+            apply(node, "format", null, builder::format);
+            return builder.build();
+        }
+
+        @Override public String toString() {
+            return "«log-handler:" + state
+                    + (name == null ? "" : ":" + name)
+                    + (level == null ? "" : ":" + level)
+                    + (type == periodicRotatingFile ? "" : ":" + type)
                     + (file == null ? "" : ":" + file)
                     + (suffix.isEmpty() ? "" : ":" + suffix)
                     + (format == null ? "" : ":" + format)
@@ -110,14 +190,19 @@ public class ConfigurationPlan {
         }
     }
 
+    private static Stream<String> fieldNames(JsonNode json) {
+        return StreamSupport.stream(((Iterable<String>) json::fieldNames).spliterator(), false);
+    }
+
+    private static void apply(JsonNode node, String fieldName, String defaultValue, Consumer<String> setter) {
+        setter.accept((node.has(fieldName)) ? node.get(fieldName).asText() : defaultValue);
+    }
+
     @Override public String toString() {
         StringBuilder out = new StringBuilder();
-        for (GroupId groupId : getGroupIds()) {
-            out.append(groupId).append(":\n");
-            for (ArtifactId artifactId : getArtifactIds(groupId)) {
-                out.append("  ").append(artifactId).append(": ").append(getItem(groupId, artifactId)).append("\n");
-            }
-        }
+        loggers().forEach(logger -> out.append(logger).append("\n"));
+        logHandlers().forEach(handler -> out.append(handler).append("\n"));
+        deployments().forEach(deployment -> out.append(deployment).append("\n"));
         return out.toString();
     }
 }

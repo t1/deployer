@@ -4,14 +4,27 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.validation.ConstraintViolation;
-
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoggerDeployerTest extends AbstractDeployerTest {
+    @Test
+    public void shouldAddEmptyLoggers() {
+        deployer.run(""
+                + "loggers:\n");
+    }
+
+    @Test
+    public void shouldFailToAddLoggerWithoutItem() {
+        Throwable thrown = catchThrowable(() -> deployer.run(""
+                + "loggers:\n"
+                + "  foo:\n"));
+
+        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("no config in loggers:foo");
+    }
+
     @Test
     public void shouldAddLogger() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
@@ -75,9 +88,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "  com.github.t1.deployer.app:\n"
                 + "    state: deployed\n"));
 
-        assertThat(unpackViolations(thrown))
-                .extracting(ConstraintViolation::getMessage, ArtifactDeployerTest::pathString)
-                .containsExactly(tuple("may not be null", "level"));
+        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("level");
     }
 
 
@@ -120,6 +131,22 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldAddEmptyLogHandlers() {
+        deployer.run(""
+                + "log-handlers:\n");
+    }
+
+    @Test
+    public void shouldFailToAddLogHandlersWithoutItem() {
+        Throwable thrown = catchThrowable(() -> deployer.run(""
+                + "log-handlers:\n"
+                + "  foo:\n"));
+
+        assertThat(thrown).isInstanceOf(NullPointerException.class)
+                          .hasMessageContaining("no config in log-handlers:foo");
+    }
+
+    @Test
     public void shouldAddPeriodicRotatingFileHandlerAsDefault() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
@@ -150,7 +177,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
@@ -170,7 +197,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
@@ -189,7 +216,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    format: the-format\n");
@@ -226,7 +253,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
@@ -249,7 +276,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
@@ -271,7 +298,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-new-file\n"
                 + "    suffix: the-suffix\n"
@@ -293,7 +320,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-new-suffix\n"
@@ -315,7 +342,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
@@ -337,7 +364,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
-                + "    handler-type: periodicRotatingFile\n"
+                + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-new-file\n"
                 + "    suffix: the-suffix\n"
