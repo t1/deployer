@@ -13,6 +13,8 @@ import java.util.List;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.rest.RestContext.*;
+import static java.lang.String.*;
+import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
 
 @Ignore
@@ -25,12 +27,15 @@ public class TestClient {
     public List<Audit> run(String plan) throws IOException {
         try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_DEPLOYER_CONFIG)).setup()) {
             memento.write(plan);
-
-            return REST
-                    .createResource(UriTemplate.fromString("http://localhost:8080/deployer/api"))
-                    .accept(new GenericType<List<Audit>>() {})
-                    .POST();
+            return postUpdate();
         }
+    }
+
+    private static List<Audit> postUpdate() {
+        return REST
+                .createResource(UriTemplate.fromString("http://localhost:8080/deployer/api"))
+                .accept(new GenericType<List<Audit>>() {})
+                .POST();
     }
 
     @Test
@@ -73,5 +78,12 @@ public class TestClient {
         List<Audit> audits = run(plan);
 
         assertThat(audits).containsExactly(JOLOKIA.removed());
+    }
+
+    @Test
+    public void shouldPostUpdate() throws Exception {
+        List<Audit> audits = postUpdate();
+
+        System.out.println("audit:\n- " + join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
     }
 }

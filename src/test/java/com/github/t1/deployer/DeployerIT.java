@@ -163,7 +163,7 @@ public class DeployerIT {
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("jolokia"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        if (plan.isEmpty()) // TODO fix deserialization
+        if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
                     ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").added());
     }
@@ -183,7 +183,7 @@ public class DeployerIT {
         assertThat(container.getAllDeployments())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        if (plan.isEmpty()) // TODO fix deserialization
+        if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
                     ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").removed());
     }
@@ -203,7 +203,7 @@ public class DeployerIT {
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("postgresql"), checksum(POSTGRESQL_9_4_1207_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        if (plan.isEmpty()) // TODO fix deserialization
+        if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
                     ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").name("postgresql").added());
     }

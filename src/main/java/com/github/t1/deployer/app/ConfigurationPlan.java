@@ -129,9 +129,10 @@ public class ConfigurationPlan {
     public static class LoggerConfig {
         @NonNull private DeploymentState state;
         @NonNull private String category;
-        @NonNull private LogLevel level;
+        private LogLevel level;
         @Singular
         @NonNull private List<LogHandlerName> handlers = new ArrayList<>();
+        // TODO use-parent-handlers
 
 
         private static LoggerConfig fromJson(ArtifactId artifactId, JsonNode node) {
@@ -171,6 +172,7 @@ public class ConfigurationPlan {
         @NonNull private String file;
         @NonNull private String suffix;
         @NonNull private String format;
+        // TODO formatter / named-formatter
 
 
         private static LogHandlerConfig fromJson(ArtifactId artifactId, JsonNode node) {

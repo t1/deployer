@@ -108,12 +108,13 @@ public class LoggerResource {
     public void add() {
         if (isRoot())
             throw new RuntimeException("can't add root logger");
-        if (level == null)
-            throw new RuntimeException("can't add logger '" + category + "' without level");
 
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("add");
-        request.get("level").set(level.name());
+        if (level != null)
+            request.get("level").set(level.name());
+        for (LogHandlerName handler : handlers)
+            request.get("handlers").add(handler.getValue());
 
         cli.execute(request);
 

@@ -87,7 +87,7 @@ public abstract class Audit {
     @EqualsAndHashCode(callSuper = true)
     public static class LoggerAudit extends Audit {
         @NonNull @JsonProperty private final String category;
-        @NonNull @JsonProperty private final LogLevel level;
+        @JsonProperty private final LogLevel level;
 
         @Override public String toString() { return super.toString() + ":" + category + ":" + level; }
 
@@ -121,7 +121,7 @@ public abstract class Audit {
         case "logger": {
             LoggerAudit.LoggerAuditBuilder builder = LoggerAudit
                     .of(map.get("category"))
-                    .level(LogLevel.valueOf(map.get("level")));
+                    .level(map.containsKey("level") ? LogLevel.valueOf(map.get("level")) : null);
             return build(map, builder);
         }
         default:

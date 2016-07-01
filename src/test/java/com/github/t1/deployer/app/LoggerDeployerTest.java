@@ -80,15 +80,15 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldFailToAddLoggerWithoutLevel() {
-        givenLogger("com.github.t1.deployer.app");
+    public void shouldAddLoggerWithoutLevel() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app");
 
-        Throwable thrown = catchThrowable(() -> deployer.run(""
+        Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
-                + "    state: deployed\n"));
+                + "    state: deployed\n");
 
-        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("level");
+        logger.verifyAdded(audits);
     }
 
 

@@ -77,11 +77,13 @@ public class Deployer {
             switch (item.getState()) {
             case deployed:
                 if (logger.isDeployed()) {
-                    if (logger.level().equals(item.getLevel())) {
-                        log.info("logger already configured: {}: {}", item.getCategory(), item.getLevel());
-                    } else {
-                        logger.correctLevel(item.getLevel());
-                        audits.audit(audit(logger).level(item.getLevel()).updated());
+                    if (item.getLevel() != null) {
+                        if (logger.level().equals(item.getLevel())) {
+                            log.info("logger already configured: {}: {}", item.getCategory(), item.getLevel());
+                        } else {
+                            logger.correctLevel(item.getLevel());
+                            audits.audit(audit(logger).level(item.getLevel()).updated());
+                        }
                     }
                 } else {
                     logger = logger.toBuilder()

@@ -122,17 +122,18 @@ public class LoggerContainerTest {
                 + "\"use-parent-handlers\" => true" + "\n";
     }
 
-    private ModelNode addLogger(String categoryType, String category, LogLevel logLevel) {
+    private ModelNode addLogger(String categoryType, String category, LogLevel logLevel, CharSequence... handlers) {
         return ModelNode.fromString("{"
-                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
-                + "\"operation\" => \"add\","
-                + "\"level\" => \"" + logLevel + "\"\n"
+                + loggerAddress(categoryType, category)
+                + "\"operation\" => \"add\""
+                + ((logLevel == null) ? "" : ",\"level\" => \"" + logLevel + "\"")
+                + ((handlers.length == 0) ? "" : ",\"handlers\" => [\"" + String.join("\", \"", handlers) + "\"]\n")
                 + "}");
     }
 
-    private ModelNode updateLogLevel(String categoryType, String category, LogLevel logLevel) {
+    private ModelNode writeLoggerAttribute(String categoryType, String category, LogLevel logLevel) {
         return ModelNode.fromString("{"
-                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
+                + loggerAddress(categoryType, category)
                 + "\"operation\" => \"write-attribute\","
                 + "\"name\" => \"level\","
                 + "\"value\" => \"" + logLevel + "\"\n"
@@ -141,9 +142,12 @@ public class LoggerContainerTest {
 
     private ModelNode removeLogger(String categoryType, String category) {
         return ModelNode.fromString("{"
-                + "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],"
-                + "\"operation\" => \"remove\"\n"
+                + "\"operation\" => \"remove\"\n" + loggerAddress(categoryType, category)
                 + "}");
+    }
+
+    private String loggerAddress(String categoryType, String category) {
+        return "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],";
     }
 
     private ModelNode addHandler(String type, String name) {
@@ -243,6 +247,41 @@ public class LoggerContainerTest {
     }
 
     @Test
+    public void shouldAddLoggerWithOneHandler() throws IOException {
+        givenNoLogger("bar");
+
+        container.logger("bar").toBuilder().level(INFO).handler(new LogHandlerName("FOO")).build().add();
+
+        verifyExecute(addLogger("logger", "bar", INFO, "FOO"));
+    }
+
+    @Test
+    public void shouldAddLoggerWithTwoHandlers() throws IOException {
+        givenNoLogger("bar");
+
+        container.logger("bar").toBuilder()
+                 .level(DEBUG)
+                 .handler(new LogHandlerName("FOO"))
+                 .handler(new LogHandlerName("BAR"))
+                 .build()
+                 .add();
+
+        verifyExecute(addLogger("logger", "bar", DEBUG, "FOO", "BAR"));
+    }
+
+    @Test
+    public void shouldAddLoggerWithOneHandlerAndNoLevel() throws IOException {
+        givenNoLogger("bar");
+
+        container.logger("bar").toBuilder()
+                 .handler(new LogHandlerName("FOO"))
+                 .build()
+                 .add();
+
+        verifyExecute(addLogger("logger", "bar", null, "FOO"));
+    }
+
+    @Test
     public void shouldFailToAddRootLogger() throws IOException {
         givenLogger("foo", FOO_LEVEL);
         givenNoLogger("bar");
@@ -261,7 +300,7 @@ public class LoggerContainerTest {
 
         container.logger("foo").correctLevel(ERROR);
 
-        verifyExecute(updateLogLevel("logger", "foo", ERROR));
+        verifyExecute(writeLoggerAttribute("logger", "foo", ERROR));
     }
 
     @Test
@@ -271,7 +310,7 @@ public class LoggerContainerTest {
 
         container.logger("").correctLevel(ERROR);
 
-        verifyExecute(updateLogLevel("root-logger", "ROOT", ERROR));
+        verifyExecute(writeLoggerAttribute("root-logger", "ROOT", ERROR));
     }
 
     @Test
