@@ -17,5 +17,5 @@ public class LoggerContainer extends CLI {
 
     public LoggerResource logger(String category) { return new LoggerResource(category, this); }
 
-    public LogHandler handler(LoggingHandlerType type, String name) { return new LogHandler(name, type, this); }
+    public LogHandler handler(LoggingHandlerType type, LogHandlerName name) { return new LogHandler(name, type, this); }
 }

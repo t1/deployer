@@ -17,7 +17,7 @@ import static lombok.AccessLevel.*;
 @AllArgsConstructor(access = PRIVATE)
 @Accessors(fluent = true, chain = true)
 public class LogHandler {
-    @NonNull private final String name;
+    @NonNull private final LogHandlerName name;
     @NonNull private final LoggingHandlerType type;
 
     @NonNull private final CLI cli;
@@ -94,7 +94,7 @@ public class LogHandler {
         ModelNode request = new ModelNode();
         request.get("address")
                .add("subsystem", "logging")
-               .add(type.getTypeName(), name);
+               .add(type.getTypeName(), name.getValue());
         return request;
     }
 

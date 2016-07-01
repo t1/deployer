@@ -24,6 +24,9 @@ public class LoggerResource {
     @NonNull private final CLI cli;
 
     private Boolean deployed = null;
+
+    @Singular
+    private List<LogHandlerName> handlers = new ArrayList<>();
     private LogLevel level;
 
     public String category() {
@@ -31,6 +34,11 @@ public class LoggerResource {
     }
 
     public boolean isRoot() { return ROOT.equals(category) || category.isEmpty(); }
+
+    public List<LogHandlerName> handlers() {
+        assertDeployed();
+        return handlers;
+    }
 
     public LogLevel level() {
         assertDeployed();

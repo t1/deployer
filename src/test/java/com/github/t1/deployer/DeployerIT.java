@@ -102,7 +102,7 @@ public class DeployerIT {
             // restore after JBoss is down
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
-            loggers.handler(console, "CONSOLE").correctLevel(ALL);
+            loggers.handler(console, new LogHandlerName("CONSOLE")).correctLevel(ALL);
             loggers.logger("com.github.t1.deployer").toBuilder().level(DEBUG).build().add();
 
             log.info("deployments: {}", container.getAllDeployments());

@@ -15,14 +15,12 @@ import org.mockito.*;
 
 import javax.enterprise.inject.Instance;
 import javax.validation.*;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static javax.ws.rs.core.Response.Status.*;
+import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -56,7 +54,8 @@ public class AbstractDeployerTest {
 
         when(loggerMock.toBuilder()).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.level(any(LogLevel.class))).thenReturn(loggerBuilderMock);
-        when(loggerBuilderMock.level(any(LogLevel.class))).thenReturn(loggerBuilderMock);
+        when(loggerBuilderMock.handler(any(LogHandlerName.class))).thenReturn(loggerBuilderMock);
+        when(loggerBuilderMock.handlers(anyListOf(LogHandlerName.class))).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.build()).thenReturn(loggerMock);
 
 
@@ -98,7 +97,7 @@ public class AbstractDeployerTest {
 
     @After
     public void afterLogHandlers() {
-        verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), anyString());
+        verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), any(LogHandlerName.class));
 
         verify(logHandlerMock, atLeast(0)).isDeployed();
 
@@ -247,20 +246,27 @@ public class AbstractDeployerTest {
     @Getter
     public class LoggerFixture {
         private final String category;
+        private final List<String> handlers = new ArrayList<>();
         private LogLevel level;
 
         public LoggerFixture(String category) {
             this.category = category;
 
             when(loggerMock.category()).thenReturn(category);
+            when(loggerMock.handlers()).then(i -> handlers);
+            when(loggerMock.level()).then(i -> level);
 
             when(loggers.logger(category)).thenReturn(loggerMock);
             when(loggerMock.isDeployed()).thenReturn(false);
         }
 
         public LoggerFixture level(LogLevel level) {
-            when(loggerMock.level()).thenReturn(level);
             this.level = level;
+            return this;
+        }
+
+        public LoggerFixture handler(String handlerName) {
+            this.handlers.add(handlerName);
             return this;
         }
 
@@ -273,6 +279,7 @@ public class AbstractDeployerTest {
         public void verifyAdded(Audits audits) {
             verify(loggerMock).toBuilder();
             verify(loggerBuilderMock).level(level);
+            verify(loggerBuilderMock).handlers(handlers.stream().map(LogHandlerName::new).collect(toList()));
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
             assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).added());
@@ -307,7 +314,7 @@ public class AbstractDeployerTest {
             this.type = type;
             this.name = name;
 
-            when(loggers.handler(type, name)).thenReturn(logHandlerMock);
+            when(loggers.handler(type, new LogHandlerName(name))).thenReturn(logHandlerMock);
             when(logHandlerMock.level()).then(i -> level);
             when(logHandlerMock.file()).then(i -> file);
             when(logHandlerMock.suffix()).then(i -> suffix);
@@ -361,7 +368,7 @@ public class AbstractDeployerTest {
         }
 
         public LogHandler verifyLogHandler() {
-            verify(loggers).handler(type, name);
+            verify(loggers).handler(type, new LogHandlerName(name));
             return verify(logHandlerMock);
         }
 
@@ -377,16 +384,4 @@ public class AbstractDeployerTest {
             assertThat(audits.asList()).isEmpty();
         }
     }
-
-
-    public static Set<ConstraintViolation<?>> unpackViolations(Throwable thrown) {
-        assertThat(thrown).isInstanceOf(WebApplicationException.class);
-        Response response = ((WebApplicationException) thrown).getResponse();
-        assertThat(response.getStatusInfo()).isEqualTo(BAD_REQUEST);
-        System.out.println("found violations: " + response.getEntity());
-        //noinspection unchecked
-        return (Set<ConstraintViolation<?>>) response.getEntity();
-    }
-
-    public static String pathString(ConstraintViolation<?> v) {return v.getPropertyPath().toString();}
 }

@@ -92,7 +92,37 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldAddWithLoggerHandlers
+    @Test
+    public void shouldAddLoggerWithOneHandler() {
+        givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG).handler("FOO");
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handler: FOO\n");
+
+        logger.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddLoggerWithTwoHandlers() {
+        givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
+        givenLogHandler(periodicRotatingFile, "BAR").level(DEBUG).deployed();
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG).handler("FOO").handler("BAR");
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handlers: [FOO,BAR]\n");
+
+        logger.verifyAdded(audits);
+    }
+
+
     // TODO shouldUpdateLoggerHandlers
     // TODO shouldAddUseParentHandlers
     // TODO shouldUpdateUseParentHandlers

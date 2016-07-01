@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.github.t1.deployer.container.DeploymentName;
+import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 import lombok.*;
@@ -16,9 +16,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.*;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
-import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
@@ -33,9 +31,7 @@ public class ConfigurationPlan {
     private static final GroupId LOGGERS = new GroupId("loggers");
     private static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
 
-    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory()
-            .enable(MINIMIZE_QUOTES).disable(WRITE_DOC_START_MARKER))
-            .setSerializationInclusion(NON_EMPTY)
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public static final TypeReference<Map<GroupId, Map<ArtifactId, JsonNode>>>
@@ -134,6 +130,8 @@ public class ConfigurationPlan {
         @NonNull private DeploymentState state;
         @NonNull private String category;
         @NonNull private LogLevel level;
+        @Singular
+        @NonNull private List<LogHandlerName> handlers = new ArrayList<>();
 
 
         private static LoggerConfig fromJson(ArtifactId artifactId, JsonNode node) {
@@ -141,6 +139,15 @@ public class ConfigurationPlan {
             apply(node, "state", "deployed", value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "name", artifactId.getValue(), builder::category);
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
+            apply(node, "handler", null, value -> {
+                if (value != null)
+                    builder.handler(new LogHandlerName(value));
+            });
+            if (node.has("handlers")) {
+                Iterator<JsonNode> handlers = node.get("handlers").elements();
+                while (handlers.hasNext())
+                    builder.handler(new LogHandlerName(handlers.next().textValue()));
+            }
             return builder.build();
         }
 
@@ -158,7 +165,7 @@ public class ConfigurationPlan {
     @AllArgsConstructor(access = PRIVATE)
     public static class LogHandlerConfig {
         @NonNull private DeploymentState state;
-        @NonNull private String name;
+        @NonNull private LogHandlerName name;
         @NonNull private LogLevel level;
         @NonNull private LoggingHandlerType type;
         @NonNull private String file;
@@ -169,7 +176,7 @@ public class ConfigurationPlan {
         private static LogHandlerConfig fromJson(ArtifactId artifactId, JsonNode node) {
             LogHandlerConfigBuilder builder = builder();
             apply(node, "state", "deployed", value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "name", artifactId.getValue(), builder::name);
+            apply(node, "name", artifactId.getValue(), value -> builder.name(new LogHandlerName(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));
             apply(node, "file", artifactId.getValue(), builder::file);

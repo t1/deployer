@@ -84,7 +84,10 @@ public class Deployer {
                         audits.add(audit(logger).level(item.getLevel()).updated());
                     }
                 } else {
-                    logger = logger.toBuilder().level(item.getLevel()).build();
+                    logger = logger.toBuilder()
+                                   .level(item.getLevel())
+                                   .handlers(item.getHandlers())
+                                   .build();
                     logger.add();
                     audits.add(audit(logger).added());
                 }
@@ -106,9 +109,9 @@ public class Deployer {
 
         private void applyLogHandler(LogHandlerConfig item) {
             validate(item, loghandler.class);
-            String name = item.getName();
+            LogHandlerName name = item.getName();
             LoggingHandlerType type = item.getType();
-            String file = (item.getFile() == null) ? name : item.getFile();
+            String file = (item.getFile() == null) ? name.getValue() : item.getFile();
             LogHandler handler = loggers.handler(type, name);
             if (handler.isDeployed())
                 handler.correctLevel(item.getLevel())
