@@ -2,6 +2,7 @@ package com.github.t1.deployer.app;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.Path;
@@ -14,6 +15,7 @@ import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Path("/api")
+@Stateless
 @Slf4j
 public class DeployerBoundary {
     public static final String ROOT_DEPLOYER_CONFIG = "root.deployer.config";

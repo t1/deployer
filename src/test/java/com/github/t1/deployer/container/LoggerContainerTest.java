@@ -142,7 +142,8 @@ public class LoggerContainerTest {
 
     private ModelNode removeLogger(String categoryType, String category) {
         return ModelNode.fromString("{"
-                + "\"operation\" => \"remove\"\n" + loggerAddress(categoryType, category)
+                + loggerAddress(categoryType, category)
+                + "\"operation\" => \"remove\"\n"
                 + "}");
     }
 

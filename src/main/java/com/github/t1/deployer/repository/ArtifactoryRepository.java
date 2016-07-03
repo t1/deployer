@@ -4,8 +4,6 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.io.InputStream;
 import java.net.URI;
@@ -14,6 +12,7 @@ import java.util.*;
 
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
+import static com.github.t1.problem.WebException.*;
 import static com.github.t1.rest.RestContext.*;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -233,10 +232,7 @@ public class ArtifactoryRepository extends Repository {
                     .inputStreamSupplier(() -> download(fileInfo))
                     .build();
         case NOT_FOUND:
-            throw new WebApplicationException(Response
-                    .status(NOT_FOUND)
-                    .entity("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type)
-                    .build());
+            throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
         default:
             throw new UnexpectedStatusException(response.status(), response.headers(), OK);
         }
