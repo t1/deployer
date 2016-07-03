@@ -13,17 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ejb.Singleton;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import javax.validation.*;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import javax.validation.Validator;
 import java.io.*;
 import java.nio.file.*;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
-import static javax.ws.rs.core.Response.Status.*;
 
 @Slf4j
 @Singleton
@@ -71,7 +66,6 @@ public class Deployer {
         }
 
         private void applyLogger(LoggerConfig item) {
-            validate(item, logger.class);
             item.validate();
             LoggerResource logger = loggers.logger(item.getCategory());
             log.debug("check '{}' -> {}", item.getCategory(), item.getState());
@@ -112,7 +106,6 @@ public class Deployer {
         }
 
         private void applyLogHandler(LogHandlerConfig item) {
-            validate(item, loghandler.class);
             LogHandlerName name = item.getName();
             LoggingHandlerType type = item.getType();
             String file = (item.getFile() == null) ? name.getValue() : item.getFile();
@@ -133,7 +126,6 @@ public class Deployer {
         }
 
         private void applyDeployment(DeploymentConfig item) {
-            validate(item, deployment.class);
             DeploymentName name = item.getDeploymentName();
             log.debug("check '{}' -> {}", name, item.getState());
             Artifact artifact = repository
@@ -146,26 +138,6 @@ public class Deployer {
             case undeployed:
                 undeployIf(name, artifact);
             }
-        }
-
-        public <T> void validate(T object, Class<?>... validationGroups) {
-            Set<ConstraintViolation<T>> violations = (object == null)
-                    ? failValidationNotNull()
-                    : validator.validate(object, validationGroups);
-            if (violations.isEmpty())
-                return;
-            log.info("violations found: {}", violations);
-            throw new WebApplicationException(Response.status(BAD_REQUEST).entity(violations).build());
-        }
-
-        public <T> Set<ConstraintViolation<T>> failValidationNotNull() {
-            @Value
-            class NotNullContainer {
-                @NotNull Object value;
-            }
-            NotNullContainer notNullContainer = new NotNullContainer(null);
-            //noinspection unchecked
-            return (Set) validator.validate(notNullContainer);
         }
 
         private void deployIf(@NonNull DeploymentName name, @NonNull Artifact artifact) {
