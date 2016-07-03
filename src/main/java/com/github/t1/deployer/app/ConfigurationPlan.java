@@ -160,7 +160,14 @@ public class ConfigurationPlan {
                 if (value != null)
                     builder.useParentHandlers(Boolean.valueOf(value));
             });
-            return builder.build();
+            LoggerConfig logger = builder.build();
+            logger.validate();
+            return logger;
+        }
+
+        private void validate() {
+            if (useParentHandlers == FALSE && handlers.isEmpty())
+                throw badRequest("Can't set use-parent-handlers to false when there are no handlers");
         }
 
         @Override public String toString() {
@@ -168,11 +175,6 @@ public class ConfigurationPlan {
                     + (category == null ? "" : ":" + category)
                     + (level == null ? "" : ":" + level)
                     + "»";
-        }
-
-        public void validate() {
-            if (useParentHandlers == FALSE && handlers.isEmpty())
-                throw badRequest("Can't set use-parent-handlers to false when there are no handlers");
         }
     }
 

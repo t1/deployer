@@ -66,7 +66,6 @@ public class Deployer {
         }
 
         private void applyLogger(LoggerConfig item) {
-            item.validate();
             LoggerResource logger = loggers.logger(item.getCategory());
             log.debug("check '{}' -> {}", item.getCategory(), item.getState());
             switch (item.getState()) {
