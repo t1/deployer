@@ -20,6 +20,7 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
+import static com.github.t1.log.LogLevel.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static lombok.AccessLevel.*;
 
@@ -160,7 +161,6 @@ public class ConfigurationPlan {
         }
     }
 
-    // TODO more smart defaults for LogHandlers
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
@@ -179,7 +179,7 @@ public class ConfigurationPlan {
             LogHandlerConfigBuilder builder = builder();
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "name", artifactId.getValue(), value -> builder.name(new LogHandlerName(value)));
-            apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
+            apply(node, "level", ALL.name(), value -> builder.level(LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));
             apply(node, "file", artifactId.getValue(), builder::file);
             apply(node, "suffix", ".yyyy-MM-dd", builder::suffix);
