@@ -122,19 +122,21 @@ public class LoggerContainerTest {
                 + "\"use-parent-handlers\" => true" + "\n";
     }
 
-    private ModelNode addLogger(String categoryType, String category, LogLevel logLevel, CharSequence... handlers) {
+    private ModelNode addLogger(String categoryType, String category, LogLevel logLevel, Boolean useParentHandlers,
+            CharSequence... handlers) {
         return ModelNode.fromString("{"
                 + loggerAddress(categoryType, category)
-                + "\"operation\" => \"add\""
-                + ((logLevel == null) ? "" : ",\"level\" => \"" + logLevel + "\"")
+                + ",\"operation\" => \"add\"\n"
+                + ((logLevel == null) ? "" : ",\"level\" => \"" + logLevel + "\"\n")
                 + ((handlers.length == 0) ? "" : ",\"handlers\" => [\"" + String.join("\", \"", handlers) + "\"]\n")
+                + ((useParentHandlers == null) ? "" : ",\"use-parent-handlers\" => " + useParentHandlers + "\n")
                 + "}");
     }
 
     private ModelNode writeLoggerAttribute(String categoryType, String category, LogLevel logLevel) {
         return ModelNode.fromString("{"
                 + loggerAddress(categoryType, category)
-                + "\"operation\" => \"write-attribute\","
+                + ",\"operation\" => \"write-attribute\","
                 + "\"name\" => \"level\","
                 + "\"value\" => \"" + logLevel + "\"\n"
                 + "}");
@@ -143,12 +145,12 @@ public class LoggerContainerTest {
     private ModelNode removeLogger(String categoryType, String category) {
         return ModelNode.fromString("{"
                 + loggerAddress(categoryType, category)
-                + "\"operation\" => \"remove\"\n"
+                + ",\"operation\" => \"remove\"\n"
                 + "}");
     }
 
     private String loggerAddress(String categoryType, String category) {
-        return "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")],";
+        return "\"address\" => [(\"subsystem\" => \"logging\"),(\"" + categoryType + "\" => \"" + category + "\")]\n";
     }
 
     private ModelNode addHandler(String type, String name) {
@@ -244,7 +246,27 @@ public class LoggerContainerTest {
 
         container.logger("bar").toBuilder().level(INFO).build().add();
 
-        verifyExecute(addLogger("logger", "bar", INFO));
+        verifyExecute(addLogger("logger", "bar", INFO, null));
+    }
+
+    @Test
+    public void shouldAddLoggerWithUseParentHandlersTrue() throws IOException {
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
+
+        container.logger("bar").toBuilder().level(INFO).useParentHandlers(true).build().add();
+
+        verifyExecute(addLogger("logger", "bar", INFO, true));
+    }
+
+    @Test
+    public void shouldAddLoggerWithUseParentHandlersFalse() throws IOException {
+        givenLogger("foo", FOO_LEVEL);
+        givenNoLogger("bar");
+
+        container.logger("bar").toBuilder().level(INFO).useParentHandlers(false).build().add();
+
+        verifyExecute(addLogger("logger", "bar", INFO, false));
     }
 
     @Test
@@ -253,7 +275,7 @@ public class LoggerContainerTest {
 
         container.logger("bar").toBuilder().level(INFO).handler(new LogHandlerName("FOO")).build().add();
 
-        verifyExecute(addLogger("logger", "bar", INFO, "FOO"));
+        verifyExecute(addLogger("logger", "bar", INFO, null, "FOO"));
     }
 
     @Test
@@ -267,7 +289,7 @@ public class LoggerContainerTest {
                  .build()
                  .add();
 
-        verifyExecute(addLogger("logger", "bar", DEBUG, "FOO", "BAR"));
+        verifyExecute(addLogger("logger", "bar", DEBUG, null, "FOO", "BAR"));
     }
 
     @Test
@@ -279,7 +301,7 @@ public class LoggerContainerTest {
                  .build()
                  .add();
 
-        verifyExecute(addLogger("logger", "bar", null, "FOO"));
+        verifyExecute(addLogger("logger", "bar", null, null, "FOO"));
     }
 
     @Test
@@ -290,7 +312,7 @@ public class LoggerContainerTest {
         assertThatThrownBy(() -> container.logger("").add())
                 .hasMessage("can't add root logger");
 
-        verify(client, never()).execute(eq(addLogger("root-logger", "ROOT", ERROR)),
+        verify(client, never()).execute(eq(addLogger("root-logger", "ROOT", ERROR, null)),
                 any(OperationMessageHandler.class));
     }
 

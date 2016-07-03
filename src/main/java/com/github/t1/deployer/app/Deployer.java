@@ -72,6 +72,7 @@ public class Deployer {
 
         private void applyLogger(LoggerConfig item) {
             validate(item, logger.class);
+            item.validate();
             LoggerResource logger = loggers.logger(item.getCategory());
             log.debug("check '{}' -> {}", item.getCategory(), item.getState());
             switch (item.getState()) {
@@ -89,6 +90,7 @@ public class Deployer {
                     logger = logger.toBuilder()
                                    .level(item.getLevel())
                                    .handlers(item.getHandlers())
+                                   .useParentHandlers(item.getUseParentHandlers())
                                    .build();
                     logger.add();
                     audits.audit(audit(logger).added());

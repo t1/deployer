@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -95,7 +96,10 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddLoggerWithOneHandler() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
-        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG).handler("FOO");
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .useParentHandlers(false);
 
         Audits audits = deployer.run(""
                 + "loggers:\n"
@@ -111,7 +115,11 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldAddLoggerWithTwoHandlers() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
         givenLogHandler(periodicRotatingFile, "BAR").level(DEBUG).deployed();
-        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG).handler("FOO").handler("BAR");
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .handler("BAR")
+                .useParentHandlers(false);
 
         Audits audits = deployer.run(""
                 + "loggers:\n"
@@ -123,9 +131,79 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldUpdateLoggerHandlers
-    // TODO shouldAddUseParentHandlers
+    @Test
+    public void shouldAddExplicitUseParentHandlersTrue() {
+        givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .useParentHandlers(true);
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handler: FOO\n"
+                + "    use-parent-handlers: true");
+
+        logger.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddExplicitUseParentHandlersFalse() {
+        givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .useParentHandlers(false);
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handler: FOO\n"
+                + "    use-parent-handlers: false");
+
+        logger.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddLoggerWithoutLogHandlersButExplicitUseParentHandlersTrue() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .useParentHandlers(true);
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    use-parent-handlers: true");
+
+        logger.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldFailToAddLoggerWithoutLogHandlersButExplicitUseParentHandlersFalse() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .useParentHandlers(false);
+
+        Throwable thrown = catchThrowable(() -> deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    use-parent-handlers: false"));
+
+        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class)
+                          .hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
+    }
+
+
     // TODO shouldUpdateUseParentHandlers
+    // TODO shouldUpdateLoggerHandlers
 
 
     @Test
@@ -177,7 +255,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     }
 
     @Test
-    public void shouldAddPeriodicRotatingFileHandlerAsDefault() {
+    public void shouldAddLogHandlerWithDefaultType() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
                 .file("the-file")
@@ -238,7 +316,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddPeriodicRotatingFileHandlerWithDefaultFile() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
-                .level(ALL)
+                .level(DEBUG)
                 .suffix("the-suffix")
                 .format("the-format");
 
@@ -246,7 +324,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
-                + "    level: ALL\n"
+                + "    level: DEBUG\n"
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 

@@ -54,6 +54,7 @@ public class AbstractDeployerTest {
 
         when(loggerMock.toBuilder()).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.level(any(LogLevel.class))).thenReturn(loggerBuilderMock);
+        when(loggerBuilderMock.useParentHandlers(any(Boolean.class))).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.handler(any(LogHandlerName.class))).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.handlers(anyListOf(LogHandlerName.class))).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.build()).thenReturn(loggerMock);
@@ -248,12 +249,14 @@ public class AbstractDeployerTest {
         private final String category;
         private final List<String> handlers = new ArrayList<>();
         private LogLevel level;
+        private Boolean useParentHandlers;
 
         public LoggerFixture(String category) {
             this.category = category;
 
             when(loggerMock.category()).thenReturn(category);
             when(loggerMock.handlers()).then(i -> handlers);
+            when(loggerMock.useParentHandlers()).then(i -> useParentHandlers);
             when(loggerMock.level()).then(i -> level);
 
             when(loggers.logger(category)).thenReturn(loggerMock);
@@ -270,6 +273,11 @@ public class AbstractDeployerTest {
             return this;
         }
 
+        public LoggerFixture useParentHandlers(Boolean useParentHandlers) {
+            this.useParentHandlers = useParentHandlers;
+            return this;
+        }
+
         public LoggerFixture deployed() {
             when(loggers.logger(category)).thenReturn(loggerMock);
             when(loggerMock.isDeployed()).thenReturn(true);
@@ -280,6 +288,7 @@ public class AbstractDeployerTest {
             verify(loggerMock).toBuilder();
             verify(loggerBuilderMock).level(level);
             verify(loggerBuilderMock).handlers(handlers.stream().map(LogHandlerName::new).collect(toList()));
+            verify(loggerBuilderMock).useParentHandlers(useParentHandlers);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
             assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).added());

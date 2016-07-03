@@ -21,6 +21,8 @@ import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
+import static com.github.t1.problem.WebException.*;
+import static java.lang.Boolean.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static lombok.AccessLevel.*;
 
@@ -132,8 +134,8 @@ public class ConfigurationPlan {
         @NonNull private String category;
         private LogLevel level;
         @Singular
-        @NonNull private List<LogHandlerName> handlers = new ArrayList<>();
-        // TODO use-parent-handlers
+        @NonNull private List<LogHandlerName> handlers;
+        private Boolean useParentHandlers;
 
 
         private static LoggerConfig fromJson(ArtifactId artifactId, JsonNode node) {
@@ -142,14 +144,22 @@ public class ConfigurationPlan {
             apply(node, "name", artifactId.getValue(), builder::category);
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "handler", null, value -> {
-                if (value != null)
+                if (value != null) {
+                    builder.useParentHandlers(false);
                     builder.handler(new LogHandlerName(value));
+                }
             });
             if (node.has("handlers")) {
                 Iterator<JsonNode> handlers = node.get("handlers").elements();
-                while (handlers.hasNext())
+                while (handlers.hasNext()) {
+                    builder.useParentHandlers(false);
                     builder.handler(new LogHandlerName(handlers.next().textValue()));
+                }
             }
+            apply(node, "use-parent-handlers", null, value -> {
+                if (value != null)
+                    builder.useParentHandlers(Boolean.valueOf(value));
+            });
             return builder.build();
         }
 
@@ -158,6 +168,11 @@ public class ConfigurationPlan {
                     + (category == null ? "" : ":" + category)
                     + (level == null ? "" : ":" + level)
                     + "»";
+        }
+
+        public void validate() {
+            if (useParentHandlers == FALSE && handlers.isEmpty())
+                throw badRequest("Can't set use-parent-handlers to false when there are no handlers");
         }
     }
 

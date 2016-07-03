@@ -27,6 +27,7 @@ public class LoggerResource {
 
     @Singular
     private List<LogHandlerName> handlers = new ArrayList<>();
+    private Boolean useParentHandlers;
     private LogLevel level;
 
     public String category() {
@@ -38,6 +39,11 @@ public class LoggerResource {
     public List<LogHandlerName> handlers() {
         assertDeployed();
         return handlers;
+    }
+
+    public Boolean useParentHandlers() {
+        assertDeployed();
+        return useParentHandlers;
     }
 
     public LogLevel level() {
@@ -115,6 +121,8 @@ public class LoggerResource {
             request.get("level").set(level.name());
         for (LogHandlerName handler : handlers)
             request.get("handlers").add(handler.getValue());
+        if (useParentHandlers != null)
+            request.get("use-parent-handlers").set(useParentHandlers);
 
         cli.execute(request);
 
