@@ -36,7 +36,7 @@ public class LoggerContainerTest {
 
     @Before
     @SneakyThrows(IOException.class)
-    public void setupRootLogger() {
+    public void setup() {
         when(client.execute(any(ModelNode.class), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString("{\"outcome\" => \"success\"}"));
         when(client.execute(eq(readRootLoggerCli()), any(OperationMessageHandler.class)))
@@ -51,6 +51,13 @@ public class LoggerContainerTest {
                         + "    }")));
         when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class)))
                 .then(invocation -> ModelNode.fromString(successCli(readLoggersCliResult(this.loggers))));
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        verify(client, atLeast(0)).execute(eq(readRootLoggerCli()), any(OperationMessageHandler.class));
+        verifyLoggerRead("*");
+        verifyNoMoreInteractions(client);
     }
 
     private static ModelNode readRootLoggerCli() {
@@ -168,6 +175,10 @@ public class LoggerContainerTest {
                 + "}");
     }
 
+    public void verifyLoggerRead(String loggerName) throws IOException {
+        verify(client, atLeast(0)).execute(eq(readLoggersCli(loggerName)), any(OperationMessageHandler.class));
+    }
+
     public void assertIsRoot(LoggerResource logger) {
         assertThat(logger.isDeployed()).isTrue();
         assertThat(logger.isRoot()).isTrue();
@@ -226,7 +237,7 @@ public class LoggerContainerTest {
     }
 
     @Test
-    public void shouldHaveOneLogger() {
+    public void shouldHaveOneLogger() throws Exception {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
@@ -239,6 +250,8 @@ public class LoggerContainerTest {
         assertThat(bar.isRoot()).isFalse();
         assertThat(bar.category()).isEqualTo("bar");
         assertThatThrownBy(bar::level).hasMessage("no logger 'bar'");
+        verifyLoggerRead("foo");
+        verifyLoggerRead("bar");
     }
 
     @Test
@@ -326,6 +339,7 @@ public class LoggerContainerTest {
         container.logger("foo").correctLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "level", ERROR));
+        verifyLoggerRead("foo");
     }
 
     @Test
@@ -335,7 +349,7 @@ public class LoggerContainerTest {
 
         container.logger("foo").correctUseParentHandler(false);
 
-        // verifyExecute(writeLoggerAttribute("logger", "foo", "use-parent-handlers", true));
+        verifyLoggerRead("foo");
     }
 
     @Test
@@ -357,6 +371,7 @@ public class LoggerContainerTest {
         container.logger("foo").correctUseParentHandler(false);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", false));
+        verifyLoggerRead("foo");
     }
 
     @Test
@@ -366,7 +381,7 @@ public class LoggerContainerTest {
 
         container.logger("foo").correctUseParentHandler(true);
 
-        // verifyExecute(writeLoggerAttribute("logger", "foo", "use-parent-handlers", false));
+        verifyLoggerRead("foo");
     }
 
     @Test
