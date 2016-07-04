@@ -8,6 +8,7 @@ import org.jboss.dmr.ModelNode;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import static com.github.t1.log.LogLevel.*;
 
@@ -38,9 +39,17 @@ public class CLI {
     }
 
     public void writeAttribute(ModelNode request, String name, String value) {
+        writeAttributeSet(request, name, node -> node.set(value));
+    }
+
+    public void writeAttribute(ModelNode request, String name, boolean value) {
+        writeAttributeSet(request, name, node -> node.set(value));
+    }
+
+    private void writeAttributeSet(ModelNode request, String name, Consumer<ModelNode> setValue) {
         request.get("operation").set("write-attribute");
         request.get("name").set(name);
-        request.get("value").set(value);
+        setValue.accept(request.get("value"));
 
         execute(request);
     }

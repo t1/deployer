@@ -75,10 +75,10 @@ public class LoggerContainerTest {
     }
 
     @SneakyThrows(IOException.class)
-    private void givenLogger(String category, LogLevel level) {
+    private void givenLogger(String category, LogLevel level, boolean useParentHandlers) {
         this.loggers.put(category, level);
         when(client.execute(eq(readLoggersCli(category)), any(OperationMessageHandler.class)))
-                .thenReturn(ModelNode.fromString(successCli("{" + logger(level) + "}")));
+                .thenReturn(ModelNode.fromString(successCli("{" + logger(level, useParentHandlers) + "}")));
     }
 
     private static ModelNode readLoggersCli(String loggerName) {
@@ -101,7 +101,7 @@ public class LoggerContainerTest {
                .append("(\"logger\" => \"").append(logger.getKey()).append("\")")
                .append("],");
             out.append("\"outcome\" => \"success\","
-                    + "\"result\" => {").append(logger(logger.getValue())).append("}\n");
+                    + "\"result\" => {").append(logger(logger.getValue(), true)).append("}\n");
             out.append("}");
         }
         out.append("]");
@@ -112,14 +112,14 @@ public class LoggerContainerTest {
         return verify(client).execute(eq(node), any(OperationMessageHandler.class));
     }
 
-    private String logger(LogLevel level) {
+    private String logger(LogLevel level, boolean useParentHandlers) {
         return ""
                 + "\"category\" => undefined," // deprecated: \"" + logger.getCategory() + "\","
                 + "\"filter\" => undefined,"
                 + "\"filter-spec\" => undefined,"
                 + "\"handlers\" => undefined,"
                 + "\"level\" => \"" + level + "\","
-                + "\"use-parent-handlers\" => true" + "\n";
+                + "\"use-parent-handlers\" => " + useParentHandlers + "\n";
     }
 
     private ModelNode addLogger(String categoryType, String category, LogLevel logLevel, Boolean useParentHandlers,
@@ -133,12 +133,14 @@ public class LoggerContainerTest {
                 + "}");
     }
 
-    private ModelNode writeLoggerAttribute(String categoryType, String category, LogLevel logLevel) {
+    private ModelNode writeLoggingAttribute(String categoryType, String category, String name, Object value) {
+        if (value instanceof String || value instanceof Enum)
+            value = "\"" + value + "\"";
         return ModelNode.fromString("{"
                 + loggerAddress(categoryType, category)
                 + ",\"operation\" => \"write-attribute\","
-                + "\"name\" => \"level\","
-                + "\"value\" => \"" + logLevel + "\"\n"
+                + "\"name\" => \"" + name + "\","
+                + "\"value\" => " + value + "\n"
                 + "}");
     }
 
@@ -200,7 +202,7 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldGetOneLogger() {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         List<LoggerResource> loggers = container.allLoggers();
@@ -212,8 +214,8 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldGetTwoLoggersSorted() {
-        givenLogger("foo", FOO_LEVEL);
-        givenLogger("bar", BAR_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
+        givenLogger("bar", BAR_LEVEL, true);
 
         List<LoggerResource> loggers = container.allLoggers();
 
@@ -225,7 +227,7 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldHaveOneLogger() {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         assertIsRoot(container.logger(""));
@@ -241,7 +243,7 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldAddLogger() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         container.logger("bar").toBuilder().level(INFO).build().add();
@@ -251,7 +253,7 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldAddLoggerWithUseParentHandlersTrue() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         container.logger("bar").toBuilder().level(INFO).useParentHandlers(true).build().add();
@@ -261,7 +263,7 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldAddLoggerWithUseParentHandlersFalse() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         container.logger("bar").toBuilder().level(INFO).useParentHandlers(false).build().add();
@@ -306,7 +308,7 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldFailToAddRootLogger() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         assertThatThrownBy(() -> container.logger("").add())
@@ -318,27 +320,68 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldUpdateLogLevel() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         container.logger("foo").correctLevel(ERROR);
 
-        verifyExecute(writeLoggerAttribute("logger", "foo", ERROR));
+        verifyExecute(writeLoggingAttribute("logger", "foo", "level", ERROR));
+    }
+
+    @Test
+    public void shouldNotUpdateUseParentHandlerFalseToFalse() throws IOException {
+        givenLogger("foo", FOO_LEVEL, false);
+        givenNoLogger("bar");
+
+        container.logger("foo").correctUseParentHandler(false);
+
+        // verifyExecute(writeLoggerAttribute("logger", "foo", "use-parent-handlers", true));
+    }
+
+    @Test
+    public void shouldUpdateUseParentHandlerFalseToTrue() throws IOException {
+        givenLogger("foo", FOO_LEVEL, false);
+        givenNoLogger("bar");
+
+        container.logger("foo").correctUseParentHandler(true);
+
+        verifyExecute(readLoggersCli("foo"));
+        verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", true));
+    }
+
+    @Test
+    public void shouldUpdateUseParentHandlerTrueToFalse() throws IOException {
+        givenLogger("foo", FOO_LEVEL, true);
+        givenNoLogger("bar");
+
+        container.logger("foo").correctUseParentHandler(false);
+
+        verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", false));
+    }
+
+    @Test
+    public void shouldNotUpdateUseParentHandlerTrueToTrue() throws IOException {
+        givenLogger("foo", FOO_LEVEL, true);
+        givenNoLogger("bar");
+
+        container.logger("foo").correctUseParentHandler(true);
+
+        // verifyExecute(writeLoggerAttribute("logger", "foo", "use-parent-handlers", false));
     }
 
     @Test
     public void shouldUpdateRootLogLevel() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         container.logger("").correctLevel(ERROR);
 
-        verifyExecute(writeLoggerAttribute("root-logger", "ROOT", ERROR));
+        verifyExecute(writeLoggingAttribute("root-logger", "ROOT", "level", ERROR));
     }
 
     @Test
     public void shouldRemoveLogger() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         container.logger("foo").remove();
@@ -348,7 +391,7 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldFailToRemoveRootLogger() throws IOException {
-        givenLogger("foo", FOO_LEVEL);
+        givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
         assertThatThrownBy(() -> container.logger("").remove())

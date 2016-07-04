@@ -41,9 +41,9 @@ public class LoggerResource {
         return handlers;
     }
 
-    public Boolean useParentHandlers() {
+    public boolean useParentHandlers() {
         assertDeployed();
-        return useParentHandlers;
+        return (useParentHandlers == null) ? true : useParentHandlers;
     }
 
     public LogLevel level() {
@@ -56,6 +56,14 @@ public class LoggerResource {
         if (level.equals(newLevel))
             return this;
         return writeAttribute("level", newLevel.name());
+    }
+
+
+    public LoggerResource correctUseParentHandler(boolean newUseParentHandlers) {
+        assertDeployed();
+        if (Objects.equals(useParentHandlers(), newUseParentHandlers))
+            return this;
+        return writeAttribute("use-parent-handlers", newUseParentHandlers);
     }
 
     private void assertDeployed() {
@@ -82,9 +90,16 @@ public class LoggerResource {
 
     private void readFrom(ModelNode response) {
         this.level = LogLevel.valueOf(response.get("level").asString());
+        ModelNode useParentHandlersNode = response.get("use-parent-handlers");
+        this.useParentHandlers = (useParentHandlersNode.isDefined()) ? useParentHandlersNode.asBoolean() : null;
     }
 
     private LoggerResource writeAttribute(String name, String value) {
+        cli.writeAttribute(createRequestWithAddress(), name, value);
+        return this;
+    }
+
+    private LoggerResource writeAttribute(String name, boolean value) {
         cli.writeAttribute(createRequestWithAddress(), name, value);
         return this;
     }
