@@ -14,7 +14,6 @@ import org.junit.*;
 import org.mockito.*;
 
 import javax.enterprise.inject.Instance;
-import javax.validation.*;
 import java.io.InputStream;
 import java.util.*;
 
@@ -29,7 +28,6 @@ public class AbstractDeployerTest {
 
     @InjectMocks Deployer deployer;
 
-    @Spy Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     @Spy private Audits audits;
     @Mock Instance<Audits> auditsInstance;
 

@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ejb.Singleton;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import javax.validation.Validator;
 import java.io.*;
 import java.nio.file.*;
 import java.util.List;
@@ -28,7 +27,6 @@ public class Deployer {
     @Inject DeploymentContainer deployments;
     @Inject LoggerContainer loggers;
     @Inject Repository repository;
-    @Inject Validator validator;
     @Inject Instance<Audits> auditInstances;
 
     @Getter @Setter
@@ -49,7 +47,7 @@ public class Deployer {
 
         private Audits run(Reader reader) {
             this.run(ConfigurationPlan.load(variables.resolve(reader)));
-            auditInstances.destroy(audits);
+            auditInstances.destroy(audits); // release potential dependent beans
             return audits;
         }
 
