@@ -157,8 +157,9 @@ public class ConfigurationPlan {
                 }
             }
             apply(node, "use-parent-handlers", null, value -> {
-                if (value != null)
-                    builder.useParentHandlers(Boolean.valueOf(value));
+                if (value == null)
+                    value = Boolean.toString(builder.build().handlers.isEmpty());
+                builder.useParentHandlers(Boolean.valueOf(value));
             });
             LoggerConfig logger = builder.build();
             logger.validate();

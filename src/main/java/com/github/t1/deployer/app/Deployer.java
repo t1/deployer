@@ -15,7 +15,7 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.io.*;
 import java.nio.file.*;
-import java.util.List;
+import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 
@@ -63,25 +63,43 @@ public class Deployer {
                     undeploy(deployment.getName(), repository.getByChecksum(deployment.getChecksum()));
         }
 
-        private void applyLogger(LoggerConfig item) {
-            LoggerResource logger = loggers.logger(item.getCategory());
-            log.debug("check '{}' -> {}", item.getCategory(), item.getState());
-            switch (item.getState()) {
+        private void applyLogger(LoggerConfig loggerPlan) {
+            LoggerResource logger = loggers.logger(loggerPlan.getCategory());
+            log.debug("check '{}' -> {}", loggerPlan.getCategory(), loggerPlan.getState());
+            switch (loggerPlan.getState()) {
             case deployed:
                 if (logger.isDeployed()) {
-                    if (item.getLevel() != null) {
-                        if (logger.level().equals(item.getLevel())) {
-                            log.info("logger already configured: {}: {}", item.getCategory(), item.getLevel());
-                        } else {
-                            logger.correctLevel(item.getLevel());
-                            audits.audit(audit(logger).level(item.getLevel()).updated());
+                    int changes = 0;
+                    if (!Objects.equals(logger.level(), loggerPlan.getLevel())) {
+                        logger.writeLevel(loggerPlan.getLevel());
+                        changes++;
+                    }
+                    if (!Objects.equals(logger.useParentHandlers(), nvl(loggerPlan.getUseParentHandlers(), true))) {
+                        logger.writeUseParentHandlers(loggerPlan.getUseParentHandlers());
+                        changes++;
+                    }
+                    if (!Objects.equals(logger.handlers(), loggerPlan.getHandlers())) {
+                        List<LogHandlerName> existing = new ArrayList<>(logger.handlers());
+                        for (LogHandlerName newHandler : loggerPlan.getHandlers())
+                            if (!existing.remove(newHandler)) {
+                                logger.addLoggerHandler(newHandler);
+                                changes++;
+                            }
+                        for (LogHandlerName oldHandler : existing) {
+                            logger.removeLoggerHandler(oldHandler);
+                            changes++;
                         }
                     }
+
+                    if (changes > 0)
+                        audits.audit(audit(logger).level(loggerPlan.getLevel()).updated());
+                    else
+                        log.info("logger already configured: {}", loggerPlan);
                 } else {
                     logger = logger.toBuilder()
-                                   .level(item.getLevel())
-                                   .handlers(item.getHandlers())
-                                   .useParentHandlers(item.getUseParentHandlers())
+                                   .level(loggerPlan.getLevel())
+                                   .handlers(loggerPlan.getHandlers())
+                                   .useParentHandlers(loggerPlan.getUseParentHandlers())
                                    .build();
                     logger.add();
                     audits.audit(audit(logger).added());
@@ -92,7 +110,7 @@ public class Deployer {
                     logger.remove();
                     audits.audit(audit(logger).removed());
                 } else {
-                    log.info("logger already removed: {}", item.getCategory());
+                    log.info("logger already removed: {}", loggerPlan.getCategory());
                 }
                 break;
             }
@@ -173,5 +191,9 @@ public class Deployer {
                     .artifactId(artifact.getArtifactId())
                     .version(artifact.getVersion());
         }
+    }
+
+    private static <T> T nvl(T value, T defaultValue) {
+        return (value == null) ? defaultValue : value;
     }
 }

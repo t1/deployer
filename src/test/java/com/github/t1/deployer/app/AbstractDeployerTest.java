@@ -51,6 +51,8 @@ public class AbstractDeployerTest {
 
 
         when(loggerMock.toBuilder()).thenReturn(loggerBuilderMock);
+        when(loggerMock.addLoggerHandler(any(LogHandlerName.class))).thenReturn(loggerMock);
+        when(loggerMock.removeLoggerHandler(any(LogHandlerName.class))).thenReturn(loggerMock);
         when(loggerBuilderMock.level(any(LogLevel.class))).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.useParentHandlers(any(Boolean.class))).thenReturn(loggerBuilderMock);
         when(loggerBuilderMock.handler(any(LogHandlerName.class))).thenReturn(loggerBuilderMock);
@@ -88,6 +90,8 @@ public class AbstractDeployerTest {
 
         verify(loggerMock, atLeast(0)).isDeployed();
         verify(loggerMock, atLeast(0)).category();
+        verify(loggerMock, atLeast(0)).handlers();
+        verify(loggerMock, atLeast(0)).useParentHandlers();
         verify(loggerMock, atLeast(0)).level();
 
         verifyNoMoreInteractions(loggerMock);
@@ -247,13 +251,13 @@ public class AbstractDeployerTest {
         private final String category;
         private final List<String> handlers = new ArrayList<>();
         private LogLevel level;
-        private Boolean useParentHandlers;
+        private Boolean useParentHandlers = true;
 
         public LoggerFixture(String category) {
             this.category = category;
 
             when(loggerMock.category()).thenReturn(category);
-            when(loggerMock.handlers()).then(i -> handlers);
+            when(loggerMock.handlers()).then(i -> handlerNames());
             when(loggerMock.useParentHandlers()).then(i -> useParentHandlers);
             when(loggerMock.level()).then(i -> level);
 
@@ -285,21 +289,35 @@ public class AbstractDeployerTest {
         public void verifyAdded(Audits audits) {
             verify(loggerMock).toBuilder();
             verify(loggerBuilderMock).level(level);
-            verify(loggerBuilderMock).handlers(handlers.stream().map(LogHandlerName::new).collect(toList()));
+            verify(loggerBuilderMock).handlers(handlerNames());
             verify(loggerBuilderMock).useParentHandlers(useParentHandlers);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
             assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).added());
         }
 
+        public List<LogHandlerName> handlerNames() {
+            return handlers.stream().map(LogHandlerName::new).collect(toList());
+        }
+
         public void verifyChanged(Audits audits) {
-            verify(loggerMock).correctLevel(level);
+            verify(loggerMock).writeLevel(level);
             assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).updated());
         }
 
         public void verifyRemoved(Audits audits) {
             verify(loggerMock).remove();
             assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).removed());
+        }
+
+        public void verifyUpdatedUseParentHandlers(Audits audits) {
+            verify(loggerMock).writeUseParentHandlers(useParentHandlers);
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).updated());
+        }
+
+        public void verifyAddedHandlers(Audits audits, String name) {
+            verify(loggerMock).addLoggerHandler(new LogHandlerName(name));
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).updated());
         }
     }
 

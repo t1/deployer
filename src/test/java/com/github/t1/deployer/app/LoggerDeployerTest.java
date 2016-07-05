@@ -132,7 +132,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldAddExplicitUseParentHandlersTrue() {
+    public void shouldAddLoggerWithExplicitUseParentHandlersTrue() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
                 .level(DEBUG)
@@ -151,7 +151,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldAddExplicitUseParentHandlersFalse() {
+    public void shouldAddLoggerWithExplicitUseParentHandlersFalse() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
                 .level(DEBUG)
@@ -187,9 +187,10 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToAddLoggerWithoutLogHandlersButExplicitUseParentHandlersFalse() {
-        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+        givenLogger("com.github.t1.deployer.app")
                 .level(DEBUG)
-                .useParentHandlers(false);
+                .useParentHandlers(false)
+                .deployed();
 
         Throwable thrown = catchThrowable(() -> deployer.run(""
                 + "loggers:\n"
@@ -202,8 +203,113 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldUpdateUseParentHandlers
-    // TODO shouldUpdateLoggerHandlers
+    @Test
+    public void shouldNotUpdateLoggerWithHandlerAndUseParentHandlersFalseToFalse() {
+        givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .useParentHandlers(false)
+                .deployed();
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handler: FOO\n"
+                + "    use-parent-handlers: false\n");
+
+        assertThat(audits.asList()).isEmpty();
+    }
+
+
+    @Test
+    public void shouldUpdateLoggerWithHandlerAndUseParentHandlersFalseToTrue() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .useParentHandlers(false)
+                .deployed();
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handler: FOO\n"
+                + "    use-parent-handlers: true\n");
+
+        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(audits);
+    }
+
+
+    @Test
+    public void shouldUpdateLoggerWithHandlerAndUseParentHandlersTrueToFalse() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .useParentHandlers(true)
+                .deployed();
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handler: FOO\n"
+                + "    use-parent-handlers: false\n");
+
+        logger.useParentHandlers(false).verifyUpdatedUseParentHandlers(audits);
+    }
+
+
+    @Test
+    public void shouldUpdateLoggerWithoutHandlerAndWithUseParentHandlersFalseToTrue() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .useParentHandlers(false)
+                .deployed();
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    use-parent-handlers: true\n");
+
+        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(audits);
+    }
+
+
+    @Test
+    public void shouldFailToUpdateLoggerWithoutHandlerAndWithUseParentHandlersTrueToFalse() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .useParentHandlers(true)
+                .deployed();
+
+        Throwable thrown = catchThrowable(() -> deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    use-parent-handlers: false\n"));
+
+        assertThat(thrown).hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
+    }
+
+
+    @Test
+    public void shouldAddLoggerHandler() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .useParentHandlers(false)
+                .deployed();
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handlers: [FOO,BAR]\n");
+
+        logger.verifyAddedHandlers(audits, "BAR");
+    }
 
 
     @Test

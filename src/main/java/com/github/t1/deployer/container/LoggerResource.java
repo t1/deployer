@@ -9,6 +9,7 @@ import org.jboss.dmr.ModelNode;
 import java.util.*;
 
 import static com.github.t1.deployer.container.CLI.*;
+import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
 
@@ -51,20 +52,35 @@ public class LoggerResource {
         return level;
     }
 
-    public LoggerResource correctLevel(LogLevel newLevel) {
+
+    public LoggerResource addLoggerHandler(LogHandlerName handler) {
         assertDeployed();
-        if (level.equals(newLevel))
-            return this;
+        ModelNode request = createRequestWithAddress();
+        request.get("operation").set("add-handler");
+        request.get("name").set(handler.getValue());
+        cli.execute(request);
+        return this;
+    }
+
+    public LoggerResource removeLoggerHandler(LogHandlerName handler) {
+        assertDeployed();
+        ModelNode request = createRequestWithAddress();
+        request.get("operation").set("remove-handler");
+        request.get("name").set(handler.getValue());
+        cli.execute(request);
+        return this;
+    }
+
+    public LoggerResource writeUseParentHandlers(boolean newUseParentHandlers) {
+        assertDeployed();
+        return writeAttribute("use-parent-handlers", newUseParentHandlers);
+    }
+
+    public LoggerResource writeLevel(LogLevel newLevel) {
+        assertDeployed();
         return writeAttribute("level", newLevel.name());
     }
 
-
-    public LoggerResource correctUseParentHandler(boolean newUseParentHandlers) {
-        assertDeployed();
-        if (Objects.equals(useParentHandlers(), newUseParentHandlers))
-            return this;
-        return writeAttribute("use-parent-handlers", newUseParentHandlers);
-    }
 
     private void assertDeployed() {
         if (!isDeployed())
@@ -92,7 +108,12 @@ public class LoggerResource {
         this.level = LogLevel.valueOf(response.get("level").asString());
         ModelNode useParentHandlersNode = response.get("use-parent-handlers");
         this.useParentHandlers = (useParentHandlersNode.isDefined()) ? useParentHandlersNode.asBoolean() : null;
+        ModelNode handlersNode = response.get("handlers");
+        this.handlers = (handlersNode.isDefined())
+                ? handlersNode.asList().stream().map(ModelNode::asString).map(LogHandlerName::new).collect(toList())
+                : emptyList();
     }
+
 
     private LoggerResource writeAttribute(String name, String value) {
         cli.writeAttribute(createRequestWithAddress(), name, value);

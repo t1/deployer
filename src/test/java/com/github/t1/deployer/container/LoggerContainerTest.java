@@ -25,6 +25,9 @@ public class LoggerContainerTest {
     private static final LogLevel FOO_LEVEL = WARN;
     private static final LogLevel BAR_LEVEL = INFO;
 
+    private static final LogHandlerName CONSOLE = new LogHandlerName("CONSOLE");
+    private static final LogHandlerName FILE = new LogHandlerName("FILE");
+
     @InjectMocks
     LoggerContainer container;
     @Mock
@@ -82,10 +85,10 @@ public class LoggerContainerTest {
     }
 
     @SneakyThrows(IOException.class)
-    private void givenLogger(String category, LogLevel level, boolean useParentHandlers) {
+    private void givenLogger(String category, LogLevel level, boolean useParentHandlers, String... handlers) {
         this.loggers.put(category, level);
         when(client.execute(eq(readLoggersCli(category)), any(OperationMessageHandler.class)))
-                .thenReturn(ModelNode.fromString(successCli("{" + logger(level, useParentHandlers) + "}")));
+                .thenReturn(ModelNode.fromString(successCli("{" + logger(level, useParentHandlers, handlers) + "}")));
     }
 
     private static ModelNode readLoggersCli(String loggerName) {
@@ -119,25 +122,29 @@ public class LoggerContainerTest {
         return verify(client).execute(eq(node), any(OperationMessageHandler.class));
     }
 
-    private String logger(LogLevel level, boolean useParentHandlers) {
+    private String logger(LogLevel level, boolean useParentHandlers, String... handlers) {
         return ""
                 + "\"category\" => undefined," // deprecated: \"" + logger.getCategory() + "\","
                 + "\"filter\" => undefined,"
                 + "\"filter-spec\" => undefined,"
-                + "\"handlers\" => undefined,"
+                + "\"handlers\" => " + toCliList(handlers) + ","
                 + "\"level\" => \"" + level + "\","
                 + "\"use-parent-handlers\" => " + useParentHandlers + "\n";
     }
 
     private ModelNode addLogger(String categoryType, String category, LogLevel logLevel, Boolean useParentHandlers,
-            CharSequence... handlers) {
+            String... handlers) {
         return ModelNode.fromString("{"
                 + loggerAddress(categoryType, category)
                 + ",\"operation\" => \"add\"\n"
                 + ((logLevel == null) ? "" : ",\"level\" => \"" + logLevel + "\"\n")
-                + ((handlers.length == 0) ? "" : ",\"handlers\" => [\"" + String.join("\", \"", handlers) + "\"]\n")
+                + ((handlers.length == 0) ? "" : ",\"handlers\" => " + toCliList(handlers) + "\n")
                 + ((useParentHandlers == null) ? "" : ",\"use-parent-handlers\" => " + useParentHandlers + "\n")
                 + "}");
+    }
+
+    private String toCliList(String... handlers) {
+        return (handlers.length == 0) ? "undefined" : "[\"" + String.join("\",\"", (CharSequence[]) handlers) + "\"]";
     }
 
     private ModelNode writeLoggingAttribute(String categoryType, String category, String name, Object value) {
@@ -336,51 +343,9 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger("foo").correctLevel(ERROR);
+        container.logger("foo").writeLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "level", ERROR));
-        verifyLoggerRead("foo");
-    }
-
-    @Test
-    public void shouldNotUpdateUseParentHandlerFalseToFalse() throws IOException {
-        givenLogger("foo", FOO_LEVEL, false);
-        givenNoLogger("bar");
-
-        container.logger("foo").correctUseParentHandler(false);
-
-        verifyLoggerRead("foo");
-    }
-
-    @Test
-    public void shouldUpdateUseParentHandlerFalseToTrue() throws IOException {
-        givenLogger("foo", FOO_LEVEL, false);
-        givenNoLogger("bar");
-
-        container.logger("foo").correctUseParentHandler(true);
-
-        verifyExecute(readLoggersCli("foo"));
-        verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", true));
-    }
-
-    @Test
-    public void shouldUpdateUseParentHandlerTrueToFalse() throws IOException {
-        givenLogger("foo", FOO_LEVEL, true);
-        givenNoLogger("bar");
-
-        container.logger("foo").correctUseParentHandler(false);
-
-        verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", false));
-        verifyLoggerRead("foo");
-    }
-
-    @Test
-    public void shouldNotUpdateUseParentHandlerTrueToTrue() throws IOException {
-        givenLogger("foo", FOO_LEVEL, true);
-        givenNoLogger("bar");
-
-        container.logger("foo").correctUseParentHandler(true);
-
         verifyLoggerRead("foo");
     }
 
@@ -389,9 +354,59 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger("").correctLevel(ERROR);
+        container.logger("").writeLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("root-logger", "ROOT", "level", ERROR));
+    }
+
+    @Test
+    public void shouldUpdateUseParentHandlerToTrue() throws IOException {
+        givenLogger("foo", FOO_LEVEL, false);
+        givenNoLogger("bar");
+
+        container.logger("foo").writeUseParentHandlers(true);
+
+        verifyExecute(readLoggersCli("foo"));
+        verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", true));
+    }
+
+    @Test
+    public void shouldUpdateUseParentHandlerToFalse() throws IOException {
+        givenLogger("foo", FOO_LEVEL, true);
+        givenNoLogger("bar");
+
+        container.logger("foo").writeUseParentHandlers(false);
+
+        verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", false));
+        verifyLoggerRead("foo");
+    }
+
+    @Test
+    public void shouldAddLogHandlerToLogger() throws IOException {
+        givenLogger("foo", FOO_LEVEL, false, "CONSOLE");
+
+        container.logger("foo").addLoggerHandler(FILE);
+
+        verifyExecute(ModelNode.fromString("{"
+                + loggerAddress("logger", "foo")
+                + ",\"operation\" => \"add-handler\""
+                + ",\"name\" => \"FILE\""
+                + "}"));
+        verifyLoggerRead("foo");
+    }
+
+    @Test
+    public void shouldRemoveLogHandlerToLogger() throws IOException {
+        givenLogger("foo", FOO_LEVEL, false, "CONSOLE", "FILE");
+
+        container.logger("foo").removeLoggerHandler(FILE);
+
+        verifyExecute(ModelNode.fromString("{"
+                + loggerAddress("logger", "foo")
+                + ",\"operation\" => \"remove-handler\""
+                + ",\"name\" => \"FILE\""
+                + "}"));
+        verifyLoggerRead("foo");
     }
 
     @Test
