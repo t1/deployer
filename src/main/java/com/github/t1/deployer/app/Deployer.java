@@ -18,12 +18,12 @@ import java.nio.file.*;
 import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.DeploymentState.*;
 
 @Slf4j
 @Singleton
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
-
     @Inject DeploymentContainer deployments;
     @Inject LoggerContainer loggers;
     @Inject Repository repository;
@@ -38,6 +38,48 @@ public class Deployer {
     public Audits run(String plan) { return run(new StringReader(plan)); }
 
     public synchronized Audits run(Reader reader) { return new Run(deployments.getAllDeployments()).run(reader); }
+
+    public ConfigurationPlan effectivePlan() {
+        ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
+        for (Deployment deployment : deployments.getAllDeployments()) {
+            Artifact artifact = getByChecksum(deployment.getChecksum());
+            DeploymentConfig deploymentConfig = DeploymentConfig
+                    .builder()
+                    .groupId(artifact.getGroupId())
+                    .artifactId(artifact.getArtifactId())
+                    .version(artifact.getVersion())
+                    .type(artifact.getType())
+                    .deploymentName(deployment.getName())
+                    .state(deployed)
+                    .build();
+            builder.deployment(deploymentConfig.getDeploymentName(), deploymentConfig);
+        }
+        return builder.build();
+    }
+
+    public Artifact getByChecksum(Checksum checksum) {
+        if (checksum == null || checksum.isEmpty())
+            return errorArtifact(checksum, "empty checksum");
+        try {
+            return repository.getByChecksum(checksum);
+        } catch (UnknownChecksumException e) {
+            return errorArtifact(checksum, "unknown");
+        }
+    }
+
+    private Artifact errorArtifact(Checksum checksum, String messageArtifactId) {
+        return Artifact
+                .builder()
+                .groupId(new GroupId("*error*"))
+                .artifactId(new ArtifactId(messageArtifactId))
+                .version(new Version("unknown"))
+                .type(unknown)
+                .checksum(checksum)
+                .inputStreamSupplier(() -> {
+                    throw new UnsupportedOperationException();
+                })
+                .build();
+    }
 
     @RequiredArgsConstructor
     private class Run {
@@ -60,7 +102,7 @@ public class Deployer {
 
             if (managed)
                 for (Deployment deployment : existing)
-                    undeploy(deployment.getName(), repository.getByChecksum(deployment.getChecksum()));
+                    undeploy(deployment.getName(), getByChecksum(deployment.getChecksum()));
         }
 
         private void applyLogger(LoggerConfig loggerPlan) {

@@ -104,7 +104,7 @@ public class DeployerIT {
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
             loggers.handler(console, new LogHandlerName("CONSOLE")).correctLevel(ALL);
-            loggers.logger("com.github.t1.deployer").toBuilder().level(DEBUG).build().add();
+            loggers.logger(LoggerCategory.of("com.github.t1.deployer")).toBuilder().level(DEBUG).build().add();
 
             log.info("deployments: {}", container.getAllDeployments());
             assertNoOtherDeployments();
@@ -119,7 +119,7 @@ public class DeployerIT {
             memento.write(plan);
 
             return REST
-                    .createResource(UriTemplate.fromString(baseUri + "api"))
+                    .createResource(UriTemplate.from(baseUri))
                     .accept(new GenericType<List<Audit>>() {})
                     .POST_Response()
                     .expecting(status);

@@ -86,7 +86,7 @@ public class AbstractDeployerTest {
 
     @After
     public void afterLoggers() {
-        verify(loggers, atLeast(0)).logger(anyString());
+        verify(loggers, atLeast(0)).logger(any(LoggerCategory.class));
 
         verify(loggerMock, atLeast(0)).isDeployed();
         verify(loggerMock, atLeast(0)).category();
@@ -190,7 +190,7 @@ public class AbstractDeployerTest {
             public void containing(String contents) { this.contents = contents; }
 
             public VersionFixture deployed() {
-                Deployment deployment = new Deployment(deploymentName(), contextRoot(), checksum(), version);
+                Deployment deployment = new Deployment(deploymentName(), contextRoot(), checksum());
                 allDeployments.add(deployment);
                 when(deployments.hasDeployment(deploymentName())).thenReturn(true);
                 when(deployments.getDeployment(deploymentName())).thenReturn(deployment);
@@ -248,20 +248,20 @@ public class AbstractDeployerTest {
 
     @Getter
     public class LoggerFixture {
-        private final String category;
+        private final LoggerCategory category;
         private final List<String> handlers = new ArrayList<>();
         private LogLevel level;
         private Boolean useParentHandlers = true;
 
         public LoggerFixture(String category) {
-            this.category = category;
+            this.category = LoggerCategory.of(category);
 
-            when(loggerMock.category()).thenReturn(category);
+            when(loggerMock.category()).then(i -> this.category);
             when(loggerMock.handlers()).then(i -> handlerNames());
             when(loggerMock.useParentHandlers()).then(i -> useParentHandlers);
             when(loggerMock.level()).then(i -> level);
 
-            when(loggers.logger(category)).thenReturn(loggerMock);
+            when(loggers.logger(this.category)).thenReturn(loggerMock);
             when(loggerMock.isDeployed()).thenReturn(false);
         }
 

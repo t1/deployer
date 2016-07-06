@@ -1,8 +1,8 @@
 package com.github.t1.deployer;
 
-import com.github.t1.deployer.app.Audit;
+import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit;
-import com.github.t1.rest.UriTemplate;
+import com.github.t1.rest.*;
 import com.github.t1.testtools.FileMemento;
 import org.junit.*;
 
@@ -32,10 +32,12 @@ public class TestClient {
     }
 
     private static List<Audit> postUpdate() {
-        return REST
-                .createResource(UriTemplate.fromString("http://localhost:8080/deployer/api"))
-                .accept(new GenericType<List<Audit>>() {})
-                .POST();
+        return deployer().accept(new GenericType<List<Audit>>() {}).POST();
+    }
+
+
+    public static RestResource deployer() {
+        return REST.createResource(UriTemplate.fromString("http://localhost:8080/deployer"));
     }
 
     @Test
@@ -85,5 +87,12 @@ public class TestClient {
         List<Audit> audits = postUpdate();
 
         System.out.println("audit:\n- " + join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
+    }
+
+    @Test
+    public void shouldGetEffectivePlan() throws Exception {
+        ConfigurationPlan plan = deployer().GET(ConfigurationPlan.class);
+
+        System.out.println("plan:\n" + plan);
     }
 }

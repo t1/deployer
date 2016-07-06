@@ -167,7 +167,7 @@ public class DeploymentContainer extends CLI {
         ContextRoot contextRoot = getContextRoot(cliDeployment);
         Checksum hash = Checksum.of(hash(cliDeployment));
         log.debug("{} -> {} -> {}", name, contextRoot, hash);
-        return new Deployment(name, contextRoot, hash, null);
+        return new Deployment(name, contextRoot, hash);
     }
 
     private byte[] hash(ModelNode cliDeployment) {

@@ -1,12 +1,11 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Checksum;
 import lombok.*;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.*;
-import java.util.List;
 
 import static javax.xml.bind.annotation.XmlAccessType.*;
 
@@ -20,27 +19,13 @@ import static javax.xml.bind.annotation.XmlAccessType.*;
 public class Deployment implements Comparable<Deployment> {
     public static final String NEW_DEPLOYMENT_PATH = "!";
     private static final DeploymentName NEW_DEPLOYMENT_NAME = new DeploymentName(NEW_DEPLOYMENT_PATH);
-    public static final Deployment NEW_DEPLOYMENT = new Deployment(NEW_DEPLOYMENT_NAME, null, null, null, null);
+    public static final Deployment NEW_DEPLOYMENT = new Deployment(NEW_DEPLOYMENT_NAME, null, null);
 
     DeploymentName name;
 
     ContextRoot contextRoot;
 
     Checksum checksum;
-
-    Version version;
-
-    @XmlElement(name = "release")
-    @XmlElementWrapper
-    List<Release> releases;
-
-    public Deployment(ContextRoot contextRoot) {
-        this(null, contextRoot, null, null, null);
-    }
-
-    public Deployment(DeploymentName name, ContextRoot contextRoot, Checksum checksum, Version version) {
-        this(name, contextRoot, checksum, version, null);
-    }
 
     @Override
     public int compareTo(@NotNull Deployment that) {
@@ -58,6 +43,6 @@ public class Deployment implements Comparable<Deployment> {
 
     @Override
     public String toString() {
-        return (isDefaultName() ? "" : name + ":") + contextRoot + ((version == null) ? "" : "@" + version);
+        return (isDefaultName() ? "" : name + ":") + contextRoot;
     }
 }

@@ -14,7 +14,7 @@ import static java.lang.String.*;
 import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
 
-@Path("/api")
+@Path("/")
 @Stateless
 @Slf4j
 public class DeployerBoundary {
@@ -41,5 +41,10 @@ public class DeployerBoundary {
             log.debug("audit:\n- {}", join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
 
         return Response.ok(audits).build();
+    }
+
+    @GET
+    public ConfigurationPlan get() {
+        return deployer.effectivePlan();
     }
 }

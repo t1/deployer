@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
+import com.github.t1.deployer.container.LoggerCategory;
 import org.junit.Test;
 
 import java.io.*;
@@ -39,7 +40,7 @@ public class AuditMarshallingTest {
             ArtifactAudit.of("org.mock-server", "mockserver-war", "3.10.4").name("mockserver");
 
     private static final LoggerAudit.LoggerAuditBuilder DEPLOYER_LOG =
-            LoggerAudit.of("com.github.t1.deployer").level(DEBUG);
+            LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG);
 
 
     private static final String TWO_AUDITS_JSON =
@@ -150,16 +151,16 @@ public class AuditMarshallingTest {
         List<Audit> audits = JSON.readValue(new StringReader(TWO_AUDITS_JSON), AUDITS);
 
         assertThat(audits).containsExactly(
-                LoggerAudit.of("foo").level(DEBUG).added(),
-                LoggerAudit.of("bar").level(INFO).removed());
+                LoggerAudit.of(LoggerCategory.of("foo")).level(DEBUG).added(),
+                LoggerAudit.of(LoggerCategory.of("bar")).level(INFO).removed());
     }
 
 
     @Test
     public void shouldSerializeTwoLoggerAudits() throws Exception {
         List<Audit> audits = asList(
-                LoggerAudit.of("foo").level(DEBUG).added(),
-                LoggerAudit.of("bar").level(INFO).removed());
+                LoggerAudit.of(LoggerCategory.of("foo")).level(DEBUG).added(),
+                LoggerAudit.of(LoggerCategory.of("bar")).level(INFO).removed());
         StringWriter out = new StringWriter();
 
         JSON.writeValue(out, audits);

@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -16,7 +17,9 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.*;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
+import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
@@ -34,7 +37,12 @@ public class ConfigurationPlan {
     private static final GroupId LOGGERS = new GroupId("loggers");
     private static final GroupId LOG_HANDLERS = new GroupId("log-handlers");
 
-    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
+    private static final ObjectMapper MAPPER = new ObjectMapper(
+            new YAMLFactory()
+                    .enable(MINIMIZE_QUOTES)
+                    .disable(WRITE_DOC_START_MARKER))
+            .setSerializationInclusion(NON_EMPTY)
+            .findAndRegisterModules()
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public static final TypeReference<Map<GroupId, Map<ArtifactId, JsonNode>>>
@@ -70,26 +78,29 @@ public class ConfigurationPlan {
                     if (node.isNull())
                         throw new NullPointerException("no config in " + groupId + ":" + artifactId);
                     if (LOGGERS.equals(groupId)) {
-                        logger(LoggerConfig.fromJson(artifactId, node));
+                        LoggerConfig loggerConfig = LoggerConfig.fromJson(artifactId, node);
+                        logger(loggerConfig.category, loggerConfig);
                     } else if (LOG_HANDLERS.equals(groupId)) {
-                        logHandler(LogHandlerConfig.fromJson(artifactId, node));
+                        LogHandlerConfig logHandlerConfig = LogHandlerConfig.fromJson(artifactId, node);
+                        logHandler(logHandlerConfig.name, logHandlerConfig);
                     } else {
-                        deployment(DeploymentConfig.fromJson(groupId, artifactId, node));
+                        DeploymentConfig deploymentConfig = DeploymentConfig.fromJson(groupId, artifactId, node);
+                        deployment(deploymentConfig.deploymentName, deploymentConfig);
                     }
                 });
             });
         }
     }
 
-    @Singular @NonNull private final List<LoggerConfig> loggers;
-    @Singular @NonNull private final List<LogHandlerConfig> logHandlers;
-    @Singular @NonNull private final List<DeploymentConfig> deployments;
+    @Singular @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
+    @Singular @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
+    @Singular @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> deployments;
 
-    public Stream<LoggerConfig> loggers() { return loggers.stream(); }
+    public Stream<LoggerConfig> loggers() { return loggers.values().stream(); }
 
-    public Stream<LogHandlerConfig> logHandlers() { return logHandlers.stream(); }
+    public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
 
-    public Stream<DeploymentConfig> deployments() { return deployments.stream(); }
+    public Stream<DeploymentConfig> deployments() { return deployments.values().stream(); }
 
     @Data
     @Builder
@@ -98,12 +109,9 @@ public class ConfigurationPlan {
         @NonNull private GroupId groupId;
         @NonNull private ArtifactId artifactId;
         @NonNull private DeploymentState state;
-        @NonNull private String name;
+        @NonNull private DeploymentName deploymentName;
         @NonNull private Version version;
         @NonNull private ArtifactType type;
-
-
-        public DeploymentName getDeploymentName() { return new DeploymentName(name); }
 
 
         public static DeploymentConfig fromJson(GroupId groupId, ArtifactId artifactId, JsonNode node) {
@@ -111,7 +119,7 @@ public class ConfigurationPlan {
                     .groupId(groupId)
                     .artifactId(artifactId);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "name", artifactId.getValue(), builder::name);
+            apply(node, "name", artifactId.getValue(), value -> builder.deploymentName(new DeploymentName(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
             return builder.build();
@@ -119,7 +127,7 @@ public class ConfigurationPlan {
 
         @Override public String toString() {
             return "«deployment:" + state
-                    + (name == null ? "" : ":" + name)
+                    + (deploymentName == null ? "" : ":" + deploymentName)
                     + (version == null ? "" : ":" + version)
                     + (type == war ? "" : ":" + type)
                     + "»";
@@ -131,7 +139,7 @@ public class ConfigurationPlan {
     @AllArgsConstructor(access = PRIVATE)
     public static class LoggerConfig {
         @NonNull private DeploymentState state;
-        @NonNull private String category;
+        @NonNull private LoggerCategory category;
         private LogLevel level;
         @Singular
         @NonNull private List<LogHandlerName> handlers;
@@ -141,7 +149,7 @@ public class ConfigurationPlan {
         private static LoggerConfig fromJson(ArtifactId artifactId, JsonNode node) {
             LoggerConfigBuilder builder = builder();
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "name", artifactId.getValue(), builder::category);
+            apply(node, "name", artifactId.getValue(), value -> builder.category(LoggerCategory.of(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "handler", null, value -> {
                 if (value != null) {
@@ -231,5 +239,10 @@ public class ConfigurationPlan {
         logHandlers().forEach(handler -> out.append(handler).append("\n"));
         deployments().forEach(deployment -> out.append(deployment).append("\n"));
         return out.toString();
+    }
+
+    @SneakyThrows(IOException.class)
+    public String toYaml() {
+        return MAPPER.writeValueAsString(this);
     }
 }

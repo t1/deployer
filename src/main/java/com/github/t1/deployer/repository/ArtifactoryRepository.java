@@ -87,9 +87,9 @@ public class ArtifactoryRepository extends Repository {
         SearchResult result = searchByChecksum(checksum);
         switch (result.getStatus()) {
         case error:
-            throw new RuntimeException("error while searching for checksum: '" + checksum + "'");
+            throw new ErrorWhileFetchingChecksumException(checksum);
         case unknown:
-            throw new RuntimeException("unknown checksum: '" + checksum + "'");
+            throw new UnknownChecksumException(checksum);
         case ok:
             break;
         }
@@ -147,10 +147,6 @@ public class ArtifactoryRepository extends Repository {
         SearchResultStatus status;
         URI uri;
         URI downloadUri;
-
-        public boolean is(SearchResultStatus status) {
-            return this.status == status;
-        }
     }
 
     @lombok.Data

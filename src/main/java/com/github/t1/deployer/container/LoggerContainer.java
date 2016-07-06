@@ -15,7 +15,7 @@ import static com.github.t1.log.LogLevel.*;
 public class LoggerContainer extends CLI {
     public List<LoggerResource> allLoggers() { return LoggerResource.all(this); }
 
-    public LoggerResource logger(String category) { return new LoggerResource(category, this); }
+    public LoggerResource logger(LoggerCategory category) { return new LoggerResource(category, this); }
 
     public LogHandler handler(LoggingHandlerType type, LogHandlerName name) { return new LogHandler(name, type, this); }
 }

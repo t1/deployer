@@ -9,6 +9,7 @@ import org.jboss.dmr.ModelNode;
 import java.util.*;
 
 import static com.github.t1.deployer.container.CLI.*;
+import static com.github.t1.deployer.container.LoggerCategory.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
@@ -19,9 +20,7 @@ import static lombok.AccessLevel.*;
 @AllArgsConstructor(access = PRIVATE)
 @Accessors(fluent = true, chain = true)
 public class LoggerResource {
-    public static final String ROOT = "ROOT";
-
-    @NonNull private final String category;
+    @NonNull @Getter private final LoggerCategory category;
     @NonNull private final CLI cli;
 
     private Boolean deployed = null;
@@ -31,11 +30,7 @@ public class LoggerResource {
     private Boolean useParentHandlers;
     private LogLevel level;
 
-    public String category() {
-        return isRoot() ? ROOT : category;
-    }
-
-    public boolean isRoot() { return ROOT.equals(category) || category.isEmpty(); }
+    public boolean isRoot() { return category.isRoot(); }
 
     public List<LogHandlerName> handlers() {
         assertDeployed();
@@ -128,10 +123,10 @@ public class LoggerResource {
     private ModelNode createRequestWithAddress() {
         ModelNode request = new ModelNode();
         ModelNode logging = request.get("address").add("subsystem", "logging");
-        if (ROOT.equals(category) || category.isEmpty())
+        if (category.isRoot())
             logging.add("root-logger", "ROOT");
         else
-            logging.add("logger", category);
+            logging.add("logger", category.getValue());
         return request;
     }
 
@@ -166,7 +161,7 @@ public class LoggerResource {
     }
 
     public static List<LoggerResource> all(CLI cli) {
-        ModelNode request = readResource(new LoggerResource("*", cli).createRequestWithAddress());
+        ModelNode request = readResource(new LoggerResource(LoggerCategory.ANY, cli).createRequestWithAddress());
         List<LoggerResource> loggers =
                 cli.execute(request)
                    .asList().stream()
@@ -177,9 +172,11 @@ public class LoggerResource {
         return loggers;
     }
 
-    private static String category(ModelNode address) { return address.get(1).get("logger").asString(); }
+    private static LoggerCategory category(ModelNode address) {
+        return LoggerCategory.of(address.get(1).get("logger").asString());
+    }
 
-    public static LoggerResource toLoggerResource(CLI cli, ModelNode node, String category) {
+    public static LoggerResource toLoggerResource(CLI cli, ModelNode node, LoggerCategory category) {
         LoggerResource logger = new LoggerResource(category, cli);
         logger.deployed = true;
         logger.readFrom(node);

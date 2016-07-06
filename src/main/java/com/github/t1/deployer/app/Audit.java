@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.annotation.*;
-import com.github.t1.deployer.container.DeploymentName;
+import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Artifact;
 import com.github.t1.log.LogLevel;
@@ -86,12 +86,12 @@ public abstract class Audit {
     @Builder
     @EqualsAndHashCode(callSuper = true)
     public static class LoggerAudit extends Audit {
-        @NonNull @JsonProperty private final String category;
+        @NonNull @JsonProperty private final LoggerCategory category;
         @JsonProperty private final LogLevel level;
 
         @Override public String toString() { return super.toString() + ":" + category + ":" + level; }
 
-        public static LoggerAuditBuilder of(@NonNull String category) {
+        public static LoggerAuditBuilder of(@NonNull LoggerCategory category) {
             return LoggerAudit.builder().category(category);
         }
 
@@ -101,7 +101,7 @@ public abstract class Audit {
             @Override protected LoggerAudit build() { return new LoggerAudit(change, category, level); }
         }
 
-        private LoggerAudit(ChangeType change, String category, LogLevel level) {
+        private LoggerAudit(ChangeType change, LoggerCategory category, LogLevel level) {
             super(logger, change);
             this.category = category;
             this.level = level;
@@ -120,7 +120,7 @@ public abstract class Audit {
         }
         case "logger": {
             LoggerAudit.LoggerAuditBuilder builder = LoggerAudit
-                    .of(map.get("category"))
+                    .of(LoggerCategory.of(map.get("category")))
                     .level(map.containsKey("level") ? LogLevel.valueOf(map.get("level")) : null);
             return build(map, builder);
         }
