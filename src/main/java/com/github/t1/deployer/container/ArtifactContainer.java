@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 @Logged(level = INFO)
 @Stateless
-public class DeploymentContainer extends CLI {
+public class ArtifactContainer extends CLI {
     private static final int TIMEOUT = 30;
 
     public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
@@ -147,9 +147,9 @@ public class DeploymentContainer extends CLI {
                     .orElseThrow(() -> new RuntimeException("no deployment with checksum [" + checksum + "]"));
     }
 
-    private Stream<Deployment> all() { return getAllDeployments().stream(); }
+    private Stream<Deployment> all() { return getAllArtifacts().stream(); }
 
-    public List<Deployment> getAllDeployments() {
+    public List<Deployment> getAllArtifacts() {
         return execute(readDeployments())
                 .asList().stream()
                 .map(cliDeploymentMatch -> toDeployment(cliDeploymentMatch.get("result")))

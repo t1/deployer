@@ -6,52 +6,24 @@ import com.github.t1.deployer.model.*;
 import org.junit.Test;
 
 import java.io.StringReader;
-import java.util.List;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
-import static java.util.stream.Collectors.*;
+import static com.github.t1.deployer.model.LoggingHandlerType.*;
+import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class ConfigurationPlanSerializationTest {
-    @Test
-    public void shouldLoadInSequence() throws Exception {
-        String A = "  A:\n"
-                + "    level: ALL\n"
-                + "    file: deployer-audit.log\n"
-                + "    suffix: .yyyy-MM-dd\n"
-                + "    format: \"%d{yyyy-MM-dd HH:mm:ss,SSS}|%X{host}|%X{slot}|%X{version}|%X{client}|%t|%X{reference}|%c|%p|%s%e%n\"\n";
-        String B = "  B:\n"
-                + "    level: ALL\n"
-                + "    file: deployer.log\n"
-                + "    suffix: .yyyy-MM-dd\n"
-                + "    format: \"%d{yyyy-MM-dd HH:mm:ss,SSS}|%X{host}|%X{slot}|%X{version}|%X{client}|%t|%X{reference}|%c|%p|%s%e%n\"\n";
-        ConfigurationPlan planAB = ConfigurationPlan.load(new StringReader(""
-                + "log-handlers:\n"
-                + A
-                + B
-        ));
-        ConfigurationPlan planBA = ConfigurationPlan.load(new StringReader(""
-                + "log-handlers:\n"
-                + B
-                + A
-        ));
+    private static final DeploymentConfig FOO = DeploymentConfig
+            .builder()
+            .name(new DeploymentName("foo"))
+            .groupId(new GroupId("org.foo"))
+            .artifactId(new ArtifactId("foo-war"))
+            .version(new Version("1"))
+            .type(war)
+            .state(deployed)
+            .build();
 
-        assertThat(planAB.loggers().collect(toList())).isEmpty();
-        assertThat(planAB.deployments().collect(toList())).isEmpty();
-        assertThat(handlerNames(planAB)).containsExactly("A", "B");
-
-        assertThat(planBA.loggers().collect(toList())).isEmpty();
-        assertThat(planBA.deployments().collect(toList())).isEmpty();
-        assertThat(handlerNames(planBA)).containsExactly("B", "A");
-    }
-
-    public List<String> handlerNames(ConfigurationPlan planBA) {
-        return planBA.logHandlers()
-                     .map(LogHandlerConfig::getName)
-                     .map(LogHandlerName::getValue)
-                     .collect(toList());
-    }
 
     @Test
     public void shouldSerializeEmptyPlan() throws Exception {
@@ -63,30 +35,113 @@ public class ConfigurationPlanSerializationTest {
     }
 
     @Test
+    public void shouldDeserializeEmptyPlan() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader("{}"));
+
+        assertThat(plan).isEqualTo(ConfigurationPlan.builder().build());
+    }
+
+
+    private static final String ONE_DEPLOYMENT_YAML = ""
+            + "artifacts:\n"
+            + "  foo:\n"
+            + "    state: deployed\n"
+            + "    group-id: org.foo\n"
+            + "    artifact-id: foo-war\n"
+            + "    version: 1\n"
+            + "    type: war\n";
+
+    private static final ConfigurationPlan ONE_DEPLOYMENT_PLAN = ConfigurationPlan
+            .builder()
+            .artifact(new DeploymentName("foo"), FOO)
+            .build();
+
+    @Test
+    public void shouldDeserializePlanWithOneDeployment() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(ONE_DEPLOYMENT_YAML));
+
+        assertThat(plan).isEqualTo(ONE_DEPLOYMENT_PLAN);
+    }
+
+    @Test
     public void shouldSerializePlanWithOneDeployment() throws Exception {
-        DeploymentConfig foo = DeploymentConfig
-                .builder()
-                .groupId(new GroupId("org.foo"))
-                .artifactId(new ArtifactId("foo-war"))
-                .version(new Version("1"))
-                .type(war)
-                .deploymentName(new DeploymentName("foo"))
-                .state(deployed)
-                .build();
-        ConfigurationPlan plan = ConfigurationPlan
-                .builder()
-                .deployment(foo.getDeploymentName(), foo)
-                .build();
+        String yaml = ONE_DEPLOYMENT_PLAN.toYaml();
 
-        String yaml = plan.toYaml();
+        assertThat(yaml).isEqualTo(ONE_DEPLOYMENT_YAML);
+    }
 
-        assertThat(yaml).isEqualTo("deployments:\n"
-                + "  foo:\n"
-                + "    groupId: org.foo\n"
-                + "    artifactId: foo-war\n"
-                + "    state: deployed\n"
-                + "    deploymentName: foo\n"
-                + "    version: 1\n"
-                + "    type: war\n");
+
+    private static final String ONE_LOGGER_YAML = ""
+            + "loggers:\n"
+            + "  some.logger.category:\n"
+            + "    state: deployed\n"
+            + "    level: TRACE\n"
+            + "    handlers:\n"
+            + "    - CONSOLE\n"
+            + "    use-parent-handlers: true\n";
+    private static final LoggerConfig LOGGER = LoggerConfig
+            .builder()
+            .category(LoggerCategory.of("some.logger.category"))
+            .state(deployed)
+            .level(TRACE)
+            .handler(new LogHandlerName("CONSOLE"))
+            .useParentHandlers(true)
+            .build();
+    private static final ConfigurationPlan ONE_LOGGER_PLAN = ConfigurationPlan
+            .builder()
+            .logger(LOGGER.getCategory(), LOGGER)
+            .build();
+
+    @Test
+    public void shouldDeserializePlanWithOneLogger() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(ONE_LOGGER_YAML));
+
+        assertThat(plan).isEqualTo(ONE_LOGGER_PLAN);
+    }
+
+    @Test
+    public void shouldSerializePlanWithOneLogger() throws Exception {
+        String yaml = ONE_LOGGER_PLAN.toYaml();
+
+        assertThat(yaml).isEqualTo(ONE_LOGGER_YAML);
+    }
+
+
+    private static final String ONE_LOGHANDLER_YAML = ""
+            + "log-handlers:\n"
+            + "  CONSOLE:\n"
+            + "    state: deployed\n"
+            + "    level: INFO\n"
+            + "    type: periodicRotatingFile\n"
+            + "    file: the-file\n"
+            + "    suffix: the-suffix\n"
+            + "    format: the-format\n";
+    private static final LogHandlerConfig LOGHANDLER = LogHandlerConfig
+            .builder()
+            .name(new LogHandlerName("CONSOLE"))
+            .state(deployed)
+            .level(INFO)
+            .type(periodicRotatingFile)
+            .file("the-file")
+            .suffix("the-suffix")
+            .format("the-format")
+            .build();
+    private static final ConfigurationPlan ONE_LOGHANDLER_PLAN = ConfigurationPlan
+            .builder()
+            .logHandler(LOGHANDLER.getName(), LOGHANDLER)
+            .build();
+
+    @Test
+    public void shouldDeserializePlanWithOneLogHandler() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(ONE_LOGHANDLER_YAML));
+
+        assertThat(plan).isEqualTo(ONE_LOGHANDLER_PLAN);
+    }
+
+    @Test
+    public void shouldSerializePlanWithOneLogHandler() throws Exception {
+        String yaml = ONE_LOGHANDLER_PLAN.toYaml();
+
+        assertThat(yaml).isEqualTo(ONE_LOGHANDLER_YAML);
     }
 }

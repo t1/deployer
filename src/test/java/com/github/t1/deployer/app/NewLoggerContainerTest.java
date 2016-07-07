@@ -4,6 +4,7 @@ import com.github.t1.deployer.app.NewLoggerContainerTest.LoggerFixture.LoggerFix
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
+import com.github.t1.problem.WebApplicationApplicationException;
 import lombok.SneakyThrows;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.eq;
 public class NewLoggerContainerTest {
     @InjectMocks Deployer deployer;
 
-    @Mock DeploymentContainer deployments;
+    @Mock ArtifactContainer artifacts;
     @Mock Repository repository;
     @Spy Audits audits;
     @Mock Instance<Audits> auditsInstance;
@@ -41,7 +42,7 @@ public class NewLoggerContainerTest {
     public void setUp() throws Exception {
         deployer.loggers = loggers;
 
-        when(deployments.getAllDeployments()).thenReturn(emptyList());
+        when(artifacts.getAllArtifacts()).thenReturn(emptyList());
     }
 
 
@@ -120,7 +121,8 @@ public class NewLoggerContainerTest {
                 + "loggers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("no config in loggers:foo");
+        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class)
+                          .hasMessageContaining("no config in logger 'foo'");
     }
 
 

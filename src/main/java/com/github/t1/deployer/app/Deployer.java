@@ -24,7 +24,7 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 @Singleton
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class Deployer {
-    @Inject DeploymentContainer deployments;
+    @Inject ArtifactContainer artifacts;
     @Inject LoggerContainer loggers;
     @Inject Repository repository;
     @Inject Instance<Audits> auditInstances;
@@ -37,11 +37,11 @@ public class Deployer {
 
     public Audits run(String plan) { return run(new StringReader(plan)); }
 
-    public synchronized Audits run(Reader reader) { return new Run(deployments.getAllDeployments()).run(reader); }
+    public synchronized Audits run(Reader reader) { return new Run(artifacts.getAllArtifacts()).run(reader); }
 
     public ConfigurationPlan effectivePlan() {
         ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
-        for (Deployment deployment : deployments.getAllDeployments()) {
+        for (Deployment deployment : artifacts.getAllArtifacts()) {
             Artifact artifact = getByChecksum(deployment.getChecksum());
             DeploymentConfig deploymentConfig = DeploymentConfig
                     .builder()
@@ -49,10 +49,9 @@ public class Deployer {
                     .artifactId(artifact.getArtifactId())
                     .version(artifact.getVersion())
                     .type(artifact.getType())
-                    .deploymentName(deployment.getName())
                     .state(deployed)
                     .build();
-            builder.deployment(deploymentConfig.getDeploymentName(), deploymentConfig);
+            builder.artifact(deployment.getName(), deploymentConfig);
         }
         return builder.build();
     }
@@ -98,7 +97,7 @@ public class Deployer {
 
             plan.logHandlers().forEach(this::applyLogHandler);
 
-            plan.deployments().forEach(this::applyDeployment);
+            plan.artifacts().forEach(this::applyArtifact);
 
             if (managed)
                 for (Deployment deployment : existing)
@@ -182,18 +181,17 @@ public class Deployer {
                        .add();
         }
 
-        private void applyDeployment(DeploymentConfig item) {
-            DeploymentName name = item.getDeploymentName();
-            log.debug("check '{}' -> {}", name, item.getState());
+        private void applyArtifact(DeploymentConfig item) {
+            log.debug("check '{}' -> {}", item.getName(), item.getState());
             Artifact artifact = repository
                     .lookupArtifact(item.getGroupId(), item.getArtifactId(), item.getVersion(), item.getType());
             switch (item.getState()) {
             case deployed:
                 log.debug("found {} => {}", item, artifact);
-                deployIf(name, artifact);
+                deployIf(item.getName(), artifact);
                 break;
             case undeployed:
-                undeployIf(name, artifact);
+                undeployIf(item.getName(), artifact);
             }
         }
 
@@ -201,14 +199,14 @@ public class Deployer {
             if (artifact.getType() == bundle) {
                 this.run(artifact.getReader());
             } else if (existing.removeIf(name::matches)) {
-                if (deployments.getDeployment(name).getChecksum().equals(artifact.getChecksum())) {
+                if (artifacts.getDeployment(name).getChecksum().equals(artifact.getChecksum())) {
                     log.info("already deployed with same checksum: {}", name);
                 } else {
-                    deployments.redeploy(name, artifact.getInputStream());
+                    artifacts.redeploy(name, artifact.getInputStream());
                     audits.audit(audit(artifact).name(name).updated());
                 }
             } else {
-                deployments.deploy(name, artifact.getInputStream());
+                artifacts.deploy(name, artifact.getInputStream());
                 audits.audit(audit(artifact).name(name).added());
             }
         }
@@ -222,7 +220,7 @@ public class Deployer {
         }
 
         private void undeploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
-            deployments.undeploy(name);
+            artifacts.undeploy(name);
             audits.audit(audit(artifact).name(name).removed());
         }
 

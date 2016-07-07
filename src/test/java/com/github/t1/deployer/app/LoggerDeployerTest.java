@@ -23,7 +23,9 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "loggers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("no config in loggers:foo");
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("no config in logger 'foo'");
     }
 
     @Test
@@ -356,8 +358,9 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "log-handlers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown).isInstanceOf(NullPointerException.class)
-                          .hasMessageContaining("no config in log-handlers:foo");
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("no config in log-handler 'foo'");
     }
 
     @Test

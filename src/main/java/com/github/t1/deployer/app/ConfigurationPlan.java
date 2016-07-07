@@ -1,8 +1,10 @@
 package com.github.t1.deployer.app;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
@@ -10,8 +12,6 @@ import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
@@ -26,12 +26,13 @@ import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.problem.WebException.*;
 import static java.lang.Boolean.*;
-import static javax.ws.rs.core.Response.Status.*;
 import static lombok.AccessLevel.*;
 
+@Value
 @Slf4j
 @Builder
 @AllArgsConstructor(access = PRIVATE)
+@JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class ConfigurationPlan {
     private static final GroupId LOGGERS = new GroupId("loggers");
@@ -59,97 +60,91 @@ public class ConfigurationPlan {
             return MAPPER.readValue(reader, JsonNode.class);
         } catch (IOException e) {
             log.debug("exception while loading config plan", e);
-            throw new WebApplicationException(Response.status(BAD_REQUEST).entity(e.getMessage()).build());
+            throw badRequest(e.getMessage());
         }
     }
 
-    public static ConfigurationPlan from(JsonNode json) {
-        ConfigurationPlanBuilder builder = builder();
-        builder.load(json);
-        return builder.build();
-    }
+    public static ConfigurationPlan from(JsonNode json) { return builder().load(json).build(); }
 
     public static class ConfigurationPlanBuilder {
-        public void load(JsonNode json) {
-            fieldNames(json).map(GroupId::new).forEach(groupId -> {
-                JsonNode artifactNode = json.get(groupId.getValue());
-                fieldNames(artifactNode).map(ArtifactId::new).forEach(artifactId -> {
-                    JsonNode node = artifactNode.get(artifactId.getValue());
-                    if (node.isNull())
-                        throw new NullPointerException("no config in " + groupId + ":" + artifactId);
-                    if (LOGGERS.equals(groupId)) {
-                        LoggerConfig loggerConfig = LoggerConfig.fromJson(artifactId, node);
-                        logger(loggerConfig.category, loggerConfig);
-                    } else if (LOG_HANDLERS.equals(groupId)) {
-                        LogHandlerConfig logHandlerConfig = LogHandlerConfig.fromJson(artifactId, node);
-                        logHandler(logHandlerConfig.name, logHandlerConfig);
-                    } else {
-                        DeploymentConfig deploymentConfig = DeploymentConfig.fromJson(groupId, artifactId, node);
-                        deployment(deploymentConfig.deploymentName, deploymentConfig);
-                    }
-                });
-            });
+        public ConfigurationPlanBuilder load(JsonNode json) {
+            JsonNode artifacts = json.get("artifacts");
+            if (artifacts != null)
+                fieldNames(artifacts).map(DeploymentName::new).forEach(deploymentName -> artifact(deploymentName,
+                        DeploymentConfig.from(deploymentName, artifacts.get(deploymentName.getValue()))));
+
+            JsonNode loggers = json.get("loggers");
+            if (loggers != null)
+                fieldNames(loggers).map(LoggerCategory::of).forEach(loggerCategory -> logger(loggerCategory,
+                        LoggerConfig.from(loggerCategory, loggers.get(loggerCategory.getValue()))));
+
+            JsonNode logHandlers = json.get("log-handlers");
+            if (logHandlers != null)
+                fieldNames(logHandlers).map(LogHandlerName::new).forEach(logHandlerName -> logHandler(logHandlerName,
+                        LogHandlerConfig.fromJson(logHandlerName, logHandlers.get(logHandlerName.getValue()))));
+
+            return this;
         }
     }
 
     @Singular @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
     @Singular @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
-    @Singular @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> deployments;
+    @Singular @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> artifacts;
 
     public Stream<LoggerConfig> loggers() { return loggers.values().stream(); }
 
     public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
 
-    public Stream<DeploymentConfig> deployments() { return deployments.values().stream(); }
+    public Stream<DeploymentConfig> artifacts() { return artifacts.values().stream(); }
 
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
+    @JsonNaming(KebabCaseStrategy.class)
     public static class DeploymentConfig {
+        @NonNull @JsonIgnore private DeploymentName name;
+        @NonNull private DeploymentState state;
         @NonNull private GroupId groupId;
         @NonNull private ArtifactId artifactId;
-        @NonNull private DeploymentState state;
-        @NonNull private DeploymentName deploymentName;
         @NonNull private Version version;
         @NonNull private ArtifactType type;
 
 
-        public static DeploymentConfig fromJson(GroupId groupId, ArtifactId artifactId, JsonNode node) {
-            DeploymentConfigBuilder builder = builder()
-                    .groupId(groupId)
-                    .artifactId(artifactId);
+        public static DeploymentConfig from(DeploymentName name, JsonNode node) {
+            if (node.isNull())
+                throw badRequest("no config in artifact '" + name + "'");
+            DeploymentConfigBuilder builder = builder().name(name);
+            apply(node, "group-id", null, value -> builder.groupId(new GroupId(value)));
+            apply(node, "artifact-id", name.getValue(), value -> builder.artifactId(new ArtifactId(value)));
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "name", artifactId.getValue(), value -> builder.deploymentName(new DeploymentName(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
             return builder.build();
         }
 
         @Override public String toString() {
-            return "«deployment:" + state
-                    + (deploymentName == null ? "" : ":" + deploymentName)
-                    + (version == null ? "" : ":" + version)
-                    + (type == war ? "" : ":" + type)
-                    + "»";
+            return "«deployment:" + state + ":" + groupId + ":" + artifactId + ":" + version + ":" + type + "»";
         }
     }
 
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
+    @JsonNaming(KebabCaseStrategy.class)
     public static class LoggerConfig {
+        @NonNull @JsonIgnore private LoggerCategory category;
         @NonNull private DeploymentState state;
-        @NonNull private LoggerCategory category;
         private LogLevel level;
         @Singular
         @NonNull private List<LogHandlerName> handlers;
         private Boolean useParentHandlers;
 
 
-        private static LoggerConfig fromJson(ArtifactId artifactId, JsonNode node) {
-            LoggerConfigBuilder builder = builder();
+        private static LoggerConfig from(LoggerCategory category, JsonNode node) {
+            if (node.isNull())
+                throw badRequest("no config in logger '" + category + "'");
+            LoggerConfigBuilder builder = builder().category(category);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "name", artifactId.getValue(), value -> builder.category(LoggerCategory.of(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "handler", null, value -> {
                 if (value != null) {
@@ -190,9 +185,10 @@ public class ConfigurationPlan {
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
+    @JsonNaming(KebabCaseStrategy.class)
     public static class LogHandlerConfig {
+        @NonNull @JsonIgnore private LogHandlerName name;
         @NonNull private DeploymentState state;
-        @NonNull private LogHandlerName name;
         @NonNull private LogLevel level;
         @NonNull private LoggingHandlerType type;
         @NonNull private String file;
@@ -201,13 +197,14 @@ public class ConfigurationPlan {
         // TODO formatter / named-formatter
 
 
-        private static LogHandlerConfig fromJson(ArtifactId artifactId, JsonNode node) {
-            LogHandlerConfigBuilder builder = builder();
+        private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
+            if (node.isNull())
+                throw badRequest("no config in log-handler '" + name + "'");
+            LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "name", artifactId.getValue(), value -> builder.name(new LogHandlerName(value)));
             apply(node, "level", ALL.name(), value -> builder.level(LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));
-            apply(node, "file", artifactId.getValue(), builder::file);
+            apply(node, "file", name.getValue(), builder::file);
             apply(node, "suffix", ".yyyy-MM-dd", builder::suffix);
             apply(node, "format", null, builder::format);
             return builder.build();
@@ -237,7 +234,7 @@ public class ConfigurationPlan {
         StringBuilder out = new StringBuilder();
         loggers().forEach(logger -> out.append(logger).append("\n"));
         logHandlers().forEach(handler -> out.append(handler).append("\n"));
-        deployments().forEach(deployment -> out.append(deployment).append("\n"));
+        artifacts().forEach(deployment -> out.append(deployment).append("\n"));
         return out.toString();
     }
 

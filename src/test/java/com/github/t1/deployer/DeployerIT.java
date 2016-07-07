@@ -87,7 +87,7 @@ public class DeployerIT {
 
     @ArquillianResource URI baseUri;
 
-    @Inject DeploymentContainer container;
+    @Inject ArtifactContainer container;
     @Inject LoggerContainer loggers;
 
     @Before
@@ -106,7 +106,7 @@ public class DeployerIT {
             loggers.handler(console, new LogHandlerName("CONSOLE")).correctLevel(ALL);
             loggers.logger(LoggerCategory.of("com.github.t1.deployer")).toBuilder().level(DEBUG).build().add();
 
-            log.info("deployments: {}", container.getAllDeployments());
+            log.info("artifacts: {}", container.getAllArtifacts());
             assertNoOtherDeployments();
         }
     }
@@ -128,20 +128,21 @@ public class DeployerIT {
 
 
     private void assertNoOtherDeployments() {
-        assertThat(container.getAllDeployments().stream().filter(DEPLOYER_IT::matches).count()).isEqualTo(0);
+        assertThat(container.getAllArtifacts().stream().filter(DEPLOYER_IT::matches).count()).isEqualTo(0);
     }
 
     @Test
     @InSequence(value = 100)
     public void shouldFailToDeployWebArchiveWithUnknownVersion() throws Exception {
         String plan = ""
-                + "org.jolokia:\n"
+                + "artifacts:\n"
                 + "  jolokia-war:\n"
+                + "    group-id: org.jolokia\n"
                 + "    version: 9999\n";
 
         EntityResponse<?> response = run(plan, NOT_FOUND);
 
-        assertThat(container.getAllDeployments())
+        assertThat(container.getAllArtifacts())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         assertThat(response.getBody(String.class))
@@ -152,14 +153,15 @@ public class DeployerIT {
     @InSequence(value = 150)
     public void shouldDeployWebArchive() throws Exception {
         String plan = ""
-                + "org.jolokia:\n"
-                + "  jolokia-war:\n"
-                + "    name: jolokia\n"
+                + "artifacts:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
                 + "    version: 1.3.2\n";
 
         List<Audit> audits = run(plan);
 
-        assertThat(container.getAllDeployments())
+        assertThat(container.getAllArtifacts())
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("jolokia"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
@@ -172,15 +174,16 @@ public class DeployerIT {
     @InSequence(value = 200)
     public void shouldUndeployWebArchive() throws Exception {
         String plan = ""
-                + "org.jolokia:\n"
-                + "  jolokia-war:\n"
-                + "    name: jolokia\n"
+                + "artifacts:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
                 + "    version: 1.3.2\n"
                 + "    state: undeployed\n";
 
         List<Audit> audits = run(plan);
 
-        assertThat(container.getAllDeployments())
+        assertThat(container.getAllArtifacts())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
@@ -192,14 +195,15 @@ public class DeployerIT {
     @InSequence(value = 300)
     public void shouldDeployJdbcDriver() throws Exception {
         String plan = ""
-                + "org.postgresql:\n"
+                + "artifacts:\n"
                 + "  postgresql:\n"
-                + "    type: jar\n"
-                + "    version: \"9.4.1207\"\n";
+                + "    group-id: org.postgresql\n"
+                + "    version: \"9.4.1207\"\n"
+                + "    type: jar\n";
 
         List<Audit> audits = run(plan);
 
-        assertThat(container.getAllDeployments())
+        assertThat(container.getAllArtifacts())
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("postgresql"), checksum(POSTGRESQL_9_4_1207_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));

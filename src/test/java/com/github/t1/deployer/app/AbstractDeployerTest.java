@@ -33,7 +33,7 @@ public class AbstractDeployerTest {
 
     @Mock Repository repository;
 
-    @Mock DeploymentContainer deployments;
+    @Mock ArtifactContainer artifacts;
     @Mock LoggerContainer loggers;
     @Mock LoggerResource loggerMock;
     @Mock LoggerResourceBuilder loggerBuilderMock;
@@ -47,7 +47,7 @@ public class AbstractDeployerTest {
         when(auditsInstance.get()).thenReturn(audits);
 
 
-        when(deployments.getAllDeployments()).then(invocation -> allDeployments);
+        when(artifacts.getAllArtifacts()).then(invocation -> allDeployments);
 
 
         when(loggerMock.toBuilder()).thenReturn(loggerBuilderMock);
@@ -76,12 +76,12 @@ public class AbstractDeployerTest {
     }
 
     @After
-    public void afterDeployments() {
-        verify(deployments, atLeast(0)).getAllDeployments();
-        verify(deployments, atLeast(0)).hasDeployment(any(DeploymentName.class));
-        verify(deployments, atLeast(0)).getDeployment(any(DeploymentName.class));
+    public void afterArtifacts() {
+        verify(artifacts, atLeast(0)).getAllArtifacts();
+        verify(artifacts, atLeast(0)).hasDeployment(any(DeploymentName.class));
+        verify(artifacts, atLeast(0)).getDeployment(any(DeploymentName.class));
 
-        verifyNoMoreInteractions(deployments);
+        verifyNoMoreInteractions(artifacts);
     }
 
     @After
@@ -118,19 +118,21 @@ public class AbstractDeployerTest {
     }
 
 
-    public ArtifactFixture givenArtifact(String groupId, String artifactId) {
-        return new ArtifactFixture(groupId, artifactId);
+    public ArtifactFixtureBuilder givenArtifact(String groupId, String artifactId) {
+        return new ArtifactFixtureBuilder(groupId, artifactId);
     }
 
-    public ArtifactFixture givenArtifact(String name) { return new ArtifactFixture("org." + name, name + "-war"); }
+    public ArtifactFixtureBuilder givenArtifact(String name) {
+        return new ArtifactFixtureBuilder("org." + name, name + "-war");
+    }
 
     @RequiredArgsConstructor
-    public class ArtifactFixture {
+    public class ArtifactFixtureBuilder {
         private final String groupId;
         private final String artifactId;
         private String name;
 
-        public ArtifactFixture named(String name) {
+        public ArtifactFixtureBuilder named(String name) {
             this.name = name;
             return this;
         }
@@ -143,21 +145,25 @@ public class AbstractDeployerTest {
 
         public DeploymentName deploymentName() { return new DeploymentName((name == null) ? artifactId : name); }
 
-        public VersionFixture version(String version) { return version(new Version(version)); }
+        public ArtifactFixture version(String version) { return version(new Version(version)); }
 
-        public VersionFixture version(Version version) { return new VersionFixture(version, war); }
+        public ArtifactFixture version(Version version) { return new ArtifactFixture(version, war); }
 
-        public VersionFixture version(String version, ArtifactType type) { return version(new Version(version), type); }
+        public ArtifactFixture version(String version, ArtifactType type) {
+            return version(new Version(version), type);
+        }
 
-        public VersionFixture version(Version version, ArtifactType type) { return new VersionFixture(version, type); }
+        public ArtifactFixture version(Version version, ArtifactType type) {
+            return new ArtifactFixture(version, type);
+        }
 
-        public class VersionFixture {
+        public class ArtifactFixture {
             private final Version version;
             private final ArtifactType type;
             private Checksum checksum;
             private String contents;
 
-            public VersionFixture(Version version, ArtifactType type) {
+            public ArtifactFixture(Version version, ArtifactType type) {
                 this.version = version;
                 this.type = type;
 
@@ -167,16 +173,16 @@ public class AbstractDeployerTest {
                         .then(i -> artifact(Version.ANY));
             }
 
-            public VersionFixture version(String version) { return ArtifactFixture.this.version(version); }
+            public ArtifactFixture version(String version) { return ArtifactFixtureBuilder.this.version(version); }
 
-            public VersionFixture named(String name) {
-                ArtifactFixture.this.named(name);
+            public ArtifactFixture named(String name) {
+                ArtifactFixtureBuilder.this.named(name);
                 return this;
             }
 
-            public DeploymentName deploymentName() { return ArtifactFixture.this.deploymentName(); }
+            public DeploymentName deploymentName() { return ArtifactFixtureBuilder.this.deploymentName(); }
 
-            public VersionFixture checksum(Checksum checksum) {
+            public ArtifactFixture checksum(Checksum checksum) {
                 this.checksum = checksum;
                 return this;
             }
@@ -189,11 +195,11 @@ public class AbstractDeployerTest {
 
             public void containing(String contents) { this.contents = contents; }
 
-            public VersionFixture deployed() {
+            public ArtifactFixture deployed() {
                 Deployment deployment = new Deployment(deploymentName(), contextRoot(), checksum());
                 allDeployments.add(deployment);
-                when(deployments.hasDeployment(deploymentName())).thenReturn(true);
-                when(deployments.getDeployment(deploymentName())).thenReturn(deployment);
+                when(artifacts.hasDeployment(deploymentName())).thenReturn(true);
+                when(artifacts.getDeployment(deploymentName())).thenReturn(deployment);
                 return this;
             }
 
@@ -223,21 +229,21 @@ public class AbstractDeployerTest {
             public ArtifactAuditBuilder artifactAudit() { return ArtifactAudit.of(artifact()).name(deploymentName()); }
 
 
-            public ArtifactFixture and() { return ArtifactFixture.this; }
+            public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
 
             public void verifyDeployed(Audits audits) {
-                verify(deployments).deploy(deploymentName(), inputStream());
+                verify(artifacts).deploy(deploymentName(), inputStream());
                 assertThat(audits.asList()).containsExactly(artifactAudit().added());
             }
 
             public void verifyRedeployed(Audits audits) {
-                verify(deployments).redeploy(deploymentName(), inputStream());
+                verify(artifacts).redeploy(deploymentName(), inputStream());
                 assertThat(audits.asList()).containsExactly(artifactAudit().updated());
             }
 
             public void verifyUndeployed(Audits audits) {
-                verify(deployments).undeploy(deploymentName());
+                verify(artifacts).undeploy(deploymentName());
                 assertThat(audits.asList()).containsExactly(artifactAudit().removed());
             }
         }

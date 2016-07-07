@@ -1,5 +1,5 @@
 @DependsUpon(packagesOf = {
-        com.github.t1.deployer.container.DeploymentContainer.class,
+        com.github.t1.deployer.container.ArtifactContainer.class,
         com.github.t1.deployer.repository.Repository.class,
         com.github.t1.deployer.model.Checksum.class,
 

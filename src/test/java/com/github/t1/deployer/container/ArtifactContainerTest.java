@@ -19,10 +19,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DeploymentContainerTest {
+public class ArtifactContainerTest {
     private static final Version NO_VERSION = null;
 
-    @InjectMocks DeploymentContainer container;
+    @InjectMocks ArtifactContainer container;
     @Mock ModelControllerClient client;
     @Mock Repository repository;
 
@@ -105,7 +105,7 @@ public class DeploymentContainerTest {
         when(client.execute(eq(readAllDeploymentsCli()), any(OperationMessageHandler.class)))
                 .thenThrow(new IOException("dummy"));
 
-        assertThatThrownBy(() -> container.getAllDeployments())
+        assertThatThrownBy(() -> container.getAllArtifacts())
                 .isInstanceOf(IOException.class)
                 .hasMessage("dummy");
     }
@@ -150,10 +150,10 @@ public class DeploymentContainerTest {
     public void shouldGetAllDeployments() {
         givenDeployments(FOO, BAR);
 
-        List<Deployment> deployments = container.getAllDeployments();
+        List<Deployment> artifacts = container.getAllArtifacts();
 
-        assertThat(deployments.size()).isEqualTo(2);
-        assertDeployment(FOO, NO_VERSION, deployments.get(0));
-        assertDeployment(BAR, NO_VERSION, deployments.get(1));
+        assertThat(artifacts.size()).isEqualTo(2);
+        assertDeployment(FOO, NO_VERSION, artifacts.get(0));
+        assertDeployment(BAR, NO_VERSION, artifacts.get(1));
     }
 }
