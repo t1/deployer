@@ -84,7 +84,7 @@ public class ConfigurationPlanSerializationTest {
             .category(LoggerCategory.of("some.logger.category"))
             .state(deployed)
             .level(TRACE)
-            .handler(new LogHandlerName("CONSOLE"))
+            .handler("CONSOLE")
             .useParentHandlers(true)
             .build();
     private static final ConfigurationPlan ONE_LOGGER_PLAN = ConfigurationPlan

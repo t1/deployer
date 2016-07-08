@@ -59,7 +59,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    group-id: org.foo\n"
                 + "    state: deployed\n"));
 
-        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("version");
+        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class).hasMessageContaining("version");
     }
 
 
@@ -286,7 +286,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    group-id: org.foo\n"
                 + "    state: undeployed\n"));
 
-        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("version");
+        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class).hasMessageContaining("version");
     }
 
 
