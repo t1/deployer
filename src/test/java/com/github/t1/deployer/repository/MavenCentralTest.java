@@ -3,25 +3,22 @@ package com.github.t1.deployer.repository;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.rest.*;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.*;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.repository.RepositoryProducer.*;
 import static javax.ws.rs.core.MediaType.*;
 import static org.assertj.core.api.Assertions.*;
 
-@RunWith(MockitoJUnitRunner.class)
 public class MavenCentralTest {
-    private final RestClientMocker mock = new RestClientMocker();
-    @Spy private final RestContext rest = mock.context();
-
-    @InjectMocks MavenCentralRepository repository;
+    private final RestClientMocker mock = new RestClientMocker()
+            .register(REST_ALIAS, DEFAULT_MAVEN_CENTRAL_URI);
+    private final RestContext rest = mock.context();
+    private final MavenCentralRepository repository = new MavenCentralRepository(rest);
 
     @Test
     public void shouldDeserializeSearchByChecksumResult() throws Exception {
         Checksum checksum = Checksum.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
-        mock.on(MavenCentralRepository.QUERY.with("checksum", checksum))
+        mock.on(repository.searchUri().with("checksum", checksum))
             .GET()
             .respond("{\n"
                     + "    \"response\": {\n"

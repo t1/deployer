@@ -19,6 +19,7 @@ import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.deployer.model.Tools.*;
 
 @Slf4j
 @Singleton
@@ -231,9 +232,5 @@ public class Deployer {
                     .artifactId(artifact.getArtifactId())
                     .version(artifact.getVersion());
         }
-    }
-
-    private static <T> T nvl(T value, T defaultValue) {
-        return (value == null) ? defaultValue : value;
     }
 }

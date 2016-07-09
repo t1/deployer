@@ -34,7 +34,7 @@ import static lombok.AccessLevel.*;
 @JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class ConfigurationPlan {
-    private static final ObjectMapper YAML = new ObjectMapper(
+    static final ObjectMapper YAML = new ObjectMapper(
             new YAMLFactory()
                     .enable(MINIMIZE_QUOTES)
                     .disable(WRITE_DOC_START_MARKER))

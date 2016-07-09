@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.*;
 
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 import static lombok.AccessLevel.*;
 
@@ -18,7 +18,5 @@ public class GroupId {
 
     @Override public String toString() { return value; }
 
-    public java.nio.file.Path asPath() {
-        return Paths.get(value.replace('.', '/'));
-    }
+    public Path asPath() { return Paths.get(value.replace('.', '/')); }
 }

@@ -2,24 +2,14 @@ package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
-import lombok.Data;
+import lombok.*;
 
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 
-import static com.github.t1.rest.UriTemplate.CommonScheme.*;
-
-@Vetoed
+@RequiredArgsConstructor
 public class MavenCentralRepository extends Repository {
-    public static final UriTemplate QUERY =
-            http.host("search.maven.org")
-                .path("solrsearch")
-                .path("select")
-                .query("q", "1:{checksum}")
-                .query("rows", "20")
-                .query("wt", "json");
-
     @Data
     private static class MavenCentralSearchResult {
         MavenCentralSearchResponse response;
@@ -38,11 +28,11 @@ public class MavenCentralRepository extends Repository {
         String p;
     }
 
-    @Inject RestContext rest;
+    private final RestContext rest;
 
     @Override public Artifact getByChecksum(Checksum checksum) {
         MavenCentralSearchResult result = rest
-                .createResource(QUERY)
+                .createResource(searchUri())
                 .with("checksum", checksum)
                 .GET(MavenCentralSearchResult.class);
 
@@ -59,8 +49,38 @@ public class MavenCentralRepository extends Repository {
                        .build();
     }
 
+    public UriTemplate searchUri() {
+        return rest.nonQueryUri("repository")
+                   .path("solrsearch")
+                   .path("select")
+                   .query("q", "1:{checksum}")
+                   .query("rows", "20")
+                   .query("wt", "json");
+    }
+
     @Override
     public Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        return null;
+        return Artifact.builder()
+                       .groupId(groupId)
+                       .artifactId(artifactId)
+                       .version(version)
+                       .type(type)
+                       .checksumSupplier(() -> null) // TODO
+                       .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
+                       .build();
+    }
+
+    private InputStream download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+        Path filepath = groupId.asPath()
+                               .resolve(artifactId.getValue())
+                               .resolve(version.getValue())
+                               .resolve(artifactId + "-" + version + "." + type.extension());
+        return rest.createResource(downloadUri())
+                   .with("filepath", filepath)
+                   .GET(InputStream.class);
+    }
+
+    public UriTemplate downloadUri() {
+        return rest.nonQueryUri("repository").path("remotecontent").query("filepath", "{filepath}");
     }
 }

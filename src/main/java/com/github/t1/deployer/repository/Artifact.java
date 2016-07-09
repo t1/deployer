@@ -7,19 +7,26 @@ import java.io.*;
 import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.*;
+import static lombok.AccessLevel.*;
 
 @Builder
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor(access = PRIVATE)
 public class Artifact {
     @NonNull private final GroupId groupId;
     @NonNull private final ArtifactId artifactId;
     @NonNull private final Version version;
     @NonNull private final ArtifactType type;
 
-    @NonNull private final Checksum checksum;
-
+    private Checksum checksum;
+    private final Supplier<Checksum> checksumSupplier;
     @NonNull private final Supplier<InputStream> inputStreamSupplier;
+
+    public Checksum getChecksum() {
+        if (checksum == null)
+            checksum = checksumSupplier.get();
+        return checksum;
+    }
 
     public InputStream getInputStream() {
         return inputStreamSupplier.get();
@@ -27,5 +34,7 @@ public class Artifact {
 
     public Reader getReader() { return new InputStreamReader(getInputStream(), UTF_8); }
 
-    @Override public String toString() { return groupId + ":" + artifactId + ":" + version + "=" + checksum;}
+    @Override public String toString() {
+        return groupId + ":" + artifactId + ":" + version + ((checksum == null) ? "" : "=" + checksum);
+    }
 }

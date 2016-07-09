@@ -21,6 +21,11 @@ If there is already a different version of jolokia deployed, it will replace it.
 
 ## Reference
 
+### Deployments
+### LogHandlers
+### Loggers
+
+
 ## History
 
 Version 1.0.0 (which was never released) provided a rest api and html gui to manage deployments manually on each node.

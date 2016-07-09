@@ -2,6 +2,7 @@ package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response.Status;
@@ -13,10 +14,10 @@ import java.util.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
 import static com.github.t1.problem.WebException.*;
-import static com.github.t1.rest.RestContext.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Slf4j
+@RequiredArgsConstructor
 public class ArtifactoryRepository extends Repository {
     public static GroupId groupIdFrom(Path path) {
         String string = path.subpath(5, path.getNameCount() - 3).toString().replace("/", ".");
@@ -45,37 +46,7 @@ public class ArtifactoryRepository extends Repository {
         return path.getName(n).toString();
     }
 
-    private URI artifactory;
-
-    private String artifactoryUserName;
-
-    private Password artifactoryPassword;
-
-    private RestContext restContext;
-
-    private RestContext rest() {
-        if (restContext == null) {
-            restContext = REST.register("repository", artifactory);
-            if (artifactoryUserName != null && artifactoryPassword != null) {
-                log.debug("put {} credentials for {}", artifactoryUserName, artifactory);
-                Credentials credentials = new Credentials(artifactoryUserName, artifactoryPassword.getValue());
-                restContext = restContext.register(artifactory, credentials);
-            }
-        }
-        return restContext;
-    }
-
-    ArtifactoryRepository() {
-        // TODO make configurable:
-        this.artifactory = URI.create("http://localhost:8081/artifactory");
-        // this.artifactory = URI.create("https://artifactory.1and1.org/artifactory");
-        // this.artifactoryUserName = "xxx";
-        // this.artifactoryPassword = new Password("xxx");
-    }
-
-    ArtifactoryRepository(RestContext restContext) {
-        this.restContext = restContext;
-    }
+    private final RestContext rest;
 
     /**
      * It's not really nice to get the version out of the repo path, but where else would I get it? Even with the
@@ -123,11 +94,11 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
-        UriTemplate uri = rest()
+        UriTemplate uri = rest
                 .nonQueryUri("repository")
                 .path("api/search/checksum")
                 .query("sha1", "{checkSum}");
-        RestRequest<ChecksumSearchResult> searchByChecksum = rest()
+        RestRequest<ChecksumSearchResult> searchByChecksum = rest
                 .createResource(uri)
                 .header("X-Result-Detail", "info")
                 .accept(ChecksumSearchResult.class);
@@ -196,7 +167,7 @@ public class ArtifactoryRepository extends Repository {
 
     @Override
     public Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        UriTemplate template = rest()
+        UriTemplate template = rest
                 .nonQueryUri("repository")
                 .path("api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/{module}-{baseRev}.{ext}");
         UriTemplate uri = template
@@ -213,7 +184,7 @@ public class ArtifactoryRepository extends Repository {
                 // customTokenName<customTokenRegex>
                 ;
         log.debug("fetch artifact info from {}", uri);
-        EntityResponse<FileInfo> response = rest().createResource(uri).GET_Response(FileInfo.class);
+        EntityResponse<FileInfo> response = rest.createResource(uri).GET_Response(FileInfo.class);
         switch ((Status) response.status()) {
         case OK:
             FileInfo fileInfo = response.getBody();
@@ -238,6 +209,6 @@ public class ArtifactoryRepository extends Repository {
         URI uri = fileInfo.getDownloadUri();
         if (uri == null)
             throw new RuntimeException("no download uri from repository for " + fileInfo.getUri());
-        return rest().createResource(uri).GET(InputStream.class);
+        return rest.createResource(uri).GET(InputStream.class);
     }
 }

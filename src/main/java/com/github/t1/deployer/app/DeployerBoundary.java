@@ -10,9 +10,9 @@ import javax.ws.rs.core.Response;
 import java.nio.file.*;
 import java.util.List;
 
+import static com.github.t1.problem.WebException.*;
 import static java.lang.String.*;
 import static java.util.stream.Collectors.*;
-import static javax.ws.rs.core.Response.Status.*;
 
 @Path("/")
 @Stateless
@@ -21,7 +21,11 @@ public class DeployerBoundary {
     public static final String ROOT_DEPLOYER_CONFIG = "root.deployer.config";
 
     public static java.nio.file.Path getConfigPath() {
-        return Paths.get(System.getProperty("jboss.server.config.dir"), ROOT_DEPLOYER_CONFIG);
+        return getConfigPath(ROOT_DEPLOYER_CONFIG);
+    }
+
+    public static java.nio.file.Path getConfigPath(String fileName) {
+        return Paths.get(System.getProperty("jboss.server.config.dir"), fileName);
     }
 
     @Inject Deployer deployer;
@@ -31,7 +35,7 @@ public class DeployerBoundary {
         java.nio.file.Path root = getConfigPath();
 
         if (!Files.isRegularFile(root))
-            return Response.status(NOT_FOUND).entity(ROOT_DEPLOYER_CONFIG + " not found").build();
+            throw notFound("config file '" + root + "' not found");
 
         log.debug("load config plan from: {}", root);
 
