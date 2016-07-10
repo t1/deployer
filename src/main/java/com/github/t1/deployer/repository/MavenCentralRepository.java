@@ -39,13 +39,18 @@ public class MavenCentralRepository extends Repository {
         assert result.response.docs.size() == 1;
         MavenCentralSearchResponseDocs doc = result.response.docs.get(0);
 
+        GroupId groupId = new GroupId(doc.g);
+        ArtifactId artifactId = new ArtifactId(doc.a);
+        Version version = new Version(doc.v);
+        ArtifactType type = ArtifactType.valueOf(doc.p);
+
         return Artifact.builder()
-                       .groupId(new GroupId(doc.g))
-                       .artifactId(new ArtifactId(doc.a))
-                       .version(new Version(doc.v))
-                       .type(ArtifactType.valueOf(doc.p))
+                       .groupId(groupId)
+                       .artifactId(artifactId)
+                       .version(version)
+                       .type(type)
                        .checksum(checksum)
-                       .inputStreamSupplier(() -> null) // TODO
+                       .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
                        .build();
     }
 
@@ -65,19 +70,29 @@ public class MavenCentralRepository extends Repository {
                        .artifactId(artifactId)
                        .version(version)
                        .type(type)
-                       .checksumSupplier(() -> null) // TODO
+                       .checksumSupplier(() -> downloadChecksum(groupId, artifactId, version, type))
                        .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
                        .build();
     }
 
+    private Checksum downloadChecksum(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+        String checksum = resource(downloadPath(groupId, artifactId, version, type) + ".sha1").GET(String.class);
+        return Checksum.fromString(checksum);
+    }
+
     private InputStream download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        Path filepath = groupId.asPath()
-                               .resolve(artifactId.getValue())
-                               .resolve(version.getValue())
-                               .resolve(artifactId + "-" + version + "." + type.extension());
-        return rest.createResource(downloadUri())
-                   .with("filepath", filepath)
-                   .GET(InputStream.class);
+        return resource(downloadPath(groupId, artifactId, version, type)).GET(InputStream.class);
+    }
+
+    private RestResource resource(Object filepath) {
+        return rest.createResource(downloadUri()).with("filepath", filepath);
+    }
+
+    private Path downloadPath(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+        return groupId.asPath()
+                      .resolve(artifactId.getValue())
+                      .resolve(version.getValue())
+                      .resolve(artifactId + "-" + version + "." + type.extension());
     }
 
     public UriTemplate downloadUri() {
