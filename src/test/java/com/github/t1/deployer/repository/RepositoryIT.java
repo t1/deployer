@@ -55,7 +55,7 @@ public class RepositoryIT {
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
         Throwable throwable = catchThrowable(() -> repository.searchByChecksum(AMBIGUOUS_CHECKSUM));
 
-        assertThat(throwable).hasMessageContaining("error while searching for checksum: '" + AMBIGUOUS_CHECKSUM + "'");
+        assertThat(throwable).hasMessageContaining("checksum not unique in repository: '" + AMBIGUOUS_CHECKSUM + "'");
     }
 
     @Test

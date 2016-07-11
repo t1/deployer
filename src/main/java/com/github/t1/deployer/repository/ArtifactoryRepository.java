@@ -71,8 +71,8 @@ public class ArtifactoryRepository extends Repository {
             log.debug("got {}", item);
             return item.getUri();
         default:
-            log.error("checksum not unique in repository: {}", checksum);
-            throw badRequest("checksum not unique in repository: " + checksum);
+            log.error("checksum not unique in repository: '{}'", checksum);
+            throw badRequest("checksum not unique in repository: '" + checksum + "'");
         }
     }
 
