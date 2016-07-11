@@ -11,8 +11,6 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 
-import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResult.*;
-import static com.github.t1.deployer.repository.ArtifactoryRepository.SearchResultStatus.*;
 import static com.github.t1.problem.WebException.*;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -53,44 +51,42 @@ public class ArtifactoryRepository extends Repository {
      * <code>X-Result-Detail</code> header, it's not provided.
      */
     @Override
-    public Artifact getByChecksum(Checksum checksum) {
-        check(checksum);
-        SearchResult result = searchByChecksum(checksum);
-        switch (result.getStatus()) {
-        case error:
-            throw new ErrorWhileFetchingChecksumException(checksum);
-        case unknown:
-            throw new UnknownChecksumException(checksum);
-        case ok:
-            break;
-        }
-        URI uri = result.getUri();
-        log.debug("got uri {}", uri);
-        Path path = path(uri);
-        return artifact(checksum, path);
-    }
-
-    private void check(Checksum checksum) {
+    public Artifact searchByChecksum(Checksum checksum) {
+        log.debug("searchByChecksum({})", checksum);
         if (checksum == null || checksum.isEmpty())
             throw new IllegalArgumentException("empty or null checksum");
+        URI uri = findUriFor(checksum);
+        log.debug("got uri {}", uri);
+        return artifactFromArtifactoryUri(checksum, uri);
     }
 
-    private SearchResult searchByChecksum(Checksum checksum) {
-        RestRequest<ChecksumSearchResult> request = searchByChecksumRequest();
-        try {
-            log.debug("searchByChecksum({})", checksum);
-            List<ChecksumSearchResultItem> results = request.with("checkSum", checksum.hexString()).GET().getResults();
-            if (results.size() == 0)
-                return searchResult().status(SearchResultStatus.unknown).build();
-            if (results.size() > 1)
-                throw new RuntimeException("checksum not unique in repository: " + checksum);
+    private URI findUriFor(Checksum checksum) {
+        List<ChecksumSearchResultItem> results = searchByChecksumResults(checksum);
+        switch (results.size()) {
+        case 0:
+            log.debug("not found: {}", checksum);
+            throw new UnknownChecksumException(checksum);
+        case 1:
             ChecksumSearchResultItem item = results.get(0);
             log.debug("got {}", item);
-            return searchResult().status(ok).uri(item.getUri()).downloadUri(item.getDownloadUri()).build();
+            return item.getUri();
+        default:
+            log.error("checksum not unique in repository: {}", checksum);
+            throw badRequest("checksum not unique in repository: " + checksum);
+        }
+    }
+
+    private List<ChecksumSearchResultItem> searchByChecksumResults(Checksum checksum) {
+        RestRequest<ChecksumSearchResult>
+                request = searchByChecksumRequest();
+        List<ChecksumSearchResultItem> results;
+        try {
+            results = request.with("checkSum", checksum.hexString()).GET().getResults();
         } catch (RuntimeException e) {
             log.error("can't search by checksum [" + checksum + "] in " + request, e);
-            return searchResult().status(error).build();
+            throw new ErrorWhileFetchingChecksumException(checksum);
         }
+        return results;
     }
 
     private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
@@ -98,26 +94,10 @@ public class ArtifactoryRepository extends Repository {
                 .nonQueryUri("repository")
                 .path("api/search/checksum")
                 .query("sha1", "{checkSum}");
-        RestRequest<ChecksumSearchResult> searchByChecksum = rest
+        return rest
                 .createResource(uri)
                 .header("X-Result-Detail", "info")
                 .accept(ChecksumSearchResult.class);
-        log.debug("configured searchByChecksum request: {}", searchByChecksum);
-        return searchByChecksum;
-    }
-
-    enum SearchResultStatus {
-        ok,
-        unknown,
-        error
-    }
-
-    @lombok.Value
-    @lombok.Builder(builderMethodName = "searchResult")
-    static class SearchResult {
-        SearchResultStatus status;
-        URI uri;
-        URI downloadUri;
     }
 
     @lombok.Data
@@ -134,11 +114,8 @@ public class ArtifactoryRepository extends Repository {
         URI downloadUri;
     }
 
-    private Path path(URI result) {
-        return Paths.get(result.getPath());
-    }
-
-    private Artifact artifact(Checksum checksum, Path path) {
+    private Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
+        Path path = Paths.get(uri.getPath());
         return Artifact
                 .builder()
                 .groupId(groupIdFrom(path))

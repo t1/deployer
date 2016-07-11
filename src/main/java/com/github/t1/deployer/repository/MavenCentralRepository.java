@@ -3,11 +3,16 @@ package com.github.t1.deployer.repository;
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.github.t1.problem.WebException.*;
+import static javax.ws.rs.core.Response.Status.*;
+
+@Slf4j
 @RequiredArgsConstructor
 public class MavenCentralRepository extends Repository {
     @Data
@@ -30,7 +35,7 @@ public class MavenCentralRepository extends Repository {
 
     private final RestContext rest;
 
-    @Override public Artifact getByChecksum(Checksum checksum) {
+    @Override public Artifact searchByChecksum(Checksum checksum) {
         MavenCentralSearchResult result = rest
                 .createResource(searchUri())
                 .with("checksum", checksum)
@@ -81,7 +86,14 @@ public class MavenCentralRepository extends Repository {
     }
 
     private InputStream download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        return resource(downloadPath(groupId, artifactId, version, type)).GET(InputStream.class);
+        RestResource resource = resource(downloadPath(groupId, artifactId, version, type));
+        log.debug("download from {}", resource);
+        EntityResponse<InputStream> response = resource.GET_Response(InputStream.class);
+        if (!response.status().equals(OK))
+            throw badRequest("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type
+                    + " -> " + response.status().getStatusCode() + " " + response.status().getReasonPhrase()
+                    + " -> " + response.getBody(String.class));
+        return response.getBody();
     }
 
     private RestResource resource(Object filepath) {

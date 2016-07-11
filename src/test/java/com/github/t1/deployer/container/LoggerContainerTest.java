@@ -13,9 +13,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 import java.util.*;
 
-import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.container.LoggerCategory.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;

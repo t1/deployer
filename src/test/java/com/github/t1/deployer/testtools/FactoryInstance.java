@@ -1,15 +1,13 @@
-package com.github.t1.deployer.tools;
+package com.github.t1.deployer.testtools;
 
-import static java.util.Collections.*;
+import lombok.AllArgsConstructor;
+import org.glassfish.hk2.api.Factory;
 
+import javax.enterprise.inject.Instance;
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
 
-import javax.enterprise.inject.Instance;
-
-import lombok.AllArgsConstructor;
-
-import org.glassfish.hk2.api.Factory;
+import static java.util.Collections.*;
 
 @AllArgsConstructor
 public class FactoryInstance<T> implements Instance<T> {

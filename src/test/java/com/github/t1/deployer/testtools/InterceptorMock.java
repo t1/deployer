@@ -1,4 +1,4 @@
-package com.github.t1.deployer.tools;
+package com.github.t1.deployer.testtools;
 
 import org.mockito.internal.util.MockUtil;
 import org.mockito.invocation.InvocationOnMock;

@@ -167,7 +167,7 @@ public class AbstractDeployerTest {
                 this.version = version;
                 this.type = type;
 
-                when(repository.getByChecksum(fakeChecksumFor(contextRoot(), version))).then(i -> artifact());
+                when(repository.searchByChecksum(fakeChecksumFor(contextRoot(), version))).then(i -> artifact());
                 when(repository.lookupArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
                 when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, type))
                         .then(i -> artifact(Version.ANY));

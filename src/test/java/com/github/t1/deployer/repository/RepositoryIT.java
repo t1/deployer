@@ -46,28 +46,28 @@ public class RepositoryIT {
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnavailable() {
-        Throwable throwable = catchThrowable(() -> repository.getByChecksum(FAILING_CHECKSUM));
+        Throwable throwable = catchThrowable(() -> repository.searchByChecksum(FAILING_CHECKSUM));
 
         assertThat(throwable).hasMessageContaining("error while searching for checksum: '" + FAILING_CHECKSUM + "'");
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenAmbiguous() {
-        Throwable throwable = catchThrowable(() -> repository.getByChecksum(AMBIGUOUS_CHECKSUM));
+        Throwable throwable = catchThrowable(() -> repository.searchByChecksum(AMBIGUOUS_CHECKSUM));
 
         assertThat(throwable).hasMessageContaining("error while searching for checksum: '" + AMBIGUOUS_CHECKSUM + "'");
     }
 
     @Test
     public void shouldFailToSearchByChecksumWhenUnknown() {
-        Throwable throwable = catchThrowable(() -> repository.getByChecksum(UNKNOWN_CHECKSUM));
+        Throwable throwable = catchThrowable(() -> repository.searchByChecksum(UNKNOWN_CHECKSUM));
 
         assertThat(throwable).hasMessageContaining("unknown checksum: '" + UNKNOWN_CHECKSUM + "'");
     }
 
     @Test
     public void shouldSearchByChecksum() {
-        Artifact artifact = repository.getByChecksum(fakeChecksumFor(FOO));
+        Artifact artifact = repository.searchByChecksum(fakeChecksumFor(FOO));
 
         assertThat(artifact.getGroupId().getValue()).isEqualTo("org.foo");
         assertThat(artifact.getArtifactId().getValue()).isEqualTo("foo-war");
@@ -82,7 +82,7 @@ public class RepositoryIT {
             config = config.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
-            Artifact artifact = new ArtifactoryRepository(config).getByChecksum(fakeChecksumFor(FOO));
+            Artifact artifact = new ArtifactoryRepository(config).searchByChecksum(fakeChecksumFor(FOO));
 
             assertThat(artifact.getGroupId().getValue()).isEqualTo("org.foo");
             assertThat(artifact.getArtifactId().getValue()).isEqualTo("foo-war");

@@ -14,7 +14,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 import java.util.List;
 
-import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static java.util.Collections.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;

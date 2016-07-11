@@ -46,6 +46,7 @@ public class Deployer {
             Artifact artifact = getByChecksum(deployment.getChecksum());
             DeploymentConfig deploymentConfig = DeploymentConfig
                     .builder()
+                    .name(deployment.getName())
                     .groupId(artifact.getGroupId())
                     .artifactId(artifact.getArtifactId())
                     .version(artifact.getVersion())
@@ -61,7 +62,7 @@ public class Deployer {
         if (checksum == null || checksum.isEmpty())
             return errorArtifact(checksum, "empty checksum");
         try {
-            return repository.getByChecksum(checksum);
+            return repository.searchByChecksum(checksum);
         } catch (UnknownChecksumException e) {
             return errorArtifact(checksum, "unknown");
         }

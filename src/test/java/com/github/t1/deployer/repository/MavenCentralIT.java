@@ -35,14 +35,14 @@ public class MavenCentralIT {
 
     @Test
     public void shouldGetByChecksum() throws Exception {
-        Artifact artifact = repository.getByChecksum(JOLOKIA_133_CHECKSUM);
+        Artifact artifact = repository.searchByChecksum(JOLOKIA_133_CHECKSUM);
 
         assertJolokia133(artifact, war, JOLOKIA_133_CHECKSUM);
     }
 
     @Test
     public void shouldGetByPomChecksum() throws Exception {
-        Artifact artifact = repository.getByChecksum(JOLOKIA_133_POM_CHECKSUM);
+        Artifact artifact = repository.searchByChecksum(JOLOKIA_133_POM_CHECKSUM);
 
         // maven central returns the info for the 'war', even when we search by the checksum of the pom
         // to find out what classifier the checksum is for, we would have to download the checksums for each classifier

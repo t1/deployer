@@ -33,7 +33,7 @@ public class ArtifactoryRepositoryTestClient {
         ArtifactoryRepository repo = new ArtifactoryRepository(config);
 
         try {
-            Artifact artifact = repo.getByChecksum(CHECKSUM);
+            Artifact artifact = repo.searchByChecksum(CHECKSUM);
             System.out.println("-> " + artifact);
         } finally {
             dropwizard.stop();

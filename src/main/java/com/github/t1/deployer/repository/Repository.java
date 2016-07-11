@@ -5,7 +5,7 @@ import com.github.t1.log.Logged;
 
 @Logged
 public abstract class Repository {
-    public abstract Artifact getByChecksum(Checksum checksum);
+    public abstract Artifact searchByChecksum(Checksum checksum);
 
     public abstract Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type);
 }

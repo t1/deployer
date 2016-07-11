@@ -17,7 +17,7 @@ import javax.enterprise.inject.Instance;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
-import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;

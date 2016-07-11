@@ -1,4 +1,4 @@
-package com.github.t1.deployer;
+package com.github.t1.deployer.testtools;
 
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Version;

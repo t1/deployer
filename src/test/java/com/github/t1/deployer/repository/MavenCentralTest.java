@@ -58,7 +58,7 @@ public class MavenCentralTest {
                     + "    }\n"
                     + "}", APPLICATION_JSON_TYPE);
 
-        Artifact artifact = repository.getByChecksum(checksum);
+        Artifact artifact = repository.searchByChecksum(checksum);
 
         assertThat(artifact.getGroupId().getValue()).isEqualTo("org.jolokia");
         assertThat(artifact.getArtifactId().getValue()).isEqualTo("jolokia-war");
