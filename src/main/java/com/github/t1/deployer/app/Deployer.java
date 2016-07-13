@@ -65,6 +65,9 @@ public class Deployer {
             return repository.searchByChecksum(checksum);
         } catch (UnknownChecksumException e) {
             return errorArtifact(checksum, "unknown");
+        } catch (RuntimeException e) {
+            log.error("error retrieving artifact by checksum " + checksum, e);
+            return errorArtifact(checksum, "error");
         }
     }
 

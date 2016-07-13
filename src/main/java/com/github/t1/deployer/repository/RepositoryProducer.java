@@ -7,7 +7,7 @@ import org.apache.http.conn.HttpHostConnectException;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import java.net.URI;
+import java.net.*;
 
 import static com.github.t1.deployer.model.Tools.*;
 import static com.github.t1.deployer.repository.RepositoryType.*;
@@ -24,6 +24,8 @@ public class RepositoryProducer {
     @Inject @Config("repository.username") String username;
     @Inject @Config("repository.password") Password password;
 
+    RestContext rest = REST;
+
     @Produces Repository repository() {
         if (type == null)
             type = lookupType();
@@ -37,29 +39,35 @@ public class RepositoryProducer {
     }
 
     private RepositoryType lookupType() {
-        if (replies(artifactoryContext()))
+        log.debug("lookup repository type");
+        RestResource resource = artifactoryContext().resource(REST_ALIAS);
+        log.debug("try {}", resource.uri());
+        if (replies(resource)) {
+            log.info("{} did reply... choose artifactory", resource.uri());
             return artifactory;
+        }
+        log.info("{} did NOT reply... choose maven central", resource.uri());
         return mavenCentral;
     }
 
-    private boolean replies(RestContext context) {
+    private boolean replies(RestResource resource) {
         try {
-            context.resource(REST_ALIAS).GET_Response();
+            resource.GET_Response();
             return true;
         } catch (RuntimeException e) {
-            if (e.getCause() instanceof HttpHostConnectException
-                    && e.getCause().getMessage().contains("Connection refused"))
+            if ((e.getCause() instanceof UnknownHostException)
+                    || (e.getCause() instanceof HttpHostConnectException
+                                && e.getCause().getMessage().contains("Connection refused")))
                 return false;
             throw e;
         }
     }
 
-    private RestContext mavenCentralContext() { return rest(nvl(uri, DEFAULT_MAVEN_CENTRAL_URI)); }
+    private RestContext mavenCentralContext() { return rest(DEFAULT_MAVEN_CENTRAL_URI); }
 
     private RestContext artifactoryContext() { return rest(nvl(uri, DEFAULT_ARTIFACTORY_URI)); }
 
     private RestContext rest(URI baseUri) {
-        RestContext rest = REST;
         if (baseUri != null)
             rest = rest.register(REST_ALIAS, baseUri);
         if (username != null && password != null) {

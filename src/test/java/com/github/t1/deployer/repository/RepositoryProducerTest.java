@@ -1,14 +1,33 @@
 package com.github.t1.deployer.repository;
 
-import io.dropwizard.testing.junit.DropwizardClientRule;
+import com.github.t1.rest.RestClientMocker;
 import org.junit.Test;
 
+import java.net.*;
+
+import static com.github.t1.deployer.repository.RepositoryProducer.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class RepositoryProducerTest {
-    @Test
-    public void shouldLookupMavenCentralRepository() throws Exception {
+    private static final URI DUMMY_URI = URI.create("http://example.nowhere");
+    private final RestClientMocker mocker = new RestClientMocker();
+
+    public RepositoryProducer createRepositoryProducer() {
         RepositoryProducer producer = new RepositoryProducer();
+        producer.rest = mocker.context();
+        return producer;
+    }
+
+    public void unknownHost(URI uri) {
+        mocker.on(uri).GET().produceBody(() -> {
+            throw new RuntimeException(new UnknownHostException());
+        });
+    }
+
+    @Test
+    public void shouldFallbackToMavenCentralWhenLocalArtifactoryNotAvailable() throws Throwable {
+        unknownHost(DEFAULT_ARTIFACTORY_URI);
+        RepositoryProducer producer = createRepositoryProducer();
 
         Repository repository = producer.repository();
 
@@ -17,25 +36,22 @@ public class RepositoryProducerTest {
 
     @Test
     public void shouldLookupLocalArtifactoryRepository() throws Throwable {
-        MyDropwizardClientRule rule = new MyDropwizardClientRule();
-        rule.before();
-        try {
-            RepositoryProducer producer = new RepositoryProducer();
-            producer.uri = rule.baseUri();
+        mocker.on(DEFAULT_ARTIFACTORY_URI).GET().respond("okay");
+        RepositoryProducer producer = createRepositoryProducer();
 
-            Repository repository = producer.repository();
+        Repository repository = producer.repository();
 
-            assertThat(repository).isInstanceOf(ArtifactoryRepository.class);
-        } finally {
-            rule.after();
-        }
+        assertThat(repository).isInstanceOf(ArtifactoryRepository.class);
     }
 
-    private static class MyDropwizardClientRule extends DropwizardClientRule {
-        public MyDropwizardClientRule() {super(new ArtifactoryMock());}
+    @Test
+    public void shouldLookupRemoteArtifactoryRepository() throws Throwable {
+        mocker.on(DUMMY_URI).GET().respond("okay");
+        RepositoryProducer producer = createRepositoryProducer();
+        producer.uri = DUMMY_URI;
 
-        @Override public void before() throws Throwable { super.before(); }
+        Repository repository = producer.repository();
 
-        @Override public void after() { super.after(); }
+        assertThat(repository).isInstanceOf(ArtifactoryRepository.class);
     }
 }

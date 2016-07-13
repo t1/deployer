@@ -41,9 +41,21 @@ public class MavenCentralRepository extends Repository {
                 .with("checksum", checksum)
                 .GET(MavenCentralSearchResult.class);
 
-        assert result.response.docs.size() == 1;
-        MavenCentralSearchResponseDocs doc = result.response.docs.get(0);
+        switch (result.response.docs.size()) {
+        case 0:
+            log.debug("not found: {}", checksum);
+            throw new UnknownChecksumException(checksum);
+        case 1:
+            MavenCentralSearchResponseDocs doc = result.response.docs.get(0);
+            log.debug("got {}", doc);
+            return toArtifact(checksum, doc);
+        default:
+            log.error("checksum not unique in repository: '{}'", checksum);
+            throw badRequest("checksum not unique in repository: '" + checksum + "'");
+        }
+    }
 
+    private Artifact toArtifact(Checksum checksum, MavenCentralSearchResponseDocs doc) {
         GroupId groupId = new GroupId(doc.g);
         ArtifactId artifactId = new ArtifactId(doc.a);
         Version version = new Version(doc.v);
