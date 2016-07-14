@@ -1,7 +1,6 @@
 package com.github.t1.deployer.testtools;
 
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.Version;
 
 import static org.junit.Assert.*;
 
@@ -17,9 +16,8 @@ public class TestData {
                 + "}\n";
     }
 
-    public static void assertDeployment(ContextRoot contextRoot, Version expectedVersion, Deployment deployment) {
-        assertEquals(contextRoot, deployment.getContextRoot());
-        // assertEquals(nameFor(contextRoot), deployment.getName());
-        // assertEquals(expectedVersion, deployment.getVersion());
+    public static void assertDeployment(ContextRoot expectedContextRoot, Deployment actualDeployment) {
+        assertEquals(expectedContextRoot, actualDeployment.getContextRoot());
+        assertEquals(nameFor(expectedContextRoot), actualDeployment.getName());
     }
 }

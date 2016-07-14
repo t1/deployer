@@ -113,9 +113,9 @@ public class ConfigurationPlanSerializationTest {
             + "    state: deployed\n"
             + "    level: INFO\n"
             + "    type: periodicRotatingFile\n"
+            + "    format: the-format\n"
             + "    file: the-file\n"
-            + "    suffix: the-suffix\n"
-            + "    format: the-format\n";
+            + "    suffix: the-suffix\n";
     private static final LogHandlerConfig LOGHANDLER = LogHandlerConfig
             .builder()
             .name(new LogHandlerName("CONSOLE"))

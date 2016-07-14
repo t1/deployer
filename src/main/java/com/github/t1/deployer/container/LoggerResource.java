@@ -10,6 +10,7 @@ import java.util.*;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LoggerCategory.*;
+import static java.lang.Boolean.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
@@ -29,6 +30,10 @@ public class LoggerResource {
     private List<LogHandlerName> handlers = new ArrayList<>();
     private Boolean useParentHandlers;
     private LogLevel level;
+
+    @Override public String toString() {
+        return "Logger:" + level + ":" + handlers + (useParentHandlers == TRUE ? "+" : "");
+    }
 
     public boolean isRoot() { return category.isRoot(); }
 

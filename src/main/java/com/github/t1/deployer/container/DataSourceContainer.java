@@ -47,7 +47,7 @@ public class DataSourceContainer extends CLI {
 
     boolean hasDataSource(String dataSourceName) {
         ModelNode result = executeRaw(readDataSource(dataSourceName));
-        return isOutcomeFound(result);
+        return hasOutcomeFound(result);
     }
 
     public DataSourceConfig getDataSource(String dataSourceName) {

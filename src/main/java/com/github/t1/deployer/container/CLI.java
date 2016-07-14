@@ -10,11 +10,9 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import static com.github.t1.log.LogLevel.*;
-
 @Slf4j
-@Logged(level = INFO)
-public class CLI {
+@Logged
+class CLI {
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
         switch (severity) {
         case ERROR:
@@ -69,6 +67,26 @@ public class CLI {
         return result;
     }
 
+    public void checkOutcome(ModelNode result) {
+        String outcome = result.get("outcome").asString();
+        if (!"success".equals(outcome))
+            fail(result);
+    }
+
+    public boolean fail(ModelNode result) {
+        throw new RuntimeException("outcome " + result.get("outcome") + ": " + result.get("failure-description"));
+    }
+
+    public boolean hasOutcomeFound(ModelNode result) {
+        String outcome = result.get("outcome").asString();
+        if ("success".equals(outcome))
+            return true;
+        else if (isNotFoundMessage(result))
+            return false;
+        else
+            return fail(result);
+    }
+
     public boolean isNotFoundMessage(ModelNode result) {
         String message = result.get("failure-description").toString();
         boolean jboss7start = message.startsWith("\"JBAS014807: Management resource");
@@ -78,25 +96,5 @@ public class CLI {
         log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]", //
                 jboss7start, jboss8start, notFoundEnd, isNotFound, message);
         return isNotFound;
-    }
-
-    public void checkOutcome(ModelNode result) {
-        String outcome = result.get("outcome").asString();
-        if (!"success".equals(outcome)) {
-            log.error("failed: {}", result);
-            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
-        }
-    }
-
-    public boolean isOutcomeFound(ModelNode result) {
-        String outcome = result.get("outcome").asString();
-        if ("success".equals(outcome)) {
-            return true;
-        } else if (isNotFoundMessage(result)) {
-            return false;
-        } else {
-            log.error("failed: {}", result);
-            throw new RuntimeException("outcome " + outcome + ": " + result.get("failure-description"));
-        }
     }
 }

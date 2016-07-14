@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.Produces;
+import javax.inject.Singleton;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
@@ -16,6 +17,7 @@ import static com.github.t1.deployer.model.Tools.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
+@Singleton
 public class ConfigProducer {
     public static final String DEPLOYER_CONFIG_YAML = "deployer.config.yaml";
 
@@ -40,7 +42,12 @@ public class ConfigProducer {
             URI uri;
             String username;
             Password password;
+            String key;
         }
+
+        @Override public String toString() { return toYAML(); }
+
+        @SneakyThrows(IOException.class) private String toYAML() { return YAML.writeValueAsString(this); }
     }
 
 
@@ -51,7 +58,7 @@ public class ConfigProducer {
         if (Files.isRegularFile(path)) {
             log.info("load deployer config from '" + path + "'");
             try (Reader reader = Files.newBufferedReader(path)) {
-                this.config = YAML.readValue(reader, DeployerConfig.class);
+                this.config = nvl(YAML.readValue(reader, DeployerConfig.class), this.config);
             } catch (IOException e) {
                 log.error("can't load config from '" + path + "'", e);
             }
@@ -64,9 +71,11 @@ public class ConfigProducer {
         return nvl(config.getRepository(), DEFAULT_CONFIG.getRepository());
     }
 
-    @Produces @Config("repository.type") public RepositoryType repositoryType() { return getRepository().getType(); }
+    @Produces @Config("repository.type")
+    public RepositoryType repositoryType() { return getRepository().getType(); }
 
-    @Produces @Config("repository.uri") public URI repositoryUri() {
+    @Produces @Config("repository.uri")
+    public URI repositoryUri() {
         return getRepository().getUri();
     }
 
@@ -75,4 +84,7 @@ public class ConfigProducer {
 
     @Produces @Config("repository.password")
     public Password repositoryPassword() { return getRepository().getPassword(); }
+
+    @Produces @Config("repository.key")
+    public String repositoryKey() { return getRepository().getKey(); }
 }

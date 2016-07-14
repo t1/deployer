@@ -2,7 +2,7 @@ package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response.Status;
@@ -44,7 +44,8 @@ public class ArtifactoryRepository extends Repository {
         return path.getName(n).toString();
     }
 
-    private final RestContext rest;
+    @NonNull private final RestContext rest;
+    @NonNull private final String repositoryKey;
 
     /**
      * It's not really nice to get the version out of the repo path, but where else would I get it? Even with the
@@ -72,7 +73,7 @@ public class ArtifactoryRepository extends Repository {
             return item.getUri();
         default:
             log.error("checksum not unique in repository: '{}'", checksum);
-            throw badRequest("checksum not unique in repository: '" + checksum + "'");
+            throw new RuntimeException("checksum not unique in repository: '" + checksum + "'");
         }
     }
 
@@ -148,7 +149,7 @@ public class ArtifactoryRepository extends Repository {
                 .nonQueryUri("repository")
                 .path("api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/{module}-{baseRev}.{ext}");
         UriTemplate uri = template
-                .with("repoKey", "remote-repos") // TODO make configurable
+                .with("repoKey", repositoryKey)
                 .with("org", groupId)
                 .with("orgPath", groupId.asPath())
                 .with("baseRev", (version == null) ? "" : version)

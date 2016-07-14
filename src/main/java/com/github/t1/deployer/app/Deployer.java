@@ -7,6 +7,7 @@ import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
+import com.github.t1.problem.WebApplicationApplicationException;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +35,15 @@ public class Deployer {
     private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
 
     @SneakyThrows(IOException.class)
-    public Audits run(Path plan) { return run(Files.newBufferedReader(plan)); }
+    public Audits run(Path plan) {
+        try {
+            return run(Files.newBufferedReader(plan));
+        } catch (WebApplicationApplicationException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new RuntimeException("can't run config plan [" + plan + "]", e);
+        }
+    }
 
     public Audits run(String plan) { return run(new StringReader(plan)); }
 
@@ -98,9 +107,9 @@ public class Deployer {
         }
 
         private void run(ConfigurationPlan plan) {
-            plan.loggers().forEach(this::applyLogger);
-
             plan.logHandlers().forEach(this::applyLogHandler);
+
+            plan.loggers().forEach(this::applyLogger);
 
             plan.artifacts().forEach(this::applyArtifact);
 
@@ -109,9 +118,31 @@ public class Deployer {
                     undeploy(deployment.getName(), getByChecksum(deployment.getChecksum()));
         }
 
+        private void applyLogHandler(LogHandlerConfig item) {
+            LogHandlerName name = item.getName();
+            LoggingHandlerType type = item.getType();
+            LogHandler handler = loggers.handler(type, name);
+            log.debug("check if log handler " + name + " is deployed");
+            if (handler.isDeployed())
+                handler.correctLevel(item.getLevel())
+                       .correctFile(item.getFile())
+                       .correctSuffix(item.getSuffix())
+                       .correctFormat(item.getFormat())
+                       .correctFormatter(item.getFormatter());
+            else
+                handler.toBuilder()
+                       .file(item.getFile())
+                       .level(item.getLevel())
+                       .suffix(item.getSuffix())
+                       .format(item.getFormat())
+                       .formatter(item.getFormatter())
+                       .build()
+                       .add();
+        }
+
         private void applyLogger(LoggerConfig loggerPlan) {
             LoggerResource logger = loggers.logger(loggerPlan.getCategory());
-            log.debug("check '{}' -> {}", loggerPlan.getCategory(), loggerPlan.getState());
+            log.debug("apply logger '{}' -> {}", loggerPlan.getCategory(), loggerPlan.getState());
             switch (loggerPlan.getState()) {
             case deployed:
                 if (logger.isDeployed()) {
@@ -120,7 +151,8 @@ public class Deployer {
                         logger.writeLevel(loggerPlan.getLevel());
                         changes++;
                     }
-                    if (!Objects.equals(logger.useParentHandlers(), nvl(loggerPlan.getUseParentHandlers(), true))) {
+                    if (!logger.isRoot() && !Objects.equals(logger.useParentHandlers(),
+                            nvl(loggerPlan.getUseParentHandlers(), true))) {
                         logger.writeUseParentHandlers(loggerPlan.getUseParentHandlers());
                         changes++;
                     }
@@ -166,28 +198,8 @@ public class Deployer {
             return LoggerAudit.builder().category(logger.category()).level(logger.level());
         }
 
-        private void applyLogHandler(LogHandlerConfig item) {
-            LogHandlerName name = item.getName();
-            LoggingHandlerType type = item.getType();
-            String file = (item.getFile() == null) ? name.getValue() : item.getFile();
-            LogHandler handler = loggers.handler(type, name);
-            if (handler.isDeployed())
-                handler.correctLevel(item.getLevel())
-                       .correctFile(file)
-                       .correctSuffix(item.getSuffix())
-                       .correctFormat(item.getFormat());
-            else
-                handler.toBuilder()
-                       .file(file)
-                       .level(item.getLevel())
-                       .suffix(item.getSuffix())
-                       .format(item.getFormat())
-                       .build()
-                       .add();
-        }
-
         private void applyArtifact(DeploymentConfig item) {
-            log.debug("check '{}' -> {}", item.getName(), item.getState());
+            log.debug("apply artifact '{}' -> {}", item.getName(), item.getState());
             Artifact artifact = repository
                     .lookupArtifact(item.getGroupId(), item.getArtifactId(), item.getVersion(), item.getType());
             switch (item.getState()) {

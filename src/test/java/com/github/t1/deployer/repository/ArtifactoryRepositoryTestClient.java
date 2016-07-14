@@ -30,7 +30,7 @@ public class ArtifactoryRepositoryTestClient {
         Dropwizard dropwizard = new Dropwizard().start();
         String artifactory = dropwizard.baseUri() + "/artifactory";
         RestContext config = REST.register("artifactory", artifactory);
-        ArtifactoryRepository repo = new ArtifactoryRepository(config);
+        ArtifactoryRepository repo = new ArtifactoryRepository(config, "remote-repos");
 
         try {
             Artifact artifact = repo.searchByChecksum(CHECKSUM);

@@ -13,12 +13,11 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 
-import static com.github.t1.log.LogLevel.*;
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.stream.Collectors.*;
 
 @Slf4j
-@Logged(level = INFO)
+@Logged
 @Stateless
 public class ArtifactContainer extends CLI {
     private static final int TIMEOUT = 30;
@@ -190,7 +189,7 @@ public class ArtifactContainer extends CLI {
     private ContextRoot toContextRoot(ModelNode contextRoot) {
         if (!contextRoot.isDefined())
             return UNDEFINED_CONTEXT_ROOT;
-        return new ContextRoot(contextRoot.asString().substring(1)); // strip leading slash
+        return new ContextRoot(contextRoot.asString());
     }
 
     public void deploy(DeploymentName deploymentName, InputStream inputStream) {

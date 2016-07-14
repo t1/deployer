@@ -7,10 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ejb.Stateless;
 import java.util.List;
 
-import static com.github.t1.log.LogLevel.*;
-
 @Slf4j
-@Logged(level = INFO)
+@Logged
 @Stateless
 public class LoggerContainer extends CLI {
     public List<LoggerResource> allLoggers() { return LoggerResource.all(this); }

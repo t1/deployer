@@ -2,7 +2,6 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.container.DeploymentName;
-import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -46,8 +45,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "artifacts:\n"
                 + "  foo-war:\n"));
 
-        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class)
-                          .hasMessageContaining("no config in artifact 'foo-war'");
+        assertThat(thrown.getCause()).hasMessageContaining("no config in artifact 'foo-war'");
     }
 
 
@@ -59,7 +57,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    group-id: org.foo\n"
                 + "    state: deployed\n"));
 
-        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class).hasMessageContaining("version");
+        assertThat(thrown.getCause()).hasMessageContaining("version");
     }
 
 
@@ -286,7 +284,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    group-id: org.foo\n"
                 + "    state: undeployed\n"));
 
-        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class).hasMessageContaining("version");
+        assertThat(thrown.getCause()).hasMessageContaining("version");
     }
 
 

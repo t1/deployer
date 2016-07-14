@@ -50,8 +50,7 @@ public class MavenCentralRepository extends Repository {
             log.debug("got {}", doc);
             return toArtifact(checksum, doc);
         default:
-            log.error("checksum not unique in repository: '{}'", checksum);
-            throw badRequest("checksum not unique in repository: '" + checksum + "'");
+            throw new RuntimeException("checksum not unique in repository: '" + checksum + "'");
         }
     }
 
@@ -102,9 +101,11 @@ public class MavenCentralRepository extends Repository {
         log.debug("download from {}", resource);
         EntityResponse<InputStream> response = resource.GET_Response(InputStream.class);
         if (!response.status().equals(OK))
-            throw badRequest("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type
-                    + " -> " + response.status().getStatusCode() + " " + response.status().getReasonPhrase()
-                    + " -> " + response.getBody(String.class));
+            throw builderFor(BAD_GATEWAY)
+                    .title("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type)
+                    .detail("received " + response.status().getStatusCode() + " " + response.status().getReasonPhrase()
+                            + " from " + resource.uri() + "\n"
+                            + "body: " + response.getBody(String.class)).build();
         return response.getBody();
     }
 

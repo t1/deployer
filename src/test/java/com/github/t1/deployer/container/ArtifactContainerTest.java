@@ -80,7 +80,7 @@ public class ArtifactContainerTest {
                 + ("\"runtime-name\" => \"" + nameFor(contextRoot) + "\",\n")
                 + "\"subdeployment\" => undefined,\n"
                 + "\"subsystem\" => {\"web\" => {\n"
-                + ("\"context-root\" => \"/" + contextRoot + "\",\n")
+                + ("\"context-root\" => \"" + contextRoot + "\",\n")
                 + "\"virtual-host\" => \"default-host\",\n"
                 + "\"servlet\" => {\"javax.ws.rs.core.Application\" => {\n"
                 + "\"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n"
@@ -125,7 +125,7 @@ public class ArtifactContainerTest {
 
         Deployment deployment = container.getDeployment(FOO);
 
-        assertDeployment(FOO, NO_VERSION, deployment);
+        assertDeployment(FOO, deployment);
     }
 
     @Test
@@ -134,7 +134,7 @@ public class ArtifactContainerTest {
 
         Deployment deployment = container.getDeployment(FOO);
 
-        assertDeployment(FOO, NO_VERSION, deployment);
+        assertDeployment(FOO, deployment);
     }
 
     @Test
@@ -143,7 +143,7 @@ public class ArtifactContainerTest {
 
         Deployment deployment = container.getDeployment(BAR);
 
-        assertDeployment(BAR, NO_VERSION, deployment);
+        assertDeployment(BAR, deployment);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class ArtifactContainerTest {
         List<Deployment> artifacts = container.getAllArtifacts();
 
         assertThat(artifacts.size()).isEqualTo(2);
-        assertDeployment(FOO, NO_VERSION, artifacts.get(0));
-        assertDeployment(BAR, NO_VERSION, artifacts.get(1));
+        assertDeployment(FOO, artifacts.get(0));
+        assertDeployment(BAR, artifacts.get(1));
     }
 }

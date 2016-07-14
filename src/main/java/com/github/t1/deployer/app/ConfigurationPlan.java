@@ -23,10 +23,13 @@ import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.problem.WebException.*;
 import static java.lang.Boolean.*;
 import static lombok.AccessLevel.*;
 
+/**
+ * The plan of how the configuration should be. This class is responsible for loading the plan from YAML, statically
+ * validating the plan, and applying default values.
+ */
 @Builder
 @EqualsAndHashCode
 @AllArgsConstructor(access = PRIVATE)
@@ -51,8 +54,7 @@ public class ConfigurationPlan {
             log.debug("config plan loaded:\n{}", plan);
             return plan;
         } catch (IOException e) {
-            log.debug("exception while loading config plan", e);
-            throw badRequest(e.getMessage());
+            throw new RuntimeException("exception while loading config plan", e);
         }
     }
 
@@ -100,7 +102,7 @@ public class ConfigurationPlan {
 
         public static DeploymentConfig fromJson(DeploymentName name, JsonNode node) {
             if (node.isNull())
-                throw badRequest("no config in artifact '" + name + "'");
+                throw new RuntimeException("no config in artifact '" + name + "'");
             DeploymentConfigBuilder builder = builder().name(name);
             apply(node, "group-id", null, value -> builder.groupId(new GroupId(value)));
             apply(node, "artifact-id", name.getValue(), value -> builder.artifactId(new ArtifactId(value)));
@@ -129,7 +131,7 @@ public class ConfigurationPlan {
 
         private static LoggerConfig fromJson(LoggerCategory category, JsonNode node) {
             if (node.isNull())
-                throw badRequest("no config in logger '" + category + "'");
+                throw new RuntimeException("no config in logger '" + category + "'");
             LoggerConfigBuilder builder = builder().category(category);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
@@ -139,11 +141,12 @@ public class ConfigurationPlan {
                 while (handlers.hasNext())
                     builder.handler(handlers.next().textValue());
             }
-            apply(node, "use-parent-handlers", null, value -> {
-                if (value == null)
-                    value = Boolean.toString(builder.build().handlers.isEmpty());
-                builder.useParentHandlers(Boolean.valueOf(value));
-            });
+            if (!builder.category.isRoot())
+                apply(node, "use-parent-handlers", null, value -> {
+                    if (value == null)
+                        value = Boolean.toString(builder.build().handlers.isEmpty());
+                    builder.useParentHandlers(Boolean.valueOf(value));
+                });
             return builder.build().validate();
         }
 
@@ -159,13 +162,13 @@ public class ConfigurationPlan {
 
         private LoggerConfig validate() {
             if (useParentHandlers == FALSE && handlers.isEmpty())
-                throw badRequest("Can't set use-parent-handlers to false when there are no handlers");
+                throw new RuntimeException("Can't set use-parent-handlers to false when there are no handlers");
             return this;
         }
 
         @Override public String toString() {
             return "«logger:" + state + ":" + category + ":" + level + ":"
-                    + handlers + (useParentHandlers ? "+" : "") + "»";
+                    + handlers + (useParentHandlers == TRUE ? "+" : "") + "»";
         }
     }
 
@@ -178,23 +181,46 @@ public class ConfigurationPlan {
         @NonNull private final DeploymentState state;
         @NonNull private final LogLevel level;
         @NonNull private final LoggingHandlerType type;
-        @NonNull private final String file;
-        @NonNull private final String suffix;
-        @NonNull private final String format;
-        // TODO formatter / named-formatter
+        private final String format;
+        private final String formatter;
+
+        private final String file;
+        private final String suffix;
 
 
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
             if (node.isNull())
-                throw badRequest("no config in log-handler '" + name + "'");
+                throw new RuntimeException("no config in log-handler '" + name + "'");
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "level", ALL.name(), value -> builder.level(LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));
-            apply(node, "file", name.getValue(), builder::file);
-            apply(node, "suffix", ".yyyy-MM-dd", builder::suffix);
             apply(node, "format", null, builder::format);
-            return builder.build();
+            apply(node, "formatter", null, builder::formatter);
+            applyByType(node, builder);
+            return builder.build().validate();
+        }
+
+        private static void applyByType(JsonNode node, LogHandlerConfigBuilder builder) {
+            switch (builder.type) {
+            case periodicRotatingFile:
+                apply(node, "file", builder.name.getValue(), builder::file);
+                apply(node, "suffix", ".yyyy-MM-dd", builder::suffix);
+                return;
+            case console:
+                // nothing more to load here
+                return;
+            }
+            throw new UnsupportedOperationException("unhandled log-handler type [" + builder.type + "]"
+                    + " in [" + builder.name + "]");
+        }
+
+        public static class LogHandlerConfigBuilder {}
+
+        private LogHandlerConfig validate() {
+            if (format == null && formatter == null)
+                throw new RuntimeException("log-handler [" + name + "] must either have a format or a formatter");
+            return this;
         }
 
         @Override public String toString() {

@@ -63,14 +63,16 @@ public class AbstractDeployerTest {
         when(logHandlerMock.toBuilder()).thenReturn(logHandlerBuilderMock);
 
         when(logHandlerMock.correctLevel(any(LogLevel.class))).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctFile(anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctSuffix(anyString())).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctFormat(anyString())).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctFile(any(String.class))).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctSuffix(any(String.class))).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctFormat(any(String.class))).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctFormatter(any(String.class))).thenReturn(logHandlerMock);
 
         when(logHandlerBuilderMock.level(any(LogLevel.class))).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.file(anyString())).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.suffix(anyString())).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.format(anyString())).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.file(any(String.class))).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.suffix(any(String.class))).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.format(any(String.class))).thenReturn(logHandlerBuilderMock);
+        when(logHandlerBuilderMock.formatter(any(String.class))).thenReturn(logHandlerBuilderMock);
 
         when(logHandlerBuilderMock.build()).thenReturn(logHandlerMock);
     }
@@ -90,6 +92,7 @@ public class AbstractDeployerTest {
 
         verify(loggerMock, atLeast(0)).isDeployed();
         verify(loggerMock, atLeast(0)).category();
+        verify(loggerMock, atLeast(0)).isRoot();
         verify(loggerMock, atLeast(0)).handlers();
         verify(loggerMock, atLeast(0)).useParentHandlers();
         verify(loggerMock, atLeast(0)).level();
@@ -108,11 +111,13 @@ public class AbstractDeployerTest {
         verify(logHandlerMock, atLeast(0)).file();
         verify(logHandlerMock, atLeast(0)).suffix();
         verify(logHandlerMock, atLeast(0)).format();
+        verify(logHandlerMock, atLeast(0)).formatter();
 
         verify(logHandlerMock, atLeast(0)).correctLevel(any(LogLevel.class));
-        verify(logHandlerMock, atLeast(0)).correctFile(anyString());
-        verify(logHandlerMock, atLeast(0)).correctSuffix(anyString());
-        verify(logHandlerMock, atLeast(0)).correctFormat(anyString());
+        verify(logHandlerMock, atLeast(0)).correctFile(any(String.class));
+        verify(logHandlerMock, atLeast(0)).correctSuffix(any(String.class));
+        verify(logHandlerMock, atLeast(0)).correctFormat(any(String.class));
+        verify(logHandlerMock, atLeast(0)).correctFormatter(any(String.class));
 
         verifyNoMoreInteractions(logHandlerMock);
     }
@@ -263,6 +268,7 @@ public class AbstractDeployerTest {
             this.category = LoggerCategory.of(category);
 
             when(loggerMock.category()).then(i -> this.category);
+            when(loggerMock.isRoot()).then(i -> this.category.isRoot());
             when(loggerMock.handlers()).then(i -> handlerNames());
             when(loggerMock.useParentHandlers()).then(i -> useParentHandlers);
             when(loggerMock.level()).then(i -> level);
@@ -340,6 +346,7 @@ public class AbstractDeployerTest {
         private String file;
         private String suffix = ".yyyy-MM-dd";
         private String format;
+        private String formatter;
 
         public LogHandlerFixture(LoggingHandlerType type, String name) {
             this.type = type;
@@ -350,6 +357,7 @@ public class AbstractDeployerTest {
             when(logHandlerMock.file()).then(i -> file);
             when(logHandlerMock.suffix()).then(i -> suffix);
             when(logHandlerMock.format()).then(i -> format);
+            when(logHandlerMock.formatter()).then(i -> formatter);
         }
 
         public LogHandlerFixture level(LogLevel level) {
@@ -369,6 +377,11 @@ public class AbstractDeployerTest {
 
         public LogHandlerFixture format(String format) {
             this.format = format;
+            return this;
+        }
+
+        public LogHandlerFixture formatter(String formatter) {
+            this.formatter = formatter;
             return this;
         }
 
@@ -398,6 +411,11 @@ public class AbstractDeployerTest {
             assertThat(audits.asList()).isEmpty();
         }
 
+        public void verifyUpdatedFormatter(Audits audits) {
+            verifyLogHandler().correctFormatter(formatter);
+            assertThat(audits.asList()).isEmpty();
+        }
+
         public LogHandler verifyLogHandler() {
             verify(loggers).handler(type, new LogHandlerName(name));
             return verify(logHandlerMock);
@@ -409,6 +427,7 @@ public class AbstractDeployerTest {
             verify(logHandlerBuilderMock).file(file);
             verify(logHandlerBuilderMock).suffix(suffix);
             verify(logHandlerBuilderMock).format(format);
+            verify(logHandlerBuilderMock).formatter(formatter);
             verify(logHandlerBuilderMock).build();
             verify(logHandlerMock).add();
 

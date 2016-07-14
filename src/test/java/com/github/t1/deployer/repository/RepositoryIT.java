@@ -22,7 +22,7 @@ public class RepositoryIT {
     public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(ARTIFACTORY_MOCK);
     private final URI baseUri = URI.create(ARTIFACTORY.baseUri() + "/artifactory");
     private RestContext config = REST.register("repository", baseUri);
-    private final ArtifactoryRepository repository = new ArtifactoryRepository(config);
+    private final ArtifactoryRepository repository = new ArtifactoryRepository(config, "remote-repos");
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -82,7 +82,8 @@ public class RepositoryIT {
             config = config.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
-            Artifact artifact = new ArtifactoryRepository(config).searchByChecksum(fakeChecksumFor(FOO));
+            Artifact artifact = new ArtifactoryRepository(config, "remote-repos")
+                    .searchByChecksum(fakeChecksumFor(FOO));
 
             assertThat(artifact.getGroupId().getValue()).isEqualTo("org.foo");
             assertThat(artifact.getArtifactId().getValue()).isEqualTo("foo-war");

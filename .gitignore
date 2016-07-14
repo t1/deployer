@@ -6,3 +6,4 @@
 target/
 .idea/
 *.iml
+/src/main/docker/deployer.war

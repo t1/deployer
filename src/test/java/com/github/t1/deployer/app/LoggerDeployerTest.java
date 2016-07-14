@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -23,9 +22,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "loggers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("no config in logger 'foo'");
+        assertThat(thrown.getCause()).hasMessageContaining("no config in logger 'foo'");
     }
 
     @Test
@@ -200,8 +197,8 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: false"));
 
-        assertThat(thrown).isInstanceOf(WebApplicationApplicationException.class)
-                          .hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
+        assertThat(thrown.getCause())
+                .hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
     }
 
 
@@ -292,7 +289,8 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: false\n"));
 
-        assertThat(thrown).hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
+        assertThat(thrown.getCause())
+                .hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
     }
 
 
@@ -358,9 +356,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "log-handlers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("no config in log-handler 'foo'");
+        assertThat(thrown.getCause()).hasMessageContaining("no config in log-handler 'foo'");
     }
 
     @Test

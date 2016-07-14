@@ -23,6 +23,7 @@ public class RepositoryProducer {
     @Inject @Config("repository.uri") URI uri;
     @Inject @Config("repository.username") String username;
     @Inject @Config("repository.password") Password password;
+    @Inject @Config("repository.key") String key;
 
     RestContext rest = REST;
 
@@ -33,7 +34,7 @@ public class RepositoryProducer {
         case mavenCentral:
             return new MavenCentralRepository(mavenCentralContext());
         case artifactory:
-            return new ArtifactoryRepository(artifactoryContext());
+            return new ArtifactoryRepository(artifactoryContext(), nvl(key, "releases-virtual"));
         }
         throw new UnsupportedOperationException("unknown repository type " + type);
     }
@@ -71,7 +72,7 @@ public class RepositoryProducer {
         if (baseUri != null)
             rest = rest.register(REST_ALIAS, baseUri);
         if (username != null && password != null) {
-            log.debug("put {} credentials for {}", username, baseUri);
+            log.debug("register {} credentials for {}", username, baseUri);
             Credentials credentials = new Credentials(username, password.getValue());
             rest = rest.register(baseUri, credentials);
         }

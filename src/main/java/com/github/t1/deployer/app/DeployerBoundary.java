@@ -10,7 +10,6 @@ import javax.ws.rs.core.Response;
 import java.nio.file.*;
 import java.util.List;
 
-import static com.github.t1.problem.WebException.*;
 import static java.lang.String.*;
 import static java.util.stream.Collectors.*;
 
@@ -35,7 +34,7 @@ public class DeployerBoundary {
         java.nio.file.Path root = getConfigPath();
 
         if (!Files.isRegularFile(root))
-            throw notFound("config file '" + root + "' not found");
+            throw new RuntimeException("config file '" + root + "' not found");
 
         log.debug("load config plan from: {}", root);
 
