@@ -46,6 +46,56 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldAddLogHandlerWithFormatter() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter");
+
+        Audits audits = deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n"
+                + "    formatter: the-formatter\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldFailToParsePlanWithLogHandlerWithNeitherFormatNorFormatter() {
+        Throwable throwable = catchThrowable(() -> deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n"));
+
+        assertThat(throwable.getCause().getCause())
+                .hasMessage("log-handler [FOO] must either have a format or a formatter");
+    }
+
+
+    @Test
+    public void shouldFailToParsePlanWithLogHandlerWithBothFormatAndFormatter() {
+        Throwable throwable = catchThrowable(() -> deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n"
+                + "    format: the-format\n"
+                + "    formatter: the-formatter\n"));
+
+        assertThat(throwable.getCause().getCause())
+                .hasMessage("log-handler [FOO] must either have a format or a formatter");
+    }
+
+
+    @Test
     public void shouldAddPeriodicRotatingFileHandler() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)

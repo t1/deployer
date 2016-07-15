@@ -218,7 +218,8 @@ public class ConfigurationPlan {
         public static class LogHandlerConfigBuilder {}
 
         private LogHandlerConfig validate() {
-            if (format == null && formatter == null)
+            if (format == null && formatter == null ||
+                    format != null && formatter != null)
                 throw new RuntimeException("log-handler [" + name + "] must either have a format or a formatter");
             return this;
         }
