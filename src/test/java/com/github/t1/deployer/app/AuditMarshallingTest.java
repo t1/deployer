@@ -8,7 +8,7 @@ import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.container.LoggerCategory;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
@@ -27,7 +27,7 @@ public class AuditMarshallingTest {
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public Audit deserialize(String json) throws IOException {
-        return JSON.readValue(new StringReader(json.replace('\'', '\"')), Audit.class);
+        return JSON.readValue(json.replace('\'', '\"'), Audit.class);
     }
 
     private static final TypeReference<List<Audit>> AUDITS = new TypeReference<List<Audit>>() {};
@@ -39,22 +39,33 @@ public class AuditMarshallingTest {
     private static final ArtifactAuditBuilder MOCKSERVER =
             ArtifactAudit.of("org.mock-server", "mockserver-war", "3.10.4").name("mockserver");
 
-    private static final LoggerAudit.LoggerAuditBuilder DEPLOYER_LOG =
-            LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG);
+    private static LoggerAudit.LoggerAuditBuilder deployerLog() {
+        return LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer"));
+    }
 
+
+    private static final Audit[] TWO_AUDITS = {
+            deployerLog().update(INFO, DEBUG).added(),
+            MOCKSERVER.removed()
+    };
 
     private static final String TWO_AUDITS_JSON =
             (""
                      + "[{"
                      + "'type':'logger',"
                      + "'change':'added',"
-                     + "'category':'foo',"
-                     + "'level':'DEBUG'"
+                     + "'updates':["
+                     + "{'type':'com.github.t1.log.LogLevel','oldValue':'INFO','newValue':'DEBUG'}"
+                     + "],"
+                     + "'category':'com.github.t1.deployer'"
                      + "},{"
-                     + "'type':'logger',"
+                     + "'type':'artifact',"
                      + "'change':'removed',"
-                     + "'category':'bar',"
-                     + "'level':'INFO'"
+                     + "'updates':[],"
+                     + "'name':'mockserver',"
+                     + "'groupId':'org.mock-server',"
+                     + "'artifactId':'mockserver-war',"
+                     + "'version':'3.10.4'"
                      + "}]"
             ).replace('\'', '\"');
 
@@ -62,8 +73,11 @@ public class AuditMarshallingTest {
     private static final String TWO_AUDITS_YAML = ""
             + "- type: logger\n"
             + "  change: added\n"
+            + "  updates:\n"
+            + "  - type: com.github.t1.log.LogLevel\n"
+            + "    oldValue: INFO\n"
+            + "    newValue: DEBUG\n"
             + "  category: com.github.t1.deployer\n"
-            + "  level: DEBUG\n"
             + "- type: artifact\n"
             + "  change: removed\n"
             + "  name: mockserver\n"
@@ -142,30 +156,23 @@ public class AuditMarshallingTest {
 
         Audit audit = deserialize(json);
 
-        assertThat(audit).isEqualTo(DEPLOYER_LOG.added());
+        assertThat(audit).isEqualTo(deployerLog().added());
     }
 
 
     @Test
-    public void shouldDeserializeTwoLoggerAudits() throws Exception {
-        List<Audit> audits = JSON.readValue(new StringReader(TWO_AUDITS_JSON), AUDITS);
+    public void shouldDeserializeTwoAuditsFromJson() throws Exception {
+        List<Audit> audits = JSON.readValue(TWO_AUDITS_JSON, AUDITS);
 
-        assertThat(audits).containsExactly(
-                LoggerAudit.of(LoggerCategory.of("foo")).level(DEBUG).added(),
-                LoggerAudit.of(LoggerCategory.of("bar")).level(INFO).removed());
+        assertThat(audits).containsExactly(TWO_AUDITS);
     }
 
 
     @Test
-    public void shouldSerializeTwoLoggerAudits() throws Exception {
-        List<Audit> audits = asList(
-                LoggerAudit.of(LoggerCategory.of("foo")).level(DEBUG).added(),
-                LoggerAudit.of(LoggerCategory.of("bar")).level(INFO).removed());
-        StringWriter out = new StringWriter();
+    public void shouldSerializeTwoAuditsAsJson() throws Exception {
+        String out = JSON.writeValueAsString(asList(TWO_AUDITS));
 
-        JSON.writeValue(out, audits);
-
-        assertThat(out.toString()).isEqualTo(TWO_AUDITS_JSON);
+        assertThat(out).isEqualTo(TWO_AUDITS_JSON);
     }
 
 
@@ -173,17 +180,14 @@ public class AuditMarshallingTest {
     public void shouldDeserializeTwoAuditsFromYaml() throws Exception {
         List<Audit> audits = YAML.readValue(TWO_AUDITS_YAML, AUDITS);
 
-        assertThat(audits).containsExactly(DEPLOYER_LOG.added(), MOCKSERVER.removed());
+        assertThat(audits).containsExactly(TWO_AUDITS);
     }
 
 
     @Test
     public void shouldSerializeTwoAuditsToYaml() throws Exception {
-        List<Audit> audits = asList(DEPLOYER_LOG.added(), MOCKSERVER.removed());
-        StringWriter out = new StringWriter();
+        String out = YAML.writeValueAsString(asList(TWO_AUDITS));
 
-        YAML.writeValue(out, audits);
-
-        assertThat(out.toString()).isEqualTo(TWO_AUDITS_YAML);
+        assertThat(out).isEqualTo(TWO_AUDITS_YAML);
     }
 }

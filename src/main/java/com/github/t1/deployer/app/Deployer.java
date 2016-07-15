@@ -153,13 +153,14 @@ public class Deployer {
         private void applyLogger(LoggerConfig plan) {
             LoggerResource logger = loggers.logger(plan.getCategory());
             log.debug("apply logger '{}' -> {}", plan.getCategory(), plan.getState());
+            LoggerAuditBuilder audit = LoggerAudit.builder().category(logger.category());
             switch (plan.getState()) {
             case deployed:
                 if (logger.isDeployed()) {
                     int changes = 0;
                     if (!Objects.equals(logger.level(), plan.getLevel())) {
                         logger.writeLevel(plan.getLevel());
-                        changes++;
+                        audit.update(logger.level(), plan.getLevel());
                     }
                     if (!logger.isRoot() && !Objects.equals(logger.useParentHandlers(),
                             nvl(plan.getUseParentHandlers(), true))) {
@@ -179,8 +180,9 @@ public class Deployer {
                         }
                     }
 
+                    changes += audit.updates().size();
                     if (changes > 0)
-                        audits.audit(audit(logger).level(plan.getLevel()).updated());
+                        audits.audit(audit.updated());
                     else
                         log.info("logger already configured: {}", plan);
                 } else {
@@ -190,23 +192,19 @@ public class Deployer {
                                    .useParentHandlers(plan.getUseParentHandlers())
                                    .build();
                     logger.add();
-                    audits.audit(audit(logger).added());
+                    audits.audit(audit.update(null, plan.getLevel()).added());
                 }
                 return;
             case undeployed:
                 if (logger.isDeployed()) {
                     logger.remove();
-                    audits.audit(audit(logger).removed());
+                    audits.audit(audit.removed());
                 } else {
                     log.info("logger already removed: {}", plan.getCategory());
                 }
                 return;
             }
             throw new UnsupportedOperationException("unhandled case: " + plan.getState());
-        }
-
-        private LoggerAuditBuilder audit(LoggerResource logger) {
-            return LoggerAudit.builder().category(logger.category()).level(logger.level());
         }
 
         private void applyArtifact(DeploymentConfig plan) {

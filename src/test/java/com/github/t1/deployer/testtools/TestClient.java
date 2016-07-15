@@ -17,7 +17,7 @@ import static java.lang.String.*;
 import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
 
-@Ignore
+@Ignore("this is not a automated test, but only a test client")
 public class TestClient {
     private static final Path JBOSS_CONFIG = Paths.get(System.getProperty("user.home"),
             "Tools/JBoss/current/standalone/configuration");

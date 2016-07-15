@@ -303,31 +303,32 @@ public class AbstractDeployerTest {
             verify(loggerBuilderMock).useParentHandlers(useParentHandlers);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).added());
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).update(null, level).added());
         }
 
         public List<LogHandlerName> handlerNames() {
             return handlers.stream().map(LogHandlerName::new).collect(toList());
         }
 
-        public void verifyChanged(Audits audits) {
+        public void verifyUpdated(LogLevel oldLevel, Audits audits) {
             verify(loggerMock).writeLevel(level);
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).updated());
+            assertThat(audits.asList()).containsExactly(
+                    LoggerAudit.of(getCategory()).update(oldLevel, level).updated());
         }
 
         public void verifyRemoved(Audits audits) {
             verify(loggerMock).remove();
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).removed());
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).removed());
         }
 
         public void verifyUpdatedUseParentHandlers(Audits audits) {
             verify(loggerMock).writeUseParentHandlers(useParentHandlers);
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).updated());
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).updated());
         }
 
         public void verifyAddedHandlers(Audits audits, String name) {
             verify(loggerMock).addLoggerHandler(new LogHandlerName(name));
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).level(getLevel()).updated());
+            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).updated());
         }
     }
 

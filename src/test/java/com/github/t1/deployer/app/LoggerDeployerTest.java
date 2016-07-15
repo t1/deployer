@@ -61,7 +61,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: INFO\n");
 
-        fixture.level(INFO).verifyChanged(audits);
+        fixture.level(INFO).verifyUpdated(DEBUG, audits);
     }
 
 
