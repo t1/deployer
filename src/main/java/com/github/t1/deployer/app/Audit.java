@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
 
 import java.util.*;
 
-import static com.github.t1.deployer.app.Audit.ChangeType.*;
+import static com.github.t1.deployer.app.Audit.Operation.*;
 import static com.github.t1.deployer.app.Audit.Type.*;
 import static lombok.AccessLevel.*;
 
@@ -22,23 +22,23 @@ import static lombok.AccessLevel.*;
 public abstract class Audit {
     public enum Type {artifact, logger}
 
-    public enum ChangeType {added, updated, removed}
+    public enum Operation {add, change, remove}
 
     @Value
-    public static class AuditUpdate<T> {
-        @NonNull @JsonProperty private final Class<T> type;
+    public static class Change<T> {
+        @NonNull @JsonProperty private final String name;
         @JsonProperty private final T oldValue;
         @JsonProperty private final T newValue;
 
-        @Override public String toString() { return type.getSimpleName() + ":" + oldValue + "->" + newValue; }
+        @Override public String toString() { return name + ":" + oldValue + "->" + newValue; }
     }
 
     @NonNull @JsonProperty private final Type type;
-    @NonNull @JsonProperty private final ChangeType change;
+    @NonNull @JsonProperty private final Operation operation;
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    @NonNull @JsonProperty private final List<AuditUpdate<?>> updates;
+    @NonNull @JsonProperty private final List<Change<?>> updates;
 
-    @Override public String toString() { return type + ":" + change; }
+    @Override public String toString() { return type + ":" + operation; }
 
     @Value
     @Builder
@@ -84,7 +84,7 @@ public abstract class Audit {
             }
         }
 
-        public ArtifactAudit(ChangeType change, List<AuditUpdate<?>> updates, DeploymentName name, GroupId groupId,
+        public ArtifactAudit(Operation change, List<Change<?>> updates, DeploymentName name, GroupId groupId,
                 ArtifactId artifactId,
                 Version version) {
             super(artifact, change, updates);
@@ -113,12 +113,12 @@ public abstract class Audit {
             @Override protected LoggerAudit build() { return new LoggerAudit(change, updates, category); }
 
             public LoggerAuditBuilder update(LogLevel oldLevel, LogLevel newLevel) {
-                update(new AuditUpdate<>(LogLevel.class, oldLevel, newLevel));
+                update(new Change<>("level", oldLevel, newLevel));
                 return this;
             }
         }
 
-        private LoggerAudit(ChangeType change, List<AuditUpdate<?>> updates, LoggerCategory category) {
+        private LoggerAudit(Operation change, List<Change<?>> updates, LoggerCategory category) {
             super(logger, change, updates);
             this.category = category;
         }
@@ -126,27 +126,27 @@ public abstract class Audit {
 
     @JsonCreator
     public static Audit factory(JsonNode node) {
-        String change = node.get("change").asText();
+        Operation operation = Operation.valueOf(node.get("operation").asText());
         String type = node.get("type").asText();
         switch (type) {
         case "artifact": {
             ArtifactAudit.ArtifactAuditBuilder builder = ArtifactAudit
                     .of(node.get("groupId").asText(), node.get("artifactId").asText(), node.get("version").asText())
                     .name(node.get("name").asText());
-            return build(change, builder);
+            return build(operation, builder);
         }
         case "logger": {
             LoggerAuditBuilder builder = LoggerAudit.of(LoggerCategory.of(node.get("category").asText()));
             if (node.has("updates")) {
                 for (JsonNode item : node.get("updates")) {
-                    String updateType = item.get("type").asText();
-                    if (LogLevel.class.getName().equals(updateType))
+                    String fieldName = item.get("name").asText();
+                    if ("level".equals(fieldName))
                         builder.update(toLevel(item.get("oldValue")), toLevel(item.get("newValue")));
                     else
-                        throw new UnsupportedOperationException("unknown update type: [" + updateType + "]");
+                        throw new UnsupportedOperationException("unknown update type: [" + fieldName + "]");
                 }
             }
-            return build(change, builder);
+            return build(operation, builder);
         }
         default:
             throw new IllegalArgumentException("unsupported audit type: '" + type + "'");
@@ -155,9 +155,9 @@ public abstract class Audit {
 
     private static LogLevel toLevel(JsonNode node) { return (node == null) ? null : LogLevel.valueOf(node.asText()); }
 
-    private static Audit build(String change, ChangeBuilder<? extends Audit> builder) {
+    private static Audit build(Operation change, ChangeBuilder<? extends Audit> builder) {
         try {
-            return builder.change(ChangeType.valueOf(change)).build();
+            return builder.change(change).build();
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("unsupported audit change: '" + change + "'");
         }
@@ -165,18 +165,18 @@ public abstract class Audit {
 
     private static abstract class ChangeBuilder<T extends Audit> {
         @Setter
-        protected ChangeType change;
-        protected List<AuditUpdate<?>> updates = new ArrayList<>();
+        protected Operation change;
+        protected List<Change<?>> updates = new ArrayList<>();
 
-        public T added() { return change(added).build(); }
+        public T added() { return change(add).build(); }
 
-        public T updated() { return change(updated).build(); }
+        public T updated() { return change(Operation.change).build(); }
 
-        public T removed() { return change(removed).build(); }
+        public T removed() { return change(remove).build(); }
 
-        public void update(AuditUpdate<?> update) { updates.add(update); }
+        public void update(Change<?> update) { updates.add(update); }
 
-        public List<AuditUpdate<?>> updates() { return updates; }
+        public List<Change<?>> updates() { return updates; }
 
         protected abstract T build();
     }

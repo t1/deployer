@@ -53,14 +53,14 @@ public class AuditMarshallingTest {
             (""
                      + "[{"
                      + "'type':'logger',"
-                     + "'change':'added',"
+                     + "'operation':'add',"
                      + "'updates':["
-                     + "{'type':'com.github.t1.log.LogLevel','oldValue':'INFO','newValue':'DEBUG'}"
+                     + "{'name':'level','oldValue':'INFO','newValue':'DEBUG'}"
                      + "],"
                      + "'category':'com.github.t1.deployer'"
                      + "},{"
                      + "'type':'artifact',"
-                     + "'change':'removed',"
+                     + "'operation':'remove',"
                      + "'updates':[],"
                      + "'name':'mockserver',"
                      + "'groupId':'org.mock-server',"
@@ -72,14 +72,14 @@ public class AuditMarshallingTest {
 
     private static final String TWO_AUDITS_YAML = ""
             + "- type: logger\n"
-            + "  change: added\n"
+            + "  operation: add\n"
             + "  updates:\n"
-            + "  - type: com.github.t1.log.LogLevel\n"
+            + "  - name: level\n"
             + "    oldValue: INFO\n"
             + "    newValue: DEBUG\n"
             + "  category: com.github.t1.deployer\n"
             + "- type: artifact\n"
-            + "  change: removed\n"
+            + "  operation: remove\n"
             + "  name: mockserver\n"
             + "  groupId: org.mock-server\n"
             + "  artifactId: mockserver-war\n"
@@ -88,7 +88,7 @@ public class AuditMarshallingTest {
 
     @Test
     public void shouldFailToDeserializeUnknownArtifactType() throws Exception {
-        String json = "{'type':'xxx','change':'added'}";
+        String json = "{'type':'xxx','operation':'add'}";
 
         assertThatThrownBy(() -> deserialize(json))
                 .hasMessageContaining("unsupported audit type: 'xxx'");
@@ -99,7 +99,7 @@ public class AuditMarshallingTest {
     public void shouldDeserializeDeployedArtifactAudit() throws Exception {
         String json = "{"
                 + "'type':'artifact',"
-                + "'change':'added',"
+                + "'operation':'add',"
                 + "'name':'jolokia',"
                 + "'groupId':'org.jolokia',"
                 + "'artifactId':'jolokia-war',"
@@ -116,7 +116,7 @@ public class AuditMarshallingTest {
     public void shouldDeserializeUndeployedArtifactAudit() throws Exception {
         String json = "{"
                 + "'type':'artifact',"
-                + "'change':'removed',"
+                + "'operation':'remove',"
                 + "'name':'mockserver',"
                 + "'groupId':'org.mock-server',"
                 + "'artifactId':'mockserver-war',"
@@ -133,7 +133,7 @@ public class AuditMarshallingTest {
     public void shouldFailToDeserializeArtifactAuditWithUnknownState() throws Exception {
         String json = "{"
                 + "'type':'artifact',"
-                + "'change':'xxx',"
+                + "'operation':'xxx',"
                 + "'name':'mockserver',"
                 + "'groupId':'org.mock-server',"
                 + "'artifactId':'mockserver-war',"
@@ -141,7 +141,8 @@ public class AuditMarshallingTest {
                 + "}";
 
         assertThatThrownBy(() -> deserialize(json))
-                .hasMessageContaining("unsupported audit change: 'xxx'");
+                .hasMessageContaining("No enum constant")
+                .hasMessageContaining("xxx");
     }
 
 
@@ -149,7 +150,7 @@ public class AuditMarshallingTest {
     public void shouldDeserializeDeployedLoggerAudit() throws Exception {
         String json = "{"
                 + "'type':'logger',"
-                + "'change':'added',"
+                + "'operation':'add',"
                 + "'category':'com.github.t1.deployer',"
                 + "'level':'DEBUG'"
                 + "}";
