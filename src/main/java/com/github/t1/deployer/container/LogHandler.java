@@ -98,20 +98,15 @@ public class LogHandler {
         return writeAttribute("suffix", newSuffix);
     }
 
-    public LogHandler correctFormat(String newFormat) {
+    public LogHandler correctFormatter(String newFormat, String newFormatter) {
         assertDeployed();
-        if (Objects.equals(format, newFormat))
+        if (Objects.equals(format, newFormat) && Objects.equals(formatter, newFormatter))
             return this;
-        log.debug("correct format of {} from {} to {}", name, format, newFormat);
-        return writeAttribute("formatter", newFormat);
-    }
-
-    public LogHandler correctFormatter(String newFormatter) {
-        assertDeployed();
-        if (Objects.equals(formatter, newFormatter))
-            return this;
-        log.debug("correct formatter of {} from {} to {}", name, formatter, newFormatter);
-        return writeAttribute("named-formatter", newFormatter);
+        log.debug("correct formatter of {} from {}/{} to {}/{}", name, format, formatter, newFormat, newFormatter);
+        if (newFormatter == null)
+            return writeAttribute("formatter", newFormat);
+        else
+            return writeAttribute("named-formatter", newFormatter);
     }
 
     private LogHandler writeAttribute(String name, String value) {

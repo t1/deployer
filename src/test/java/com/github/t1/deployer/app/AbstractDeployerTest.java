@@ -65,8 +65,7 @@ public class AbstractDeployerTest {
         when(logHandlerMock.correctLevel(any(LogLevel.class))).thenReturn(logHandlerMock);
         when(logHandlerMock.correctFile(any(String.class))).thenReturn(logHandlerMock);
         when(logHandlerMock.correctSuffix(any(String.class))).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctFormat(any(String.class))).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctFormatter(any(String.class))).thenReturn(logHandlerMock);
+        when(logHandlerMock.correctFormatter(any(String.class), any(String.class))).thenReturn(logHandlerMock);
 
         when(logHandlerBuilderMock.level(any(LogLevel.class))).thenReturn(logHandlerBuilderMock);
         when(logHandlerBuilderMock.file(any(String.class))).thenReturn(logHandlerBuilderMock);
@@ -116,8 +115,7 @@ public class AbstractDeployerTest {
         verify(logHandlerMock, atLeast(0)).correctLevel(any(LogLevel.class));
         verify(logHandlerMock, atLeast(0)).correctFile(any(String.class));
         verify(logHandlerMock, atLeast(0)).correctSuffix(any(String.class));
-        verify(logHandlerMock, atLeast(0)).correctFormat(any(String.class));
-        verify(logHandlerMock, atLeast(0)).correctFormatter(any(String.class));
+        verify(logHandlerMock, atLeast(0)).correctFormatter(any(String.class), any(String.class));
 
         verifyNoMoreInteractions(logHandlerMock);
     }
@@ -377,10 +375,12 @@ public class AbstractDeployerTest {
 
         public LogHandlerFixture format(String format) {
             this.format = format;
+            this.formatter = null;
             return this;
         }
 
         public LogHandlerFixture formatter(String formatter) {
+            this.format = null;
             this.formatter = formatter;
             return this;
         }
@@ -406,13 +406,8 @@ public class AbstractDeployerTest {
             assertThat(audits.asList()).isEmpty(); // TODO implement audit
         }
 
-        public void verifyUpdatedFormat(Audits audits) {
-            verifyLogHandler().correctFormat(format);
-            assertThat(audits.asList()).isEmpty(); // TODO implement audit
-        }
-
         public void verifyUpdatedFormatter(Audits audits) {
-            verifyLogHandler().correctFormatter(formatter);
+            verifyLogHandler().correctFormatter(format, formatter);
             assertThat(audits.asList()).isEmpty(); // TODO implement audit
         }
 

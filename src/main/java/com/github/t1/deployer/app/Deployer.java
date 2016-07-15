@@ -129,8 +129,7 @@ public class Deployer {
                     handler.correctLevel(plan.getLevel())
                            .correctFile(plan.getFile())
                            .correctSuffix(plan.getSuffix())
-                           .correctFormat(plan.getFormat())
-                           .correctFormatter(plan.getFormatter());
+                           .correctFormatter(plan.getFormat(), plan.getFormatter());
                 else
                     handler.toBuilder()
                            .file(plan.getFile())
