@@ -274,7 +274,51 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldRemoveHandlerWhenStateIsUndeployed
+    @Test
+    public void shouldRemoveHandlerWhenStateIsUndeployed() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-suffix")
+                .format("the-format")
+                .deployed();
+
+        Audits audits = deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n"
+                + "    format: the-format\n"
+                + "    state: undeployed\n");
+
+        fixture.verifyRemoved(audits);
+    }
+
+
+    @Test
+    public void shouldNotRemoveUndeployedHandlerWhenStateIsUndeployed() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-suffix")
+                .format("the-format");
+
+        Audits audits = deployer.run(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: periodicRotatingFile\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n"
+                + "    format: the-format\n"
+                + "    state: undeployed\n");
+
+        assertThat(audits.asList()).isEmpty();
+    }
+
+
     // TODO shouldRemoveHandlerWhenManaged
     // TODO shouldAddConsoleHandler
     // TODO shouldAddCustomHandler

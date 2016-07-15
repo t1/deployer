@@ -140,4 +140,14 @@ public class LogHandler {
 
         return this;
     }
+
+    public void remove() {
+        cli.execute(removeLogHandler());
+    }
+
+    private ModelNode removeLogHandler() {
+        ModelNode request = createRequestWithAddress();
+        request.get("operation").set("remove");
+        return request;
+    }
 }
