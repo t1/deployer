@@ -134,6 +134,13 @@ public abstract class Audit {
             }
 
             private String toString(Boolean bool) { return (bool == null) ? null : bool.toString(); }
+
+            public LoggerAuditBuilder changeHandler(LogHandlerName oldHandler, LogHandlerName newHandler) {
+                change(new Change("handlers", toString(oldHandler), toString(newHandler)));
+                return this;
+            }
+
+            private String toString(LogHandlerName handler) { return (handler == null) ? null : handler.getValue(); }
         }
 
         private LoggerAudit(Operation change, List<Change> changes, LoggerCategory category) {

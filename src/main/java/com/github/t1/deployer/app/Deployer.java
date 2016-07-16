@@ -154,7 +154,6 @@ public class Deployer {
             switch (plan.getState()) {
             case deployed:
                 if (logger.isDeployed()) {
-                    int changes = 0;
                     if (!Objects.equals(logger.level(), plan.getLevel())) {
                         logger.writeLevel(plan.getLevel());
                         audit.change(logger.level(), plan.getLevel());
@@ -169,18 +168,17 @@ public class Deployer {
                         for (LogHandlerName newHandler : plan.getHandlers())
                             if (!existing.remove(newHandler)) {
                                 logger.addLoggerHandler(newHandler);
-                                changes++;
+                                audit.changeHandler(null, newHandler);
                             }
                         for (LogHandlerName oldHandler : existing) {
                             logger.removeLoggerHandler(oldHandler);
-                            changes++;
+                            audit.changeHandler(oldHandler, null);
                         }
                     }
 
                     LoggerAudit updated = audit.changed();
 
-                    changes += updated.changeCount();
-                    if (changes > 0)
+                    if (updated.changeCount() > 0)
                         audits.audit(updated);
                     else
                         log.info("logger already configured: {}", plan);

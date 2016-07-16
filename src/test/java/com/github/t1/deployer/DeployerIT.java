@@ -17,7 +17,6 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URI;
@@ -111,16 +110,16 @@ public class DeployerIT {
         }
     }
 
-    public List<Audit> run(String plan) { return run(plan, OK).getBody(); }
+    public List<Audit> run(String plan) { return run(plan, OK).getBody().getAudits(); }
 
     @SneakyThrows(IOException.class)
-    public EntityResponse<List<Audit>> run(String plan, Status status) {
+    public EntityResponse<Audits> run(String plan, Status status) {
         try (FileMemento memento = new FileMemento(DeployerBoundary.getConfigPath()).setup()) {
             memento.write(plan);
 
             return REST
                     .createResource(UriTemplate.from(baseUri))
-                    .accept(new GenericType<List<Audit>>() {})
+                    .accept(Audits.class)
                     .POST_Response()
                     .expecting(status);
         }

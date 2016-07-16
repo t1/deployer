@@ -308,7 +308,26 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    handlers: [FOO,BAR]\n");
 
-        logger.verifyAddedHandlers(audits, "BAR");
+        logger.verifyAddedHandler(audits, "BAR");
+    }
+
+
+    @Test
+    public void shouldRemoveLoggerHandler() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .handler("FOO")
+                .handler("BAR")
+                .useParentHandlers(false)
+                .deployed();
+
+        Audits audits = deployer.run(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    level: DEBUG\n"
+                + "    handlers: [FOO]\n");
+
+        logger.verifyRemovedHandler(audits, "BAR");
     }
 
 

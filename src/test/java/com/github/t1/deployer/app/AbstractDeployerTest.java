@@ -329,9 +329,18 @@ public class AbstractDeployerTest {
                                .changed());
         }
 
-        public void verifyAddedHandlers(Audits audits, String name) {
-            verify(loggerMock).addLoggerHandler(new LogHandlerName(name));
-            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).changed());
+        public void verifyAddedHandler(Audits audits, String name) {
+            LogHandlerName handlerName = new LogHandlerName(name);
+            verify(loggerMock).addLoggerHandler(handlerName);
+            assertThat(audits.getAudits()).containsExactly(
+                    LoggerAudit.of(getCategory()).changeHandler(null, handlerName).changed());
+        }
+
+        public void verifyRemovedHandler(Audits audits, String name) {
+            LogHandlerName handlerName = new LogHandlerName(name);
+            verify(loggerMock).removeLoggerHandler(handlerName);
+            assertThat(audits.getAudits()).containsExactly(
+                    LoggerAudit.of(getCategory()).changeHandler(handlerName, null).changed());
         }
     }
 
