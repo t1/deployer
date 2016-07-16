@@ -303,7 +303,13 @@ public class AbstractDeployerTest {
             verify(loggerBuilderMock).useParentHandlers(useParentHandlers);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
-            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).change(null, level).added());
+            LoggerAudit.LoggerAuditBuilder audit = LoggerAudit
+                    .of(getCategory())
+                    .change(null, level)
+                    .changeUseParentHandlers(null, useParentHandlers);
+            for (LogHandlerName handler : handlerNames())
+                audit.changeHandler(null, handler);
+            assertThat(audits.getAudits()).containsExactly(audit.added());
         }
 
         public List<LogHandlerName> handlerNames() {

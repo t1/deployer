@@ -189,7 +189,11 @@ public class Deployer {
                                    .useParentHandlers(plan.getUseParentHandlers())
                                    .build();
                     logger.add();
-                    audits.audit(audit.change(null, plan.getLevel()).added());
+                    audit.change(null, plan.getLevel())
+                         .changeUseParentHandlers(null, plan.getUseParentHandlers());
+                    for (LogHandlerName handler : plan.getHandlers())
+                        audit.changeHandler(null, handler);
+                    audits.audit(audit.added());
                 }
                 return;
             case undeployed:
