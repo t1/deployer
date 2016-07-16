@@ -121,26 +121,39 @@ public class AbstractDeployerTest {
     }
 
 
-    public ArtifactFixtureBuilder givenArtifact(String groupId, String artifactId) {
-        return new ArtifactFixtureBuilder(groupId, artifactId);
+    public ArtifactFixtureBuilder givenArtifact(String name) {
+        return givenArtifact(name, "org." + name, name);
     }
 
-    public ArtifactFixtureBuilder givenArtifact(String name) {
-        return new ArtifactFixtureBuilder("org." + name, name + "-war");
+    public ArtifactFixtureBuilder givenArtifact(String groupId, String artifactId) {
+        return givenArtifact(artifactId, groupId, artifactId);
+    }
+
+    public ArtifactFixtureBuilder givenArtifact(String name, GroupId groupId, ArtifactId artifactId) {
+        return givenArtifact(name, groupId.getValue(), artifactId.getValue());
+    }
+
+    public ArtifactFixtureBuilder givenArtifact(String name, String groupId, String artifactId) {
+        return new ArtifactFixtureBuilder(name).groupId(groupId).artifactId(artifactId);
     }
 
     @RequiredArgsConstructor
     public class ArtifactFixtureBuilder {
-        private final String groupId;
-        private final String artifactId;
-        private String name;
+        private final String name;
+        private String groupId;
+        private String artifactId;
 
-        public ArtifactFixtureBuilder named(String name) {
-            this.name = name;
+        public ArtifactFixtureBuilder groupId(String groupId) {
+            this.groupId = groupId;
             return this;
         }
 
         public GroupId groupId() { return new GroupId(groupId); }
+
+        public ArtifactFixtureBuilder artifactId(String artifactId) {
+            this.artifactId = artifactId;
+            return this;
+        }
 
         public ArtifactId artifactId() { return new ArtifactId(artifactId); }
 
@@ -170,23 +183,19 @@ public class AbstractDeployerTest {
                 this.version = version;
                 this.type = type;
 
-                when(repository.searchByChecksum(fakeChecksumFor(contextRoot(), version))).then(i -> artifact());
                 when(repository.lookupArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
                 when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, type))
                         .then(i -> artifact(Version.ANY));
+                checksum(fakeChecksumFor(contextRoot(), version));
             }
 
             public ArtifactFixture version(String version) { return ArtifactFixtureBuilder.this.version(version); }
-
-            public ArtifactFixture named(String name) {
-                ArtifactFixtureBuilder.this.named(name);
-                return this;
-            }
 
             public DeploymentName deploymentName() { return ArtifactFixtureBuilder.this.deploymentName(); }
 
             public ArtifactFixture checksum(Checksum checksum) {
                 this.checksum = checksum;
+                when(repository.searchByChecksum(checksum)).then(i -> artifact());
                 return this;
             }
 
@@ -216,6 +225,10 @@ public class AbstractDeployerTest {
                 return artifact(this.version);
             }
 
+            public GroupId groupId() { return ArtifactFixtureBuilder.this.groupId(); }
+
+            public ArtifactId artifactId() { return ArtifactFixtureBuilder.this.artifactId(); }
+
             private Artifact artifact(Version version) {
                 return Artifact
                         .builder()
@@ -233,7 +246,6 @@ public class AbstractDeployerTest {
 
 
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
-
 
             public void verifyDeployed(Audits audits) {
                 verify(artifacts).deploy(deploymentName(), inputStream());

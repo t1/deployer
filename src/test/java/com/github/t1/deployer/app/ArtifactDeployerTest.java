@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
-import com.github.t1.deployer.container.DeploymentName;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -12,17 +11,13 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtifactDeployerTest extends AbstractDeployerTest {
-    private static final DeploymentName FOO_WAR = new DeploymentName("foo-war");
-    private static final DeploymentName BAR = new DeploymentName("bar");
-    private static final DeploymentName MOCKSERVER = new DeploymentName("mockserver");
-
     @Test
     public void shouldDeployWebArchive() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: 1.3.2\n"
         );
@@ -63,24 +58,25 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithOtherName() {
-        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture bar = givenArtifact("bar", foo.groupId(), foo.artifactId()).version("1.3.2");
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
                 + "  bar:\n"
                 + "    group-id: org.foo\n"
-                + "    artifact-id: foo-war\n"
+                + "    artifact-id: foo\n"
                 + "    version: 1.3.2\n"
         );
 
-        foo.named("bar").verifyDeployed(audits);
+        bar.verifyDeployed(audits);
     }
 
 
     @Test
     public void shouldDeployWebArchiveWithVariables() {
         systemProperties.given("fooGroupId", "org.foo");
-        systemProperties.given("fooArtifactId", FOO_WAR);
+        systemProperties.given("fooArtifactId", "foo");
         systemProperties.given("fooVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -102,7 +98,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: ${orgVar}.${fooVar}\n"
                 + "    version: 1\n");
 
@@ -117,7 +113,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: ${orgVar}.foo # cool\n"
                 + "    version: 1\n");
 
@@ -131,7 +127,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: $1\n");
 
@@ -145,7 +141,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: 1 # ${not} cool\n"
                 + "# absolutely ${not} cool");
@@ -160,7 +156,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: ${undefined}\n");
 
@@ -170,7 +166,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithEscapedVariable() {
-        ArtifactFixture foo = givenArtifact("foo").named("${bar}").version("1");
+        ArtifactFixture foo = givenArtifact("${bar}", "org.foo", "foo-war").version("1");
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
@@ -192,7 +188,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: 2\n");
 
@@ -220,7 +216,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldDeployWebArchiveWithSameChecksumButDifferentName() {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
-        ArtifactFixture bar = givenArtifact("foo").named(BAR.getValue()).version("1").checksum(foo.checksum());
+        ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1").checksum(foo.checksum());
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
@@ -236,18 +232,35 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldNotDeployWebArchiveWithSameNameButDifferentGroup() {
+        ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
+        ArtifactFixture bar = givenArtifact("bar", foo.groupId(), foo.artifactId()).version("1");
+
+        Audits audits = deployer.run(""
+                + "artifacts:\n"
+                + "  bar:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo\n"
+                + "    version: 1\n"
+        );
+
+        // #after(): foo not undeployed
+        bar.verifyDeployed(audits);
+    }
+
+
+    @Test
     public void shouldDeploySecondWebArchive() {
         givenArtifact("jolokia")
                 .version("1.3.2").deployed()
                 .and()
                 .version("1.3.3");
-        ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war")
-                .named("mockserver")
+        ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war")
                 .version("3.10.4");
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  jolokia-war:\n"
+                + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    version: 1.3.2\n"
                 + "  mockserver:\n"
@@ -266,7 +279,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: 1.3.2\n"
                 + "    state: undeployed\n"
@@ -294,7 +307,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: '*'\n"
                 + "    state: undeployed\n");
@@ -306,7 +319,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldRenameWebArchiveWithSameChecksumWhenManaged() {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
-        ArtifactFixture bar = givenArtifact("foo").named(BAR.getValue()).version("1");
+        ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1");
         deployer.setManaged(true);
 
         Audits audits = deployer.run(""
@@ -333,7 +346,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
-                + "  jolokia-war:\n"
+                + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    version: 1.3.2\n");
 
@@ -344,17 +357,19 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployBundle() {
-        givenArtifact("jolokia").version("1.3.2").deployed();
-        ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4");
+        givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
+        ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war").version("3.10.4");
         givenArtifact("artifact-deployer-test", "should-deploy-bundle")
                 .version("1", bundle)
                 .containing(""
                         + "artifacts:\n"
-                        + "  jolokia-war:\n"
+                        + "  jolokia:\n"
                         + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
                         + "    version: 1.3.2\n"
-                        + "  mockserver-war:\n"
+                        + "  mockserver:\n"
                         + "    group-id: org.mock-server\n"
+                        + "    artifact-id: mockserver-war\n"
                         + "    version: 3.10.4\n");
 
         Audits audits = deployer.run(""

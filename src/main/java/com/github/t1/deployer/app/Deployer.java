@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.*;
-import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
@@ -110,8 +109,11 @@ public class Deployer {
             plan.artifacts().forEach(this::applyArtifact);
 
             if (managed)
-                for (Deployment deployment : existing)
-                    undeploy(deployment.getName(), getByChecksum(deployment.getChecksum()));
+                for (Deployment deployment : existing) {
+                    DeploymentName name = deployment.getName();
+                    artifacts.undeploy(name);
+                    audits.audit(ArtifactAudit.of(getByChecksum(deployment.getChecksum())).name(name).removed());
+                }
         }
 
         private void applyLogHandler(LogHandlerConfig plan) {
@@ -218,48 +220,28 @@ public class Deployer {
             switch (plan.getState()) {
             case deployed:
                 log.debug("found {} => {}", plan, artifact);
-                deployIf(plan.getName(), artifact);
+                if (artifact.getType() == bundle) {
+                    this.run(artifact.getReader());
+                } else if (existing.removeIf(plan.getName()::matches)) {
+                    if (artifacts.getDeployment(plan.getName()).getChecksum().equals(artifact.getChecksum())) {
+                        log.info("already deployed with same checksum: {}", plan.getName());
+                    } else {
+                        artifacts.redeploy(plan.getName(), artifact.getInputStream());
+                        audits.audit(ArtifactAudit.of(artifact).name(plan.getName()).changed());
+                    }
+                } else {
+                    artifacts.deploy(plan.getName(), artifact.getInputStream());
+                    audits.audit(ArtifactAudit.of(artifact).name(plan.getName()).added());
+                }
                 break;
             case undeployed:
-                undeployIf(plan.getName(), artifact);
-            }
-        }
-
-        private void deployIf(@NonNull DeploymentName name, @NonNull Artifact artifact) {
-            if (artifact.getType() == bundle) {
-                this.run(artifact.getReader());
-            } else if (existing.removeIf(name::matches)) {
-                if (artifacts.getDeployment(name).getChecksum().equals(artifact.getChecksum())) {
-                    log.info("already deployed with same checksum: {}", name);
+                if (existing.removeIf(plan.getName()::matches)) {
+                    artifacts.undeploy(plan.getName());
+                    audits.audit(ArtifactAudit.of(artifact).name(plan.getName()).removed());
                 } else {
-                    artifacts.redeploy(name, artifact.getInputStream());
-                    audits.audit(audit(artifact).name(name).changed());
+                    log.info("already undeployed: {}", plan.getName());
                 }
-            } else {
-                artifacts.deploy(name, artifact.getInputStream());
-                audits.audit(audit(artifact).name(name).added());
             }
-        }
-
-        private void undeployIf(@NonNull DeploymentName name, @NonNull Artifact artifact) {
-            if (existing.removeIf(name::matches)) {
-                undeploy(name, artifact);
-            } else {
-                log.info("already undeployed: {}", name);
-            }
-        }
-
-        private void undeploy(@NonNull DeploymentName name, @NonNull Artifact artifact) {
-            artifacts.undeploy(name);
-            audits.audit(audit(artifact).name(name).removed());
-        }
-
-        private ArtifactAuditBuilder audit(@NonNull Artifact artifact) {
-            return ArtifactAudit
-                    .builder()
-                    .groupId(artifact.getGroupId())
-                    .artifactId(artifact.getArtifactId())
-                    .version(artifact.getVersion());
         }
     }
 }

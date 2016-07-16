@@ -11,6 +11,7 @@ import java.nio.file.*;
 import java.util.List;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -19,7 +20,7 @@ public class TestClient {
     private static final Path JBOSS_CONFIG = Paths.get(System.getProperty("user.home"),
             "Tools/JBoss/current/standalone/configuration");
     private static final ArtifactAudit.ArtifactAuditBuilder JOLOKIA =
-            ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
+            artifactAuditOf("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
 
     public List<Audit> run(String plan) throws IOException {
         try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_DEPLOYER_CONFIG)).setup()) {

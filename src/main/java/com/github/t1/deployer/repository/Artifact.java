@@ -35,6 +35,6 @@ public class Artifact {
     public Reader getReader() { return new InputStreamReader(getInputStream(), UTF_8); }
 
     @Override public String toString() {
-        return groupId + ":" + artifactId + ":" + version + ((checksum == null) ? "" : "=" + checksum);
+        return groupId + ":" + artifactId + ":" + version + ":" + type + ((checksum == null) ? "" : "=" + checksum);
     }
 }

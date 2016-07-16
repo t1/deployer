@@ -2,8 +2,8 @@ package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
+import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.container.LoggerCategory;
 import org.junit.Test;
@@ -13,10 +13,11 @@ import java.io.IOException;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class AuditMarshallingTest {
+public class AuditSerializationTest {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory()
@@ -30,10 +31,10 @@ public class AuditMarshallingTest {
 
 
     private static final ArtifactAuditBuilder JOLOKIA =
-            ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
+            artifactAuditOf("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
 
     private static final ArtifactAuditBuilder MOCKSERVER =
-            ArtifactAudit.of("org.mock-server", "mockserver-war", "3.10.4").name("mockserver");
+            artifactAuditOf("org.mock-server", "mockserver-war", "3.10.4").name("mockserver");
 
     private static LoggerAuditBuilder deployerLog() {
         return LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer"));

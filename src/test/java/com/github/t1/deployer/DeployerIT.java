@@ -1,7 +1,6 @@
 package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.*;
-import com.github.t1.deployer.app.Audit.ArtifactAudit;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
@@ -23,6 +22,7 @@ import java.net.URI;
 import java.util.List;
 
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
 import static java.util.concurrent.TimeUnit.*;
@@ -166,7 +166,7 @@ public class DeployerIT {
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
-                    ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").added());
+                    artifactAuditOf("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").added());
     }
 
     @Test
@@ -187,7 +187,7 @@ public class DeployerIT {
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
-                    ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").removed());
+                    artifactAuditOf("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").removed());
     }
 
     @Test
@@ -208,7 +208,7 @@ public class DeployerIT {
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
-                    ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").name("postgresql").added());
+                    artifactAuditOf("org.postgresql", "postgresql", "9.4.1207").name("postgresql").added());
     }
 
     // TODO shouldUpdateDeployer (WOW!)
@@ -225,7 +225,7 @@ public class DeployerIT {
         if (plan.isEmpty()) { // TODO make this run
             assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
             assertThat(audits).containsExactly(
-                    ArtifactAudit.of("org.postgresql", "postgresql", "9.4.1207").removed());
+                    artifactAuditOf("org.postgresql", "postgresql", "9.4.1207").removed());
         }
     }
 }

@@ -59,14 +59,6 @@ public abstract class Audit {
             return super.toString() + ":" + name + "->" + groupId + ":" + artifactId + ":" + version;
         }
 
-        public static ArtifactAuditBuilder of(String groupId, String artifactId, String version) {
-            return ArtifactAudit.of(new GroupId(groupId), new ArtifactId(artifactId), new Version(version));
-        }
-
-        public static ArtifactAuditBuilder of(GroupId groupId, ArtifactId artifactId, Version version) {
-            return ArtifactAudit.builder().groupId(groupId).artifactId(artifactId).version(version);
-        }
-
         public static ArtifactAuditBuilder of(Artifact artifact) {
             return ArtifactAudit
                     .builder()
