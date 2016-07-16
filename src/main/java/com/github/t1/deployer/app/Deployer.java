@@ -198,6 +198,10 @@ public class Deployer {
             case undeployed:
                 if (logger.isDeployed()) {
                     logger.remove();
+                    audit.change("level", logger.level(), null)
+                         .change("useParentHandlers", logger.useParentHandlers(), null);
+                    for (LogHandlerName handler : logger.handlers())
+                        audit.change("handlers", handler, null);
                     audits.audit(audit.removed());
                 } else {
                     log.info("logger already removed: {}", plan.getCategory());

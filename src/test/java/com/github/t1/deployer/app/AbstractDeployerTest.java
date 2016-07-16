@@ -324,7 +324,13 @@ public class AbstractDeployerTest {
 
         public void verifyRemoved(Audits audits) {
             verify(loggerMock).remove();
-            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).removed());
+            AuditBuilder audit = LoggerAudit
+                    .of(getCategory())
+                    .change("level", level, null)
+                    .change("useParentHandlers", useParentHandlers, null);
+            for (LogHandlerName handler : handlerNames())
+                audit.change("handlers", handler, null);
+            assertThat(audits.getAudits()).containsExactly(audit.removed());
         }
 
         public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {

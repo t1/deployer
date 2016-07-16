@@ -333,12 +333,16 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldRemoveExistingLoggerWhenStateIsUndeployed() {
-        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
+        LoggerFixture fixture = givenLogger("com.github.t1.deployer.app")
+                .level(DEBUG)
+                .useParentHandlers(true)
+                .handler("FOO")
+                .handler("BAR")
+                .deployed();
 
         Audits audits = deployer.run(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
-                + "    level: DEBUG\n"
                 + "    state: undeployed\n");
 
         fixture.verifyRemoved(audits);
