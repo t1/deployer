@@ -157,12 +157,12 @@ public class Deployer {
                     int changes = 0;
                     if (!Objects.equals(logger.level(), plan.getLevel())) {
                         logger.writeLevel(plan.getLevel());
-                        audit.update(logger.level(), plan.getLevel());
+                        audit.change(logger.level(), plan.getLevel());
                     }
                     if (!logger.isRoot() && !Objects.equals(logger.useParentHandlers(),
                             nvl(plan.getUseParentHandlers(), true))) {
                         logger.writeUseParentHandlers(plan.getUseParentHandlers());
-                        changes++;
+                        audit.changeUseParentHandlers(logger.useParentHandlers(), plan.getUseParentHandlers());
                     }
                     if (!Objects.equals(logger.handlers(), plan.getHandlers())) {
                         List<LogHandlerName> existing = new ArrayList<>(logger.handlers());
@@ -177,7 +177,7 @@ public class Deployer {
                         }
                     }
 
-                    LoggerAudit updated = audit.updated();
+                    LoggerAudit updated = audit.changed();
 
                     changes += updated.changeCount();
                     if (changes > 0)
@@ -191,7 +191,7 @@ public class Deployer {
                                    .useParentHandlers(plan.getUseParentHandlers())
                                    .build();
                     logger.add();
-                    audits.audit(audit.update(null, plan.getLevel()).added());
+                    audits.audit(audit.change(null, plan.getLevel()).added());
                 }
                 return;
             case undeployed:
@@ -228,7 +228,7 @@ public class Deployer {
                     log.info("already deployed with same checksum: {}", name);
                 } else {
                     artifacts.redeploy(name, artifact.getInputStream());
-                    audits.audit(audit(artifact).name(name).updated());
+                    audits.audit(audit(artifact).name(name).changed());
                 }
             } else {
                 artifacts.deploy(name, artifact.getInputStream());

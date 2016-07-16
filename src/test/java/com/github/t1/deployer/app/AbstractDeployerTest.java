@@ -242,7 +242,7 @@ public class AbstractDeployerTest {
 
             public void verifyRedeployed(Audits audits) {
                 verify(artifacts).redeploy(deploymentName(), inputStream());
-                assertThat(audits.getAudits()).containsExactly(artifactAudit().updated());
+                assertThat(audits.getAudits()).containsExactly(artifactAudit().changed());
             }
 
             public void verifyUndeployed(Audits audits) {
@@ -303,7 +303,7 @@ public class AbstractDeployerTest {
             verify(loggerBuilderMock).useParentHandlers(useParentHandlers);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
-            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).update(null, level).added());
+            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).change(null, level).added());
         }
 
         public List<LogHandlerName> handlerNames() {
@@ -313,7 +313,7 @@ public class AbstractDeployerTest {
         public void verifyUpdated(LogLevel oldLevel, Audits audits) {
             verify(loggerMock).writeLevel(level);
             assertThat(audits.getAudits()).containsExactly(
-                    LoggerAudit.of(getCategory()).update(oldLevel, level).updated());
+                    LoggerAudit.of(getCategory()).change(oldLevel, level).changed());
         }
 
         public void verifyRemoved(Audits audits) {
@@ -321,14 +321,17 @@ public class AbstractDeployerTest {
             assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).removed());
         }
 
-        public void verifyUpdatedUseParentHandlers(Audits audits) {
+        public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {
             verify(loggerMock).writeUseParentHandlers(useParentHandlers);
-            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).updated());
+            assertThat(audits.getAudits()).containsExactly(
+                    LoggerAudit.of(getCategory())
+                               .changeUseParentHandlers(oldUseParentHandlers, useParentHandlers)
+                               .changed());
         }
 
         public void verifyAddedHandlers(Audits audits, String name) {
             verify(loggerMock).addLoggerHandler(new LogHandlerName(name));
-            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).updated());
+            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).changed());
         }
     }
 

@@ -236,7 +236,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    handler: FOO\n"
                 + "    use-parent-handlers: true\n");
 
-        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(audits);
+        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(false, audits);
     }
 
 
@@ -255,7 +255,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    handler: FOO\n"
                 + "    use-parent-handlers: false\n");
 
-        logger.useParentHandlers(false).verifyUpdatedUseParentHandlers(audits);
+        logger.useParentHandlers(false).verifyUpdatedUseParentHandlers(true, audits);
     }
 
 
@@ -272,13 +272,13 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: true\n");
 
-        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(audits);
+        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(false, audits);
     }
 
 
     @Test
     public void shouldFailToUpdateLoggerWithoutHandlerAndWithUseParentHandlersTrueToFalse() {
-        LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
+        givenLogger("com.github.t1.deployer.app")
                 .level(DEBUG)
                 .useParentHandlers(true)
                 .deployed();

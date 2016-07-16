@@ -121,12 +121,19 @@ public abstract class Audit {
 
             @Override protected LoggerAudit build() { return new LoggerAudit(operation, changes, category); }
 
-            public LoggerAuditBuilder update(LogLevel oldLevel, LogLevel newLevel) {
+            public LoggerAuditBuilder change(LogLevel oldLevel, LogLevel newLevel) {
                 change(new Change("level", toString(oldLevel), toString(newLevel)));
                 return this;
             }
 
             private String toString(LogLevel level) { return (level == null) ? null : level.name(); }
+
+            public LoggerAuditBuilder changeUseParentHandlers(Boolean oldValue, Boolean newValue) {
+                change(new Change("useParentHandlers", toString(oldValue), toString(newValue)));
+                return this;
+            }
+
+            private String toString(Boolean bool) { return (bool == null) ? null : bool.toString(); }
         }
 
         private LoggerAudit(Operation change, List<Change> changes, LoggerCategory category) {
@@ -142,14 +149,14 @@ public abstract class Audit {
 
         public T added() { return operation(add).build(); }
 
-        public T updated() { return operation(Operation.change).build(); }
+        public T changed() { return operation(Operation.change).build(); }
 
         public T removed() { return operation(remove).build(); }
 
-        public void change(Change update) {
+        public void change(Change change) {
             if (changes == null)
                 changes = new ArrayList<>();
-            changes.add(update);
+            changes.add(change);
         }
 
         protected abstract T build();
