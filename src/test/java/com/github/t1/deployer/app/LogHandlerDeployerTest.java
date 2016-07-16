@@ -207,7 +207,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    format: the-format\n");
 
         // #after(): not added/updated
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
 
@@ -386,7 +386,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
         fixture.file("the-new-file").format("the-new-format");
         fixture.verifyLogHandler().correctFile(fixture.getFile());
         fixture.verifyLogHandler().correctFormatter(fixture.getFormat(), null);
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
 
@@ -431,7 +431,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    format: the-format\n"
                 + "    state: undeployed\n");
 
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
 

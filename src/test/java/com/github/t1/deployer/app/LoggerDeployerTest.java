@@ -48,7 +48,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n");
 
         // #after(): no add nor update
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
 
@@ -217,7 +217,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    handler: FOO\n"
                 + "    use-parent-handlers: false\n");
 
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
 
@@ -337,7 +337,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    state: undeployed\n");
 
         // #after(): not undeployed
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
     // TODO shouldRemoveLoggerWhenManaged

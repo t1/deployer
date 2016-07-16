@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.*;
@@ -10,12 +11,13 @@ import static lombok.AccessLevel.*;
 
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
-@RequiredArgsConstructor
 @JsonSerialize(using = ToStringSerializer.class)
 public class DeploymentName {
     @NonNull
     @XmlValue
     String value;
+
+    @JsonCreator public DeploymentName(String value) { this.value = value; }
 
     @Override
     public String toString() {

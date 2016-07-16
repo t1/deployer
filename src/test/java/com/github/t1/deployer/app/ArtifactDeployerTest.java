@@ -35,7 +35,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
         Audits audits = deployer.run(""
                 + "artifacts:\n");
 
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
 
@@ -213,7 +213,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: 1\n");
 
         // #after(): no deploy operations
-        assertThat(audits.asList()).isEmpty();
+        assertThat(audits.getAudits()).isEmpty();
     }
 
 
@@ -319,7 +319,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         verify(artifacts).undeploy(foo.deploymentName());
         verify(artifacts).deploy(bar.deploymentName(), bar.inputStream());
-        assertThat(audits.asList()).containsExactly(
+        assertThat(audits.getAudits()).containsExactly(
                 bar.artifactAudit().added(),
                 foo.artifactAudit().removed());
     }
@@ -382,7 +382,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         verify(artifacts).undeploy(jolokia.deploymentName());
         verify(artifacts).undeploy(mockserver.deploymentName());
-        assertThat(audits.asList()).containsExactly(
+        assertThat(audits.getAudits()).containsExactly(
                 jolokia.artifactAudit().removed(),
                 mockserver.artifactAudit().removed());
     }

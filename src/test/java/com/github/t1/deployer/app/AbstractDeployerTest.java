@@ -237,17 +237,17 @@ public class AbstractDeployerTest {
 
             public void verifyDeployed(Audits audits) {
                 verify(artifacts).deploy(deploymentName(), inputStream());
-                assertThat(audits.asList()).containsExactly(artifactAudit().added());
+                assertThat(audits.getAudits()).containsExactly(artifactAudit().added());
             }
 
             public void verifyRedeployed(Audits audits) {
                 verify(artifacts).redeploy(deploymentName(), inputStream());
-                assertThat(audits.asList()).containsExactly(artifactAudit().updated());
+                assertThat(audits.getAudits()).containsExactly(artifactAudit().updated());
             }
 
             public void verifyUndeployed(Audits audits) {
                 verify(artifacts).undeploy(deploymentName());
-                assertThat(audits.asList()).containsExactly(artifactAudit().removed());
+                assertThat(audits.getAudits()).containsExactly(artifactAudit().removed());
             }
         }
     }
@@ -303,7 +303,7 @@ public class AbstractDeployerTest {
             verify(loggerBuilderMock).useParentHandlers(useParentHandlers);
             verify(loggerBuilderMock).build();
             verify(loggerMock).add();
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).update(null, level).added());
+            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).update(null, level).added());
         }
 
         public List<LogHandlerName> handlerNames() {
@@ -312,23 +312,23 @@ public class AbstractDeployerTest {
 
         public void verifyUpdated(LogLevel oldLevel, Audits audits) {
             verify(loggerMock).writeLevel(level);
-            assertThat(audits.asList()).containsExactly(
+            assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).update(oldLevel, level).updated());
         }
 
         public void verifyRemoved(Audits audits) {
             verify(loggerMock).remove();
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).removed());
+            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).removed());
         }
 
         public void verifyUpdatedUseParentHandlers(Audits audits) {
             verify(loggerMock).writeUseParentHandlers(useParentHandlers);
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).updated());
+            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).updated());
         }
 
         public void verifyAddedHandlers(Audits audits, String name) {
             verify(loggerMock).addLoggerHandler(new LogHandlerName(name));
-            assertThat(audits.asList()).containsExactly(LoggerAudit.of(getCategory()).updated());
+            assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(getCategory()).updated());
         }
     }
 
@@ -394,22 +394,22 @@ public class AbstractDeployerTest {
 
         public void verifyUpdatedLogLevel(Audits audits) {
             verifyLogHandler().correctLevel(level);
-            assertThat(audits.asList()).isEmpty(); // TODO implement audit
+            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
         }
 
         public void verifyUpdatedFile(Audits audits) {
             verifyLogHandler().correctFile(file);
-            assertThat(audits.asList()).isEmpty(); // TODO implement audit
+            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
         }
 
         public void verifyUpdatedSuffix(Audits audits) {
             verifyLogHandler().correctSuffix(suffix);
-            assertThat(audits.asList()).isEmpty(); // TODO implement audit
+            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
         }
 
         public void verifyUpdatedFormatter(Audits audits) {
             verifyLogHandler().correctFormatter(format, formatter);
-            assertThat(audits.asList()).isEmpty(); // TODO implement audit
+            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
         }
 
         public LogHandler verifyLogHandler() {
@@ -427,13 +427,13 @@ public class AbstractDeployerTest {
             verify(logHandlerBuilderMock).build();
             verify(logHandlerMock).add();
 
-            assertThat(audits.asList()).isEmpty(); // TODO implement audit
+            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
         }
 
         public void verifyRemoved(Audits audits) {
             verify(logHandlerMock).remove();
-            assertThat(audits.asList()).isEmpty(); // TODO implement audit
-            // assertThat(audits.asList()).containsExactly(LogHandlerAudit.of(getCategory()).level(getLevel()).removed());
+            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
+            // assertThat(audits.getAudits()).containsExactly(LogHandlerAudit.of(getCategory()).level(getLevel()).removed());
         }
     }
 }

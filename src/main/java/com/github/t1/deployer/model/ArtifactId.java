@@ -9,10 +9,11 @@ import static lombok.AccessLevel.*;
 
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
-@RequiredArgsConstructor(onConstructor = @__({ @JsonCreator }))
 @JsonSerialize(using = ToStringSerializer.class)
 public class ArtifactId {
     String value;
+
+    @JsonCreator public ArtifactId(String value) { this.value = value; }
 
     @Override public String toString() { return value; }
 }

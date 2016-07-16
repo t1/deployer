@@ -8,10 +8,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import java.nio.file.*;
-import java.util.List;
-
-import static java.lang.String.*;
-import static java.util.stream.Collectors.*;
 
 @Path("/")
 @Stateless
@@ -38,10 +34,10 @@ public class DeployerBoundary {
 
         log.debug("load config plan from: {}", root);
 
-        List<Audit> audits = deployer.run(root).asList();
+        Audits audits = deployer.run(root);
 
         if (log.isDebugEnabled())
-            log.debug("audit:\n- {}", join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
+            log.debug("audits:\n {}", audits.toYaml());
 
         return Response.ok(audits).build();
     }

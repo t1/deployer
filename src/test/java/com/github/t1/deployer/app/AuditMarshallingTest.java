@@ -1,21 +1,19 @@
 package com.github.t1.deployer.app;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
+import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.container.LoggerCategory;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.log.LogLevel.*;
-import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class AuditMarshallingTest {
@@ -30,8 +28,6 @@ public class AuditMarshallingTest {
         return JSON.readValue(json.replace('\'', '\"'), Audit.class);
     }
 
-    private static final TypeReference<List<Audit>> AUDITS = new TypeReference<List<Audit>>() {};
-
 
     private static final ArtifactAuditBuilder JOLOKIA =
             ArtifactAudit.of("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
@@ -39,46 +35,45 @@ public class AuditMarshallingTest {
     private static final ArtifactAuditBuilder MOCKSERVER =
             ArtifactAudit.of("org.mock-server", "mockserver-war", "3.10.4").name("mockserver");
 
-    private static LoggerAudit.LoggerAuditBuilder deployerLog() {
+    private static LoggerAuditBuilder deployerLog() {
         return LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer"));
     }
 
 
-    private static final Audit[] TWO_AUDITS = {
-            deployerLog().update(INFO, DEBUG).added(),
-            MOCKSERVER.removed()
-    };
+    private static final Audits TWO_AUDITS = new Audits()
+            .audit(deployerLog().update(INFO, DEBUG).added())
+            .audit(MOCKSERVER.removed());
 
     private static final String TWO_AUDITS_JSON =
-            (""
+            ("{'audits':"
                      + "[{"
                      + "'type':'logger',"
                      + "'operation':'add',"
-                     + "'updates':["
+                     + "'changes':["
                      + "{'name':'level','oldValue':'INFO','newValue':'DEBUG'}"
                      + "],"
                      + "'category':'com.github.t1.deployer'"
                      + "},{"
                      + "'type':'artifact',"
                      + "'operation':'remove',"
-                     + "'updates':[],"
                      + "'name':'mockserver',"
                      + "'groupId':'org.mock-server',"
                      + "'artifactId':'mockserver-war',"
                      + "'version':'3.10.4'"
-                     + "}]"
+                     + "}]}"
             ).replace('\'', '\"');
 
 
     private static final String TWO_AUDITS_YAML = ""
-            + "- type: logger\n"
+            + "audits:\n"
+            + "- !<logger>\n"
             + "  operation: add\n"
-            + "  updates:\n"
+            + "  changes:\n"
             + "  - name: level\n"
             + "    oldValue: INFO\n"
             + "    newValue: DEBUG\n"
             + "  category: com.github.t1.deployer\n"
-            + "- type: artifact\n"
+            + "- !<artifact>\n"
             + "  operation: remove\n"
             + "  name: mockserver\n"
             + "  groupId: org.mock-server\n"
@@ -91,7 +86,7 @@ public class AuditMarshallingTest {
         String json = "{'type':'xxx','operation':'add'}";
 
         assertThatThrownBy(() -> deserialize(json))
-                .hasMessageContaining("unsupported audit type: 'xxx'");
+                .hasMessageContaining("Could not resolve type id 'xxx' into a subtype");
     }
 
 
@@ -141,7 +136,7 @@ public class AuditMarshallingTest {
                 + "}";
 
         assertThatThrownBy(() -> deserialize(json))
-                .hasMessageContaining("No enum constant")
+                .hasMessageContaining("value not one of declared Enum instance names")
                 .hasMessageContaining("xxx");
     }
 
@@ -152,26 +147,29 @@ public class AuditMarshallingTest {
                 + "'type':'logger',"
                 + "'operation':'add',"
                 + "'category':'com.github.t1.deployer',"
-                + "'level':'DEBUG'"
-                + "}";
+                + "'changes':[{"
+                + "'name':'level',"
+                + "'oldValue':null,"
+                + "'newValue':'INFO'"
+                + "}]}";
 
         Audit audit = deserialize(json);
 
-        assertThat(audit).isEqualTo(deployerLog().added());
+        assertThat(audit).isEqualTo(deployerLog().update(null, INFO).added());
     }
 
 
     @Test
     public void shouldDeserializeTwoAuditsFromJson() throws Exception {
-        List<Audit> audits = JSON.readValue(TWO_AUDITS_JSON, AUDITS);
+        Audits audits = JSON.readValue(TWO_AUDITS_JSON, Audits.class);
 
-        assertThat(audits).containsExactly(TWO_AUDITS);
+        assertThat(audits).isEqualTo(TWO_AUDITS);
     }
 
 
     @Test
     public void shouldSerializeTwoAuditsAsJson() throws Exception {
-        String out = JSON.writeValueAsString(asList(TWO_AUDITS));
+        String out = JSON.writeValueAsString(TWO_AUDITS);
 
         assertThat(out).isEqualTo(TWO_AUDITS_JSON);
     }
@@ -179,15 +177,15 @@ public class AuditMarshallingTest {
 
     @Test
     public void shouldDeserializeTwoAuditsFromYaml() throws Exception {
-        List<Audit> audits = YAML.readValue(TWO_AUDITS_YAML, AUDITS);
+        Audits audits = YAML.readValue(TWO_AUDITS_YAML, Audits.class);
 
-        assertThat(audits).containsExactly(TWO_AUDITS);
+        assertThat(audits).isEqualTo(TWO_AUDITS);
     }
 
 
     @Test
     public void shouldSerializeTwoAuditsToYaml() throws Exception {
-        String out = YAML.writeValueAsString(asList(TWO_AUDITS));
+        String out = YAML.writeValueAsString(TWO_AUDITS);
 
         assertThat(out).isEqualTo(TWO_AUDITS_YAML);
     }

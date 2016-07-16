@@ -6,15 +6,12 @@ import com.github.t1.rest.*;
 import com.github.t1.testtools.FileMemento;
 import org.junit.*;
 
-import javax.ws.rs.core.GenericType;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.rest.RestContext.*;
-import static java.lang.String.*;
-import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
 
 @Ignore("this is not a automated test, but only a test client")
@@ -27,12 +24,12 @@ public class TestClient {
     public List<Audit> run(String plan) throws IOException {
         try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_DEPLOYER_CONFIG)).setup()) {
             memento.write(plan);
-            return postUpdate();
+            return postUpdate().getAudits();
         }
     }
 
-    private static List<Audit> postUpdate() {
-        return deployer().accept(new GenericType<List<Audit>>() {}).POST();
+    private static Audits postUpdate() {
+        return deployer().accept(Audits.class).POST();
     }
 
 
@@ -84,9 +81,9 @@ public class TestClient {
 
     @Test
     public void shouldPostUpdate() throws Exception {
-        List<Audit> audits = postUpdate();
+        Audits audits = postUpdate();
 
-        System.out.println("audit:\n- " + join("\n- ", audits.stream().map(Audit::toString).collect(toList())));
+        System.out.println(audits.toYaml());
     }
 
     @Test
