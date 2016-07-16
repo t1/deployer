@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Artifact;
-import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -76,9 +75,7 @@ public abstract class Audit {
                     .version(artifact.getVersion());
         }
 
-        public static class ArtifactAuditBuilder extends ChangeBuilder<ArtifactAudit> {
-            private ArtifactAuditBuilder() {}
-
+        public static class ArtifactAuditBuilder extends AuditBuilder<ArtifactAudit> {
             public ArtifactAuditBuilder name(String name) { return name(new DeploymentName(name)); }
 
             public ArtifactAuditBuilder name(DeploymentName name) {
@@ -91,10 +88,10 @@ public abstract class Audit {
             }
         }
 
-        public ArtifactAudit(Operation change, List<Change> changes, DeploymentName name, GroupId groupId,
+        public ArtifactAudit(Operation operation, List<Change> changes, DeploymentName name, GroupId groupId,
                 ArtifactId artifactId,
                 Version version) {
-            super(change, changes);
+            super(operation, changes);
             this.name = name;
             this.groupId = groupId;
             this.artifactId = artifactId;
@@ -116,55 +113,37 @@ public abstract class Audit {
             return LoggerAudit.builder().category(category);
         }
 
-        public static class LoggerAuditBuilder extends ChangeBuilder<LoggerAudit> {
+        public static class LoggerAuditBuilder extends AuditBuilder<LoggerAudit> {
             private LoggerAuditBuilder() {}
 
             @Override protected LoggerAudit build() { return new LoggerAudit(operation, changes, category); }
-
-            public LoggerAuditBuilder change(LogLevel oldLevel, LogLevel newLevel) {
-                change(new Change("level", toString(oldLevel), toString(newLevel)));
-                return this;
-            }
-
-            private String toString(LogLevel level) { return (level == null) ? null : level.name(); }
-
-            public LoggerAuditBuilder changeUseParentHandlers(Boolean oldValue, Boolean newValue) {
-                change(new Change("useParentHandlers", toString(oldValue), toString(newValue)));
-                return this;
-            }
-
-            private String toString(Boolean bool) { return (bool == null) ? null : bool.toString(); }
-
-            public LoggerAuditBuilder changeHandler(LogHandlerName oldHandler, LogHandlerName newHandler) {
-                change(new Change("handlers", toString(oldHandler), toString(newHandler)));
-                return this;
-            }
-
-            private String toString(LogHandlerName handler) { return (handler == null) ? null : handler.getValue(); }
         }
 
-        private LoggerAudit(Operation change, List<Change> changes, LoggerCategory category) {
-            super(change, changes);
+        private LoggerAudit(Operation operation, List<Change> changes, LoggerCategory category) {
+            super(operation, changes);
             this.category = category;
         }
     }
 
-    private static abstract class ChangeBuilder<T extends Audit> {
+    public static abstract class AuditBuilder<T extends Audit> {
         @Setter
         protected Operation operation;
         protected List<Change> changes;
 
         public T added() { return operation(add).build(); }
 
-        public T changed() { return operation(Operation.change).build(); }
+        public T changed() { return operation(change).build(); }
 
         public T removed() { return operation(remove).build(); }
 
-        public void change(Change change) {
+        public <U> AuditBuilder change(String name, U oldValue, U newValue) {
             if (changes == null)
                 changes = new ArrayList<>();
-            changes.add(change);
+            changes.add(new Change(name, toString(oldValue), toString(newValue)));
+            return this;
         }
+
+        private static String toString(Object value) { return (value == null) ? null : value.toString(); }
 
         protected abstract T build();
     }

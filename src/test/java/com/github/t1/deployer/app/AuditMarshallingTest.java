@@ -41,7 +41,7 @@ public class AuditMarshallingTest {
 
 
     private static final Audits TWO_AUDITS = new Audits()
-            .audit(deployerLog().change(INFO, DEBUG).added())
+            .audit(deployerLog().change("level", INFO, DEBUG).added())
             .audit(MOCKSERVER.removed());
 
     private static final String TWO_AUDITS_JSON =
@@ -155,7 +155,7 @@ public class AuditMarshallingTest {
 
         Audit audit = deserialize(json);
 
-        assertThat(audit).isEqualTo(deployerLog().change(null, INFO).added());
+        assertThat(audit).isEqualTo(deployerLog().change("level", null, INFO).added());
     }
 
 

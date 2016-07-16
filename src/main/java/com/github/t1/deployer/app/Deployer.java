@@ -2,7 +2,6 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
-import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
@@ -150,33 +149,33 @@ public class Deployer {
         private void applyLogger(LoggerConfig plan) {
             LoggerResource logger = loggers.logger(plan.getCategory());
             log.debug("apply logger '{}' -> {}", plan.getCategory(), plan.getState());
-            LoggerAuditBuilder audit = LoggerAudit.builder().category(logger.category());
+            AuditBuilder audit = LoggerAudit.builder().category(logger.category());
             switch (plan.getState()) {
             case deployed:
                 if (logger.isDeployed()) {
                     if (!Objects.equals(logger.level(), plan.getLevel())) {
                         logger.writeLevel(plan.getLevel());
-                        audit.change(logger.level(), plan.getLevel());
+                        audit.change("level", logger.level(), plan.getLevel());
                     }
                     if (!logger.isRoot() && !Objects.equals(logger.useParentHandlers(),
                             nvl(plan.getUseParentHandlers(), true))) {
                         logger.writeUseParentHandlers(plan.getUseParentHandlers());
-                        audit.changeUseParentHandlers(logger.useParentHandlers(), plan.getUseParentHandlers());
+                        audit.change("useParentHandlers", logger.useParentHandlers(), plan.getUseParentHandlers());
                     }
                     if (!Objects.equals(logger.handlers(), plan.getHandlers())) {
                         List<LogHandlerName> existing = new ArrayList<>(logger.handlers());
                         for (LogHandlerName newHandler : plan.getHandlers())
                             if (!existing.remove(newHandler)) {
                                 logger.addLoggerHandler(newHandler);
-                                audit.changeHandler(null, newHandler);
+                                audit.change("handlers", null, newHandler);
                             }
                         for (LogHandlerName oldHandler : existing) {
                             logger.removeLoggerHandler(oldHandler);
-                            audit.changeHandler(oldHandler, null);
+                            audit.change("handlers", oldHandler, null);
                         }
                     }
 
-                    LoggerAudit updated = audit.changed();
+                    Audit updated = audit.changed();
 
                     if (updated.changeCount() > 0)
                         audits.audit(updated);
@@ -189,10 +188,10 @@ public class Deployer {
                                    .useParentHandlers(plan.getUseParentHandlers())
                                    .build();
                     logger.add();
-                    audit.change(null, plan.getLevel())
-                         .changeUseParentHandlers(null, plan.getUseParentHandlers());
+                    audit.change("level", null, plan.getLevel())
+                         .change("useParentHandlers", null, plan.getUseParentHandlers());
                     for (LogHandlerName handler : plan.getHandlers())
-                        audit.changeHandler(null, handler);
+                        audit.change("handlers", null, handler);
                     audits.audit(audit.added());
                 }
                 return;
