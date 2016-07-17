@@ -51,5 +51,10 @@ public abstract class AbstractResource {
 
     public abstract void add();
 
-    public abstract void remove();
+    public void remove() {
+        ModelNode request = createRequestWithAddress();
+        request.get("operation").set("remove");
+
+        execute(request);
+    }
 }

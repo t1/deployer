@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends AbstractResource> {
     private final Audits audits;
 
-    public void applyLogger(PLAN plan) {
+    public void apply(PLAN plan) {
         RESOURCE resource = getResource(plan);
         log.debug("apply {} to {}", plan, resource);
         AuditBuilder audit = buildAudit(resource);
@@ -48,7 +48,7 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
 
     protected abstract RESOURCE getResource(PLAN plan);
 
-    protected abstract void update(RESOURCE logger, PLAN plan, AuditBuilder audit);
+    protected abstract void update(RESOURCE resource, PLAN plan, AuditBuilder audit);
 
     protected abstract RESOURCE buildResource(PLAN plan, AuditBuilder audit);
 

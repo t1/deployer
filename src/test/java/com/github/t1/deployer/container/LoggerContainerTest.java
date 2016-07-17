@@ -180,7 +180,7 @@ public class LoggerContainerTest {
                 + "  \"relative-to\" => \"jboss.server.log.dir\"\n"
                 + "},\n"
                 + "\"suffix\" => \"the-suffix\",\n"
-                + "\"formatter\" => \"the-formatter\"\n"
+                + "\"named-formatter\" => \"the-formatter\"\n"
                 + "}");
     }
 
@@ -434,12 +434,11 @@ public class LoggerContainerTest {
 
     @Test
     public void shouldAddPeriodicRotatingFileLogHandler() throws Exception {
-        LogHandler foo = container
+        LogHandlerResource foo = container
                 .handler(periodicRotatingFile, new LogHandlerName("FOO"))
-                .toBuilder()
                 .file("the-file")
                 .suffix("the-suffix")
-                .format("the-formatter")
+                .formatter("the-formatter")
                 .build();
 
         foo.add();

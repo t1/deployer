@@ -62,7 +62,7 @@ public class Deployer {
         return builder.build();
     }
 
-    public Artifact getByChecksum(Checksum checksum) {
+    private Artifact getByChecksum(Checksum checksum) {
         if (checksum == null || checksum.isEmpty())
             return errorArtifact(checksum, "empty checksum");
         try {
@@ -95,6 +95,7 @@ public class Deployer {
         private final Audits audits = new Audits();
         private final List<Deployment> existing;
 
+        private final LogHandlerDeployer logHandlerDeployer = new LogHandlerDeployer(loggers, audits);
         private final LoggerDeployer loggerDeployer = new LoggerDeployer(loggers, audits);
 
         private Audits run(Reader reader) {
@@ -103,9 +104,9 @@ public class Deployer {
         }
 
         private void run(ConfigurationPlan plan) {
-            plan.logHandlers().forEach(this::applyLogHandler);
+            plan.logHandlers().forEach(logHandlerDeployer::apply);
 
-            plan.loggers().forEach(loggerDeployer::applyLogger);
+            plan.loggers().forEach(loggerDeployer::apply);
 
             plan.artifacts().forEach(this::applyArtifact);
 
@@ -115,38 +116,6 @@ public class Deployer {
                     artifacts.undeploy(name);
                     audits.audit(ArtifactAudit.of(getByChecksum(deployment.getChecksum())).name(name).removed());
                 }
-        }
-
-        private void applyLogHandler(LogHandlerConfig plan) {
-            LogHandlerName name = plan.getName();
-            LoggingHandlerType type = plan.getType();
-            LogHandler handler = loggers.handler(type, name);
-            log.debug("apply log-handler '{}' -> {}", name, plan.getState());
-            switch (plan.getState()) {
-            case deployed:
-                if (handler.isDeployed())
-                    handler.correctLevel(plan.getLevel())
-                           .correctFile(plan.getFile())
-                           .correctSuffix(plan.getSuffix())
-                           .correctFormatter(plan.getFormat(), plan.getFormatter());
-                else
-                    handler.toBuilder()
-                           .file(plan.getFile())
-                           .level(plan.getLevel())
-                           .suffix(plan.getSuffix())
-                           .format(plan.getFormat())
-                           .formatter(plan.getFormatter())
-                           .build()
-                           .add();
-                return;
-            case undeployed:
-                if (handler.isDeployed())
-                    handler.remove();
-                else
-                    log.info("log-handler already removed: {}", name);
-                return;
-            }
-            throw new UnsupportedOperationException("unhandled case: " + plan.getState());
         }
 
         private void applyArtifact(DeploymentConfig plan) {

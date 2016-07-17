@@ -75,34 +75,30 @@ public class LoggerResource extends AbstractResource {
     }
 
 
-    public LoggerResource addLoggerHandler(LogHandlerName handler) {
+    public void addLoggerHandler(LogHandlerName handler) {
         assertDeployed();
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("add-handler");
         request.get("name").set(handler.getValue());
         execute(request);
-        return this;
     }
 
-    public LoggerResource removeLoggerHandler(LogHandlerName handler) {
+    public void removeLoggerHandler(LogHandlerName handler) {
         assertDeployed();
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("remove-handler");
         request.get("name").set(handler.getValue());
         execute(request);
-        return this;
     }
 
-    public LoggerResource writeUseParentHandlers(boolean newUseParentHandlers) {
+    public void writeUseParentHandlers(boolean newUseParentHandlers) {
         assertDeployed();
         writeAttribute("use-parent-handlers", newUseParentHandlers);
-        return this;
     }
 
-    public LoggerResource writeLevel(LogLevel newLevel) {
+    public void writeLevel(LogLevel newLevel) {
         assertDeployed();
         writeAttribute("level", newLevel.name());
-        return this;
     }
 
 
@@ -130,13 +126,7 @@ public class LoggerResource extends AbstractResource {
     @Override public void remove() {
         if (isRoot())
             throw new RuntimeException("can't remove root logger");
-        execute(removeLogger());
-    }
-
-    private ModelNode removeLogger() {
-        ModelNode request = createRequestWithAddress();
-        request.get("operation").set("remove");
-        return request;
+        super.remove();
     }
 
     @Override public void add() {

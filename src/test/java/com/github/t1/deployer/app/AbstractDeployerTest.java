@@ -2,8 +2,8 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
+import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.Tools.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
@@ -35,33 +36,13 @@ public class AbstractDeployerTest {
 
     @Mock ArtifactContainer artifacts;
     @Mock LoggerContainer loggers;
-    @Mock LogHandler logHandlerMock;
-    @Mock LogHandlerBuilder logHandlerBuilderMock;
 
     private final List<Deployment> allDeployments = new ArrayList<>();
 
     @Before
     public void before() {
         when(auditsInstance.get()).thenReturn(audits);
-
-
         when(artifacts.getAllArtifacts()).then(invocation -> allDeployments);
-
-
-        when(logHandlerMock.toBuilder()).thenReturn(logHandlerBuilderMock);
-
-        when(logHandlerMock.correctLevel(any(LogLevel.class))).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctFile(any(String.class))).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctSuffix(any(String.class))).thenReturn(logHandlerMock);
-        when(logHandlerMock.correctFormatter(any(String.class), any(String.class))).thenReturn(logHandlerMock);
-
-        when(logHandlerBuilderMock.level(any(LogLevel.class))).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.file(any(String.class))).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.suffix(any(String.class))).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.format(any(String.class))).thenReturn(logHandlerBuilderMock);
-        when(logHandlerBuilderMock.formatter(any(String.class))).thenReturn(logHandlerBuilderMock);
-
-        when(logHandlerBuilderMock.build()).thenReturn(logHandlerMock);
     }
 
     @After
@@ -76,29 +57,10 @@ public class AbstractDeployerTest {
     @After
     public void afterLoggers() {
         verify(loggers, atLeast(0)).logger(any(LoggerCategory.class));
+        verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), any(LogHandlerName.class));
         verify(loggers, atLeast(0)).executeRaw(any(ModelNode.class));
 
         verifyNoMoreInteractions(loggers);
-    }
-
-    @After
-    public void afterLogHandlers() {
-        verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), any(LogHandlerName.class));
-
-        verify(logHandlerMock, atLeast(0)).isDeployed();
-
-        verify(logHandlerMock, atLeast(0)).level();
-        verify(logHandlerMock, atLeast(0)).file();
-        verify(logHandlerMock, atLeast(0)).suffix();
-        verify(logHandlerMock, atLeast(0)).format();
-        verify(logHandlerMock, atLeast(0)).formatter();
-
-        verify(logHandlerMock, atLeast(0)).correctLevel(any(LogLevel.class));
-        verify(logHandlerMock, atLeast(0)).correctFile(any(String.class));
-        verify(logHandlerMock, atLeast(0)).correctSuffix(any(String.class));
-        verify(logHandlerMock, atLeast(0)).correctFormatter(any(String.class), any(String.class));
-
-        verifyNoMoreInteractions(logHandlerMock);
     }
 
 
@@ -322,22 +284,19 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAdded(Audits audits) {
-            ArgumentCaptor<ModelNode> captor = ArgumentCaptor.forClass(ModelNode.class);
-            verify(loggers).execute(captor.capture());
-            ModelNode node = captor.getValue();
-            assertThat(node.toString().replace('\"', '\'')).isEqualTo("{\n"
+            verify(loggers).execute(toModelNode("{\n"
                     + loggerAddress()
                     + "    'operation' => 'add',\n"
                     + ((level == null) ? "" : "    'level' => '" + level + "',\n")
                     + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
                     + "    'use-parent-handlers' => " + useParentHandlers + "\n"
-                    + "}");
+                    + "}"));
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", null, level)
                     .change("useParentHandlers", null, useParentHandlers);
             for (LogHandlerName handler : handlerNames())
-                audit.change("handlers", null, handler);
+                audit.change("handler", null, handler);
             assertThat(audits.getAudits()).containsExactly(audit.added());
         }
 
@@ -346,10 +305,7 @@ public class AbstractDeployerTest {
         }
 
         public ModelNode buildRequest() {
-            return toModelNode("{'address' => [\n"
-                    + "    ('subsystem' => 'logging'),\n"
-                    + "    ('logger' => '" + category + "')\n"
-                    + "]}");
+            return toModelNode("{" + loggerAddress() + "}");
         }
 
         public void verifyUpdated(LogLevel oldLevel, Audits audits) {
@@ -369,7 +325,7 @@ public class AbstractDeployerTest {
                     .change("level", level, null)
                     .change("useParentHandlers", useParentHandlers, null);
             for (LogHandlerName handler : handlerNames())
-                audit.change("handlers", handler, null);
+                audit.change("handler", handler, null);
             assertThat(audits.getAudits()).containsExactly(audit.removed());
         }
 
@@ -389,7 +345,7 @@ public class AbstractDeployerTest {
                     + "    'name' => '" + name + "'\n"
                     + "}"));
             assertThat(audits.getAudits()).containsExactly(
-                    LoggerAudit.of(getCategory()).change("handlers", null, handlerName).changed());
+                    LoggerAudit.of(getCategory()).change("handler", null, handlerName).changed());
         }
 
         public void verifyRemovedHandler(Audits audits, String name) {
@@ -401,7 +357,7 @@ public class AbstractDeployerTest {
                     + "    'name' => '" + name + "'\n"
                     + "}"));
             assertThat(audits.getAudits()).containsExactly(
-                    LoggerAudit.of(getCategory()).change("handlers", handlerName, null).changed());
+                    LoggerAudit.of(getCategory()).change("handler", handlerName, null).changed());
         }
     }
 
@@ -432,23 +388,49 @@ public class AbstractDeployerTest {
     @Getter
     public class LogHandlerFixture {
         private final LoggingHandlerType type;
-        private final String name;
+        private final LogHandlerName name;
+        private final LogHandlerAuditBuilder audit;
         private LogLevel level;
         private String file;
         private String suffix = ".yyyy-MM-dd";
         private String format;
         private String formatter;
+        private boolean deployed;
 
         public LogHandlerFixture(LoggingHandlerType type, String name) {
             this.type = type;
-            this.name = name;
+            this.name = new LogHandlerName(name);
+            this.audit = LogHandlerAudit.builder().type(this.type).name(this.name);
 
-            when(loggers.handler(type, new LogHandlerName(name))).thenReturn(logHandlerMock);
-            when(logHandlerMock.level()).then(i -> level);
-            when(logHandlerMock.file()).then(i -> file);
-            when(logHandlerMock.suffix()).then(i -> suffix);
-            when(logHandlerMock.format()).then(i -> format);
-            when(logHandlerMock.formatter()).then(i -> formatter);
+            when(loggers.handler(type, this.name)).then(i -> LogHandlerResource.builder(this.type, this.name, loggers));
+            when(loggers.executeRaw(readResource("logging", type.getTypeName(), name))).then(
+                    i -> deployed ? deployedNode() : notDeployedNode());
+        }
+
+        public ModelNode deployedNode() {
+            String string = ""
+                    + "{\n"
+                    + "    'outcome' => 'success',\n"
+                    + "    'result' => {\n"
+                    + ((level == null) ? "" : "        'level' => '" + level + "',\n")
+                    + ((file == null) ? "" : "        'file' => '" + file + "',\n")
+                    + ((suffix == null) ? "" : "        'suffix' => '" + suffix + "',\n")
+                    + ((format == null) ? "" : "        'format' => '" + format + "',\n")
+                    + ((formatter == null) ? "" : "        'named-formatter' => '" + formatter + "',\n")
+                    + "    }\n"
+                    + "}";
+            return toModelNode(string);
+        }
+
+        private ModelNode notDeployedNode() {
+            return ModelNode.fromString("{\n"
+                    + "    \"outcome\" => \"failed\",\n"
+                    + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
+                    + "    (\\\"subsystem\\\" => \\\"logging\\\"),\n"
+                    + "    (\\\"" + type + "\\\" => \\\"" + name + "\\\")\n"
+                    + "]' not found\",\n"
+                    + "    \"rolled-back\" => true\n"
+                    + "}");
         }
 
         public LogHandlerFixture level(LogLevel level) {
@@ -479,53 +461,64 @@ public class AbstractDeployerTest {
         }
 
         public LogHandlerFixture deployed() {
-            when(logHandlerMock.isDeployed()).thenReturn(true);
+            this.deployed = true;
             return this;
         }
 
 
-        public void verifyUpdatedLogLevel(Audits audits) {
-            verifyLogHandler().correctLevel(level);
-            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
+        private ModelNode buildRequest() {
+            return toModelNode("{" + logHandlerAddress() + "}");
         }
 
-        public void verifyUpdatedFile(Audits audits) {
-            verifyLogHandler().correctFile(file);
-            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
+        private String logHandlerAddress() { return address("logging", type.getTypeName(), name); }
+
+
+        public <T> void verifyChange(String name, T oldValue, T newValue) {
+            verifyWriteAttribute(name, newValue);
+            expectChange(name, oldValue, newValue);
         }
 
-        public void verifyUpdatedSuffix(Audits audits) {
-            verifyLogHandler().correctSuffix(suffix);
-            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
+        public <T> void verifyWriteAttribute(String name, T value) {
+            verify(loggers).writeAttribute(buildRequest(), name, toStringOrNull(value));
         }
 
-        public void verifyUpdatedFormatter(Audits audits) {
-            verifyLogHandler().correctFormatter(format, formatter);
-            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
+        public <T> void expectChange(String name, T oldValue, T newValue) {
+            audit.change(name, oldValue, newValue);
         }
 
-        public LogHandler verifyLogHandler() {
-            verify(loggers).handler(type, new LogHandlerName(name));
-            return verify(logHandlerMock);
+        public void verifyChanges(Audits audits) {
+            assertThat(audits.getAudits()).containsExactly(this.audit.changed());
         }
 
         public void verifyAdded(Audits audits) {
-            verifyLogHandler().toBuilder();
-            verify(logHandlerBuilderMock).level(level);
-            verify(logHandlerBuilderMock).file(file);
-            verify(logHandlerBuilderMock).suffix(suffix);
-            verify(logHandlerBuilderMock).format(format);
-            verify(logHandlerBuilderMock).formatter(formatter);
-            verify(logHandlerBuilderMock).build();
-            verify(logHandlerMock).add();
-
-            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
+            verify(loggers).execute(toModelNode("{\n"
+                    + logHandlerAddress()
+                    + "    'operation' => 'add'"
+                    + ((level == null) ? "" : ",\n    'level' => '" + level + "'")
+                    + ((file == null) ? "" : ",\n    'file' => {\n"
+                    + "        'path' => '" + file + "',\n"
+                    + "        'relative-to' => 'jboss.server.log.dir'\n"
+                    + "    }")
+                    + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
+                    + ((format == null) ? "" : ",\n    'format' => '" + format + "'")
+                    + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
+                    + "\n}"));
+            assertThat(audits.getAudits()).containsExactly(audit.added());
         }
 
         public void verifyRemoved(Audits audits) {
-            verify(logHandlerMock).remove();
-            assertThat(audits.getAudits()).isEmpty(); // TODO implement audit
-            // assertThat(audits.getAudits()).containsExactly(LogHandlerAudit.of(getCategory()).level(getLevel()).removed());
+            verify(loggers).execute(toModelNode("{\n"
+                    + logHandlerAddress()
+                    + "    'operation' => 'remove'\n"
+                    + "}"));
+            audit.change("level", this.level, null)
+                 .change("file", this.file, null)
+                 .change("suffix", this.suffix, null);
+            if (this.format != null)
+                audit.change("format", this.format, null);
+            if (this.formatter != null)
+                audit.change("formatter", this.formatter, null);
+            assertThat(audits.getAudits()).containsExactly(audit.removed());
         }
     }
 }

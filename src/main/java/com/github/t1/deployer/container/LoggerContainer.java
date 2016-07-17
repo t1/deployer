@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.LoggingHandlerType;
 import com.github.t1.log.Logged;
@@ -16,5 +17,7 @@ public class LoggerContainer extends CLI {
 
     public LoggerResourceBuilder logger(LoggerCategory category) { return LoggerResource.builder(category, this); }
 
-    public LogHandler handler(LoggingHandlerType type, LogHandlerName name) { return new LogHandler(name, type, this); }
+    public LogHandlerResourceBuilder handler(LoggingHandlerType type, LogHandlerName name) {
+        return LogHandlerResource.builder(type, name, this);
+    }
 }

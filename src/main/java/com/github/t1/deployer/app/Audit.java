@@ -14,6 +14,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.*;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.*;
 import static com.github.t1.deployer.app.Audit.Operation.*;
+import static com.github.t1.deployer.model.Tools.*;
 import static lombok.AccessLevel.*;
 
 @Data
@@ -21,7 +22,7 @@ import static lombok.AccessLevel.*;
 @RequiredArgsConstructor(access = PROTECTED)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @JsonTypeInfo(use = NAME, include = PROPERTY, property = "type")
-@JsonSubTypes({ @Type(Audit.ArtifactAudit.class), @Type(Audit.LoggerAudit.class) })
+@JsonSubTypes({ @Type(Audit.ArtifactAudit.class), @Type(Audit.LoggerAudit.class), @Type(Audit.LogHandlerAudit.class) })
 @JsonInclude(NON_EMPTY)
 @SuppressWarnings("ClassReferencesSubclass")
 public abstract class Audit {
@@ -117,6 +118,32 @@ public abstract class Audit {
         }
     }
 
+    @Value
+    @Builder
+    @EqualsAndHashCode(callSuper = true)
+    @JsonTypeName("log-handler")
+    @NoArgsConstructor(access = PRIVATE, force = true)
+    public static class LogHandlerAudit extends Audit {
+        @NonNull @JsonProperty private final LoggingHandlerType type;
+        @NonNull @JsonProperty private final LogHandlerName name;
+
+        @Override public String toString() { return super.toString() + ":" + type + ":" + name + ":" + super.changes; }
+
+        public static class LogHandlerAuditBuilder extends AuditBuilder<LogHandlerAudit> {
+            private LogHandlerAuditBuilder() {}
+
+            @Override protected LogHandlerAudit build() { return new LogHandlerAudit(operation, changes, type, name); }
+        }
+
+        private LogHandlerAudit(Operation operation, List<Change> changes, LoggingHandlerType type,
+                LogHandlerName name) {
+            super(operation, changes);
+            this.type = type;
+            this.name = name;
+        }
+    }
+
+    @SuppressWarnings("deprecation")
     public static abstract class AuditBuilder<T extends Audit> {
         @Setter
         protected Operation operation;
@@ -131,12 +158,12 @@ public abstract class Audit {
         public <U> AuditBuilder change(String name, U oldValue, U newValue) {
             if (changes == null)
                 changes = new ArrayList<>();
-            changes.add(new Change(name, toString(oldValue), toString(newValue)));
+            changes.add(new Change(name, toStringOrNull(oldValue), toStringOrNull(newValue)));
             return this;
         }
 
-        private static String toString(Object value) { return (value == null) ? null : value.toString(); }
-
+        /** only to be called from {@link #added()}, {@link #changed()}, or {@link #removed()}. */
+        @Deprecated
         protected abstract T build();
     }
 }

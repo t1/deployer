@@ -181,7 +181,7 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class LogHandlerConfig {
+    public static class LogHandlerConfig implements AbstractConfig {
         @NonNull @JsonIgnore private final LogHandlerName name;
         @NonNull private final DeploymentState state;
         @NonNull private final LogLevel level;

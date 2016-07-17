@@ -22,5 +22,5 @@ public class LogHandlerName {
         return value;
     }
 
-    public boolean matches(@NonNull LogHandler logHandler) { return this.equals(logHandler.name()); }
+    public boolean matches(@NonNull LogHandlerResource logHandler) { return this.equals(logHandler.name()); }
 }

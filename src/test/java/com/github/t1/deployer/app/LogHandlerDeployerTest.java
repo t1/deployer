@@ -229,7 +229,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.level(ALL).verifyUpdatedLogLevel(audits);
+        fixture.verifyChange("level", DEBUG, ALL);
+        fixture.verifyChanges(audits);
     }
 
 
@@ -251,7 +252,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.file("the-new-file").verifyUpdatedFile(audits);
+        fixture.verifyChange("file", "the-old-file", "the-new-file");
+        fixture.verifyChanges(audits);
     }
 
 
@@ -273,7 +275,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-new-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.suffix("the-new-suffix").verifyUpdatedSuffix(audits);
+        fixture.verifyChange("suffix", "the-old-suffix", "the-new-suffix");
+        fixture.verifyChanges(audits);
     }
 
 
@@ -295,7 +298,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-new-format\n");
 
-        fixture.format("the-new-format").verifyUpdatedFormatter(audits);
+        fixture.verifyChange("format", "the-old-format", "the-new-format");
+        fixture.verifyChanges(audits);
     }
 
 
@@ -317,7 +321,9 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-new-formatter\n");
 
-        fixture.formatter("the-new-formatter").verifyUpdatedFormatter(audits);
+        fixture.verifyWriteAttribute("named-formatter", "the-new-formatter");
+        fixture.expectChange("formatter", "the-old-formatter", "the-new-formatter");
+        fixture.verifyChanges(audits);
     }
 
 
@@ -339,7 +345,10 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.formatter("the-formatter").verifyUpdatedFormatter(audits);
+        fixture.verifyChange("format", "the-format", null);
+        fixture.verifyWriteAttribute("named-formatter", "the-formatter");
+        fixture.expectChange("formatter", null, "the-formatter");
+        fixture.verifyChanges(audits);
     }
 
 
@@ -361,17 +370,21 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.format("the-format").verifyUpdatedFormatter(audits);
+        fixture.verifyWriteAttribute("format", "the-format");
+        fixture.expectChange("format", null, "the-format");
+        fixture.verifyWriteAttribute("named-formatter", null);
+        fixture.expectChange("formatter", "the-formatter", null);
+        fixture.verifyChanges(audits);
     }
 
 
     @Test
-    public void shouldUpdateHandlerFileAndFormat() {
+    public void shouldUpdateHandlerFileAndSuffix() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
                 .file("the-old-file")
-                .suffix("the-suffix")
-                .format("the-old-format")
+                .suffix("the-old-suffix")
+                .format("the-format")
                 .deployed();
 
         Audits audits = deployer.run(""
@@ -380,13 +393,12 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    type: periodicRotatingFile\n"
                 + "    level: ALL\n"
                 + "    file: the-new-file\n"
-                + "    suffix: the-suffix\n"
-                + "    format: the-new-format\n");
+                + "    suffix: the-new-suffix\n"
+                + "    format: the-format\n");
 
-        fixture.file("the-new-file").format("the-new-format");
-        fixture.verifyLogHandler().correctFile(fixture.getFile());
-        fixture.verifyLogHandler().correctFormatter(fixture.getFormat(), null);
-        assertThat(audits.getAudits()).isEmpty();
+        fixture.verifyChange("file", "the-old-file", "the-new-file");
+        fixture.verifyChange("suffix", "the-old-suffix", "the-new-suffix");
+        fixture.verifyChanges(audits);
     }
 
 
@@ -415,7 +427,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldNotRemoveUndeployedHandlerWhenStateIsUndeployed() {
-        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+        givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
                 .file("the-file")
                 .suffix("the-suffix")
