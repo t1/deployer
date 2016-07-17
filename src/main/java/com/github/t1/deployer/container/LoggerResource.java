@@ -13,26 +13,48 @@ import static com.github.t1.deployer.container.LoggerCategory.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
-import static lombok.AccessLevel.*;
 
 @Slf4j
-@Builder(toBuilder = true)
-@RequiredArgsConstructor
-@AllArgsConstructor(access = PRIVATE)
+@Builder(builderMethodName = "doNotUseThisBuilder_UseTheBuildMethodWithCategoryAndContainer")
 @Accessors(fluent = true, chain = true)
-public class LoggerResource {
+public class LoggerResource extends AbstractResource {
     @NonNull @Getter private final LoggerCategory category;
-    @NonNull private final CLI cli;
-
-    private Boolean deployed = null;
 
     @Singular
     private List<LogHandlerName> handlers = new ArrayList<>();
     private Boolean useParentHandlers;
     private LogLevel level;
 
+    private LoggerResource(LoggerCategory category, LoggerContainer container) {
+        super(container);
+        this.category = category;
+    }
+
+    public static LoggerResourceBuilder builder(LoggerCategory category, LoggerContainer container) {
+        return doNotUseThisBuilder_UseTheBuildMethodWithCategoryAndContainer().category(category).container(container);
+    }
+
+    public static class LoggerResourceBuilder {
+        private LoggerContainer container;
+
+        public LoggerResourceBuilder container(LoggerContainer container) {
+            this.container = container;
+            return this;
+        }
+
+        public LoggerResource build() {
+            LoggerResource resource = new LoggerResource(category, container);
+            resource.useParentHandlers = this.useParentHandlers;
+            resource.level = this.level;
+            if (this.handlers != null)
+                resource.handlers.addAll(this.handlers);
+            return resource;
+        }
+    }
+
     @Override public String toString() {
-        return "Logger:" + level + ":" + handlers + (useParentHandlers == TRUE ? "+" : "");
+        return "Logger:" + category + ":deployed=" + deployed + ":" + level
+                + ":" + handlers + ((useParentHandlers == TRUE) ? "+" : "");
     }
 
     public boolean isRoot() { return category.isRoot(); }
@@ -58,7 +80,7 @@ public class LoggerResource {
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("add-handler");
         request.get("name").set(handler.getValue());
-        cli.execute(request);
+        execute(request);
         return this;
     }
 
@@ -67,44 +89,24 @@ public class LoggerResource {
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("remove-handler");
         request.get("name").set(handler.getValue());
-        cli.execute(request);
+        execute(request);
         return this;
     }
 
     public LoggerResource writeUseParentHandlers(boolean newUseParentHandlers) {
         assertDeployed();
-        return writeAttribute("use-parent-handlers", newUseParentHandlers);
+        writeAttribute("use-parent-handlers", newUseParentHandlers);
+        return this;
     }
 
     public LoggerResource writeLevel(LogLevel newLevel) {
         assertDeployed();
-        return writeAttribute("level", newLevel.name());
+        writeAttribute("level", newLevel.name());
+        return this;
     }
 
 
-    private void assertDeployed() {
-        if (!isDeployed())
-            throw new RuntimeException("no logger '" + category + "'");
-    }
-
-    public boolean isDeployed() {
-        if (deployed == null) {
-            ModelNode response = cli.executeRaw(readResource(createRequestWithAddress()));
-            String outcome = response.get("outcome").asString();
-            if ("success".equals(outcome)) {
-                this.deployed = true;
-                readFrom(response.get("result"));
-            } else if (cli.isNotFoundMessage(response)) {
-                this.deployed = false;
-            } else {
-                log.error("failed: {}", response);
-                throw new RuntimeException("outcome " + outcome + ": " + response.get("failure-description"));
-            }
-        }
-        return deployed;
-    }
-
-    private void readFrom(ModelNode response) {
+    @Override protected void readFrom(ModelNode response) {
         this.level = LogLevel.valueOf(response.get("level").asString());
         ModelNode useParentHandlersNode = response.get("use-parent-handlers");
         this.useParentHandlers = (useParentHandlersNode.isDefined()) ? useParentHandlersNode.asBoolean() : null;
@@ -115,17 +117,7 @@ public class LoggerResource {
     }
 
 
-    private LoggerResource writeAttribute(String name, String value) {
-        cli.writeAttribute(createRequestWithAddress(), name, value);
-        return this;
-    }
-
-    private LoggerResource writeAttribute(String name, boolean value) {
-        cli.writeAttribute(createRequestWithAddress(), name, value);
-        return this;
-    }
-
-    private ModelNode createRequestWithAddress() {
+    @Override protected ModelNode createRequestWithAddress() {
         ModelNode request = new ModelNode();
         ModelNode logging = request.get("address").add("subsystem", "logging");
         if (category.isRoot())
@@ -135,10 +127,10 @@ public class LoggerResource {
         return request;
     }
 
-    public void remove() {
+    @Override public void remove() {
         if (isRoot())
             throw new RuntimeException("can't remove root logger");
-        cli.execute(removeLogger());
+        execute(removeLogger());
     }
 
     private ModelNode removeLogger() {
@@ -147,7 +139,7 @@ public class LoggerResource {
         return request;
     }
 
-    public void add() {
+    @Override public void add() {
         if (isRoot())
             throw new RuntimeException("can't add root logger");
 
@@ -160,20 +152,21 @@ public class LoggerResource {
         if (useParentHandlers != null)
             request.get("use-parent-handlers").set(useParentHandlers);
 
-        cli.execute(request);
+        execute(request);
 
         this.deployed = true;
     }
 
-    public static List<LoggerResource> all(CLI cli) {
-        ModelNode request = readResource(new LoggerResource(LoggerCategory.ANY, cli).createRequestWithAddress());
+    public static List<LoggerResource> all(LoggerContainer container) {
+        LoggerResource loggerResource = new LoggerResource(LoggerCategory.ANY, container);
+        ModelNode request = readResource(loggerResource.createRequestWithAddress());
         List<LoggerResource> loggers =
-                cli.execute(request)
-                   .asList().stream()
-                   .map(node -> toLoggerResource(cli, node.get("result"), category(node.get("address"))))
-                   .collect(toList());
+                container.execute(request)
+                         .asList().stream()
+                         .map(node -> toLoggerResource(container, node.get("result"), category(node.get("address"))))
+                         .collect(toList());
         Collections.sort(loggers, Comparator.comparing(LoggerResource::category));
-        loggers.add(0, readRootLogger(cli));
+        loggers.add(0, readRootLogger(container));
         return loggers;
     }
 
@@ -181,15 +174,16 @@ public class LoggerResource {
         return LoggerCategory.of(address.get(1).get("logger").asString());
     }
 
-    public static LoggerResource toLoggerResource(CLI cli, ModelNode node, LoggerCategory category) {
-        LoggerResource logger = new LoggerResource(category, cli);
+    public static LoggerResource toLoggerResource(LoggerContainer container, ModelNode node, LoggerCategory category) {
+        LoggerResource logger = new LoggerResource(category, container);
         logger.deployed = true;
         logger.readFrom(node);
         return logger;
     }
 
-    private static LoggerResource readRootLogger(CLI cli) {
-        ModelNode root = cli.execute(readResource(new LoggerResource(ROOT, cli).createRequestWithAddress()));
-        return toLoggerResource(cli, root, ROOT);
+    private static LoggerResource readRootLogger(LoggerContainer container) {
+        ModelNode requestWithAddress = new LoggerResource(ROOT, container).createRequestWithAddress();
+        ModelNode root = container.execute(readResource(requestWithAddress));
+        return toLoggerResource(container, root, ROOT);
     }
 }

@@ -103,7 +103,7 @@ public class DeployerIT {
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
             loggers.handler(console, new LogHandlerName("CONSOLE")).correctLevel(ALL);
-            loggers.logger(LoggerCategory.of("com.github.t1.deployer")).toBuilder().level(DEBUG).build().add();
+            loggers.logger(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).build().add();
 
             log.info("artifacts: {}", container.getAllArtifacts());
             assertNoOtherDeployments();

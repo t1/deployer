@@ -4,12 +4,12 @@ import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.container.LogHandler.LogHandlerBuilder;
-import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.SystemPropertiesRule;
 import lombok.*;
+import org.jboss.dmr.ModelNode;
 import org.junit.*;
 import org.mockito.*;
 
@@ -35,8 +35,6 @@ public class AbstractDeployerTest {
 
     @Mock ArtifactContainer artifacts;
     @Mock LoggerContainer loggers;
-    @Mock LoggerResource loggerMock;
-    @Mock LoggerResourceBuilder loggerBuilderMock;
     @Mock LogHandler logHandlerMock;
     @Mock LogHandlerBuilder logHandlerBuilderMock;
 
@@ -48,16 +46,6 @@ public class AbstractDeployerTest {
 
 
         when(artifacts.getAllArtifacts()).then(invocation -> allDeployments);
-
-
-        when(loggerMock.toBuilder()).thenReturn(loggerBuilderMock);
-        when(loggerMock.addLoggerHandler(any(LogHandlerName.class))).thenReturn(loggerMock);
-        when(loggerMock.removeLoggerHandler(any(LogHandlerName.class))).thenReturn(loggerMock);
-        when(loggerBuilderMock.level(any(LogLevel.class))).thenReturn(loggerBuilderMock);
-        when(loggerBuilderMock.useParentHandlers(any(Boolean.class))).thenReturn(loggerBuilderMock);
-        when(loggerBuilderMock.handler(any(LogHandlerName.class))).thenReturn(loggerBuilderMock);
-        when(loggerBuilderMock.handlers(anyListOf(LogHandlerName.class))).thenReturn(loggerBuilderMock);
-        when(loggerBuilderMock.build()).thenReturn(loggerMock);
 
 
         when(logHandlerMock.toBuilder()).thenReturn(logHandlerBuilderMock);
@@ -88,15 +76,8 @@ public class AbstractDeployerTest {
     @After
     public void afterLoggers() {
         verify(loggers, atLeast(0)).logger(any(LoggerCategory.class));
+        verify(loggers, atLeast(0)).executeRaw(any(ModelNode.class));
 
-        verify(loggerMock, atLeast(0)).isDeployed();
-        verify(loggerMock, atLeast(0)).category();
-        verify(loggerMock, atLeast(0)).isRoot();
-        verify(loggerMock, atLeast(0)).handlers();
-        verify(loggerMock, atLeast(0)).useParentHandlers();
-        verify(loggerMock, atLeast(0)).level();
-
-        verifyNoMoreInteractions(loggerMock);
         verifyNoMoreInteractions(loggers);
     }
 
@@ -273,18 +254,42 @@ public class AbstractDeployerTest {
         private final List<String> handlers = new ArrayList<>();
         private LogLevel level;
         private Boolean useParentHandlers = true;
+        private boolean deployed;
 
         public LoggerFixture(String category) {
             this.category = LoggerCategory.of(category);
 
-            when(loggerMock.category()).then(i -> this.category);
-            when(loggerMock.isRoot()).then(i -> this.category.isRoot());
-            when(loggerMock.handlers()).then(i -> handlerNames());
-            when(loggerMock.useParentHandlers()).then(i -> useParentHandlers);
-            when(loggerMock.level()).then(i -> level);
+            when(loggers.logger(this.category)).then(i -> LoggerResource.builder(this.category, loggers));
 
-            when(loggers.logger(this.category)).thenReturn(loggerMock);
-            when(loggerMock.isDeployed()).thenReturn(false);
+            when(loggers.executeRaw(readResource("logging", "logger", category))).then(
+                    i -> deployed ? deployedNode() : notDeployedNode());
+        }
+
+        public ModelNode deployedNode() {
+            String string = ""
+                    + "{\n"
+                    + "    'outcome' => 'success',\n"
+                    + "    'result' => {\n"
+                    + "        'category' => " + ((category == null) ? "undefined" : "'" + category + "'") + ",\n"
+                    + "        'filter' => undefined,\n"
+                    + "        'filter-spec' => undefined,\n"
+                    + (handlers.isEmpty() ? "" : "        'handlers' => " + handlersArrayNode() + ",\n")
+                    + "        'level' => '" + level + "',\n"
+                    + "        'use-parent-handlers' => " + useParentHandlers + "\n"
+                    + "    }\n"
+                    + "}";
+            return toModelNode(string);
+        }
+
+        private ModelNode notDeployedNode() {
+            return ModelNode.fromString("{\n"
+                    + "    \"outcome\" => \"failed\",\n"
+                    + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
+                    + "    (\\\"subsystem\\\" => \\\"logging\\\"),\n"
+                    + "    (\\\"logger\\\" => \\\"" + category + "\\\")\n"
+                    + "]' not found\",\n"
+                    + "    \"rolled-back\" => true\n"
+                    + "}");
         }
 
         public LoggerFixture level(LogLevel level) {
@@ -303,18 +308,30 @@ public class AbstractDeployerTest {
         }
 
         public LoggerFixture deployed() {
-            when(loggers.logger(category)).thenReturn(loggerMock);
-            when(loggerMock.isDeployed()).thenReturn(true);
+            this.deployed = true;
             return this;
         }
 
+        public String loggerAddress() { return address("logging", "logger", category); }
+
+        private String handlersArrayNode() {
+            if (handlers.size() == 1)
+                return "['" + handlers.get(0) + "']";
+            else
+                return handlers.stream().collect(joining("',\n        '", "[\n        '", "'\n    ]"));
+        }
+
         public void verifyAdded(Audits audits) {
-            verify(loggerMock).toBuilder();
-            verify(loggerBuilderMock).level(level);
-            verify(loggerBuilderMock).handlers(handlerNames());
-            verify(loggerBuilderMock).useParentHandlers(useParentHandlers);
-            verify(loggerBuilderMock).build();
-            verify(loggerMock).add();
+            ArgumentCaptor<ModelNode> captor = ArgumentCaptor.forClass(ModelNode.class);
+            verify(loggers).execute(captor.capture());
+            ModelNode node = captor.getValue();
+            assertThat(node.toString().replace('\"', '\'')).isEqualTo("{\n"
+                    + loggerAddress()
+                    + "    'operation' => 'add',\n"
+                    + ((level == null) ? "" : "    'level' => '" + level + "',\n")
+                    + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
+                    + "    'use-parent-handlers' => " + useParentHandlers + "\n"
+                    + "}");
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", null, level)
@@ -328,14 +345,25 @@ public class AbstractDeployerTest {
             return handlers.stream().map(LogHandlerName::new).collect(toList());
         }
 
+        public ModelNode buildRequest() {
+            return toModelNode("{'address' => [\n"
+                    + "    ('subsystem' => 'logging'),\n"
+                    + "    ('logger' => '" + category + "')\n"
+                    + "]}");
+        }
+
         public void verifyUpdated(LogLevel oldLevel, Audits audits) {
-            verify(loggerMock).writeLevel(level);
+            verify(loggers).writeAttribute(buildRequest(), "level", level.toString());
             assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
         }
 
         public void verifyRemoved(Audits audits) {
-            verify(loggerMock).remove();
+            verify(loggers).execute(toModelNode(""
+                    + "{\n"
+                    + loggerAddress()
+                    + "    'operation' => 'remove'\n"
+                    + "}"));
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", level, null)
@@ -346,7 +374,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {
-            verify(loggerMock).writeUseParentHandlers(useParentHandlers);
+            verify(loggers).writeAttribute(buildRequest(), "use-parent-handlers", useParentHandlers);
             assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).change("useParentHandlers", oldUseParentHandlers, useParentHandlers)
                                .changed());
@@ -354,18 +382,47 @@ public class AbstractDeployerTest {
 
         public void verifyAddedHandler(Audits audits, String name) {
             LogHandlerName handlerName = new LogHandlerName(name);
-            verify(loggerMock).addLoggerHandler(handlerName);
+            verify(loggers).execute(toModelNode(""
+                    + "{\n"
+                    + loggerAddress()
+                    + "    'operation' => 'add-handler',\n"
+                    + "    'name' => '" + name + "'\n"
+                    + "}"));
             assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).change("handlers", null, handlerName).changed());
         }
 
         public void verifyRemovedHandler(Audits audits, String name) {
             LogHandlerName handlerName = new LogHandlerName(name);
-            verify(loggerMock).removeLoggerHandler(handlerName);
+            verify(loggers).execute(toModelNode(""
+                    + "{\n"
+                    + loggerAddress()
+                    + "    'operation' => 'remove-handler',\n"
+                    + "    'name' => '" + name + "'\n"
+                    + "}"));
             assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).change("handlers", handlerName, null).changed());
         }
     }
+
+    public static ModelNode readResource(String subsystem, String type, Object name) {
+        return toModelNode(""
+                + "{\n"
+                + address(subsystem, type, name)
+                + "    'operation' => 'read-resource',\n"
+                + "    'recursive' => true\n"
+                + "}");
+    }
+
+    private static String address(String subsystem, String type, Object name) {
+        return ""
+                + "    'address' => [\n"
+                + "        ('subsystem' => '" + subsystem + "'),\n"
+                + "        ('" + type + "' => '" + name + "')\n"
+                + "    ],\n";
+    }
+
+    public static ModelNode toModelNode(String replace) { return ModelNode.fromString(replace.replace('\'', '\"')); }
 
 
     public LogHandlerFixture givenLogHandler(LoggingHandlerType type, String name) {

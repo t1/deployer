@@ -250,15 +250,15 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        assertIsRoot(container.logger(ROOT));
+        assertIsRoot(container.logger(ROOT).build());
 
-        assertIsFoo(container.logger(LoggerCategory.of("foo")));
+        assertIsFoo(container.logger(LoggerCategory.of("foo")).build());
 
-        LoggerResource bar = container.logger(BAR);
+        LoggerResource bar = container.logger(BAR).build();
         assertThat(bar.isDeployed()).isFalse();
         assertThat(bar.isRoot()).isFalse();
         assertThat(bar.category()).isEqualTo(BAR);
-        assertThatThrownBy(bar::level).hasMessage("no logger 'bar'");
+        assertThatThrownBy(bar::level).hasMessage("not deployed 'Logger:bar:deployed=false:null:[]'");
         verifyLoggerRead("foo");
         verifyLoggerRead("bar");
     }
@@ -268,7 +268,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger(BAR).toBuilder().level(INFO).build().add();
+        container.logger(BAR).level(INFO).build().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, null));
     }
@@ -278,7 +278,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger(BAR).toBuilder().level(INFO).useParentHandlers(true).build().add();
+        container.logger(BAR).level(INFO).useParentHandlers(true).build().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, true));
     }
@@ -288,7 +288,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger(BAR).toBuilder().level(INFO).useParentHandlers(false).build().add();
+        container.logger(BAR).level(INFO).useParentHandlers(false).build().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, false));
     }
@@ -297,7 +297,7 @@ public class LoggerContainerTest {
     public void shouldAddLoggerWithOneHandler() throws IOException {
         givenNoLogger("bar");
 
-        container.logger(BAR).toBuilder().level(INFO).handler(new LogHandlerName("FOO")).build().add();
+        container.logger(BAR).level(INFO).handler(new LogHandlerName("FOO")).build().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, null, "FOO"));
     }
@@ -306,7 +306,7 @@ public class LoggerContainerTest {
     public void shouldAddLoggerWithTwoHandlers() throws IOException {
         givenNoLogger("bar");
 
-        container.logger(BAR).toBuilder()
+        container.logger(BAR)
                  .level(DEBUG)
                  .handler(new LogHandlerName("FOO"))
                  .handler(new LogHandlerName("BAR"))
@@ -320,7 +320,7 @@ public class LoggerContainerTest {
     public void shouldAddLoggerWithOneHandlerAndNoLevel() throws IOException {
         givenNoLogger("bar");
 
-        container.logger(BAR).toBuilder()
+        container.logger(BAR)
                  .handler(new LogHandlerName("FOO"))
                  .build()
                  .add();
@@ -333,7 +333,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        assertThatThrownBy(() -> container.logger(ROOT).add())
+        assertThatThrownBy(() -> container.logger(ROOT).build().add())
                 .hasMessage("can't add root logger");
 
         verify(client, never()).execute(eq(addLogger("root-logger", "ROOT", ERROR, null)),
@@ -345,7 +345,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger(FOO).writeLevel(ERROR);
+        container.logger(FOO).build().writeLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "level", ERROR));
         verifyLoggerRead("foo");
@@ -356,7 +356,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger(ROOT).writeLevel(ERROR);
+        container.logger(ROOT).build().writeLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("root-logger", "ROOT", "level", ERROR));
     }
@@ -366,7 +366,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, false);
         givenNoLogger("bar");
 
-        container.logger(FOO).writeUseParentHandlers(true);
+        container.logger(FOO).build().writeUseParentHandlers(true);
 
         verifyExecute(readLoggersCli("foo"));
         verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", true));
@@ -377,7 +377,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger(FOO).writeUseParentHandlers(false);
+        container.logger(FOO).build().writeUseParentHandlers(false);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", false));
         verifyLoggerRead("foo");
@@ -387,7 +387,7 @@ public class LoggerContainerTest {
     public void shouldAddLogHandlerToLogger() throws IOException {
         givenLogger("foo", FOO_LEVEL, false, "CONSOLE");
 
-        container.logger(FOO).addLoggerHandler(FILE);
+        container.logger(FOO).build().addLoggerHandler(FILE);
 
         verifyExecute(ModelNode.fromString("{"
                 + loggerAddress("logger", "foo")
@@ -401,7 +401,7 @@ public class LoggerContainerTest {
     public void shouldRemoveLogHandlerToLogger() throws IOException {
         givenLogger("foo", FOO_LEVEL, false, "CONSOLE", "FILE");
 
-        container.logger(FOO).removeLoggerHandler(FILE);
+        container.logger(FOO).build().removeLoggerHandler(FILE);
 
         verifyExecute(ModelNode.fromString("{"
                 + loggerAddress("logger", "foo")
@@ -416,7 +416,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.logger(FOO).remove();
+        container.logger(FOO).build().remove();
 
         verifyExecute(removeLogger("logger", "foo"));
     }
@@ -426,7 +426,7 @@ public class LoggerContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        assertThatThrownBy(() -> container.logger(ROOT).remove())
+        assertThatThrownBy(() -> container.logger(ROOT).build().remove())
                 .hasMessage("can't remove root logger");
 
         verify(client, never()).execute(eq(removeLogger("root-logger", "ROOT")), any(OperationMessageHandler.class));

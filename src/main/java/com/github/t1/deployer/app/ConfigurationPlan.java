@@ -28,7 +28,7 @@ import static lombok.AccessLevel.*;
 
 /**
  * The plan of how the configuration should be. This class is responsible for loading the plan from YAML, statically
- * validating the plan, and applying default values.
+ * validating the plan, and applying default values. It also provides {@link #toYaml}.
  */
 @Builder
 @EqualsAndHashCode
@@ -87,6 +87,11 @@ public class ConfigurationPlan {
 
     public Stream<DeploymentConfig> artifacts() { return artifacts.values().stream(); }
 
+
+    public interface AbstractConfig {
+        DeploymentState getState();
+    }
+
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
@@ -121,7 +126,7 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class LoggerConfig {
+    public static class LoggerConfig implements AbstractConfig {
         @NonNull @JsonIgnore private final LoggerCategory category;
         @NonNull private final DeploymentState state;
         private final LogLevel level;
