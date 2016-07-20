@@ -19,7 +19,7 @@ public abstract class AbstractResource {
 
     protected Boolean deployed = null;
 
-    protected void assertDeployed() {
+    protected void checkDeployed() {
         if (!isDeployed())
             throw new RuntimeException("not deployed '" + this + "'");
     }

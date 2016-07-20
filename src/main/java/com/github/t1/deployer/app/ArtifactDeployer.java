@@ -2,7 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.ArtifactAudit;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
-import com.github.t1.deployer.app.ConfigurationPlan.DeploymentConfig;
+import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.github.t1.deployer.model.DeploymentState.*;
 import static java.util.Objects.*;
 
 @Slf4j
@@ -101,5 +102,22 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
                 audits.audit(audit.removed());
                 deployment.remove();
             }
+    }
+
+
+    @Override public void read(ConfigurationPlanBuilder builder) {
+        for (DeploymentResource deployment : container.allDeployments()) {
+            Artifact artifact = lookupByChecksum.apply(deployment.checksum());
+            DeploymentConfig deploymentConfig = DeploymentConfig
+                    .builder()
+                    .name(deployment.name())
+                    .groupId(artifact.getGroupId())
+                    .artifactId(artifact.getArtifactId())
+                    .version(artifact.getVersion())
+                    .type(artifact.getType())
+                    .state(deployed)
+                    .build();
+            builder.artifact(deployment.name(), deploymentConfig);
+        }
     }
 }

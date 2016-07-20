@@ -77,7 +77,7 @@ public class DeploymentResource extends AbstractResource {
     }
 
     public Checksum checksum() {
-        assertDeployed();
+        checkDeployed();
         return checksum;
     }
 

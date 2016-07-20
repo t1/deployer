@@ -2,21 +2,22 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
-import com.github.t1.deployer.app.ConfigurationPlan.LoggerConfig;
+import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.Tools.*;
 
 @Slf4j
 public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResource, LoggerAuditBuilder> {
-    private final Container loggers;
+    private final Container container;
 
-    public LoggerDeployer(Container loggers, Audits audits) {
+    public LoggerDeployer(Container container, Audits audits) {
         super(audits);
-        this.loggers = loggers;
+        this.container = container;
     }
 
     @Override
@@ -25,7 +26,7 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
     }
 
     @Override
-    protected LoggerResource getResource(LoggerConfig plan) { return loggers.logger(plan.getCategory()).build(); }
+    protected LoggerResource getResource(LoggerConfig plan) { return container.logger(plan.getCategory()).build(); }
 
     @Override
     protected void update(LoggerResource resource, LoggerConfig plan, LoggerAuditBuilder audit) {
@@ -57,7 +58,7 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
              .change("useParentHandlers", null, plan.getUseParentHandlers());
         for (LogHandlerName handler : plan.getHandlers())
             audit.change("handler", null, handler);
-        return loggers
+        return container
                 .logger(plan.getCategory())
                 .level(plan.getLevel())
                 .handlers(plan.getHandlers())
@@ -71,5 +72,17 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
              .change("useParentHandlers", resource.useParentHandlers(), null);
         for (LogHandlerName handler : resource.handlers())
             audit.change("handler", handler, null);
+    }
+
+    @Override public void read(ConfigurationPlanBuilder builder) {
+        for (LoggerResource logger : container.allLoggers())
+            builder.logger(logger.category(), LoggerConfig
+                    .builder()
+                    .category(logger.category())
+                    .state(deployed)
+                    .level(logger.level())
+                    .handlers(logger.handlers())
+                    .useParentHandlers(logger.useParentHandlers())
+                    .build());
     }
 }

@@ -12,13 +12,13 @@ import static org.assertj.core.api.Assertions.*;
 public class LogHandlerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddEmptyLogHandlers() {
-        deployer.run(""
+        deployer.apply(""
                 + "log-handlers:\n");
     }
 
     @Test
     public void shouldFailToAddLogHandlersWithoutItem() {
-        Throwable thrown = catchThrowable(() -> deployer.run(""
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "log-handlers:\n"
                 + "  foo:\n"));
 
@@ -33,7 +33,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .format("the-format");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: ALL\n"
@@ -53,7 +53,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .formatter("the-formatter");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: ALL\n"
@@ -67,7 +67,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToParsePlanWithLogHandlerWithNeitherFormatNorFormatter() {
-        Throwable throwable = catchThrowable(() -> deployer.run(""
+        Throwable throwable = catchThrowable(() -> deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: ALL\n"
@@ -81,7 +81,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToParsePlanWithLogHandlerWithBothFormatAndFormatter() {
-        Throwable throwable = catchThrowable(() -> deployer.run(""
+        Throwable throwable = catchThrowable(() -> deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: ALL\n"
@@ -103,7 +103,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .format("the-format");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -123,7 +123,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .format("the-format");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -141,7 +141,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .format("the-format");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -160,7 +160,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .file("the-file")
                 .format("the-format");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -178,7 +178,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .level(ALL)
                 .format("the-format");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: ALL\n"
@@ -197,7 +197,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -220,7 +220,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -243,7 +243,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -266,7 +266,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -289,7 +289,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-old-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -312,7 +312,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-old-formatter")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -336,7 +336,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -361,7 +361,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .formatter("the-formatter")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -387,7 +387,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -411,7 +411,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .format("the-format")
                 .deployed();
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"
@@ -433,7 +433,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .suffix("the-suffix")
                 .format("the-format");
 
-        Audits audits = deployer.run(""
+        Audits audits = deployer.apply(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodicRotatingFile\n"

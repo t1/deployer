@@ -50,27 +50,27 @@ public class LogHandlerResource extends AbstractResource {
     }
 
     public LogLevel level() {
-        assertDeployed();
+        checkDeployed();
         return level;
     }
 
     public String file() {
-        assertDeployed();
+        checkDeployed();
         return file;
     }
 
     public String suffix() {
-        assertDeployed();
+        checkDeployed();
         return suffix;
     }
 
     public String format() {
-        assertDeployed();
+        checkDeployed();
         return format;
     }
 
     public String formatter() {
-        assertDeployed();
+        checkDeployed();
         return formatter;
     }
 
@@ -82,27 +82,27 @@ public class LogHandlerResource extends AbstractResource {
     }
 
     public void updateLevel(LogLevel newLevel) {
-        assertDeployed();
+        checkDeployed();
         writeAttribute("level", newLevel.name());
     }
 
     public void updateFile(String newFile) {
-        assertDeployed();
+        checkDeployed();
         writeAttribute("file", newFile);
     }
 
     public void updateSuffix(String newSuffix) {
-        assertDeployed();
+        checkDeployed();
         writeAttribute("suffix", newSuffix);
     }
 
     public void updateFormat(String newFormat) {
-        assertDeployed();
+        checkDeployed();
         writeAttribute("format", newFormat);
     }
 
     public void updateFormatter(String newFormatter) {
-        assertDeployed();
+        checkDeployed();
         writeAttribute("named-formatter", newFormatter);
     }
 

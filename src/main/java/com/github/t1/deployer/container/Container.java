@@ -23,6 +23,8 @@ public class Container {
 
     public LoggerResourceBuilder logger(LoggerCategory category) { return LoggerResource.builder(category, cli); }
 
+    public List<LoggerResource> allLoggers() { return LoggerResource.allLoggers(cli); }
+
     public DeploymentResourceBuilder deployment(DeploymentName name) { return DeploymentResource.builder(name, cli); }
 
     public List<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(cli); }

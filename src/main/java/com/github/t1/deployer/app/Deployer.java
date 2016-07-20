@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.ConfigurationPlan.*;
-import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.problem.WebApplicationApplicationException;
@@ -14,7 +14,6 @@ import java.io.*;
 import java.nio.file.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.model.DeploymentState.*;
 
 @Slf4j
 @Singleton
@@ -26,10 +25,14 @@ public class Deployer {
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
 
+
+    public ConfigurationPlan effectivePlan() { return new Run().read(); }
+
+
     @SneakyThrows(IOException.class)
-    public Audits run(Path plan) {
+    public Audits apply(Path plan) {
         try {
-            return run(Files.newBufferedReader(plan));
+            return apply(Files.newBufferedReader(plan));
         } catch (WebApplicationApplicationException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -37,26 +40,48 @@ public class Deployer {
         }
     }
 
-    public Audits run(String plan) { return run(new StringReader(plan)); }
+    public Audits apply(String plan) { return apply(new StringReader(plan)); }
 
-    public synchronized Audits run(Reader reader) { return new Run().run(reader); }
+    public synchronized Audits apply(Reader reader) { return new Run().apply(reader); }
 
-    public ConfigurationPlan effectivePlan() {
-        ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
-        for (DeploymentResource deployment : container.allDeployments()) {
-            Artifact artifact = lookupByChecksum(deployment.checksum());
-            DeploymentConfig deploymentConfig = DeploymentConfig
-                    .builder()
-                    .name(deployment.name())
-                    .groupId(artifact.getGroupId())
-                    .artifactId(artifact.getArtifactId())
-                    .version(artifact.getVersion())
-                    .type(artifact.getType())
-                    .state(deployed)
-                    .build();
-            builder.artifact(deployment.name(), deploymentConfig);
+    private class Run {
+        private final Variables variables = new Variables();
+        private final Audits audits = new Audits();
+
+        private final LogHandlerDeployer logHandlerDeployer = new LogHandlerDeployer(container, audits);
+        private final LoggerDeployer loggerDeployer = new LoggerDeployer(container, audits);
+        private final ArtifactDeployer artifactDeployer = new ArtifactDeployer(repository, container, managed, audits,
+                Deployer.this::lookupByChecksum);
+
+        public ConfigurationPlan read() {
+            ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
+            loggerDeployer.read(builder);
+            logHandlerDeployer.read(builder);
+            artifactDeployer.read(builder);
+            return builder.build();
         }
-        return builder.build();
+
+        private Audits apply(Reader reader) {
+            this.apply(ConfigurationPlan.load(variables.resolve(reader)));
+            return audits;
+        }
+
+        private void apply(ConfigurationPlan plan) {
+            plan.logHandlers().forEach(logHandlerDeployer::apply);
+            logHandlerDeployer.cleanup(audits);
+
+            plan.loggers().forEach(loggerDeployer::apply);
+            loggerDeployer.cleanup(audits);
+
+            // TODO if we could move this recursion logic into the ArtifactDeployer, we could generalize the Deployers
+            plan.artifacts().forEach(deploymentPlan -> {
+                if (deploymentPlan.getType() == bundle) {
+                    this.apply(lookup(deploymentPlan).getReader());
+                }
+                artifactDeployer.apply(deploymentPlan);
+            });
+            artifactDeployer.cleanup(audits);
+        }
     }
 
 
@@ -91,37 +116,5 @@ public class Deployer {
                     throw new UnsupportedOperationException();
                 })
                 .build();
-    }
-
-    @RequiredArgsConstructor
-    private class Run {
-        private final Variables variables = new Variables();
-        private final Audits audits = new Audits();
-
-        private final LogHandlerDeployer logHandlerDeployer = new LogHandlerDeployer(container, audits);
-        private final LoggerDeployer loggerDeployer = new LoggerDeployer(container, audits);
-        private final ArtifactDeployer artifactDeployer = new ArtifactDeployer(repository, container, managed, audits,
-                Deployer.this::lookupByChecksum);
-
-        private Audits run(Reader reader) {
-            this.run(ConfigurationPlan.load(variables.resolve(reader)));
-            return audits;
-        }
-
-        private void run(ConfigurationPlan plan) {
-            plan.logHandlers().forEach(logHandlerDeployer::apply);
-            logHandlerDeployer.cleanup(audits);
-
-            plan.loggers().forEach(loggerDeployer::apply);
-            loggerDeployer.cleanup(audits);
-
-            plan.artifacts().forEach(deploymentPlan -> {
-                if (deploymentPlan.getType() == bundle) {
-                    this.run(lookup(deploymentPlan).getReader());
-                }
-                artifactDeployer.apply(deploymentPlan);
-            });
-            artifactDeployer.cleanup(audits);
-        }
     }
 }

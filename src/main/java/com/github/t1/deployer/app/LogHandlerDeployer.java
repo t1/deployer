@@ -2,7 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LogHandlerAudit;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
-import com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig;
+import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -76,5 +76,9 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
             audit.change("format", resource.format(), null);
         if (resource.formatter() != null)
             audit.change("formatter", resource.formatter(), null);
+    }
+
+    @Override public void read(ConfigurationPlanBuilder builder) {
+        // TODO implement
     }
 }

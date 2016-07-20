@@ -34,6 +34,19 @@ public class LoggerResource extends AbstractResource {
         return doNotCallThisBuilderExternally().category(category).container(cli);
     }
 
+    public static List<LoggerResource> allLoggers(CLI cli) {
+        ModelNode request = readResource(new LoggerResource(LoggerCategory.ANY, cli).createRequestWithAddress());
+        List<LoggerResource> loggers =
+                cli.execute(request)
+                   .asList().stream()
+                   .map(node -> toLoggerResource(category(node.get("address")), cli, node.get("result")))
+                   .collect(toList());
+        Collections.sort(loggers, Comparator.comparing(LoggerResource::category));
+        loggers.add(0, readRootLogger(cli));
+        return loggers;
+    }
+
+
     public static class LoggerResourceBuilder {
         private CLI cli;
 
@@ -60,23 +73,23 @@ public class LoggerResource extends AbstractResource {
     public boolean isRoot() { return category.isRoot(); }
 
     public List<LogHandlerName> handlers() {
-        assertDeployed();
+        checkDeployed();
         return handlers;
     }
 
     public boolean useParentHandlers() {
-        assertDeployed();
+        checkDeployed();
         return (useParentHandlers == null) ? true : useParentHandlers;
     }
 
     public LogLevel level() {
-        assertDeployed();
+        checkDeployed();
         return level;
     }
 
 
     public void addLoggerHandler(LogHandlerName handler) {
-        assertDeployed();
+        checkDeployed();
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("add-handler");
         request.get("name").set(handler.getValue());
@@ -84,7 +97,7 @@ public class LoggerResource extends AbstractResource {
     }
 
     public void removeLoggerHandler(LogHandlerName handler) {
-        assertDeployed();
+        checkDeployed();
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("remove-handler");
         request.get("name").set(handler.getValue());
@@ -92,18 +105,18 @@ public class LoggerResource extends AbstractResource {
     }
 
     public void writeUseParentHandlers(boolean newUseParentHandlers) {
-        assertDeployed();
+        checkDeployed();
         writeAttribute("use-parent-handlers", newUseParentHandlers);
     }
 
     public void writeLevel(LogLevel newLevel) {
-        assertDeployed();
+        checkDeployed();
         writeAttribute("level", newLevel.name());
     }
 
 
     @Override protected void readFrom(ModelNode response) {
-        this.level = LogLevel.valueOf(response.get("level").asString());
+        this.level = (response.get("level").isDefined()) ? LogLevel.valueOf(response.get("level").asString()) : null;
         ModelNode useParentHandlersNode = response.get("use-parent-handlers");
         this.useParentHandlers = (useParentHandlersNode.isDefined()) ? useParentHandlersNode.asBoolean() : null;
         ModelNode handlersNode = response.get("handlers");
@@ -117,7 +130,7 @@ public class LoggerResource extends AbstractResource {
         ModelNode request = new ModelNode();
         ModelNode logging = request.get("address").add("subsystem", "logging");
         if (category.isRoot())
-            logging.add("root-logger", "ROOT");
+            logging.add("root-logger", ROOT.getValue());
         else
             logging.add("logger", category.getValue());
         return request;
@@ -147,33 +160,21 @@ public class LoggerResource extends AbstractResource {
         this.deployed = true;
     }
 
-    public static List<LoggerResource> all(CLI cli) {
-        LoggerResource loggerResource = new LoggerResource(LoggerCategory.ANY, cli);
-        ModelNode request = readResource(loggerResource.createRequestWithAddress());
-        List<LoggerResource> loggers =
-                cli.execute(request)
-                   .asList().stream()
-                   .map(node -> toLoggerResource(cli, node.get("result"), category(node.get("address"))))
-                   .collect(toList());
-        Collections.sort(loggers, Comparator.comparing(LoggerResource::category));
-        loggers.add(0, readRootLogger(cli));
-        return loggers;
-    }
-
     private static LoggerCategory category(ModelNode address) {
         return LoggerCategory.of(address.get(1).get("logger").asString());
     }
 
-    public static LoggerResource toLoggerResource(CLI cli, ModelNode node, LoggerCategory category) {
+    public static LoggerResource toLoggerResource(LoggerCategory category, CLI cli, ModelNode node) {
         LoggerResource logger = new LoggerResource(category, cli);
-        logger.deployed = true;
         logger.readFrom(node);
+        logger.deployed = true;
         return logger;
     }
 
     private static LoggerResource readRootLogger(CLI cli) {
-        ModelNode requestWithAddress = new LoggerResource(ROOT, cli).createRequestWithAddress();
-        ModelNode root = cli.execute(readResource(requestWithAddress));
-        return toLoggerResource(cli, root, ROOT);
+        LoggerResource root = new LoggerResource(ROOT, cli);
+        root.checkDeployed();
+        assert root.isRoot();
+        return root;
     }
 }

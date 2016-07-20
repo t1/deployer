@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.AuditBuilder;
-import com.github.t1.deployer.app.ConfigurationPlan.AbstractConfig;
+import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.AbstractResource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends AbstractResource, AUDIT extends AuditBuilder> {
     private final Audits audits;
+
+
+    public abstract void read(ConfigurationPlanBuilder builder);
+
 
     public void apply(PLAN plan) {
         RESOURCE resource = getResource(plan);

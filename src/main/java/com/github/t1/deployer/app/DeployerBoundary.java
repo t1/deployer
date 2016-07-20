@@ -34,7 +34,7 @@ public class DeployerBoundary {
 
         log.debug("load config plan from: {}", root);
 
-        Audits audits = deployer.run(root);
+        Audits audits = deployer.apply(root);
 
         if (log.isDebugEnabled())
             log.debug("audits:\n {}", audits.toYaml());

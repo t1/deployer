@@ -17,7 +17,7 @@ public class LoggerCategory implements Comparable<LoggerCategory> {
     public static final LoggerCategory ROOT = new LoggerCategory("ROOT");
     public static final LoggerCategory ANY = new LoggerCategory("*");
 
-    public static LoggerCategory of(String value) {
+    public static LoggerCategory of(@NonNull String value) {
         if (value.isEmpty() || value.equals(ROOT.getValue()))
             return ROOT;
         if (value.equals(ANY.getValue()))
