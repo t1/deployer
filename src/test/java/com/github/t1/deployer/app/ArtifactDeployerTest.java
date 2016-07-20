@@ -1,13 +1,14 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
+import com.github.t1.deployer.app.Audit.ArtifactAudit;
+import com.github.t1.deployer.model.Checksum;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtifactDeployerTest extends AbstractDeployerTest {
@@ -216,7 +217,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldDeployWebArchiveWithSameChecksumButDifferentName() {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
-        ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1").checksum(foo.checksum());
+        ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1").checksum(foo.getChecksum());
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
@@ -285,7 +286,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    state: undeployed\n"
         );
 
-        foo.verifyUndeployed(audits);
+        foo.verifyRemoved(audits);
     }
 
 
@@ -304,6 +305,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldUndeployWebArchiveWithAnyVersionWhenStateIsUndeployed() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+        Checksum checksum = foo.getChecksum();
 
         Audits audits = deployer.run(""
                 + "artifacts:\n"
@@ -312,7 +314,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: '*'\n"
                 + "    state: undeployed\n");
 
-        foo.version("*").verifyUndeployed(audits);
+        foo.version("*").checksum(checksum).verifyRemoved(audits);
     }
 
 
@@ -330,11 +332,9 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: 1\n"
         );
 
-        verify(artifacts).undeploy(foo.deploymentName());
-        verify(artifacts).deploy(bar.deploymentName(), bar.inputStream());
-        assertThat(audits.getAudits()).containsExactly(
-                bar.artifactAudit().added(),
-                foo.artifactAudit().removed());
+        foo.verifyUndeployExecuted();
+        bar.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(bar.addedAudit(), foo.removedAudit());
     }
 
 
@@ -351,7 +351,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: 1.3.2\n");
 
         // #after(): jolokia not undeployed
-        mockserver.verifyUndeployed(audits);
+        mockserver.verifyRemoved(audits);
     }
 
 
@@ -380,7 +380,18 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: 1\n");
 
         // #after(): jolokia not re-deployed
-        mockserver.verifyDeployed(audits);
+        mockserver.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(
+                mockserver.addedAudit(),
+                ArtifactAudit.builder()
+                             .name("should-deploy-bundle")
+                             .change("group-id", null, "artifact-deployer-test")
+                             .change("artifact-id", null, "should-deploy-bundle")
+                             .change("version", null, "1")
+                             .change("type", null, "bundle")
+                             .change("checksum", null, "face0000fa544508949608141c2e1f62fe9c82f3")
+                             .added()
+        );
     }
 
 
@@ -395,10 +406,8 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.run("---\n");
 
-        verify(artifacts).undeploy(jolokia.deploymentName());
-        verify(artifacts).undeploy(mockserver.deploymentName());
-        assertThat(audits.getAudits()).containsExactly(
-                jolokia.artifactAudit().removed(),
-                mockserver.artifactAudit().removed());
+        jolokia.verifyUndeployExecuted();
+        mockserver.verifyUndeployExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.removedAudit(), mockserver.removedAudit());
     }
 }

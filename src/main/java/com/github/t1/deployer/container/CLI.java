@@ -4,6 +4,7 @@ import com.github.t1.log.Logged;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
+import org.jboss.as.controller.client.helpers.standalone.ServerDeploymentManager;
 import org.jboss.dmr.ModelNode;
 
 import javax.inject.Inject;
@@ -12,7 +13,7 @@ import java.util.function.Consumer;
 
 @Slf4j
 @Logged
-class CLI {
+public class CLI {
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
         switch (severity) {
         case ERROR:
@@ -27,7 +28,7 @@ class CLI {
     };
 
     @Inject
-    public ModelControllerClient client;
+    ModelControllerClient client;
 
 
     public static ModelNode readResource(ModelNode request) {
@@ -96,5 +97,9 @@ class CLI {
         log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]", //
                 jboss7start, jboss8start, notFoundEnd, isNotFound, message);
         return isNotFound;
+    }
+
+    public ServerDeploymentManager openServerDeploymentManager() {
+        return ServerDeploymentManager.Factory.create(client);
     }
 }

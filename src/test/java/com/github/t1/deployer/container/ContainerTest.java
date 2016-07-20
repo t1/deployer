@@ -1,13 +1,12 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
 import lombok.SneakyThrows;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -15,13 +14,12 @@ import java.util.*;
 
 import static com.github.t1.deployer.container.LoggerCategory.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
-import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class LoggerContainerTest {
+public class ContainerTest {
     private static final LogLevel ROOT_LEVEL = DEBUG;
     private static final LogLevel FOO_LEVEL = WARN;
     private static final LogLevel BAR_LEVEL = INFO;
@@ -30,18 +28,18 @@ public class LoggerContainerTest {
     private static final LoggerCategory BAR = LoggerCategory.of("bar");
     private static final LoggerCategory FOO = LoggerCategory.of("foo");
 
-    @InjectMocks
-    LoggerContainer container;
+    Container container = new Container();
     @Mock
     ModelControllerClient client;
-    @Mock
-    Repository repository;
 
     private Map<String, LogLevel> loggers = new LinkedHashMap<>();
 
     @Before
     @SneakyThrows(IOException.class)
     public void setup() {
+        container.cli = new CLI();
+        container.cli.client = client;
+
         when(client.execute(any(ModelNode.class), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString("{\"outcome\" => \"success\"}"));
         when(client.execute(eq(readRootLoggerCli()), any(OperationMessageHandler.class)))
@@ -56,6 +54,13 @@ public class LoggerContainerTest {
                         + "    }")));
         when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class)))
                 .then(invocation -> ModelNode.fromString(successCli(readLoggersCliResult(this.loggers))));
+    }
+
+    private static String successCli(String result) {
+        return "{\n"
+                + "\"outcome\" => \"success\",\n"
+                + "\"result\" => " + result + "\n"
+                + "}\n";
     }
 
     @After
@@ -207,42 +212,6 @@ public class LoggerContainerTest {
         assertThat(logger.isRoot()).isFalse();
         assertThat(logger.category()).isEqualTo(BAR);
         assertThat(logger.level()).isEqualTo(INFO);
-    }
-
-    @Test
-    public void shouldGetJustRootLogger() {
-        givenNoLogger("foo");
-        givenNoLogger("bar");
-
-        List<LoggerResource> loggers = container.allLoggers();
-
-        assertThat(loggers).hasSize(1);
-        assertIsRoot(loggers.get(0));
-    }
-
-    @Test
-    public void shouldGetOneLogger() {
-        givenLogger("foo", FOO_LEVEL, true);
-        givenNoLogger("bar");
-
-        List<LoggerResource> loggers = container.allLoggers();
-
-        assertThat(loggers).hasSize(2);
-        assertIsRoot(loggers.get(0));
-        assertIsFoo(loggers.get(1));
-    }
-
-    @Test
-    public void shouldGetTwoLoggersSorted() {
-        givenLogger("foo", FOO_LEVEL, true);
-        givenLogger("bar", BAR_LEVEL, true);
-
-        List<LoggerResource> loggers = container.allLoggers();
-
-        assertThat(loggers).hasSize(3);
-        assertIsRoot(loggers.get(0));
-        assertIsBar(loggers.get(1));
-        assertIsFoo(loggers.get(2));
     }
 
     @Test
@@ -435,7 +404,7 @@ public class LoggerContainerTest {
     @Test
     public void shouldAddPeriodicRotatingFileLogHandler() throws Exception {
         LogHandlerResource foo = container
-                .handler(periodicRotatingFile, new LogHandlerName("FOO"))
+                .logHandler(periodicRotatingFile, new LogHandlerName("FOO"))
                 .file("the-file")
                 .suffix("the-suffix")
                 .formatter("the-formatter")

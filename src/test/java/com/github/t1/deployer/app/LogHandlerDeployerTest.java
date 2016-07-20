@@ -230,7 +230,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    format: the-format\n");
 
         fixture.verifyChange("level", DEBUG, ALL);
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 
@@ -253,7 +253,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    format: the-format\n");
 
         fixture.verifyChange("file", "the-old-file", "the-new-file");
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 
@@ -276,7 +276,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    format: the-format\n");
 
         fixture.verifyChange("suffix", "the-old-suffix", "the-new-suffix");
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 
@@ -299,7 +299,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    format: the-new-format\n");
 
         fixture.verifyChange("format", "the-old-format", "the-new-format");
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 
@@ -323,7 +323,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
         fixture.verifyWriteAttribute("named-formatter", "the-new-formatter");
         fixture.expectChange("formatter", "the-old-formatter", "the-new-formatter");
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 
@@ -348,7 +348,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
         fixture.verifyChange("format", "the-format", null);
         fixture.verifyWriteAttribute("named-formatter", "the-formatter");
         fixture.expectChange("formatter", null, "the-formatter");
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 
@@ -374,7 +374,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
         fixture.expectChange("format", null, "the-format");
         fixture.verifyWriteAttribute("named-formatter", null);
         fixture.expectChange("formatter", "the-formatter", null);
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 
@@ -398,7 +398,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
         fixture.verifyChange("file", "the-old-file", "the-new-file");
         fixture.verifyChange("suffix", "the-old-suffix", "the-new-suffix");
-        fixture.verifyChanges(audits);
+        fixture.verifyChanged(audits);
     }
 
 

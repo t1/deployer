@@ -2,14 +2,20 @@ package com.github.t1.deployer.container;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.as.controller.client.helpers.standalone.ServerDeploymentManager;
 import org.jboss.dmr.ModelNode;
 
 import static com.github.t1.deployer.container.CLI.*;
 
+/**
+ * Resources represent the configuration state of the JavaEE container. They are responsible to {@link #add()},
+ * {@link #remove()}, or update (using overloaded `updateSomething` methods) the current state in the container;
+ * and to provide information about an existing resource with {@link #isDeployed()} and various fluent getters.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractResource {
-    @NonNull private final CLI container;
+    @NonNull private final CLI cli;
 
     protected Boolean deployed = null;
 
@@ -20,7 +26,8 @@ public abstract class AbstractResource {
 
     public boolean isDeployed() {
         if (deployed == null) {
-            ModelNode response = container.executeRaw(readResource(createRequestWithAddress()));
+            ModelNode readResource = readResource(createRequestWithAddress());
+            ModelNode response = cli.executeRaw(readResource);
             String outcome = response.get("outcome").asString();
             if ("success".equals(outcome)) {
                 this.deployed = true;
@@ -39,14 +46,16 @@ public abstract class AbstractResource {
 
     protected abstract void readFrom(ModelNode result);
 
-    protected void execute(ModelNode request) { container.execute(request); }
+    protected void execute(ModelNode request) { cli.execute(request); }
+
+    protected ServerDeploymentManager openServerDeploymentManager() { return cli.openServerDeploymentManager(); }
 
     protected void writeAttribute(String name, String value) {
-        container.writeAttribute(createRequestWithAddress(), name, value);
+        cli.writeAttribute(createRequestWithAddress(), name, value);
     }
 
     protected void writeAttribute(String name, boolean value) {
-        container.writeAttribute(createRequestWithAddress(), name, value);
+        cli.writeAttribute(createRequestWithAddress(), name, value);
     }
 
     public abstract void add();

@@ -5,10 +5,11 @@ import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.*;
+import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.SystemPropertiesRule;
 import lombok.*;
+import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
 import org.mockito.*;
@@ -21,6 +22,7 @@ import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Tools.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static java.util.stream.Collectors.*;
+import static org.apache.commons.lang3.concurrent.ConcurrentUtils.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -34,33 +36,84 @@ public class AbstractDeployerTest {
 
     @Mock Repository repository;
 
-    @Mock ArtifactContainer artifacts;
-    @Mock LoggerContainer loggers;
+    @Spy Container cont;
+    @Mock CLI cli;
+    @Mock ServerDeploymentManager deploymentManager;
+    @Mock InitialDeploymentPlanBuilder planBuilder;
+    @Mock AddDeploymentPlanBuilder addPlanBuilder;
+    @Mock ReplaceDeploymentPlanBuilder replacePlanBuilder;
+    @Mock UndeployDeploymentPlanBuilder undeployPlanBuilder;
+    @Mock DeploymentPlan deploymentPlan;
+    @Mock ServerDeploymentPlanResult planResult;
 
-    private final List<Deployment> allDeployments = new ArrayList<>();
+    private List<DeploymentResource> allDeployments = new ArrayList<>();
 
     @Before
     public void before() {
+        cont.cli = cli;
         when(auditsInstance.get()).thenReturn(audits);
-        when(artifacts.getAllArtifacts()).then(invocation -> allDeployments);
+        when(cli.openServerDeploymentManager()).then(i -> deploymentManager);
+
+        when(deploymentManager.newDeploymentPlan()).then(i -> planBuilder);
+
+        when(planBuilder.add(any(String.class), any(InputStream.class))).then(i -> addPlanBuilder);
+        when(addPlanBuilder.deploy(any(String.class))).then(i -> addPlanBuilder);
+        when(addPlanBuilder.build()).then(i -> deploymentPlan);
+
+        when(planBuilder.replace(any(String.class), any(InputStream.class))).then(i -> replacePlanBuilder);
+        when(replacePlanBuilder.build()).then(i -> deploymentPlan);
+
+        when(planBuilder.undeploy(any(String.class))).then(i -> undeployPlanBuilder);
+        when(undeployPlanBuilder.remove(any(String.class))).then(i -> undeployPlanBuilder);
+        when(undeployPlanBuilder.build()).then(i -> deploymentPlan);
+
+        when(deploymentManager.execute(any(DeploymentPlan.class))).then(i -> constantFuture(planResult));
+
+        when(cli.execute(readAllDeployments())).then(i -> allDeploymentsResponse());
+    }
+
+    public ModelNode readAllDeployments() { return readResource(null, "deployment", "*"); }
+
+    private ModelNode allDeploymentsResponse() {
+        String out = "[";
+        for (DeploymentResource deployment : allDeployments) {
+            if (out.length() > 1)
+                out += ",";
+            //noinspection StringConcatenationInsideStringBufferAppend
+            out += "{\n"
+                    + "\"address\" => [(\"deployment\" => \"" + deployment.name() + "\")],\n"
+                    + "\"outcome\" => \"success\",\n"
+                    + "    \"result\" => {\n"
+                    + "        \"content\" => [{\"hash\" => bytes {\n"
+                    + "            " + deployment.checksum().hexByteArray() + "\n"
+                    + "        }}],\n"
+                    + "        \"enabled\" => true,\n"
+                    + "        \"name\" => \"" + deployment.name() + "\",\n"
+                    + "        \"persistent\" => true,\n"
+                    + "        \"runtime-name\" => \"" + deployment.name() + "\",\n"
+                    + "        \"subdeployment\" => undefined,\n"
+                    + "        \"subsystem\" => {\"web\" => {\n"
+                    + "            \"context-root\" => \"" + deployment.name() + "\",\n"
+                    + "            \"virtual-host\" => \"default-host\",\n"
+                    + "            \"servlet\" => {\"javax.ws.rs.core.Application\" => {\n"
+                    + "                \"servlet-class\" => \"org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher\",\n"
+                    + "                \"servlet-name\" => \"javax.ws.rs.core.Application\"\n"
+                    + "            }}\n"
+                    + "        }}\n"
+                    + "    }\n"
+                    + "}\n";
+        }
+        out += "]";
+        return toModelNode(out);
     }
 
     @After
-    public void afterArtifacts() {
-        verify(artifacts, atLeast(0)).getAllArtifacts();
-        verify(artifacts, atLeast(0)).hasDeployment(any(DeploymentName.class));
-        verify(artifacts, atLeast(0)).getDeployment(any(DeploymentName.class));
+    public void after() {
+        verify(cli, atLeast(0)).executeRaw(any(ModelNode.class));
+        verify(cli, atLeast(0)).openServerDeploymentManager();
+        verify(cli, atLeast(0)).execute(readAllDeployments());
 
-        verifyNoMoreInteractions(artifacts);
-    }
-
-    @After
-    public void afterLoggers() {
-        verify(loggers, atLeast(0)).logger(any(LoggerCategory.class));
-        verify(loggers, atLeast(0)).handler(any(LoggingHandlerType.class), any(LogHandlerName.class));
-        verify(loggers, atLeast(0)).executeRaw(any(ModelNode.class));
-
-        verifyNoMoreInteractions(loggers);
+        verifyNoMoreInteractions(cli);
     }
 
 
@@ -80,11 +133,18 @@ public class AbstractDeployerTest {
         return new ArtifactFixtureBuilder(name).groupId(groupId).artifactId(artifactId);
     }
 
-    @RequiredArgsConstructor
     public class ArtifactFixtureBuilder {
         private final String name;
         private String groupId;
         private String artifactId;
+        private ArtifactFixture deployed;
+
+        public ArtifactFixtureBuilder(String name) {
+            this.name = name;
+
+            when(cli.executeRaw(readResource(null, "deployment", name))).then(
+                    i -> (deployed == null) ? notDeployedNode(null, "deployment", name) : deployed.deployedNode());
+        }
 
         public ArtifactFixtureBuilder groupId(String groupId) {
             this.groupId = groupId;
@@ -99,8 +159,6 @@ public class AbstractDeployerTest {
         }
 
         public ArtifactId artifactId() { return new ArtifactId(artifactId); }
-
-        public ContextRoot contextRoot() { return new ContextRoot(artifactId); }
 
         public DeploymentName deploymentName() { return new DeploymentName((name == null) ? artifactId : name); }
 
@@ -117,9 +175,9 @@ public class AbstractDeployerTest {
         }
 
         public class ArtifactFixture {
-            private final Version version;
-            private final ArtifactType type;
-            private Checksum checksum;
+            @NonNull @Getter private final Version version;
+            @NonNull @Getter private final ArtifactType type;
+            @Getter private Checksum checksum;
             private String contents;
 
             public ArtifactFixture(Version version, ArtifactType type) {
@@ -129,7 +187,31 @@ public class AbstractDeployerTest {
                 when(repository.lookupArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
                 when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, type))
                         .then(i -> artifact(Version.ANY));
-                checksum(fakeChecksumFor(contextRoot(), version));
+                checksum(fakeChecksumFor(deploymentName(), version));
+            }
+
+            public ModelNode deployedNode() {
+                String string = ""
+                        + "{\n"
+                        + "    'outcome' => 'success',\n"
+                        + "    'result' => {\n"
+                        + "        'content' => [{'hash' => bytes {" + checksum.hexByteArray() + "}}],\n"
+                        + "        'enabled' => true,\n"
+                        + "        'name' => '" + deploymentName() + "',\n"
+                        + "        'persistent' => true,\n"
+                        + "        'runtime-name' => '" + deploymentName() + "',\n"
+                        + "        'subdeployment' => undefined,\n"
+                        + "        'subsystem' => {'web' => {\n"
+                        + "            'context-root' => '" + deploymentName() + "',\n"
+                        + "            'virtual-host' => 'default-host',\n"
+                        + "            'servlet' => {'javax.ws.rs.core.Application' => {\n"
+                        + "                'servlet-class' => 'org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher',\n"
+                        + "                'servlet-name' => 'javax.ws.rs.core.Application'\n"
+                        + "            }}\n"
+                        + "        }}\n"
+                        + "    }\n"
+                        + "}";
+                return toModelNode(string);
             }
 
             public ArtifactFixture version(String version) { return ArtifactFixtureBuilder.this.version(version); }
@@ -142,25 +224,19 @@ public class AbstractDeployerTest {
                 return this;
             }
 
-            public Checksum checksum() {
-                return (checksum == null)
-                        ? fakeChecksumFor(contextRoot(), version)
-                        : checksum;
-            }
-
             public void containing(String contents) { this.contents = contents; }
 
             public ArtifactFixture deployed() {
-                Deployment deployment = new Deployment(deploymentName(), contextRoot(), checksum());
-                allDeployments.add(deployment);
-                when(artifacts.hasDeployment(deploymentName())).thenReturn(true);
-                when(artifacts.getDeployment(deploymentName())).thenReturn(deployment);
+                if (deployed != null)
+                    throw new RuntimeException("already have deployed " + name + ":" + version);
+                deployed = this;
+                allDeployments.add(DeploymentResource.builder(deploymentName(), cli).checksum(checksum).build());
                 return this;
             }
 
             public InputStream inputStream() {
                 return (contents == null)
-                        ? inputStreamFor(contextRoot(), version)
+                        ? inputStreamFor(deploymentName(), version)
                         : new StringInputStream(contents);
             }
 
@@ -179,30 +255,68 @@ public class AbstractDeployerTest {
                         .artifactId(artifactId())
                         .version(version)
                         .type(type)
-                        .checksum(checksum())
+                        .checksum(checksum)
                         .inputStreamSupplier(this::inputStream)
                         .build();
             }
 
 
-            public ArtifactAuditBuilder artifactAudit() { return ArtifactAudit.of(artifact()).name(deploymentName()); }
+            public ArtifactAuditBuilder artifactAudit() { return ArtifactAudit.builder().name(deploymentName()); }
 
 
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
             public void verifyDeployed(Audits audits) {
-                verify(artifacts).deploy(deploymentName(), inputStream());
-                assertThat(audits.getAudits()).containsExactly(artifactAudit().added());
+                verifyAddExecuted();
+                assertThat(audits.getAudits()).containsExactly(addedAudit());
+            }
+
+            public void verifyAddExecuted() {
+                // verify(cli).execute(toModelNode(""
+                //         + "{\n"
+                //         + "    'address' => [('deployment' => '" + name + "')],"
+                //         + "    'operation' => 'add'\n"
+                //         + "}"));
+            }
+
+            public Audit addedAudit() {
+                return artifactAudit()
+                        .change("group-id", null, groupId)
+                        .change("artifact-id", null, artifactId)
+                        .change("version", null, version)
+                        .change("type", null, type)
+                        .change("checksum", null, checksum)
+                        .added();
             }
 
             public void verifyRedeployed(Audits audits) {
-                verify(artifacts).redeploy(deploymentName(), inputStream());
-                assertThat(audits.getAudits()).containsExactly(artifactAudit().changed());
+                // FIXME verify(artifacts).redeploy(deploymentName(), inputStream());
+                Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
+                Version oldVersion = (deployed == null) ? null : deployed.version;
+                assertThat(audits.getAudits()).containsExactly(artifactAudit()
+                        .change("checksum", oldChecksum, checksum)
+                        .change("version", oldVersion, version)
+                        .changed());
             }
 
-            public void verifyUndeployed(Audits audits) {
-                verify(artifacts).undeploy(deploymentName());
-                assertThat(audits.getAudits()).containsExactly(artifactAudit().removed());
+            public void verifyRemoved(Audits audits) {
+                verifyUndeployExecuted();
+                assertThat(audits.getAudits()).containsExactly(removedAudit());
+            }
+
+            public void verifyUndeployExecuted() {
+                verify(planBuilder).undeploy(name);
+                verify(undeployPlanBuilder).remove(name);
+            }
+
+            public Audit removedAudit() {
+                return artifactAudit()
+                        .change("group-id", groupId, null)
+                        .change("artifact-id", artifactId, null)
+                        .change("version", version, null)
+                        .change("type", type, null)
+                        .change("checksum", checksum, null)
+                        .removed();
             }
         }
     }
@@ -221,10 +335,8 @@ public class AbstractDeployerTest {
         public LoggerFixture(String category) {
             this.category = LoggerCategory.of(category);
 
-            when(loggers.logger(this.category)).then(i -> LoggerResource.builder(this.category, loggers));
-
-            when(loggers.executeRaw(readResource("logging", "logger", category))).then(
-                    i -> deployed ? deployedNode() : notDeployedNode());
+            when(cli.executeRaw(readResource("logging", "logger", category))).then(
+                    i -> deployed ? deployedNode() : notDeployedNode("logging", "logger", category));
         }
 
         public ModelNode deployedNode() {
@@ -241,17 +353,6 @@ public class AbstractDeployerTest {
                     + "    }\n"
                     + "}";
             return toModelNode(string);
-        }
-
-        private ModelNode notDeployedNode() {
-            return ModelNode.fromString("{\n"
-                    + "    \"outcome\" => \"failed\",\n"
-                    + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
-                    + "    (\\\"subsystem\\\" => \\\"logging\\\"),\n"
-                    + "    (\\\"logger\\\" => \\\"" + category + "\\\")\n"
-                    + "]' not found\",\n"
-                    + "    \"rolled-back\" => true\n"
-                    + "}");
         }
 
         public LoggerFixture level(LogLevel level) {
@@ -284,7 +385,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAdded(Audits audits) {
-            verify(loggers).execute(toModelNode("{\n"
+            verify(cli).execute(toModelNode("{\n"
                     + loggerAddress()
                     + "    'operation' => 'add',\n"
                     + ((level == null) ? "" : "    'level' => '" + level + "',\n")
@@ -309,13 +410,13 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdated(LogLevel oldLevel, Audits audits) {
-            verify(loggers).writeAttribute(buildRequest(), "level", level.toString());
+            verify(cli).writeAttribute(buildRequest(), "level", level.toString());
             assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
         }
 
         public void verifyRemoved(Audits audits) {
-            verify(loggers).execute(toModelNode(""
+            verify(cli).execute(toModelNode(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'remove'\n"
@@ -330,7 +431,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {
-            verify(loggers).writeAttribute(buildRequest(), "use-parent-handlers", useParentHandlers);
+            verify(cli).writeAttribute(buildRequest(), "use-parent-handlers", useParentHandlers);
             assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).change("useParentHandlers", oldUseParentHandlers, useParentHandlers)
                                .changed());
@@ -338,7 +439,7 @@ public class AbstractDeployerTest {
 
         public void verifyAddedHandler(Audits audits, String name) {
             LogHandlerName handlerName = new LogHandlerName(name);
-            verify(loggers).execute(toModelNode(""
+            verify(cli).execute(toModelNode(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'add-handler',\n"
@@ -350,7 +451,7 @@ public class AbstractDeployerTest {
 
         public void verifyRemovedHandler(Audits audits, String name) {
             LogHandlerName handlerName = new LogHandlerName(name);
-            verify(loggers).execute(toModelNode(""
+            verify(cli).execute(toModelNode(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'remove-handler',\n"
@@ -373,12 +474,23 @@ public class AbstractDeployerTest {
     private static String address(String subsystem, String type, Object name) {
         return ""
                 + "    'address' => [\n"
-                + "        ('subsystem' => '" + subsystem + "'),\n"
+                + ((subsystem == null) ? "" : "        ('subsystem' => '" + subsystem + "'),\n")
                 + "        ('" + type + "' => '" + name + "')\n"
                 + "    ],\n";
     }
 
-    public static ModelNode toModelNode(String replace) { return ModelNode.fromString(replace.replace('\'', '\"')); }
+    private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
+        return ModelNode.fromString("{\n"
+                + "    \"outcome\" => \"failed\",\n"
+                + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
+                + ((subsystem == null) ? "" : "    (\\\"subsystem\\\" => \\\"" + subsystem + "\\\"),\n")
+                + "    (\\\"" + type + "\\\" => \\\"" + name + "\\\")\n"
+                + "]' not found\",\n"
+                + "    \"rolled-back\" => true\n"
+                + "}");
+    }
+
+    public static ModelNode toModelNode(String string) { return ModelNode.fromString(string.replace('\'', '\"')); }
 
 
     public LogHandlerFixture givenLogHandler(LoggingHandlerType type, String name) {
@@ -402,9 +514,8 @@ public class AbstractDeployerTest {
             this.name = new LogHandlerName(name);
             this.audit = LogHandlerAudit.builder().type(this.type).name(this.name);
 
-            when(loggers.handler(type, this.name)).then(i -> LogHandlerResource.builder(this.type, this.name, loggers));
-            when(loggers.executeRaw(readResource("logging", type.getTypeName(), name))).then(
-                    i -> deployed ? deployedNode() : notDeployedNode());
+            when(cli.executeRaw(readResource("logging", type.getTypeName(), name))).then(
+                    i -> deployed ? deployedNode() : notDeployedNode("logging", type, name));
         }
 
         public ModelNode deployedNode() {
@@ -420,17 +531,6 @@ public class AbstractDeployerTest {
                     + "    }\n"
                     + "}";
             return toModelNode(string);
-        }
-
-        private ModelNode notDeployedNode() {
-            return ModelNode.fromString("{\n"
-                    + "    \"outcome\" => \"failed\",\n"
-                    + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
-                    + "    (\\\"subsystem\\\" => \\\"logging\\\"),\n"
-                    + "    (\\\"" + type + "\\\" => \\\"" + name + "\\\")\n"
-                    + "]' not found\",\n"
-                    + "    \"rolled-back\" => true\n"
-                    + "}");
         }
 
         public LogHandlerFixture level(LogLevel level) {
@@ -479,19 +579,17 @@ public class AbstractDeployerTest {
         }
 
         public <T> void verifyWriteAttribute(String name, T value) {
-            verify(loggers).writeAttribute(buildRequest(), name, toStringOrNull(value));
+            verify(cli).writeAttribute(buildRequest(), name, toStringOrNull(value));
         }
 
-        public <T> void expectChange(String name, T oldValue, T newValue) {
-            audit.change(name, oldValue, newValue);
-        }
+        public <T> void expectChange(String name, T oldValue, T newValue) { audit.change(name, oldValue, newValue); }
 
-        public void verifyChanges(Audits audits) {
+        public void verifyChanged(Audits audits) {
             assertThat(audits.getAudits()).containsExactly(this.audit.changed());
         }
 
         public void verifyAdded(Audits audits) {
-            verify(loggers).execute(toModelNode("{\n"
+            verify(cli).execute(toModelNode("{\n"
                     + logHandlerAddress()
                     + "    'operation' => 'add'"
                     + ((level == null) ? "" : ",\n    'level' => '" + level + "'")
@@ -503,11 +601,21 @@ public class AbstractDeployerTest {
                     + ((format == null) ? "" : ",\n    'format' => '" + format + "'")
                     + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
                     + "\n}"));
+            if (level != null)
+                audit.change("level", null, level);
+            if (file != null)
+                audit.change("file", null, file);
+            if (suffix != null)
+                audit.change("suffix", null, suffix);
+            if (format != null)
+                audit.change("format", null, format);
+            if (formatter != null)
+                audit.change("formatter", null, formatter);
             assertThat(audits.getAudits()).containsExactly(audit.added());
         }
 
         public void verifyRemoved(Audits audits) {
-            verify(loggers).execute(toModelNode("{\n"
+            verify(cli).execute(toModelNode("{\n"
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));

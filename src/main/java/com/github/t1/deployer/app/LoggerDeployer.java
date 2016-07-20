@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Audit.*;
+import com.github.t1.deployer.app.Audit.LoggerAudit;
+import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.LoggerConfig;
 import com.github.t1.deployer.container.*;
 import lombok.extern.slf4j.Slf4j;
@@ -10,16 +11,16 @@ import java.util.*;
 import static com.github.t1.deployer.model.Tools.*;
 
 @Slf4j
-public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResource> {
-    private final LoggerContainer loggers;
+public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResource, LoggerAuditBuilder> {
+    private final Container loggers;
 
-    public LoggerDeployer(LoggerContainer loggers, Audits audits) {
+    public LoggerDeployer(Container loggers, Audits audits) {
         super(audits);
         this.loggers = loggers;
     }
 
     @Override
-    protected AuditBuilder buildAudit(LoggerResource logger) {
+    protected LoggerAuditBuilder buildAudit(LoggerResource logger) {
         return LoggerAudit.builder().category(logger.category());
     }
 
@@ -27,7 +28,7 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
     protected LoggerResource getResource(LoggerConfig plan) { return loggers.logger(plan.getCategory()).build(); }
 
     @Override
-    protected void update(LoggerResource resource, LoggerConfig plan, AuditBuilder audit) {
+    protected void update(LoggerResource resource, LoggerConfig plan, LoggerAuditBuilder audit) {
         if (!Objects.equals(resource.level(), plan.getLevel())) {
             resource.writeLevel(plan.getLevel());
             audit.change("level", resource.level(), plan.getLevel());
@@ -51,21 +52,21 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
         }
     }
 
-    @Override protected LoggerResource buildResource(LoggerConfig plan, AuditBuilder audit) {
-        LoggerResource logger = loggers
+    @Override protected LoggerResource buildResource(LoggerConfig plan, LoggerAuditBuilder audit) {
+        audit.change("level", null, plan.getLevel())
+             .change("useParentHandlers", null, plan.getUseParentHandlers());
+        for (LogHandlerName handler : plan.getHandlers())
+            audit.change("handler", null, handler);
+        return loggers
                 .logger(plan.getCategory())
                 .level(plan.getLevel())
                 .handlers(plan.getHandlers())
                 .useParentHandlers(plan.getUseParentHandlers())
                 .build();
-        audit.change("level", null, plan.getLevel())
-             .change("useParentHandlers", null, plan.getUseParentHandlers());
-        for (LogHandlerName handler : plan.getHandlers())
-            audit.change("handler", null, handler);
-        return logger;
     }
 
-    @Override protected void auditRemove(LoggerResource resource, AuditBuilder audit) {
+    @Override protected void auditRemove(LoggerResource resource, LoggerConfig plan,
+            LoggerAuditBuilder audit) {
         audit.change("level", resource.level(), null)
              .change("useParentHandlers", resource.useParentHandlers(), null);
         for (LogHandlerName handler : resource.handlers())

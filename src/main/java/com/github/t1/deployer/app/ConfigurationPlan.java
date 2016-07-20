@@ -42,7 +42,7 @@ public class ConfigurationPlan {
                     .enable(MINIMIZE_QUOTES)
                     .disable(WRITE_DOC_START_MARKER))
             .setSerializationInclusion(NON_EMPTY)
-            // .setPropertyNamingStrategy(KEBAB_CASE) // TODO Jackson 2.7.x; remove annotation
+            // preferable to @JsonNaming, but won't be picked up by JAX-RS: .setPropertyNamingStrategy(KEBAB_CASE)
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             .findAndRegisterModules();
 
@@ -96,7 +96,7 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class DeploymentConfig {
+    public static class DeploymentConfig implements AbstractConfig {
         @NonNull @JsonIgnore private final DeploymentName name;
         @NonNull private final DeploymentState state;
         @NonNull private final GroupId groupId;
@@ -120,6 +120,7 @@ public class ConfigurationPlan {
         @Override public String toString() {
             return "«deployment:" + state + ":" + groupId + ":" + artifactId + ":" + version + ":" + type + "»";
         }
+
     }
 
     @Data

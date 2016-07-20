@@ -22,7 +22,6 @@ import java.net.URI;
 import java.util.List;
 
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
-import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
 import static java.util.concurrent.TimeUnit.*;
@@ -40,14 +39,16 @@ public class DeployerIT {
     private static final Checksum JOLOKIA_1_3_2_CHECKSUM = Checksum.fromString(
             "9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330");
 
-    private static Condition<Deployment> deployment(String name) { return deployment(new DeploymentName(name)); }
+    private static Condition<DeploymentResource> deployment(String name) {
+        return deployment(new DeploymentName(name));
+    }
 
-    private static Condition<Deployment> deployment(DeploymentName name) {
+    private static Condition<DeploymentResource> deployment(DeploymentName name) {
         return new Condition<>(name::matches, "deployment with name '" + name + "'");
     }
 
-    private static Condition<Deployment> checksum(Checksum checksum) {
-        return new Condition<>(deployment -> deployment.getChecksum().equals(checksum),
+    private static Condition<DeploymentResource> checksum(Checksum checksum) {
+        return new Condition<>(deployment -> deployment.checksum().equals(checksum),
                 "deployment with checksum '" + checksum + "'");
     }
 
@@ -86,8 +87,7 @@ public class DeployerIT {
 
     @ArquillianResource URI baseUri;
 
-    @Inject ArtifactContainer container;
-    @Inject LoggerContainer loggers;
+    @Inject Container container;
 
     @Before
     public void setup() throws Exception {
@@ -102,10 +102,10 @@ public class DeployerIT {
             // restore after JBoss is down
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
-            loggers.handler(console, new LogHandlerName("CONSOLE")).build().writeLevel(ALL);
-            loggers.logger(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).build().add();
+            container.logHandler(console, new LogHandlerName("CONSOLE")).build().updateLevel(ALL);
+            container.logger(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).build().add();
 
-            log.info("artifacts: {}", container.getAllArtifacts());
+            log.info("artifacts: {}", container.allDeployments());
             assertNoOtherDeployments();
         }
     }
@@ -127,7 +127,7 @@ public class DeployerIT {
 
 
     private void assertNoOtherDeployments() {
-        assertThat(container.getAllArtifacts().stream().filter(DEPLOYER_IT::matches).count()).isEqualTo(0);
+        assertThat(container.allDeployments().stream().filter(DEPLOYER_IT::matches).count()).isEqualTo(0);
     }
 
     @Test
@@ -141,7 +141,7 @@ public class DeployerIT {
 
         EntityResponse<?> response = run(plan, NOT_FOUND);
 
-        assertThat(container.getAllArtifacts())
+        assertThat(container.allDeployments())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         assertThat(response.getBody(String.class))
@@ -160,13 +160,18 @@ public class DeployerIT {
 
         List<Audit> audits = run(plan);
 
-        assertThat(container.getAllArtifacts())
+        assertThat(container.allDeployments())
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("jolokia"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
-                    artifactAuditOf("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").added());
+                    Audit.ArtifactAudit.builder().name("jolokia")
+                                       .change("group-id", null, "org.jolokia")
+                                       .change("artifact-id", null, "jolokia-war")
+                                       .change("version", null, "1.3.2")
+                                       .change("type", null, "war")
+                                       .added());
     }
 
     @Test
@@ -182,12 +187,17 @@ public class DeployerIT {
 
         List<Audit> audits = run(plan);
 
-        assertThat(container.getAllArtifacts())
+        assertThat(container.allDeployments())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
-                    artifactAuditOf("org.jolokia", "jolokia-war", "1.3.2").name("jolokia").removed());
+                    Audit.ArtifactAudit.builder().name("jolokia")
+                                       .change("group-id", "org.jolokia", null)
+                                       .change("artifact-id", "jolokia-war", null)
+                                       .change("version", "1.3.2", null)
+                                       .change("type", "war", null)
+                                       .added());
     }
 
     @Test
@@ -202,13 +212,18 @@ public class DeployerIT {
 
         List<Audit> audits = run(plan);
 
-        assertThat(container.getAllArtifacts())
+        assertThat(container.allDeployments())
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("postgresql"), checksum(POSTGRESQL_9_4_1207_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
-                    artifactAuditOf("org.postgresql", "postgresql", "9.4.1207").name("postgresql").added());
+                    Audit.ArtifactAudit.builder().name("postgresql")
+                                       .change("group-id", null, "org.postgresql")
+                                       .change("artifact-id", null, "postgresql")
+                                       .change("version", null, "9.4.1207")
+                                       .change("type", null, "jar")
+                                       .added());
     }
 
     // TODO shouldUpdateDeployer (WOW!)
@@ -225,7 +240,59 @@ public class DeployerIT {
         if (plan.isEmpty()) { // TODO make this run
             assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
             assertThat(audits).containsExactly(
-                    artifactAuditOf("org.postgresql", "postgresql", "9.4.1207").removed());
+                    Audit.ArtifactAudit.builder().name("postgresql")
+                                       .change("group-id", "org.postgresql", null)
+                                       .change("artifact-id", "postgresql", null)
+                                       .change("version", "9.4.1207", null)
+                                       .change("type", "jar", null)
+                                       .added());
         }
     }
+
+    // FIXME parking position: do we still need this?
+    // public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
+    //
+    // public List<Deployment> getAllArtifacts() {
+    //     return execute(readDeployments())
+    //             .asList().stream()
+    //             .map(cliDeploymentMatch -> toDeployment(cliDeploymentMatch.get("result")))
+    //             .collect(toList());
+    // }
+    //
+    // private static ModelNode readDeployments() {
+    //     ModelNode request = new ModelNode();
+    //     request.get("address").add("deployment", "*");
+    //     return readResource(request);
+    // }
+    //
+    // private Deployment toDeployment(ModelNode cliDeployment) {
+    //     DeploymentName name = new DeploymentName(cliDeployment.get("name").asString());
+    //     ContextRoot contextRoot = getContextRoot(cliDeployment);
+    //     Checksum hash = Checksum.of(hash(cliDeployment));
+    //     log.debug("{} -> {} -> {}", name, contextRoot, hash);
+    //     return new Deployment(name, contextRoot, hash);
+    // }
+    //
+    // private byte[] hash(ModelNode cliDeployment) {
+    //     try {
+    //         return cliDeployment.get("content").get(0).get("hash").asBytes();
+    //     } catch (RuntimeException e) {
+    //         log.error("failed to get hash for {}", cliDeployment.get("name"));
+    //         return new byte[0];
+    //     }
+    // }
+    //
+    // private ContextRoot getContextRoot(ModelNode cliDeployment) {
+    //     ModelNode subsystems = cliDeployment.get("subsystem");
+    //     // JBoss 8+ uses 'undertow' while JBoss 7 uses 'web'
+    //     ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
+    //     ModelNode contextRoot = web.get("context-root");
+    //     return toContextRoot(contextRoot);
+    // }
+    //
+    // private ContextRoot toContextRoot(ModelNode contextRoot) {
+    //     if (!contextRoot.isDefined())
+    //         return UNDEFINED_CONTEXT_ROOT;
+    //     return new ContextRoot(contextRoot.asString());
+    // }
 }

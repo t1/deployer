@@ -1,6 +1,5 @@
-package com.github.t1.deployer.repository;
+package com.github.t1.deployer.model;
 
-import com.github.t1.deployer.model.*;
 import lombok.*;
 
 import java.io.*;

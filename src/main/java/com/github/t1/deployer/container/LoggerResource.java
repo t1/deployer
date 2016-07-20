@@ -15,7 +15,7 @@ import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 
 @Slf4j
-@Builder(builderMethodName = "doNotUseThisBuilder_UseTheBuildMethodWithCategoryAndContainer")
+@Builder(builderMethodName = "doNotCallThisBuilderExternally")
 @Accessors(fluent = true, chain = true)
 public class LoggerResource extends AbstractResource {
     @NonNull @Getter private final LoggerCategory category;
@@ -25,25 +25,25 @@ public class LoggerResource extends AbstractResource {
     private Boolean useParentHandlers;
     private LogLevel level;
 
-    private LoggerResource(LoggerCategory category, LoggerContainer container) {
-        super(container);
+    private LoggerResource(LoggerCategory category, CLI cli) {
+        super(cli);
         this.category = category;
     }
 
-    public static LoggerResourceBuilder builder(LoggerCategory category, LoggerContainer container) {
-        return doNotUseThisBuilder_UseTheBuildMethodWithCategoryAndContainer().category(category).container(container);
+    public static LoggerResourceBuilder builder(LoggerCategory category, CLI cli) {
+        return doNotCallThisBuilderExternally().category(category).container(cli);
     }
 
     public static class LoggerResourceBuilder {
-        private LoggerContainer container;
+        private CLI cli;
 
-        public LoggerResourceBuilder container(LoggerContainer container) {
-            this.container = container;
+        public LoggerResourceBuilder container(CLI cli) {
+            this.cli = cli;
             return this;
         }
 
         public LoggerResource build() {
-            LoggerResource resource = new LoggerResource(category, container);
+            LoggerResource resource = new LoggerResource(category, cli);
             resource.useParentHandlers = this.useParentHandlers;
             resource.level = this.level;
             if (this.handlers != null)
@@ -147,16 +147,16 @@ public class LoggerResource extends AbstractResource {
         this.deployed = true;
     }
 
-    public static List<LoggerResource> all(LoggerContainer container) {
-        LoggerResource loggerResource = new LoggerResource(LoggerCategory.ANY, container);
+    public static List<LoggerResource> all(CLI cli) {
+        LoggerResource loggerResource = new LoggerResource(LoggerCategory.ANY, cli);
         ModelNode request = readResource(loggerResource.createRequestWithAddress());
         List<LoggerResource> loggers =
-                container.execute(request)
-                         .asList().stream()
-                         .map(node -> toLoggerResource(container, node.get("result"), category(node.get("address"))))
-                         .collect(toList());
+                cli.execute(request)
+                   .asList().stream()
+                   .map(node -> toLoggerResource(cli, node.get("result"), category(node.get("address"))))
+                   .collect(toList());
         Collections.sort(loggers, Comparator.comparing(LoggerResource::category));
-        loggers.add(0, readRootLogger(container));
+        loggers.add(0, readRootLogger(cli));
         return loggers;
     }
 
@@ -164,16 +164,16 @@ public class LoggerResource extends AbstractResource {
         return LoggerCategory.of(address.get(1).get("logger").asString());
     }
 
-    public static LoggerResource toLoggerResource(LoggerContainer container, ModelNode node, LoggerCategory category) {
-        LoggerResource logger = new LoggerResource(category, container);
+    public static LoggerResource toLoggerResource(CLI cli, ModelNode node, LoggerCategory category) {
+        LoggerResource logger = new LoggerResource(category, cli);
         logger.deployed = true;
         logger.readFrom(node);
         return logger;
     }
 
-    private static LoggerResource readRootLogger(LoggerContainer container) {
-        ModelNode requestWithAddress = new LoggerResource(ROOT, container).createRequestWithAddress();
-        ModelNode root = container.execute(readResource(requestWithAddress));
-        return toLoggerResource(container, root, ROOT);
+    private static LoggerResource readRootLogger(CLI cli) {
+        ModelNode requestWithAddress = new LoggerResource(ROOT, cli).createRequestWithAddress();
+        ModelNode root = cli.execute(readResource(requestWithAddress));
+        return toLoggerResource(cli, root, ROOT);
     }
 }

@@ -1,6 +1,6 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.*;
 import com.github.t1.rest.RestContext;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 import lombok.SneakyThrows;

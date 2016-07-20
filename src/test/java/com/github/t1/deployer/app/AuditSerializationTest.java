@@ -1,40 +1,29 @@
 package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
-import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.container.LoggerCategory;
 import org.junit.Test;
 
 import java.io.IOException;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
-import static com.fasterxml.jackson.databind.DeserializationFeature.*;
-import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
-import static com.github.t1.deployer.testtools.TestData.*;
+import static com.github.t1.deployer.app.ConfigurationPlan.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class AuditSerializationTest {
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory()
-            .enable(MINIMIZE_QUOTES).disable(WRITE_DOC_START_MARKER))
-            .setSerializationInclusion(NON_EMPTY)
-            .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-
     public Audit deserialize(String json) throws IOException {
         return JSON.readValue(json.replace('\'', '\"'), Audit.class);
     }
 
 
-    private static final ArtifactAuditBuilder JOLOKIA =
-            artifactAuditOf("org.jolokia", "jolokia-war", "1.3.2").name("jolokia");
+    private static final ArtifactAuditBuilder JOLOKIA = ArtifactAudit.builder().name("jolokia");
 
-    private static final ArtifactAuditBuilder MOCKSERVER =
-            artifactAuditOf("org.mock-server", "mockserver-war", "3.10.4").name("mockserver");
+    private static final ArtifactAuditBuilder MOCKSERVER = ArtifactAudit.builder().name("mockserver");
 
     private static LoggerAuditBuilder deployerLog() {
         return LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer"));
@@ -57,10 +46,7 @@ public class AuditSerializationTest {
                      + "},{"
                      + "'type':'artifact',"
                      + "'operation':'remove',"
-                     + "'name':'mockserver',"
-                     + "'groupId':'org.mock-server',"
-                     + "'artifactId':'mockserver-war',"
-                     + "'version':'3.10.4'"
+                     + "'name':'mockserver'"
                      + "}]}"
             ).replace('\'', '\"');
 
@@ -76,10 +62,7 @@ public class AuditSerializationTest {
             + "  category: com.github.t1.deployer\n"
             + "- !<artifact>\n"
             + "  operation: remove\n"
-            + "  name: mockserver\n"
-            + "  groupId: org.mock-server\n"
-            + "  artifactId: mockserver-war\n"
-            + "  version: 3.10.4\n";
+            + "  name: mockserver\n";
 
 
     @Test
@@ -96,10 +79,7 @@ public class AuditSerializationTest {
         String json = "{"
                 + "'type':'artifact',"
                 + "'operation':'add',"
-                + "'name':'jolokia',"
-                + "'groupId':'org.jolokia',"
-                + "'artifactId':'jolokia-war',"
-                + "'version':'1.3.2'"
+                + "'name':'jolokia'"
                 + "}";
 
         Audit audit = deserialize(json);
@@ -109,14 +89,43 @@ public class AuditSerializationTest {
 
 
     @Test
+    public void shouldDeserializeChangeAudit() throws Exception {
+        String json = "{'audits':["
+                + "{"
+                + "'type':'artifact',"
+                + "'operation':'add',"
+                + "'changes':["
+                + "{'name':'group-id','oldValue':null,'newValue':'org.jolokia'},"
+                + "{'name':'artifact-id','oldValue':null,'newValue':'jolokia-war'},"
+                + "{'name':'version','oldValue':null,'newValue':'1.3.2'},"
+                + "{'name':'type','oldValue':null,'newValue':'war'}"
+                + "],'name':'jolokia'}"
+                + "]}";
+
+        Audits audits = JSON.readValue(json.replace('\'', '\"'), Audits.class);
+
+        assertThat(audits.toYaml()).isEqualTo("audits:\n"
+                + "- !<artifact>\n"
+                + "  operation: add\n"
+                + "  changes:\n"
+                + "  - name: group-id\n"
+                + "    newValue: org.jolokia\n"
+                + "  - name: artifact-id\n"
+                + "    newValue: jolokia-war\n"
+                + "  - name: version\n"
+                + "    newValue: 1.3.2\n"
+                + "  - name: type\n"
+                + "    newValue: war\n"
+                + "  name: jolokia\n");
+    }
+
+
+    @Test
     public void shouldDeserializeUndeployedArtifactAudit() throws Exception {
         String json = "{"
                 + "'type':'artifact',"
                 + "'operation':'remove',"
-                + "'name':'mockserver',"
-                + "'groupId':'org.mock-server',"
-                + "'artifactId':'mockserver-war',"
-                + "'version':'3.10.4'"
+                + "'name':'mockserver'"
                 + "}";
 
         Audit audit = deserialize(json);

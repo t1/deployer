@@ -1,32 +1,116 @@
 package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.Checksum;
-import com.github.t1.log.Logged;
-import lombok.AllArgsConstructor;
+import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
-import javax.ejb.Stateless;
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.Stream;
 
+import static com.github.t1.deployer.container.CLI.*;
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.stream.Collectors.*;
 
 @Slf4j
-@Logged
-@Stateless
-public class ArtifactContainer extends CLI {
+@Builder(builderMethodName = "doNotCallThisBuilderExternally")
+@Accessors(fluent = true, chain = true)
+public class DeploymentResource extends AbstractResource {
     private static final int TIMEOUT = 30;
 
-    public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
+    @NonNull @Getter private final DeploymentName name;
+    private Checksum checksum;
+    private InputStream inputStream;
+
+    public DeploymentResource(DeploymentName name, CLI cli) {
+        super(cli);
+        this.name = name;
+    }
+
+    public static DeploymentResourceBuilder builder(DeploymentName name, CLI cli) {
+        return doNotCallThisBuilderExternally().name(name).container(cli);
+    }
+
+    public static List<DeploymentResource> allDeployments(CLI cli) {
+        return cli.execute(readDeployments())
+                  .asList().stream()
+                  .map(match -> toDeployment(match.get("result"), cli))
+                  .collect(toList());
+    }
+
+    private static ModelNode readDeployments() {
+        ModelNode request = new ModelNode();
+        request.get("address").add("deployment", "*");
+        return readResource(request);
+    }
+
+    private static DeploymentResource toDeployment(ModelNode node, CLI cli) {
+        DeploymentName name = readName(node);
+        Checksum hash = readHash(node);
+        log.debug("{}: {}", name, hash);
+        return DeploymentResource.builder(name, cli).checksum(hash).build();
+    }
+
+    public static class DeploymentResourceBuilder {
+        private CLI cli;
+
+        public DeploymentResourceBuilder container(CLI cli) {
+            this.cli = cli;
+            return this;
+        }
+
+        public DeploymentResource build() {
+            DeploymentResource resource = new DeploymentResource(name, cli);
+            resource.inputStream = inputStream;
+            resource.checksum = checksum;
+            return resource;
+        }
+    }
+
+    @Override public String toString() {
+        return name
+                + ((checksum == null) ? "" : ":" + checksum)
+                + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
+    }
+
+    public Checksum checksum() {
+        assertDeployed();
+        return checksum;
+    }
+
+    @Override protected ModelNode createRequestWithAddress() {
+        ModelNode request = new ModelNode();
+        request.get("address").add("deployment", name.getValue());
+        return request;
+    }
+
+    @Override protected void readFrom(ModelNode node) {
+        DeploymentName name = readName(node);
+        Checksum checksum = readHash(node);
+        log.debug("{}: {}", name, checksum);
+        assert this.name.equals(name);
+        this.checksum = checksum;
+    }
+
+    private static DeploymentName readName(ModelNode node) { return new DeploymentName(node.get("name").asString()); }
+
+    private static Checksum readHash(ModelNode node) { return Checksum.of(hash(node)); }
+
+    private static byte[] hash(ModelNode cliDeployment) {
+        try {
+            return cliDeployment.get("content").get(0).get("hash").asBytes();
+        } catch (RuntimeException e) {
+            log.error("failed to get hash for {}", cliDeployment.get("name"));
+            return new byte[0];
+        }
+    }
 
     private abstract class AbstractPlan {
         public void execute() {
-            try (ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(client)) {
+            try (ServerDeploymentManager deploymentManager = openServerDeploymentManager()) {
                 DeploymentPlan plan = buildPlan(deploymentManager.newDeploymentPlan()).build();
 
                 log.debug("start executing {}", getClass().getSimpleName());
@@ -94,9 +178,8 @@ public class ArtifactContainer extends CLI {
 
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            return plan
-                    .add(deploymentName.getValue(), inputStream)
-                    .deploy(deploymentName.getValue());
+            String name = deploymentName.getValue();
+            return plan.add(name, inputStream).deploy(name);
         }
     }
 
@@ -117,90 +200,22 @@ public class ArtifactContainer extends CLI {
 
         @Override
         protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            return plan
-                    .undeploy(deploymentName.getValue())
-                    .remove(deploymentName.getValue());
+            String name = deploymentName.getValue();
+            return plan.undeploy(name).remove(name);
         }
     }
 
-    public boolean hasDeployment(ContextRoot contextRoot) { return all().anyMatch(contextRoot::matches); }
-
-    public boolean hasDeployment(DeploymentName deploymentName) { return all().anyMatch(deploymentName::matches); }
-
-    public boolean hasDeployment(Checksum checksum) {
-        return all().anyMatch(deployment -> deployment.getChecksum().equals(checksum));
+    @Override public void add() {
+        assert inputStream != null : "need an input stream to deploy";
+        new DeployPlan(name, inputStream).execute();
+        this.deployed = true;
     }
 
-    public Deployment getDeployment(ContextRoot contextRoot) {
-        return all().filter(contextRoot::matches).findAny()
-                    .orElseThrow(() -> new RuntimeException("no deployment with context root [" + contextRoot + "]"));
+    public void redeploy(InputStream inputStream) {
+        new ReplacePlan(name, inputStream).execute();
     }
 
-    public Deployment getDeployment(DeploymentName name) {
-        return all().filter(name::matches).findAny()
-                    .orElseThrow(() -> new RuntimeException("no deployment with name [" + name + "]"));
-    }
-
-    public Deployment getDeployment(Checksum checksum) {
-        return all().filter(deployment -> deployment.getChecksum().equals(checksum)).findAny()
-                    .orElseThrow(() -> new RuntimeException("no deployment with checksum [" + checksum + "]"));
-    }
-
-    private Stream<Deployment> all() { return getAllArtifacts().stream(); }
-
-    public List<Deployment> getAllArtifacts() {
-        return execute(readDeployments())
-                .asList().stream()
-                .map(cliDeploymentMatch -> toDeployment(cliDeploymentMatch.get("result")))
-                .collect(toList());
-    }
-
-    private static ModelNode readDeployments() {
-        ModelNode request = new ModelNode();
-        request.get("address").add("deployment", "*");
-        return readResource(request);
-    }
-
-    private Deployment toDeployment(ModelNode cliDeployment) {
-        DeploymentName name = new DeploymentName(cliDeployment.get("name").asString());
-        ContextRoot contextRoot = getContextRoot(cliDeployment);
-        Checksum hash = Checksum.of(hash(cliDeployment));
-        log.debug("{} -> {} -> {}", name, contextRoot, hash);
-        return new Deployment(name, contextRoot, hash);
-    }
-
-    private byte[] hash(ModelNode cliDeployment) {
-        try {
-            return cliDeployment.get("content").get(0).get("hash").asBytes();
-        } catch (RuntimeException e) {
-            log.error("failed to get hash for {}", cliDeployment.get("name"));
-            return new byte[0];
-        }
-    }
-
-    private ContextRoot getContextRoot(ModelNode cliDeployment) {
-        ModelNode subsystems = cliDeployment.get("subsystem");
-        // JBoss 8+ uses 'undertow' while JBoss 7 uses 'web'
-        ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
-        ModelNode contextRoot = web.get("context-root");
-        return toContextRoot(contextRoot);
-    }
-
-    private ContextRoot toContextRoot(ModelNode contextRoot) {
-        if (!contextRoot.isDefined())
-            return UNDEFINED_CONTEXT_ROOT;
-        return new ContextRoot(contextRoot.asString());
-    }
-
-    public void deploy(DeploymentName deploymentName, InputStream inputStream) {
-        new DeployPlan(deploymentName, inputStream).execute();
-    }
-
-    public void redeploy(DeploymentName deploymentName, InputStream inputStream) {
-        new ReplacePlan(deploymentName, inputStream).execute();
-    }
-
-    public void undeploy(DeploymentName deploymentName) {
-        new UndeployPlan(deploymentName).execute();
+    @Override public void remove() {
+        new UndeployPlan(name).execute();
     }
 }

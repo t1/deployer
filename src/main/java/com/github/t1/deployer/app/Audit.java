@@ -2,9 +2,9 @@ package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.Artifact;
+import com.github.t1.deployer.model.LoggingHandlerType;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -30,11 +30,19 @@ public abstract class Audit {
 
     @Value
     public static class Change {
+        @JsonCreator public static Change fromJson(JsonNode node) {
+            return new Change(getText(node, "name"), getText(node, "oldValue"), getText(node, "newValue"));
+        }
+
         @NonNull @JsonProperty private final String name;
         @JsonProperty private final String oldValue;
         @JsonProperty private final String newValue;
 
         @Override public String toString() { return name + ":" + oldValue + "->" + newValue; }
+    }
+
+    private static String getText(JsonNode node, String fieldName) {
+        return (node.has(fieldName) && !node.get(fieldName).isNull()) ? node.get(fieldName).asText() : null;
     }
 
     @NonNull @JsonProperty private final Operation operation;
@@ -52,20 +60,9 @@ public abstract class Audit {
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class ArtifactAudit extends Audit {
         @NonNull @JsonProperty private final DeploymentName name;
-        @NonNull @JsonProperty private final GroupId groupId;
-        @NonNull @JsonProperty private final ArtifactId artifactId;
-        @NonNull @JsonProperty private final Version version;
 
         @Override public String toString() {
-            return super.toString() + ":" + name + "->" + groupId + ":" + artifactId + ":" + version;
-        }
-
-        public static ArtifactAuditBuilder of(Artifact artifact) {
-            return ArtifactAudit
-                    .builder()
-                    .groupId(artifact.getGroupId())
-                    .artifactId(artifact.getArtifactId())
-                    .version(artifact.getVersion());
+            return super.toString() + ":" + name + ((super.changes == null) ? "" : ":" + super.changes);
         }
 
         public static class ArtifactAuditBuilder extends AuditBuilder<ArtifactAudit> {
@@ -77,18 +74,13 @@ public abstract class Audit {
             }
 
             @Override protected ArtifactAudit build() {
-                return new ArtifactAudit(operation, changes, name, groupId, artifactId, version);
+                return new ArtifactAudit(operation, changes, name);
             }
         }
 
-        public ArtifactAudit(Operation operation, List<Change> changes, DeploymentName name, GroupId groupId,
-                ArtifactId artifactId,
-                Version version) {
+        public ArtifactAudit(Operation operation, List<Change> changes, DeploymentName name) {
             super(operation, changes);
             this.name = name;
-            this.groupId = groupId;
-            this.artifactId = artifactId;
-            this.version = version;
         }
     }
 

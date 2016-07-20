@@ -1,6 +1,6 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.container.ContextRoot;
+import com.github.t1.deployer.container.DeploymentName;
 import com.github.t1.deployer.model.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -77,8 +77,8 @@ public class ArtifactoryMock {
     static final Checksum AMBIGUOUS_CHECKSUM = Checksum.ofHexString("2222222222222222222222222222222222222222");
     static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("3333333333333333333333333333333333333333");
 
-    public static final ContextRoot FOO = new ContextRoot("foo");
-    public static final ContextRoot BAR = new ContextRoot("bar");
+    public static final DeploymentName FOO = new DeploymentName("foo");
+    public static final DeploymentName BAR = new DeploymentName("bar");
 
     private static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
     static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
@@ -172,38 +172,42 @@ public class ArtifactoryMock {
         } else if (FAILING_CHECKSUM.equals(checksum)) {
             throw new RuntimeException("fake error in repo");
         } else if (AMBIGUOUS_CHECKSUM.equals(checksum)) {
-            return fileSearchResult(new ContextRoot("x"), new Version("1.0")) + ","
-                    + fileSearchResult(new ContextRoot("y"), new Version("2.0"));
+            return fileSearchResult(new DeploymentName("x"), new Version("1.0")) + ","
+                    + fileSearchResult(new DeploymentName("y"), new Version("2.0"));
         } else if (UNKNOWN_CHECKSUM.equals(checksum)) {
             return "";
         } else if (isIndexed(checksum)) {
             java.nio.file.Path path = index().get(checksum);
             return fileSearchResult(REPO_NAME + "/" + path);
         } else if (FAKES) {
-            ContextRoot contextRoot = fakeContextRootFor(checksum);
+            DeploymentName name = fakeNameFor(checksum);
             Version version = fakeVersionFor(checksum);
-            log.info("fake search result for {}: {}@{}", checksum, contextRoot, version);
-            return fileSearchResult(contextRoot, version);
+            log.info("fake search result for {}: {}@{}", checksum, name, version);
+            return fileSearchResult(name, version);
         } else {
             return "";
         }
     }
 
-    public static Checksum fakeChecksumFor(ContextRoot contextRoot) {
-        return fakeChecksumFor(contextRoot, fakeVersionFor(contextRoot));
+    public static Checksum fakeChecksumFor(DeploymentName name) {
+        return fakeChecksumFor(name, fakeVersionFor(name));
     }
 
-    public static Version fakeVersionFor(ContextRoot contextRoot) {
-        if (FOO.equals(contextRoot)) {
+    public static Version fakeVersionFor(DeploymentName name) {
+        if (FOO.equals(name)) {
             return CURRENT_FOO_VERSION;
-        } else if (BAR.equals(contextRoot)) {
+        } else if (BAR.equals(name)) {
             return CURRENT_BAR_VERSION;
         } else {
-            return fakeVersionFor(contextRoot.getValue().getBytes());
+            return fakeVersionFor(name.getValue().getBytes());
         }
     }
 
-    public static Checksum fakeChecksumFor(ContextRoot name, Version version) {
+    public static Checksum fakeChecksumFor(String name, String version) {
+        return fakeChecksumFor(new DeploymentName(name), new Version(version));
+    }
+
+    public static Checksum fakeChecksumFor(DeploymentName name, Version version) {
         Checksum result = Checksum.sha1((name + "@" + version).getBytes()); // arbitrary but fixed for name/version
         result.getBytes()[0] = (byte) 0xFA;
         result.getBytes()[1] = (byte) 0xCE;
@@ -212,20 +216,20 @@ public class ArtifactoryMock {
         return result;
     }
 
-    private String fileSearchResult(ContextRoot contextRoot, Version version) {
-        return fileSearchResult(fakePathFor(contextRoot, version).toString());
+    private String fileSearchResult(DeploymentName name, Version version) {
+        return fileSearchResult(fakePathFor(name, version).toString());
     }
 
-    private static java.nio.file.Path fakePathFor(ContextRoot contextRoot, Version version) {
-        return REPO_NAME.resolve(fakeGroupId(contextRoot).replace(".", "/"))
-                        .resolve(fakeArtifactId(contextRoot))
+    private static java.nio.file.Path fakePathFor(DeploymentName name, Version version) {
+        return REPO_NAME.resolve(fakeGroupId(name).replace(".", "/"))
+                        .resolve(fakeArtifactId(name))
                         .resolve(version.toString())
-                        .resolve(contextRoot + "-" + version + ".war");
+                        .resolve(name + "-" + version + ".war");
     }
 
-    @NotNull private static String fakeGroupId(ContextRoot contextRoot) {return "org." + contextRoot;}
+    @NotNull private static String fakeGroupId(DeploymentName name) {return "org." + name;}
 
-    @NotNull private static String fakeArtifactId(ContextRoot contextRoot) {return contextRoot + "-war";}
+    @NotNull private static String fakeArtifactId(DeploymentName name) {return name + "-war";}
 
     private String fileSearchResult(String path) {
         return "{"
@@ -238,11 +242,11 @@ public class ArtifactoryMock {
         return index().containsKey(checksum);
     }
 
-    private static ContextRoot fakeContextRootFor(Checksum checksum) {
+    private static DeploymentName fakeNameFor(Checksum checksum) {
         if (checksum.hexString().length() < 6)
             throw new RuntimeException("checkSum too short. must be at least 6 characters for fake context root: ["
                     + checksum.hexString() + "]");
-        return new ContextRoot("fake-" + checksum.hexString().substring(0, 6));
+        return new DeploymentName("fake-" + checksum.hexString().substring(0, 6));
     }
 
     private static Version fakeVersionFor(Checksum checksum) {
@@ -306,7 +310,7 @@ public class ArtifactoryMock {
             return fileInfo(resolved);
         if (FAKES) {
             log.info("fake file info for: {}", path);
-            Checksum checksum = fakeChecksumFor(new ContextRoot(path.getFileName().toString()));
+            Checksum checksum = fakeChecksumFor(new DeploymentName(path.getFileName().toString()));
             return fileInfo(12345, checksum, checksum);
         }
         throw new WebApplicationException(Response
@@ -342,7 +346,7 @@ public class ArtifactoryMock {
                     });
         } else if (FAKES) {
             log.info("fake folder info {}", path);
-            for (Version version : fakeVersionsFor(new ContextRoot(path.toString()))) {
+            for (Version version : fakeVersionsFor(new DeploymentName(path.toString()))) {
                 out.append(folderChild(version.toString()));
             }
         }
@@ -370,13 +374,13 @@ public class ArtifactoryMock {
         return false;
     }
 
-    public static List<Version> fakeVersionsFor(ContextRoot contextRoot) {
-        if (contextRoot.equals(FOO)) {
+    public static List<Version> fakeVersionsFor(DeploymentName name) {
+        if (name.equals(FOO)) {
             return FOO_VERSIONS;
-        } else if (contextRoot.equals(BAR)) {
+        } else if (name.equals(BAR)) {
             return BAR_VERSIONS;
         } else {
-            return fakeVersionsFor(contextRoot.getValue().getBytes());
+            return fakeVersionsFor(name.getValue().getBytes());
         }
     }
 
@@ -445,12 +449,12 @@ public class ArtifactoryMock {
             return Files.newInputStream(repoPath);
         }
         int n = path.getNameCount();
-        ContextRoot contextRoot = new ContextRoot(path.getName(n - 1).toString());
+        DeploymentName name = new DeploymentName(path.getName(n - 1).toString());
         Version version = new Version(path.getName(n - 2).toString());
-        return inputStreamFor(contextRoot, version);
+        return inputStreamFor(name, version);
     }
 
-    public static InputStream inputStreamFor(ContextRoot contextRoot, Version version) {
-        return new StringInputStream(contextRoot + "@" + version);
+    public static InputStream inputStreamFor(DeploymentName name, Version version) {
+        return new StringInputStream(name + "@" + version);
     }
 }

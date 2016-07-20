@@ -8,13 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends AbstractResource> {
+abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends AbstractResource, AUDIT extends AuditBuilder> {
     private final Audits audits;
 
     public void apply(PLAN plan) {
         RESOURCE resource = getResource(plan);
         log.debug("apply {} to {}", plan, resource);
-        AuditBuilder audit = buildAudit(resource);
+        AUDIT audit = buildAudit(resource);
         switch (plan.getState()) {
         case deployed:
             if (resource.isDeployed()) {
@@ -34,7 +34,7 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
         case undeployed:
             if (resource.isDeployed()) {
                 resource.remove();
-                auditRemove(resource, audit);
+                auditRemove(resource, plan, audit);
                 audits.audit(audit.removed());
             } else {
                 log.info("resource already removed: {}", plan);
@@ -44,13 +44,19 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
         throw new UnsupportedOperationException("unhandled case: " + plan.getState());
     }
 
-    protected abstract AuditBuilder buildAudit(RESOURCE resource);
+    protected abstract AUDIT buildAudit(RESOURCE resource);
 
     protected abstract RESOURCE getResource(PLAN plan);
 
-    protected abstract void update(RESOURCE resource, PLAN plan, AuditBuilder audit);
+    protected abstract void update(RESOURCE resource, PLAN plan, AUDIT audit);
 
-    protected abstract RESOURCE buildResource(PLAN plan, AuditBuilder audit);
+    protected abstract RESOURCE buildResource(PLAN plan, AUDIT audit);
 
-    protected abstract void auditRemove(RESOURCE resource, AuditBuilder audit);
+    protected abstract void auditRemove(RESOURCE resource, PLAN plan, AUDIT audit);
+
+    /**
+     * This method is called after all planned resources have been visited, so managed resources can clean up,
+     * e.g. deployments that are not in the plan get undeployed.
+     */
+    public void cleanup(Audits audits) {}
 }

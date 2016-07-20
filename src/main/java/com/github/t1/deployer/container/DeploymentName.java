@@ -19,10 +19,7 @@ public class DeploymentName {
 
     @JsonCreator public DeploymentName(String value) { this.value = value; }
 
-    @Override
-    public String toString() {
-        return value;
-    }
+    @Override public String toString() { return value; }
 
-    public boolean matches(@NonNull Deployment deployment) { return this.equals(deployment.getName()); }
+    public boolean matches(@NonNull DeploymentResource deployment) { return this.equals(deployment.name()); }
 }

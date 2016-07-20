@@ -8,14 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
 @Slf4j
-@Getter
-@Builder(builderMethodName = "doNotUseThisBuilder_UseTheBuildMethodWithTypeAndNameAndContainer")
+@Builder(builderMethodName = "doNotCallThisBuilderExternally")
 @Accessors(fluent = true, chain = true)
 public class LogHandlerResource extends AbstractResource {
-    @NonNull private final LoggingHandlerType type;
-    @NonNull private final LogHandlerName name;
-
-    private Boolean deployed = null;
+    @NonNull @Getter private final LoggingHandlerType type;
+    @NonNull @Getter private final LogHandlerName name;
 
     private LogLevel level;
     private String file;
@@ -23,28 +20,26 @@ public class LogHandlerResource extends AbstractResource {
     private String format;
     private String formatter;
 
-    private LogHandlerResource(LoggerContainer container, LoggingHandlerType type, LogHandlerName name) {
-        super(container);
+    private LogHandlerResource(CLI cli, LoggingHandlerType type, LogHandlerName name) {
+        super(cli);
         this.type = type;
         this.name = name;
     }
 
-    public static LogHandlerResourceBuilder builder(LoggingHandlerType type, LogHandlerName name,
-            LoggerContainer container) {
-        return doNotUseThisBuilder_UseTheBuildMethodWithTypeAndNameAndContainer()
-                .container(container).type(type).name(name);
+    public static LogHandlerResourceBuilder builder(LoggingHandlerType type, LogHandlerName name, CLI cli) {
+        return doNotCallThisBuilderExternally().cli(cli).type(type).name(name);
     }
 
     public static class LogHandlerResourceBuilder {
-        private LoggerContainer container;
+        private CLI cli;
 
-        public LogHandlerResourceBuilder container(LoggerContainer container) {
-            this.container = container;
+        public LogHandlerResourceBuilder cli(CLI cli) {
+            this.cli = cli;
             return this;
         }
 
         public LogHandlerResource build() {
-            LogHandlerResource resource = new LogHandlerResource(container, type, name);
+            LogHandlerResource resource = new LogHandlerResource(cli, type, name);
             resource.level = level;
             resource.file = file;
             resource.suffix = suffix;
@@ -54,6 +49,31 @@ public class LogHandlerResource extends AbstractResource {
         }
     }
 
+    public LogLevel level() {
+        assertDeployed();
+        return level;
+    }
+
+    public String file() {
+        assertDeployed();
+        return file;
+    }
+
+    public String suffix() {
+        assertDeployed();
+        return suffix;
+    }
+
+    public String format() {
+        assertDeployed();
+        return format;
+    }
+
+    public String formatter() {
+        assertDeployed();
+        return formatter;
+    }
+
     @Override public String toString() {
         return type + ":" + name + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed")
                 + ":" + level + ":" + file + ":" + suffix
@@ -61,27 +81,27 @@ public class LogHandlerResource extends AbstractResource {
                 + (formatter == null ? "" : ":" + formatter);
     }
 
-    public void writeLevel(LogLevel newLevel) {
+    public void updateLevel(LogLevel newLevel) {
         assertDeployed();
         writeAttribute("level", newLevel.name());
     }
 
-    public void writeFile(String newFile) {
+    public void updateFile(String newFile) {
         assertDeployed();
         writeAttribute("file", newFile);
     }
 
-    public void writeSuffix(String newSuffix) {
+    public void updateSuffix(String newSuffix) {
         assertDeployed();
         writeAttribute("suffix", newSuffix);
     }
 
-    public void writeFormat(String newFormat) {
+    public void updateFormat(String newFormat) {
         assertDeployed();
         writeAttribute("format", newFormat);
     }
 
-    public void writeFormatter(String newFormatter) {
+    public void updateFormatter(String newFormatter) {
         assertDeployed();
         writeAttribute("named-formatter", newFormatter);
     }
