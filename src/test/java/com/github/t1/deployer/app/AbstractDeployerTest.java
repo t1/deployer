@@ -22,6 +22,8 @@ import java.util.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Tools.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static com.github.t1.log.LogLevel.*;
+import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.*;
 import static org.assertj.core.api.Assertions.*;
@@ -49,12 +51,13 @@ public class AbstractDeployerTest {
 
     private List<String> allDeployments = new ArrayList<>();
     private List<String> allLoggers = new ArrayList<>();
+    private Map<LoggingHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
 
     @Before
     public void before() {
         container.cli = cli;
+
         when(auditsInstance.get()).thenReturn(audits);
-        when(cli.openServerDeploymentManager()).then(i -> deploymentManager);
 
         when(deploymentManager.newDeploymentPlan()).then(i -> planBuilder);
 
@@ -74,7 +77,9 @@ public class AbstractDeployerTest {
         when(cli.executeRaw(readResource("logging", "root-logger", "ROOT"))).then(i -> rootLoggerResponse());
         when(cli.execute(readResource("logging", "logger", "*"))).then(
                 i -> toModelNode(allLoggers.stream().collect(joining(",", "[", "]"))));
+        Arrays.stream(LoggingHandlerType.values()).forEach(this::stubAllLogHandlers);
         when(cli.execute(readResource(null, "deployment", "*"))).then(i -> allDeploymentsResponse());
+        when(cli.openServerDeploymentManager()).then(i -> deploymentManager);
     }
 
     private ModelNode rootLoggerResponse() {
@@ -93,6 +98,11 @@ public class AbstractDeployerTest {
                 + "}");
     }
 
+    private void stubAllLogHandlers(LoggingHandlerType type) {
+        when(cli.execute(readResource("logging", type.getTypeName(), "*"))).then(i ->
+                toModelNode(allLogHandlers.getOrDefault(type, emptyList()).stream().collect(joining(",", "[", "]"))));
+    }
+
     private ModelNode allDeploymentsResponse() {
         return toModelNode(allDeployments.stream().collect(joining(",", "[", "]")));
     }
@@ -103,6 +113,8 @@ public class AbstractDeployerTest {
         verify(cli, atLeast(0)).openServerDeploymentManager();
         verify(cli, atLeast(0)).execute(readResource(null, "deployment", "*"));
         verify(cli, atLeast(0)).execute(readResource("logging", "logger", "*"));
+        Arrays.stream(LoggingHandlerType.values()).forEach(type ->
+                verify(cli, atLeast(0)).execute(readResource("logging", type.getTypeName(), "*")));
 
         verifyNoMoreInteractions(cli);
     }
@@ -133,10 +145,9 @@ public class AbstractDeployerTest {
         public ArtifactFixtureBuilder(String name) {
             this.name = name;
 
-            when(cli.executeRaw(readResource(null, "deployment", name))).then(
-                    i -> (deployed == null)
-                            ? notDeployedNode(null, "deployment", name)
-                            : toModelNode(deployed.deployedNode()));
+            when(cli.executeRaw(readResource(null, "deployment", name))).then(i -> (deployed == null)
+                    ? notDeployedNode(null, "deployment", name)
+                    : toModelNode("{" + deployed.deployedNode() + "}"));
         }
 
         public ArtifactFixtureBuilder groupId(String groupId) {
@@ -185,23 +196,33 @@ public class AbstractDeployerTest {
 
             public String deployedNode() {
                 return ""
-                        + "{\n"
-                        + "    'outcome' => 'success',\n"
-                        + "    'result' => {\n"
-                        + "        'content' => [{'hash' => bytes {" + checksum.hexByteArray() + "}}],\n"
-                        + "        'enabled' => true,\n"
-                        + "        'name' => '" + deploymentName() + "',\n"
-                        + "        'persistent' => true,\n"
-                        + "        'runtime-name' => '" + deploymentName() + "',\n"
-                        + "        'subdeployment' => undefined,\n"
-                        + "        'subsystem' => {'web' => {\n"
+                        + "'outcome' => 'success',\n"
+                        + "'result' => {\n"
+                        + "    'content' => [{'hash' => bytes {" + checksum.hexByteArray() + "}}],\n"
+                        + "    'enabled' => true,\n"
+                        + "    'name' => '" + deploymentName() + "',\n"
+                        + "    'persistent' => true,\n"
+                        + "    'runtime-name' => '" + deploymentName() + "',\n"
+                        + "    'subdeployment' => undefined,\n"
+                        + "    'subsystem' => {"
+                        + "        'jaxrs' => {},\n"
+                        + "        'ejb3' => {\n"
+                        + "            'entity-bean' => undefined,\n"
+                        + "            'message-driven-bean' => undefined,\n"
+                        + "            'singleton-bean' => undefined,\n"
+                        + "            'stateful-session-bean' => undefined,\n"
+                        + "            'stateless-session-bean' => undefined\n"
+                        + "        },\n"
+                        + "        'undertow' => {\n"
                         + "            'context-root' => '" + deploymentName() + "',\n"
                         + "            'virtual-host' => 'default-host',\n"
                         + "            'servlet' => {'javax.ws.rs.core.Application' => {\n"
                         + "                'servlet-class' => 'org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher',\n"
                         + "                'servlet-name' => 'javax.ws.rs.core.Application'\n"
-                        + "            }}\n"
-                        + "        }}\n"
+                        + "            }},\n"
+                        + "            'websocket' => undefined,\n"
+                        + "            'logging' => {'configuration' => undefined}\n"
+                        + "        }\n"
                         + "    }\n"
                         + "}";
             }
@@ -222,9 +243,11 @@ public class AbstractDeployerTest {
                 if (deployed != null)
                     throw new RuntimeException("already have deployed " + name + ":" + version);
                 deployed = this;
-                allDeployments.add(deployedNode());
+                allDeployments.add("{" + deploymentAddress() + deployedNode() + "}");
                 return this;
             }
+
+            private String deploymentAddress() { return address(null, "deployment", name); }
 
             public InputStream inputStream() {
                 return (contents == null)
@@ -264,7 +287,7 @@ public class AbstractDeployerTest {
             }
 
             public void verifyAddExecuted() {
-                // verify(cli).execute(toModelNode(""
+                // TODO verify(cli).execute(toModelNode(""
                 //         + "{\n"
                 //         + "    'address' => [('deployment' => '" + name + "')],"
                 //         + "    'operation' => 'add'\n"
@@ -339,24 +362,22 @@ public class AbstractDeployerTest {
         public LoggerFixture(@NonNull String category) {
             this.category = LoggerCategory.of(category);
 
-            when(cli.executeRaw(readResource("logging", "logger", category))).then(
-                    i -> deployed ? deployedNode() : notDeployedNode("logging", "logger", category));
+            when(cli.executeRaw(readResource("logging", "logger", category))).then(i -> deployed
+                    ? toModelNode("{" + deployedNode() + "}")
+                    : notDeployedNode("logging", "logger", category));
         }
 
-        public ModelNode deployedNode() {
-            String string = ""
-                    + "{\n"
-                    + "    'outcome' => 'success',\n"
-                    + "    'result' => {\n"
-                    + "        'category' => " + ((category == null) ? "undefined" : "'" + category + "'") + ",\n"
-                    + "        'filter' => undefined,\n"
-                    + "        'filter-spec' => undefined,\n"
+        public String deployedNode() {
+            return ""
+                    + "'outcome' => 'success',\n"
+                    + "'result' => {\n"
+                    + "    'category' => " + ((category == null) ? "undefined" : "'" + category + "'") + ",\n"
+                    + "    'filter' => undefined,\n"
+                    + "    'filter-spec' => undefined,\n"
                     + (handlers.isEmpty() ? "" : "        'handlers' => " + handlersArrayNode() + ",\n")
-                    + "        'level' => '" + level + "',\n"
-                    + "        'use-parent-handlers' => " + useParentHandlers + "\n"
-                    + "    }\n"
-                    + "}";
-            return toModelNode(string);
+                    + "    'level' => " + ((level == null) ? "undefined" : "'" + level + "'") + ",\n"
+                    + "    'use-parent-handlers' => " + useParentHandlers + "\n"
+                    + "}\n";
         }
 
         public LoggerFixture level(LogLevel level) {
@@ -376,22 +397,7 @@ public class AbstractDeployerTest {
 
         public LoggerFixture deployed() {
             this.deployed = true;
-            allLoggers.add(""
-                    + "{\n"
-                    + "    \"address\" => [\n"
-                    + "        (\"subsystem\" => \"logging\"),\n"
-                    + "        (\"logger\" => \"" + category + "\")\n"
-                    + "    ],\n"
-                    + "    \"outcome\" => \"success\",\n"
-                    + "    \"result\" => {\n"
-                    + "        \"category\" => \"" + category + "\",\n"
-                    + "        \"filter\" => undefined,\n"
-                    + "        \"filter-spec\" => undefined,\n"
-                    + "        \"handlers\" => undefined,\n"
-                    + ((level == null) ? "" : "        \"level\" => \"" + level + "\",\n")
-                    + "        \"use-parent-handlers\" => " + useParentHandlers + "\n"
-                    + "    }\n"
-                    + "}\n");
+            allLoggers.add("{" + loggerAddress() + deployedNode() + "}");
             return this;
         }
 
@@ -545,28 +551,41 @@ public class AbstractDeployerTest {
             this.name = new LogHandlerName(name);
             this.audit = LogHandlerAudit.builder().type(this.type).name(this.name);
 
-            when(cli.executeRaw(readResource("logging", type.getTypeName(), name))).then(
-                    i -> deployed ? deployedNode() : notDeployedNode("logging", type, name));
+            when(cli.executeRaw(readResource("logging", type.getTypeName(), name))).then(i -> deployed
+                    ? toModelNode("{" + deployedNode() + "}")
+                    : notDeployedNode("logging", type, name));
         }
 
-        public ModelNode deployedNode() {
-            String string = ""
-                    + "{\n"
-                    + "    'outcome' => 'success',\n"
-                    + "    'result' => {\n"
-                    + ((level == null) ? "" : "        'level' => '" + level + "',\n")
-                    + ((file == null) ? "" : "        'file' => '" + file + "',\n")
-                    + ((suffix == null) ? "" : "        'suffix' => '" + suffix + "',\n")
-                    + ((format == null) ? "" : "        'format' => '" + format + "',\n")
-                    + ((formatter == null) ? "" : "        'named-formatter' => '" + formatter + "',\n")
-                    + "    }\n"
-                    + "}";
-            return toModelNode(string);
+        public String deployedNode() {
+            return ""
+                    + "'outcome' => 'success',\n"
+                    + "'result' => {\n"
+                    + "    'append' => true,\n"
+                    + "    'autoflush' => true,\n"
+                    + "    'enabled' => true,\n"
+                    + "    'encoding' => undefined,\n"
+                    + "    'file' => {\n"
+                    + "        'relative-to' => 'jboss.server.log.dir',\n"
+                    + "        'path' => '" + file() + "'\n"
+                    + "    },\n"
+                    + "    'filter' => undefined,\n"
+                    + "    'filter-spec' => undefined,\n"
+                    + "    'formatter' => '" + ((format == null)
+                                                        ? "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n" : format) + "',\n"
+                    + ((level == null) ? "" : "    'level' => '" + level + "',\n")
+                    + "    'name' => '" + name + "',\n"
+                    + "    'named-formatter' => " + ((formatter == null) ? "undefined" : "'" + formatter + "'") + ",\n"
+                    + "    'suffix' => '" + suffix + "'\n"
+                    + "}\n";
         }
 
         public LogHandlerFixture level(LogLevel level) {
             this.level = level;
             return this;
+        }
+
+        private String file() {
+            return (file == null) ? name.getValue() : file;
         }
 
         public LogHandlerFixture file(String file) {
@@ -593,6 +612,8 @@ public class AbstractDeployerTest {
 
         public LogHandlerFixture deployed() {
             this.deployed = true;
+            allLogHandlers.computeIfAbsent(type, t -> new ArrayList<>())
+                          .add("{" + logHandlerAddress() + deployedNode() + "}");
             return this;
         }
 
@@ -624,10 +645,10 @@ public class AbstractDeployerTest {
                     + logHandlerAddress()
                     + "    'operation' => 'add'"
                     + ((level == null) ? "" : ",\n    'level' => '" + level + "'")
-                    + ((file == null) ? "" : ",\n    'file' => {\n"
-                    + "        'path' => '" + file + "',\n"
+                    + ",\n    'file' => {\n"
+                    + "        'path' => '" + file() + "',\n"
                     + "        'relative-to' => 'jboss.server.log.dir'\n"
-                    + "    }")
+                    + "    }"
                     + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
                     + ((format == null) ? "" : ",\n    'format' => '" + format + "'")
                     + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
@@ -658,6 +679,20 @@ public class AbstractDeployerTest {
             if (this.formatter != null)
                 audit.change("formatter", this.formatter, null);
             assertThat(audits.getAudits()).containsExactly(audit.removed());
+        }
+
+        public LogHandlerConfig asConfig() {
+            return LogHandlerConfig
+                    .builder()
+                    .state(DeploymentState.deployed)
+                    .type(type)
+                    .name(name)
+                    .level((level == null) ? ALL : level)
+                    .file(file())
+                    .suffix((suffix == null) ? ".yyyy-MM-dd" : suffix)
+                    .format(format)
+                    .formatter(formatter)
+                    .build();
         }
     }
 }

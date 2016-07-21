@@ -13,6 +13,8 @@ import static lombok.AccessLevel.*;
 @NoArgsConstructor(access = PRIVATE, force = true)
 @JsonSerialize(using = ToStringSerializer.class)
 public class DeploymentName {
+    public static final DeploymentName ALL = new DeploymentName("*");
+
     @NonNull
     @XmlValue
     String value;

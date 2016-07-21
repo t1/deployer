@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static com.github.t1.deployer.container.CLI.*;
+import static com.github.t1.deployer.container.DeploymentName.*;
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.stream.Collectors.*;
 
@@ -35,16 +36,10 @@ public class DeploymentResource extends AbstractResource {
     }
 
     public static List<DeploymentResource> allDeployments(CLI cli) {
-        return cli.execute(readDeployments())
+        return cli.execute(readResource(new DeploymentResource(ALL, cli).createRequestWithAddress()))
                   .asList().stream()
                   .map(match -> toDeployment(match.get("result"), cli))
                   .collect(toList());
-    }
-
-    private static ModelNode readDeployments() {
-        ModelNode request = new ModelNode();
-        request.get("address").add("deployment", "*");
-        return readResource(request);
     }
 
     private static DeploymentResource toDeployment(ModelNode node, CLI cli) {

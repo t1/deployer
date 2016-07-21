@@ -21,6 +21,8 @@ public class Container {
         return LogHandlerResource.builder(type, name, cli);
     }
 
+    public List<LogHandlerResource> allLogHandlers() { return LogHandlerResource.allHandlers(cli); }
+
     public LoggerResourceBuilder logger(LoggerCategory category) { return LoggerResource.builder(category, cli); }
 
     public List<LoggerResource> allLoggers() { return LoggerResource.allLoggers(cli); }

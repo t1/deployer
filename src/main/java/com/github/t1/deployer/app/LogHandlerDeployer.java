@@ -8,13 +8,15 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
 
+import static com.github.t1.deployer.model.DeploymentState.*;
+
 @Slf4j
 public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHandlerResource, LogHandlerAuditBuilder> {
-    private final Container loggers;
+    private final Container container;
 
-    public LogHandlerDeployer(Container loggers, Audits audits) {
+    public LogHandlerDeployer(Container container, Audits audits) {
         super(audits);
-        this.loggers = loggers;
+        this.container = container;
     }
 
     @Override protected LogHandlerAuditBuilder buildAudit(LogHandlerResource resource) {
@@ -22,7 +24,7 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
     }
 
     @Override protected LogHandlerResource getResource(LogHandlerConfig plan) {
-        return loggers.logHandler(plan.getType(), plan.getName()).build();
+        return container.logHandler(plan.getType(), plan.getName()).build();
     }
 
     @Override
@@ -58,17 +60,17 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
             audit.change("format", null, plan.getFormat());
         if (plan.getFormatter() != null)
             audit.change("formatter", null, plan.getFormatter());
-        return loggers.logHandler(plan.getType(), plan.getName())
-                      .level(plan.getLevel())
-                      .file(plan.getFile())
-                      .suffix(plan.getSuffix())
-                      .format(plan.getFormat())
-                      .formatter(plan.getFormatter())
-                      .build();
+        return container.logHandler(plan.getType(), plan.getName())
+                        .level(plan.getLevel())
+                        .file(plan.getFile())
+                        .suffix(plan.getSuffix())
+                        .format(plan.getFormat())
+                        .formatter(plan.getFormatter())
+                        .build();
     }
 
-    @Override protected void auditRemove(LogHandlerResource resource, LogHandlerConfig plan,
-            LogHandlerAuditBuilder audit) {
+    @Override
+    protected void auditRemove(LogHandlerResource resource, LogHandlerConfig plan, LogHandlerAuditBuilder audit) {
         audit.change("level", resource.level(), null)
              .change("file", resource.file(), null)
              .change("suffix", resource.suffix(), null);
@@ -79,6 +81,17 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
     }
 
     @Override public void read(ConfigurationPlanBuilder builder) {
-        // TODO implement
+        for (LogHandlerResource handler : container.allLogHandlers())
+            builder.logHandler(handler.name(), LogHandlerConfig
+                    .builder()
+                    .type(handler.type())
+                    .name(handler.name())
+                    .state(deployed)
+                    .level(handler.level())
+                    .format(handler.format())
+                    .formatter(handler.formatter())
+                    .file(handler.file())
+                    .suffix(handler.suffix())
+                    .build());
     }
 }

@@ -183,6 +183,8 @@ public class ConfigurationPlan {
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
     public static class LogHandlerConfig implements AbstractConfig {
+        private static final LogLevel DEFAULT_LEVEL = ALL;
+
         @NonNull @JsonIgnore private final LogHandlerName name;
         @NonNull private final DeploymentState state;
         @NonNull private final LogLevel level;
@@ -199,7 +201,7 @@ public class ConfigurationPlan {
                 throw new RuntimeException("no config in log-handler '" + name + "'");
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "level", ALL.name(), value -> builder.level(LogLevel.valueOf(value)));
+            apply(node, "level", DEFAULT_LEVEL.name(), value -> builder.level(LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));
             apply(node, "format", null, builder::format);
             apply(node, "formatter", null, builder::formatter);
@@ -221,18 +223,25 @@ public class ConfigurationPlan {
                     + " in [" + builder.name + "]");
         }
 
-        public static class LogHandlerConfigBuilder {}
+        public static class LogHandlerConfigBuilder {
+            public LogHandlerConfigBuilder level(LogLevel level) {
+                this.level = (level == null) ? DEFAULT_LEVEL : level;
+                return this;
+            }
+        }
 
         private LogHandlerConfig validate() {
-            if (format == null && formatter == null ||
-                    format != null && formatter != null)
+            if (format == null && formatter == null || format != null && formatter != null)
                 throw new RuntimeException("log-handler [" + name + "] must either have a format or a formatter");
             return this;
         }
 
         @Override public String toString() {
-            return "«log-handler:" + state + ":" + name + ":" + level + ":" + type + ":" + file + ":" + suffix
-                    + ":" + format + "»";
+            return "«log-handler:" + state + ":" + type + ":" + name + ":" + level
+                    + ":" + file + ":" + suffix
+                    + ((format == null) ? "" : ":format=" + format)
+                    + ((formatter == null) ? "" : ":formatter=" + formatter)
+                    + "»";
         }
     }
 

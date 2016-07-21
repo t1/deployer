@@ -13,6 +13,8 @@ import static lombok.AccessLevel.*;
 @RequiredArgsConstructor
 @JsonSerialize(using = ToStringSerializer.class)
 public class LogHandlerName {
+    public static final LogHandlerName ALL = new LogHandlerName("*");
+
     @NonNull
     @XmlValue
     String value;

@@ -15,13 +15,13 @@ import static lombok.AccessLevel.*;
 @JsonSerialize(using = ToStringSerializer.class)
 public class LoggerCategory implements Comparable<LoggerCategory> {
     public static final LoggerCategory ROOT = new LoggerCategory("ROOT");
-    public static final LoggerCategory ANY = new LoggerCategory("*");
+    public static final LoggerCategory ALL = new LoggerCategory("*");
 
     public static LoggerCategory of(@NonNull String value) {
         if (value.isEmpty() || value.equals(ROOT.getValue()))
             return ROOT;
-        if (value.equals(ANY.getValue()))
-            return ANY;
+        if (value.equals(ALL.getValue()))
+            return ALL;
         return new LoggerCategory(value);
     }
 

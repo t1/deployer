@@ -35,11 +35,11 @@ public class LoggerResource extends AbstractResource {
     }
 
     public static List<LoggerResource> allLoggers(CLI cli) {
-        ModelNode request = readResource(new LoggerResource(LoggerCategory.ANY, cli).createRequestWithAddress());
+        ModelNode request = readResource(new LoggerResource(ALL, cli).createRequestWithAddress());
         List<LoggerResource> loggers =
                 cli.execute(request)
                    .asList().stream()
-                   .map(node -> toLoggerResource(category(node.get("address")), cli, node.get("result")))
+                   .map(node -> toLoggerResource(category(node), cli, node.get("result")))
                    .collect(toList());
         Collections.sort(loggers, Comparator.comparing(LoggerResource::category));
         loggers.add(0, readRootLogger(cli));
@@ -117,11 +117,17 @@ public class LoggerResource extends AbstractResource {
 
     @Override protected void readFrom(ModelNode response) {
         this.level = (response.get("level").isDefined()) ? LogLevel.valueOf(response.get("level").asString()) : null;
-        ModelNode useParentHandlersNode = response.get("use-parent-handlers");
-        this.useParentHandlers = (useParentHandlersNode.isDefined()) ? useParentHandlersNode.asBoolean() : null;
-        ModelNode handlersNode = response.get("handlers");
-        this.handlers = (handlersNode.isDefined())
-                ? handlersNode.asList().stream().map(ModelNode::asString).map(LogHandlerName::new).collect(toList())
+
+        this.useParentHandlers = (response.get("use-parent-handlers").isDefined())
+                ? response.get("use-parent-handlers").asBoolean() : null;
+
+        this.handlers = (response.get("handlers").isDefined())
+                ? response.get("handlers")
+                          .asList()
+                          .stream()
+                          .map(ModelNode::asString)
+                          .map(LogHandlerName::new)
+                          .collect(toList())
                 : emptyList();
     }
 
@@ -161,7 +167,7 @@ public class LoggerResource extends AbstractResource {
     }
 
     private static LoggerCategory category(ModelNode address) {
-        return LoggerCategory.of(address.get(1).get("logger").asString());
+        return LoggerCategory.of(address.get("address").get(1).get("logger").asString());
     }
 
     public static LoggerResource toLoggerResource(LoggerCategory category, CLI cli, ModelNode node) {
