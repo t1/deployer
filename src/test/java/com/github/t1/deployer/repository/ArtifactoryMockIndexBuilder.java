@@ -18,6 +18,20 @@ public class ArtifactoryMockIndexBuilder {
 
     private final Map<Checksum, java.nio.file.Path> INDEX = new HashMap<>();
 
+    @SneakyThrows(IOException.class)
+    public void run() {
+        System.out.println("build local maven repository checksum index");
+        BuildChecksumsFileVisitor visitor = new BuildChecksumsFileVisitor(MAVEN_REPOSITORY);
+        Instant start = Instant.now();
+
+        Files.walkFileTree(MAVEN_REPOSITORY, visitor);
+        writeIndex();
+
+        Instant end = Instant.now();
+        Duration duration = Duration.between(start, end);
+        System.out.println("ended after " + duration.getSeconds() + "s for " + visitor.getCount() + " deployables");
+    }
+
     @RequiredArgsConstructor
     private final class BuildChecksumsFileVisitor extends SimpleFileVisitor<java.nio.file.Path> {
         private final java.nio.file.Path root;
@@ -37,37 +51,26 @@ public class ArtifactoryMockIndexBuilder {
         }
 
         private boolean isDeployable(String fileName) {
-            return fileName.endsWith(".war") || fileName.endsWith(".ear");
+            return fileName.endsWith(".war") || fileName.endsWith(".ear") || (
+                    fileName.contains("postgresql") && fileName.endsWith(".jar")
+                            && !fileName.endsWith("-javadoc.jar") && !fileName.endsWith("-sources.jar")
+            );
         }
-    }
-
-    @SneakyThrows(IOException.class)
-    public void run() {
-        System.out.println("build local maven repository checksum index");
-        BuildChecksumsFileVisitor visitor = new BuildChecksumsFileVisitor(MAVEN_REPOSITORY);
-        Instant start = Instant.now();
-
-        Files.walkFileTree(MAVEN_REPOSITORY, visitor);
-        writeIndex();
-
-        Instant end = Instant.now();
-        Duration duration = Duration.between(start, end);
-        System.out.println("ended after " + duration.getSeconds() + "s for " + visitor.getCount() + " deployables");
     }
 
     @SneakyThrows(IOException.class)
     private void writeIndex() {
         try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
-            INDEX.entrySet().stream() //
-                    .sorted((left, right) -> left.getValue().compareTo(right.getValue())) //
-                    .forEach(entry -> write(writer, entry));
+            INDEX.entrySet().stream()
+                 .sorted((left, right) -> left.getValue().compareTo(right.getValue()))
+                 .forEach(entry -> write(writer, entry));
         }
     }
 
     private Writer write(BufferedWriter writer, Map.Entry<Checksum, java.nio.file.Path> entry) {
         try {
-            return writer.append(entry.getKey().hexString()).append(":") //
-                    .append(entry.getValue().toString()).append("\n");
+            return writer.append(entry.getKey().hexString()).append(":")
+                         .append(entry.getValue().toString()).append("\n");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
