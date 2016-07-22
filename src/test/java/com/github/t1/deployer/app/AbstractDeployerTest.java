@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 public class AbstractDeployerTest {
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
 
-    @InjectMocks Deployer deployer;
+    @InjectMocks DeployerBoundary deployer;
 
     @Spy private Audits audits;
     @Mock Instance<Audits> auditsInstance;

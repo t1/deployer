@@ -55,7 +55,7 @@ public class DeployerIT {
     @org.jboss.arquillian.container.test.api.Deployment
     public static WebArchive createDeployment() {
         return new WebArchiveBuilder(DEPLOYER_IT_WAR)
-                .with(Deployer.class.getPackage())
+                .with(DeployerBoundary.class.getPackage())
                 .with(TestLoggerRule.class, FileMemento.class, LoggerMemento.class)
                 .library("org.assertj", "assertj-core")
                 .print()
