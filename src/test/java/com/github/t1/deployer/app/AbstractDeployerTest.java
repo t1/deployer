@@ -23,6 +23,7 @@ import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Tools.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.log.LogLevel.*;
+import static java.lang.Boolean.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.*;
@@ -494,7 +495,7 @@ public class AbstractDeployerTest {
                     .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
                     .level(level)
                     .handlers(handlerNames())
-                    .useParentHandlers(useParentHandlers)
+                    .useParentHandlers((useParentHandlers == FALSE) ? false : null) // true -> null (default)
                     .build();
         }
     }

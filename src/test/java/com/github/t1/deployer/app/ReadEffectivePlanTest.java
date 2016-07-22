@@ -24,7 +24,6 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
             .level(INFO)
             .handler("CONSOLE")
             .handler("FILE")
-            .useParentHandlers(true)
             .build();
 
     private static List<DeploymentConfig> artifacts(ConfigurationPlan plan) {
