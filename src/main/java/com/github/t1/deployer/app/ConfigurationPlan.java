@@ -77,13 +77,13 @@ public class ConfigurationPlan {
             });
     }
 
-    @Singular @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
     @Singular @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
+    @Singular @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
     @Singular @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> artifacts;
 
-    public Stream<LoggerConfig> loggers() { return loggers.values().stream(); }
-
     public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
+
+    public Stream<LoggerConfig> loggers() { return loggers.values().stream(); }
 
     public Stream<DeploymentConfig> artifacts() { return artifacts.values().stream(); }
 

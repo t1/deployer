@@ -4,6 +4,7 @@ import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
+import com.github.t1.log.Logged;
 import com.github.t1.problem.WebApplicationApplicationException;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +18,11 @@ import java.nio.file.*;
 import java.nio.file.Path;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.log.LogLevel.*;
 
 @javax.ws.rs.Path("/")
 @Stateless
+@Logged(level = INFO)
 @Slf4j
 public class DeployerBoundary {
     public static final String ROOT_DEPLOYER_CONFIG = "root.deployer.config";
@@ -33,7 +36,7 @@ public class DeployerBoundary {
     }
 
     @GET
-    public ConfigurationPlan get() { return effectivePlan(); }
+    public ConfigurationPlan getEffectivePlan() { return new Run().read(); }
 
     @POST
     public Response post() {
@@ -57,9 +60,6 @@ public class DeployerBoundary {
 
     @Getter @Setter
     private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
-
-
-    public ConfigurationPlan effectivePlan() { return new Run().read(); }
 
 
     @SneakyThrows(IOException.class)
@@ -88,8 +88,8 @@ public class DeployerBoundary {
 
         public ConfigurationPlan read() {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
-            loggerDeployer.read(builder);
             logHandlerDeployer.read(builder);
+            loggerDeployer.read(builder);
             artifactDeployer.read(builder);
             return builder.build();
         }
