@@ -60,7 +60,8 @@ public class ConfigProducer {
             try (Reader reader = Files.newBufferedReader(path)) {
                 this.config = nvl(YAML.readValue(reader, DeployerConfig.class), this.config);
             } catch (IOException e) {
-                log.error("can't load config from '" + path + "'", e);
+                log.error("can't load config from '" + path + "'.\n"
+                        + "--------- CONTINUE WITH DEFAULT CONFIG! ---------\n", e);
             }
         } else {
             log.info("no deployer config file at '" + path + "'");
