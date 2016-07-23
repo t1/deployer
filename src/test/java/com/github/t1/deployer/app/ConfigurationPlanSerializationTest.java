@@ -105,8 +105,6 @@ public class ConfigurationPlanSerializationTest {
         ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(TWO_DEPLOYMENTS_YAML));
 
         assertThat(plan).isEqualTo(TWO_DEPLOYMENTS_PLAN);
-        assertThat(plan.getArtifacts())
-                .containsOnlyKeys(new DeploymentName("foo"), new DeploymentName("bar-name"));
     }
 
     @Test

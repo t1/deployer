@@ -12,6 +12,7 @@ import com.github.t1.testtools.SystemPropertiesRule;
 import lombok.*;
 import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
+import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.mockito.*;
 
@@ -125,6 +126,10 @@ public class AbstractDeployerTest {
         return givenArtifact(name, "org." + name, name);
     }
 
+    public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String groupId, String artifactId) {
+        return givenArtifact(type, artifactId, groupId, artifactId);
+    }
+
     public ArtifactFixtureBuilder givenArtifact(String groupId, String artifactId) {
         return givenArtifact(artifactId, groupId, artifactId);
     }
@@ -134,22 +139,30 @@ public class AbstractDeployerTest {
     }
 
     public ArtifactFixtureBuilder givenArtifact(String name, String groupId, String artifactId) {
-        return new ArtifactFixtureBuilder(name).groupId(groupId).artifactId(artifactId);
+        return givenArtifact(war, name, groupId, artifactId);
+    }
+
+    public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name, String groupId, String artifactId) {
+        return new ArtifactFixtureBuilder(type, name).groupId(groupId).artifactId(artifactId);
     }
 
     public class ArtifactFixtureBuilder {
+        private final ArtifactType type;
         private final String name;
         private String groupId;
         private String artifactId;
         private ArtifactFixture deployed;
 
-        public ArtifactFixtureBuilder(String name) {
+        public ArtifactFixtureBuilder(ArtifactType type, String name) {
+            this.type = type;
             this.name = name;
 
-            when(cli.executeRaw(readResource(null, "deployment", name))).then(i -> (deployed == null)
+            when(cli.executeRaw(readResource(null, "deployment", name + typeSuffix()))).then(i -> (deployed == null)
                     ? notDeployedNode(null, "deployment", name)
                     : toModelNode("{" + deployed.deployedNode() + "}"));
         }
+
+        @NotNull protected String typeSuffix() {return (this.type == war) ? ".war" : "";}
 
         public ArtifactFixtureBuilder groupId(String groupId) {
             this.groupId = groupId;
@@ -169,25 +182,15 @@ public class AbstractDeployerTest {
 
         public ArtifactFixture version(String version) { return version(new Version(version)); }
 
-        public ArtifactFixture version(Version version) { return new ArtifactFixture(version, war); }
-
-        public ArtifactFixture version(String version, ArtifactType type) {
-            return version(new Version(version), type);
-        }
-
-        public ArtifactFixture version(Version version, ArtifactType type) {
-            return new ArtifactFixture(version, type);
-        }
+        public ArtifactFixture version(Version version) { return new ArtifactFixture(version); }
 
         public class ArtifactFixture {
             @NonNull @Getter private final Version version;
-            @NonNull @Getter private final ArtifactType type;
             @Getter private Checksum checksum;
             private String contents;
 
-            public ArtifactFixture(Version version, ArtifactType type) {
+            public ArtifactFixture(Version version) {
                 this.version = version;
-                this.type = type;
 
                 when(repository.lookupArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
                 when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, type))
@@ -201,7 +204,7 @@ public class AbstractDeployerTest {
                         + "'result' => {\n"
                         + "    'content' => [{'hash' => bytes {" + checksum.hexByteArray() + "}}],\n"
                         + "    'enabled' => true,\n"
-                        + "    'name' => '" + deploymentName() + "',\n"
+                        + "    'name' => '" + deploymentName() + typeSuffix() + "',\n"
                         + "    'persistent' => true,\n"
                         + "    'runtime-name' => '" + deploymentName() + "',\n"
                         + "    'subdeployment' => undefined,\n"
@@ -321,8 +324,8 @@ public class AbstractDeployerTest {
             }
 
             public void verifyUndeployExecuted() {
-                verify(planBuilder).undeploy(name);
-                verify(undeployPlanBuilder).remove(name);
+                verify(planBuilder).undeploy(name + ".war");
+                verify(undeployPlanBuilder).remove(name + ".war");
             }
 
             public Audit removedAudit() {

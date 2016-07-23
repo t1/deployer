@@ -11,11 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static java.util.Objects.*;
 
 @Slf4j
 public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, DeploymentResource, ArtifactAuditBuilder> {
+    private static final String WAR_SUFFIX = ".war";
     private final boolean managed;
     private final Repository repository;
     private final Container container;
@@ -34,22 +36,35 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
     }
 
     @Override protected ArtifactAuditBuilder buildAudit(DeploymentResource resource) {
-        return ArtifactAudit.builder().name(resource.name());
+        return ArtifactAudit.builder().name(toPlanDeploymentName(resource));
     }
 
     @Override protected DeploymentResource getResource(DeploymentConfig plan) {
-        return container.deployment(plan.getName()).build();
+        return container.deployment(toResourceDeploymentName(plan)).build();
+    }
+
+    private DeploymentName toResourceDeploymentName(DeploymentConfig plan) {
+        if (plan.getType() == war && !plan.getName().getValue().endsWith(".war"))
+            return new DeploymentName(plan.getName() + ".war");
+        return plan.getName();
+    }
+
+    private DeploymentName toPlanDeploymentName(DeploymentResource resource) {
+        String name = resource.name().getValue();
+        if (name.endsWith(WAR_SUFFIX))
+            return new DeploymentName(name.substring(0, name.length() - WAR_SUFFIX.length()));
+        return resource.name();
     }
 
     @Override
     protected void update(DeploymentResource resource, DeploymentConfig plan, ArtifactAuditBuilder audit) {
         Artifact artifact = lookupArtifact(plan);
         if (resource.checksum().equals(artifact.getChecksum())) {
-            boolean removed = existing.removeIf(plan.getName()::matches);
+            boolean removed = existing.removeIf(toResourceDeploymentName(plan)::matches);
             assert removed : "expected [" + resource + "] to be in existing " + existing;
             log.info("already deployed with same checksum: {}", plan.getName());
         } else {
-            container.deployment(plan.getName()).build().redeploy(artifact.getInputStream());
+            container.deployment(toResourceDeploymentName(plan)).build().redeploy(artifact.getInputStream());
             audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
             Artifact old = lookupByChecksum.apply(resource.checksum());
@@ -73,7 +88,7 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
              .change("version", null, plan.getVersion())
              .change("type", null, plan.getType())
              .change("checksum", null, artifact.getChecksum());
-        return container.deployment(plan.getName()).inputStream(artifact.getInputStream()).build();
+        return container.deployment(toResourceDeploymentName(plan)).inputStream(artifact.getInputStream()).build();
     }
 
     private Artifact lookupArtifact(DeploymentConfig plan) {
@@ -93,7 +108,7 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
         if (managed)
             for (DeploymentResource deployment : existing) {
                 Artifact artifact = lookupByChecksum.apply(deployment.checksum());
-                ArtifactAuditBuilder audit = ArtifactAudit.builder().name(deployment.name());
+                ArtifactAuditBuilder audit = ArtifactAudit.builder().name(toPlanDeploymentName(deployment));
                 audit.change("group-id", artifact.getGroupId(), null);
                 audit.change("artifact-id", artifact.getArtifactId(), null);
                 audit.change("version", artifact.getVersion(), null);
@@ -110,7 +125,7 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
             Artifact artifact = lookupByChecksum.apply(deployment.checksum());
             builder.artifact(DeploymentConfig
                     .builder()
-                    .name(deployment.name())
+                    .name(toPlanDeploymentName(deployment))
                     .groupId(artifact.getGroupId())
                     .artifactId(artifact.getArtifactId())
                     .version(artifact.getVersion())

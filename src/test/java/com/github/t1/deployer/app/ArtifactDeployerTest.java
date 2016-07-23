@@ -359,8 +359,8 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     public void shouldDeployBundle() {
         givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war").version("3.10.4");
-        givenArtifact("artifact-deployer-test", "should-deploy-bundle")
-                .version("1", bundle)
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
                 .containing(""
                         + "artifacts:\n"
                         + "  jolokia:\n"
