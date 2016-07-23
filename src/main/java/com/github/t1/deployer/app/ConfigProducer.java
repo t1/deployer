@@ -1,5 +1,8 @@
 package com.github.t1.deployer.app;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.RepositoryType;
 import lombok.*;
@@ -11,7 +14,9 @@ import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
 
-import static com.github.t1.deployer.app.ConfigurationPlan.*;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
+import static com.fasterxml.jackson.databind.DeserializationFeature.*;
+import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.model.Tools.*;
 import static lombok.AccessLevel.*;
@@ -19,6 +24,15 @@ import static lombok.AccessLevel.*;
 @Slf4j
 @Singleton
 public class ConfigProducer {
+    private static final ObjectMapper YAML = new ObjectMapper(
+            new YAMLFactory()
+                    .enable(MINIMIZE_QUOTES)
+                    .disable(WRITE_DOC_START_MARKER))
+            .setSerializationInclusion(NON_EMPTY)
+            .setPropertyNamingStrategy(new KebabCaseStrategy())
+            .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .findAndRegisterModules();
+
     public static final String DEPLOYER_CONFIG_YAML = "deployer.config.yaml";
 
     private static final DeployerConfig DEFAULT_CONFIG = DeployerConfig
@@ -42,7 +56,8 @@ public class ConfigProducer {
             URI uri;
             String username;
             Password password;
-            String key;
+            String repositorySnapshots;
+            String repositoryReleases;
         }
 
         @Override public String toString() { return toYAML(); }
@@ -76,9 +91,7 @@ public class ConfigProducer {
     public RepositoryType repositoryType() { return getRepository().getType(); }
 
     @Produces @Config("repository.uri")
-    public URI repositoryUri() {
-        return getRepository().getUri();
-    }
+    public URI repositoryUri() { return getRepository().getUri(); }
 
     @Produces @Config("repository.username")
     public String repositoryUsername() { return getRepository().getUsername(); }
@@ -86,6 +99,9 @@ public class ConfigProducer {
     @Produces @Config("repository.password")
     public Password repositoryPassword() { return getRepository().getPassword(); }
 
-    @Produces @Config("repository.key")
-    public String repositoryKey() { return getRepository().getKey(); }
+    @Produces @Config("repository.snapshots")
+    public String repositorySnapshots() { return getRepository().getRepositorySnapshots(); }
+
+    @Produces @Config("repository.releases")
+    public String repositoryReleases() { return getRepository().getRepositoryReleases(); }
 }

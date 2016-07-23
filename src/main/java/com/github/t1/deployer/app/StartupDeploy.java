@@ -15,7 +15,5 @@ public class StartupDeploy {
 
     @Resource ManagedExecutorService executorService;
 
-    @PostConstruct public void startup() {
-        executorService.execute(deployer::post);
-    }
+    @PostConstruct public void startup() { executorService.execute(deployer::post); }
 }

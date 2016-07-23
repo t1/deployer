@@ -24,6 +24,7 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
+import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
 
 /**
@@ -31,6 +32,7 @@ import static lombok.AccessLevel.*;
  * validating the plan, and applying default values. It also provides {@link #toYaml}.
  */
 @Builder
+@Getter
 @EqualsAndHashCode
 @AllArgsConstructor(access = PRIVATE)
 @Slf4j
@@ -59,8 +61,8 @@ public class ConfigurationPlan {
     }
 
     @JsonCreator public static ConfigurationPlan fromJson(JsonNode json) {
-        ConfigurationPlanBuilder builder = builder();
-        readAll(json.get("artifacts"), DeploymentName::new, DeploymentConfig::fromJson, builder::artifact);
+        ConfigurationPlanBuilder builder = builder()
+                .readArtifacts(json.get("artifacts"));
         readAll(json.get("loggers"), LoggerCategory::of, LoggerConfig::fromJson, builder::logger);
         readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerConfig::fromJson, builder::logHandler);
         return builder.build();
@@ -79,7 +81,7 @@ public class ConfigurationPlan {
 
     @Singular @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
     @Singular @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
-    @Singular @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> artifacts;
+    @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> artifacts;
 
     public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
 
@@ -87,6 +89,23 @@ public class ConfigurationPlan {
 
     public Stream<DeploymentConfig> artifacts() { return artifacts.values().stream(); }
 
+    public static class ConfigurationPlanBuilder {
+        private Map<DeploymentName, DeploymentConfig> artifacts = new LinkedHashMap<>();
+
+        public ConfigurationPlanBuilder readArtifacts(JsonNode node) {
+            if (node != null)
+                node.fieldNames().forEachRemaining(name -> {
+                    DeploymentName deploymentName = new DeploymentName(name);
+                    artifact(DeploymentConfig.fromJson(deploymentName, node.get(name)));
+                });
+            return this;
+        }
+
+        public ConfigurationPlanBuilder artifact(DeploymentConfig config) {
+            this.artifacts.put(config.getName(), config);
+            return this;
+        }
+    }
 
     public interface AbstractConfig {
         DeploymentState getState();
@@ -118,9 +137,9 @@ public class ConfigurationPlan {
         }
 
         @Override public String toString() {
-            return "«deployment:" + state + ":" + groupId + ":" + artifactId + ":" + version + ":" + type + "»";
+            return "«deployment:" + state + ":" + name + ":" + groupId + ":" + artifactId + ":" + version
+                    + ":" + type + "»";
         }
-
     }
 
     @Data
@@ -168,7 +187,8 @@ public class ConfigurationPlan {
 
         private LoggerConfig validate() {
             if (useParentHandlers == FALSE && handlers.isEmpty())
-                throw new RuntimeException("Can't set use-parent-handlers to false when there are no handlers");
+                throw new RuntimeException("Can't set use-parent-handlers of [" + category + "] "
+                        + "to false when there are no handlers");
             return this;
         }
 
@@ -246,11 +266,15 @@ public class ConfigurationPlan {
     }
 
     private static void apply(JsonNode node, String fieldName, String defaultValue, Consumer<String> setter) {
-        setter.accept((node.has(fieldName)) ? node.get(fieldName).asText() : defaultValue);
+        setter.accept((node.has(fieldName) && !node.get(fieldName).isNull())
+                ? node.get(fieldName).asText() : defaultValue);
     }
 
     @Override public String toString() {
-        return toYaml();
+        return ""
+                + "log-handlers:\n  - " + logHandlers().map(Object::toString).collect(joining("\n  - "))
+                + "\nloggers:\n  - " + loggers().map(Object::toString).collect(joining("\n  - "))
+                + "\nartifacts:\n  - " + artifacts().map(Object::toString).collect(joining("\n  - "));
     }
 
     @SneakyThrows(IOException.class)

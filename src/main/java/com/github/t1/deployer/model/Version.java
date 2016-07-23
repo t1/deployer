@@ -31,10 +31,10 @@ public class Version implements Comparable<Version> {
     /** this is called when YAML deserializes a version '1.0' */
     public Version(double value) { this.value = Double.toString(value); }
 
+    public boolean isSnapshot() { return value.endsWith("-SNAPSHOT"); }
+
     @Override
-    public String toString() {
-        return value;
-    }
+    public String toString() { return value; }
 
     @Override
     public int compareTo(@NotNull Version that) { return COMPARATOR.compare(this, that); }
@@ -74,12 +74,8 @@ public class Version implements Comparable<Version> {
             return 0;
         }
 
-        private String[] split(String thisVersion) {
-            return thisVersion.split("[.-]");
-        }
+        private String[] split(String thisVersion) { return thisVersion.split("[.-]"); }
 
-        private boolean isNumeric(String string) {
-            return string.matches("\\d+");
-        }
+        private boolean isNumeric(String string) { return string.matches("\\d+"); }
     };
 }

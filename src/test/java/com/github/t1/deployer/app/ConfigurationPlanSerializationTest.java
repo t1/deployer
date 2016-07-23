@@ -16,11 +16,11 @@ import static org.assertj.core.api.Assertions.*;
 public class ConfigurationPlanSerializationTest {
     private static final DeploymentConfig FOO = DeploymentConfig
             .builder()
+            .type(war)
             .name(new DeploymentName("foo"))
             .groupId(new GroupId("org.foo"))
             .artifactId(new ArtifactId("foo-war"))
             .version(new Version("1"))
-            .type(war)
             .state(deployed)
             .build();
 
@@ -53,7 +53,7 @@ public class ConfigurationPlanSerializationTest {
 
     private static final ConfigurationPlan ONE_DEPLOYMENT_PLAN = ConfigurationPlan
             .builder()
-            .artifact(new DeploymentName("foo"), FOO)
+            .artifact(FOO)
             .build();
 
     @Test
@@ -68,6 +68,52 @@ public class ConfigurationPlanSerializationTest {
         String yaml = ONE_DEPLOYMENT_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(ONE_DEPLOYMENT_YAML);
+    }
+
+
+    private static final String TWO_DEPLOYMENTS_YAML = ""
+            + "artifacts:\n"
+            + "  foo:\n"
+            + "    state: deployed\n"
+            + "    group-id: org.foo\n"
+            + "    artifact-id: foo-war\n"
+            + "    version: 1\n"
+            + "    type: war\n"
+            + "  bar-name:\n"
+            + "    state: deployed\n"
+            + "    group-id: org.bar\n"
+            + "    artifact-id: bar-war\n"
+            + "    version: 1.2.3\n"
+            + "    type: war\n";
+
+    private static final ConfigurationPlan TWO_DEPLOYMENTS_PLAN = ConfigurationPlan
+            .builder()
+            .artifact(FOO)
+            .artifact(DeploymentConfig
+                    .builder()
+                    .type(war)
+                    .name(new DeploymentName("bar-name"))
+                    .groupId(new GroupId("org.bar"))
+                    .artifactId(new ArtifactId("bar-war"))
+                    .version(new Version("1.2.3"))
+                    .state(deployed)
+                    .build())
+            .build();
+
+    @Test
+    public void shouldDeserializePlanWithTwoDeployments() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(TWO_DEPLOYMENTS_YAML));
+
+        assertThat(plan).isEqualTo(TWO_DEPLOYMENTS_PLAN);
+        assertThat(plan.getArtifacts())
+                .containsOnlyKeys(new DeploymentName("foo"), new DeploymentName("bar-name"));
+    }
+
+    @Test
+    public void shouldSerializePlanWithTwoDeployments() throws Exception {
+        String yaml = TWO_DEPLOYMENTS_PLAN.toYaml();
+
+        assertThat(yaml).isEqualTo(TWO_DEPLOYMENTS_YAML);
     }
 
 

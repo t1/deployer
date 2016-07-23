@@ -23,7 +23,8 @@ public class RepositoryProducer {
     @Inject @Config("repository.uri") URI uri;
     @Inject @Config("repository.username") String username;
     @Inject @Config("repository.password") Password password;
-    @Inject @Config("repository.key") String key;
+    @Inject @Config("repository.snapshots") String repositorySnapshots;
+    @Inject @Config("repository.releases") String repositoryReleases;
 
     RestContext rest = REST;
 
@@ -34,7 +35,9 @@ public class RepositoryProducer {
         case mavenCentral:
             return new MavenCentralRepository(mavenCentralContext());
         case artifactory:
-            return new ArtifactoryRepository(artifactoryContext(), nvl(key, "releases-virtual"));
+            return new ArtifactoryRepository(artifactoryContext(),
+                    nvl(repositorySnapshots, "snapshots-virtual"),
+                    nvl(repositoryReleases, "releases-virtual"));
         }
         throw new UnsupportedOperationException("unknown repository type " + type);
     }

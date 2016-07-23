@@ -108,7 +108,7 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
     @Override public void read(ConfigurationPlanBuilder builder) {
         for (DeploymentResource deployment : container.allDeployments()) {
             Artifact artifact = lookupByChecksum.apply(deployment.checksum());
-            DeploymentConfig deploymentConfig = DeploymentConfig
+            builder.artifact(DeploymentConfig
                     .builder()
                     .name(deployment.name())
                     .groupId(artifact.getGroupId())
@@ -116,8 +116,7 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
                     .version(artifact.getVersion())
                     .type(artifact.getType())
                     .state(deployed)
-                    .build();
-            builder.artifact(deployment.name(), deploymentConfig);
+                    .build());
         }
     }
 }

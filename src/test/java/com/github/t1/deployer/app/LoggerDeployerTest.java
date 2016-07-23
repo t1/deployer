@@ -193,12 +193,12 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
         Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "loggers:\n"
-                + "  com.github.t1.deployer.app:\n"
+                + "  com.github.t1.deployer:\n"
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: false"));
 
-        assertThat(thrown.getCause())
-                .hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
+        assertThat(thrown.getCause()).hasMessageContaining("Can't set use-parent-handlers of [com.github.t1.deployer]"
+                + " to false when there are no handlers");
     }
 
 
@@ -285,12 +285,12 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
         Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "loggers:\n"
-                + "  com.github.t1.deployer.app:\n"
+                + "  com.github.t1.deployer:\n"
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: false\n"));
 
-        assertThat(thrown.getCause())
-                .hasMessageContaining("Can't set use-parent-handlers to false when there are no handlers");
+        assertThat(thrown.getCause()).hasMessageContaining("Can't set use-parent-handlers of [com.github.t1.deployer]"
+                + " to false when there are no handlers");
     }
 
 

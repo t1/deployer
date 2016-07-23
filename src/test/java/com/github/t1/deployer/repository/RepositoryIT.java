@@ -22,7 +22,7 @@ public class RepositoryIT {
     public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(ARTIFACTORY_MOCK);
     private final URI baseUri = URI.create(ARTIFACTORY.baseUri() + "/artifactory");
     private RestContext config = REST.register("repository", baseUri);
-    private final ArtifactoryRepository repository = new ArtifactoryRepository(config, "remote-repos");
+    private final ArtifactoryRepository repository = new ArtifactoryRepository(config, "snapshots", "releases");
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -82,7 +82,7 @@ public class RepositoryIT {
             config = config.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
-            Artifact artifact = new ArtifactoryRepository(config, "remote-repos")
+            Artifact artifact = new ArtifactoryRepository(config, "snapshots", "releases")
                     .searchByChecksum(fakeChecksumFor(FOO));
 
             assertThat(artifact.getGroupId().getValue()).isEqualTo("org.foo");
@@ -96,7 +96,21 @@ public class RepositoryIT {
     }
 
     @Test
-    public void shouldFetchArtifact() throws Exception {
+    public void shouldFetchSnapshotArtifact() throws Exception {
+        GroupId groupId = new GroupId("org.jolokia");
+        ArtifactId artifactId = new ArtifactId("jolokia-war");
+        Version version = new Version("1.3.3-SNAPSHOT");
+
+        Artifact artifact = repository.lookupArtifact(groupId, artifactId, version, war);
+
+        assertThat(artifact.getGroupId()).isEqualTo(groupId);
+        assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
+        assertThat(artifact.getVersion()).isEqualTo(version);
+        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("FACE0000198C532FB516A3E79549519DA78A0655"));
+    }
+
+    @Test
+    public void shouldFetchReleasedArtifact() throws Exception {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.3");

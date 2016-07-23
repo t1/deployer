@@ -45,7 +45,8 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @NonNull private final RestContext rest;
-    @NonNull private final String repositoryKey;
+    @NonNull private final String repositorySnapshots;
+    @NonNull private final String repositoryReleases;
 
     /**
      * It's not really nice to get the version out of the repo path, but where else would I get it? Even with the
@@ -144,15 +145,19 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override
-    public Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+    public Artifact lookupArtifact(
+            @NonNull GroupId groupId,
+            @NonNull ArtifactId artifactId,
+            @NonNull Version version,
+            @NonNull ArtifactType type) {
         UriTemplate template = rest
                 .nonQueryUri("repository")
                 .path("api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/{module}-{baseRev}.{ext}");
         UriTemplate uri = template
-                .with("repoKey", repositoryKey)
+                .with("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
                 .with("org", groupId)
                 .with("orgPath", groupId.asPath())
-                .with("baseRev", (version == null) ? "" : version)
+                .with("baseRev", version)
                 .with("module", artifactId)
                 // (-{folderItegRev})
                 // (-{fileItegRev})
