@@ -82,7 +82,7 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
 
     @Override public void read(ConfigurationPlanBuilder builder) {
         for (LogHandlerResource handler : container.allLogHandlers())
-            builder.logHandler(handler.name(), LogHandlerConfig
+            builder.logHandler(LogHandlerConfig
                     .builder()
                     .type(handler.type())
                     .name(handler.name())

@@ -76,7 +76,7 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
 
     @Override public void read(ConfigurationPlanBuilder builder) {
         for (LoggerResource logger : container.allLoggers())
-            builder.logger(logger.category(), LoggerConfig
+            builder.logger(LoggerConfig
                     .builder()
                     .category(logger.category())
                     .state(deployed)

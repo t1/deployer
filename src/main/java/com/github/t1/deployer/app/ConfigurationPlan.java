@@ -48,11 +48,13 @@ public class ConfigurationPlan {
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             .findAndRegisterModules();
 
+    private static final ConfigurationPlan EMPTY_PLAN = ConfigurationPlan.builder().build();
+
     public static ConfigurationPlan load(Reader reader) {
         try {
             ConfigurationPlan plan = YAML.readValue(reader, ConfigurationPlan.class);
             if (plan == null)
-                plan = ConfigurationPlan.builder().build();
+                plan = EMPTY_PLAN;
             log.debug("config plan loaded:\n{}", plan);
             return plan;
         } catch (IOException e) {
@@ -61,26 +63,22 @@ public class ConfigurationPlan {
     }
 
     @JsonCreator public static ConfigurationPlan fromJson(JsonNode json) {
-        ConfigurationPlanBuilder builder = builder()
-                .readArtifacts(json.get("artifacts"));
-        readAll(json.get("loggers"), LoggerCategory::of, LoggerConfig::fromJson, builder::logger);
+        ConfigurationPlanBuilder builder = builder();
         readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerConfig::fromJson, builder::logHandler);
+        readAll(json.get("loggers"), LoggerCategory::of, LoggerConfig::fromJson, builder::logger);
+        readAll(json.get("artifacts"), DeploymentName::new, DeploymentConfig::fromJson, builder::artifact);
         return builder.build();
     }
 
-    public static <K, V> void readAll(JsonNode jsonNode,
-            Function<String, K> toKey,
-            BiFunction<K, JsonNode, V> toConfig,
-            BiConsumer<K, V> consumer) {
+    public static <K, V> void readAll(JsonNode jsonNode, Function<String, K> toKey, BiFunction<K, JsonNode, V> toConfig,
+            Consumer<V> consumer) {
         if (jsonNode != null)
-            jsonNode.fieldNames().forEachRemaining(name -> {
-                K key = toKey.apply(name);
-                consumer.accept(key, toConfig.apply(key, jsonNode.get(name)));
-            });
+            jsonNode.fieldNames().forEachRemaining(name ->
+                    consumer.accept(toConfig.apply(toKey.apply(name), jsonNode.get(name))));
     }
 
-    @Singular @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
-    @Singular @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
+    @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
+    @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
     @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> artifacts;
 
     public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
@@ -90,14 +88,17 @@ public class ConfigurationPlan {
     public Stream<DeploymentConfig> artifacts() { return artifacts.values().stream(); }
 
     public static class ConfigurationPlanBuilder {
+        private Map<LogHandlerName, LogHandlerConfig> logHandlers = new LinkedHashMap<>();
+        private Map<LoggerCategory, LoggerConfig> loggers = new LinkedHashMap<>();
         private Map<DeploymentName, DeploymentConfig> artifacts = new LinkedHashMap<>();
 
-        public ConfigurationPlanBuilder readArtifacts(JsonNode node) {
-            if (node != null)
-                node.fieldNames().forEachRemaining(name -> {
-                    DeploymentName deploymentName = new DeploymentName(name);
-                    artifact(DeploymentConfig.fromJson(deploymentName, node.get(name)));
-                });
+        public ConfigurationPlanBuilder logHandler(LogHandlerConfig config) {
+            this.logHandlers.put(config.getName(), config);
+            return this;
+        }
+
+        public ConfigurationPlanBuilder logger(LoggerConfig config) {
+            this.loggers.put(config.getCategory(), config);
             return this;
         }
 

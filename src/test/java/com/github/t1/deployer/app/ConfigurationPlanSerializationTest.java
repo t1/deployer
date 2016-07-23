@@ -135,7 +135,7 @@ public class ConfigurationPlanSerializationTest {
             .build();
     private static final ConfigurationPlan ONE_LOGGER_PLAN = ConfigurationPlan
             .builder()
-            .logger(LOGGER.getCategory(), LOGGER)
+            .logger(LOGGER)
             .build();
 
     @Test
@@ -174,7 +174,7 @@ public class ConfigurationPlanSerializationTest {
             .build();
     private static final ConfigurationPlan ONE_LOGHANDLER_PLAN = ConfigurationPlan
             .builder()
-            .logHandler(LOGHANDLER.getName(), LOGHANDLER)
+            .logHandler(LOGHANDLER)
             .build();
 
     @Test

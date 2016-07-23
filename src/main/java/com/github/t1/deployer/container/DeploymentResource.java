@@ -45,7 +45,7 @@ public class DeploymentResource extends AbstractResource {
     private static DeploymentResource toDeployment(ModelNode node, CLI cli) {
         DeploymentName name = readName(node);
         Checksum hash = readHash(node);
-        log.debug("{}: {}", name, hash);
+        log.debug("read from all deployments {}: {}", name, hash);
         return DeploymentResource.builder(name, cli).checksum(hash).build();
     }
 
@@ -85,7 +85,7 @@ public class DeploymentResource extends AbstractResource {
     @Override protected void readFrom(ModelNode node) {
         DeploymentName name = readName(node);
         Checksum checksum = readHash(node);
-        log.debug("{}: {}", name, checksum);
+        log.debug("read deployment {}: {}", name, checksum);
         assert this.name.equals(name);
         this.checksum = checksum;
     }
