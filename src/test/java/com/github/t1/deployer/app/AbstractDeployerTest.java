@@ -119,6 +119,7 @@ public class AbstractDeployerTest {
                 verify(cli, atLeast(0)).execute(readResource("logging", type.getTypeName(), "*")));
 
         verifyNoMoreInteractions(cli);
+        // TODO verifyNoMoreInteractions(deploymentManager);
     }
 
 

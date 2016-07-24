@@ -13,7 +13,6 @@ loggers:
     handlers: [CONSOLE, FILE]
   com.github.t1.deployer:
     level: DEBUG
-    handlers: [CONSOLE, FILE]
 log-handlers:
   CONSOLE:
     type: console

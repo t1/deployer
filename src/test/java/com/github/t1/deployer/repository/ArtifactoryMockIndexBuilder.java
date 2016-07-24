@@ -39,7 +39,7 @@ public class ArtifactoryMockIndexBuilder {
         private int count = 0;
 
         @Override
-        public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attrs) {
+        public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attributes) {
             if (!isDeployable(path.getFileName().toString()))
                 return FileVisitResult.CONTINUE;
             Checksum checksum = Checksum.sha1(path);
@@ -51,7 +51,7 @@ public class ArtifactoryMockIndexBuilder {
         }
 
         private boolean isDeployable(String fileName) {
-            return fileName.endsWith(".war") || fileName.endsWith(".ear") || (
+            return fileName.endsWith(".war") || fileName.endsWith(".ear") || fileName.endsWith(".bundle") || (
                     fileName.contains("postgresql") && fileName.endsWith(".jar")
                             && !fileName.endsWith("-javadoc.jar") && !fileName.endsWith("-sources.jar")
             );

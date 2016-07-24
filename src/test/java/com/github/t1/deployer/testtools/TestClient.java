@@ -22,7 +22,7 @@ public class TestClient {
     private static final ArtifactAuditBuilder JOLOKIA = ArtifactAudit.builder().name("jolokia");
 
     public List<Audit> run(String plan) throws IOException {
-        try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_DEPLOYER_CONFIG)).setup()) {
+        try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_BUNDLE)).setup()) {
             memento.write(plan);
             return postUpdate().getAudits();
         }

@@ -25,10 +25,10 @@ import static com.github.t1.log.LogLevel.*;
 @Logged(level = INFO)
 @Slf4j
 public class DeployerBoundary {
-    public static final String ROOT_DEPLOYER_CONFIG = "root.deployer.config";
+    public static final String ROOT_BUNDLE = "deployer.root.bundle";
 
     public static java.nio.file.Path getConfigPath() {
-        return getConfigPath(ROOT_DEPLOYER_CONFIG);
+        return getConfigPath(ROOT_BUNDLE);
     }
 
     public static java.nio.file.Path getConfigPath(String fileName) {
@@ -108,10 +108,10 @@ public class DeployerBoundary {
 
             // TODO if we could move this recursion logic into the ArtifactDeployer, we could generalize the Deployers
             plan.artifacts().forEach(deploymentPlan -> {
-                if (deploymentPlan.getType() == bundle) {
-                    this.apply(lookup(deploymentPlan).getReader());
-                }
-                artifactDeployer.apply(deploymentPlan);
+                if (deploymentPlan.getType() == bundle)
+                    apply(lookup(deploymentPlan).getReader());
+                else
+                    artifactDeployer.apply(deploymentPlan);
             });
             artifactDeployer.cleanup(audits);
         }
