@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.t1</groupId>
@@ -34,13 +35,10 @@
 
     <distributionManagement>
         <repository>
-            <id>access-releases</id>
-            <url>https://artifactory.1and1.org/artifactory/access-release</url>
+            <id>bintray-t1-javaee-helpers</id>
+            <name>t1-javaee-helpers</name>
+            <url>https://api.bintray.com/maven/t1/javaee-helpers/deployer/;publish=1</url>
         </repository>
-        <snapshotRepository>
-            <id>access-snapshots</id>
-            <url>https://artifactory.1and1.org/artifactory/access-snapshot</url>
-        </snapshotRepository>
     </distributionManagement>
 
     <build>
@@ -164,12 +162,12 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>rest-client</artifactId>
-            <version>1.0.9</version>
+            <version>1.0.11</version>
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>problem-detail</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.2</version>
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
