@@ -8,7 +8,7 @@ import lombok.SneakyThrows;
 import static com.github.t1.rest.RestContext.*;
 
 public class ArtifactoryRepositoryTestClient {
-    private static final ChecksumX CHECKSUM = ChecksumX.ofHexString("CC99BBEC4AF60E0A39AE4CA4312001B29287580C");
+    private static final Checksum CHECKSUM = Checksum.ofHexString("CC99BBEC4AF60E0A39AE4CA4312001B29287580C");
 
     private static final class Dropwizard extends DropwizardClientRule {
         private Dropwizard() {

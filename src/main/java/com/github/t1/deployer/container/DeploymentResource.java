@@ -1,6 +1,6 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.ChecksumX;
+import com.github.t1.deployer.model.Checksum;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class DeploymentResource extends AbstractResource {
     private static final int TIMEOUT = 30;
 
     @NonNull @Getter private final DeploymentName name;
-    private ChecksumX checksum;
+    private Checksum checksum;
     private InputStream inputStream;
 
     public DeploymentResource(DeploymentName name, CLI cli) {
@@ -44,7 +44,7 @@ public class DeploymentResource extends AbstractResource {
 
     private static DeploymentResource toDeployment(ModelNode node, CLI cli) {
         DeploymentName name = readName(node);
-        ChecksumX hash = readHash(node);
+        Checksum hash = readHash(node);
         log.debug("read from all deployments {}: {}", name, hash);
         return DeploymentResource.builder(name, cli).checksum(hash).build();
     }
@@ -71,7 +71,7 @@ public class DeploymentResource extends AbstractResource {
                 + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
     }
 
-    public ChecksumX checksum() {
+    public Checksum checksum() {
         checkDeployed();
         return checksum;
     }
@@ -84,7 +84,7 @@ public class DeploymentResource extends AbstractResource {
 
     @Override protected void readFrom(ModelNode node) {
         DeploymentName name = readName(node);
-        ChecksumX checksum = readHash(node);
+        Checksum checksum = readHash(node);
         log.debug("read deployment {}: {}", name, checksum);
         assert this.name.equals(name);
         this.checksum = checksum;
@@ -92,7 +92,7 @@ public class DeploymentResource extends AbstractResource {
 
     private static DeploymentName readName(ModelNode node) { return new DeploymentName(node.get("name").asString()); }
 
-    private static ChecksumX readHash(ModelNode node) { return ChecksumX.of(hash(node)); }
+    private static Checksum readHash(ModelNode node) { return Checksum.of(hash(node)); }
 
     private static byte[] hash(ModelNode cliDeployment) {
         try {

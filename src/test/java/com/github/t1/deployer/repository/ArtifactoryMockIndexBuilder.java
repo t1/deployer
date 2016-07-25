@@ -1,6 +1,6 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.ChecksumX;
+import com.github.t1.deployer.model.Checksum;
 import lombok.*;
 
 import java.io.*;
@@ -16,7 +16,7 @@ public class ArtifactoryMockIndexBuilder {
         new ArtifactoryMockIndexBuilder().run();
     }
 
-    private final Map<ChecksumX, java.nio.file.Path> INDEX = new HashMap<>();
+    private final Map<Checksum, java.nio.file.Path> INDEX = new HashMap<>();
 
     @SneakyThrows(IOException.class)
     public void run() {
@@ -42,7 +42,7 @@ public class ArtifactoryMockIndexBuilder {
         public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attributes) {
             if (!isDeployable(path.getFileName().toString()))
                 return FileVisitResult.CONTINUE;
-            ChecksumX checksum = ChecksumX.sha1(path);
+            Checksum checksum = Checksum.sha1(path);
             java.nio.file.Path relativePath = root.relativize(path);
             // System.out.println(relativePath + " (" + count + ") -> " + checkSum);
             INDEX.put(checksum, relativePath);
@@ -67,7 +67,7 @@ public class ArtifactoryMockIndexBuilder {
         }
     }
 
-    private Writer write(BufferedWriter writer, Map.Entry<ChecksumX, java.nio.file.Path> entry) {
+    private Writer write(BufferedWriter writer, Map.Entry<Checksum, java.nio.file.Path> entry) {
         try {
             return writer.append(entry.getKey().hexString()).append(":")
                          .append(entry.getValue().toString()).append("\n");

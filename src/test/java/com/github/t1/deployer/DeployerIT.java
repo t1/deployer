@@ -2,7 +2,7 @@ package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.ChecksumX;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
 import com.github.t1.rest.*;
 import com.github.t1.testtools.*;
@@ -34,9 +34,9 @@ import static org.assertj.core.api.Assertions.*;
 public class DeployerIT {
     private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it");
     private static final String DEPLOYER_IT_WAR = DEPLOYER_IT + ".war";
-    private static final ChecksumX POSTGRESQL_9_4_1207_CHECKSUM = ChecksumX.fromString(
+    private static final Checksum POSTGRESQL_9_4_1207_CHECKSUM = Checksum.fromString(
             "f2ea471fbe4446057991e284a6b4b3263731f319");
-    private static final ChecksumX JOLOKIA_1_3_2_CHECKSUM = ChecksumX.fromString(
+    private static final Checksum JOLOKIA_1_3_2_CHECKSUM = Checksum.fromString(
             "9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330");
 
     private static Condition<DeploymentResource> deployment(String name) {
@@ -47,7 +47,7 @@ public class DeployerIT {
         return new Condition<>(name::matches, "deployment with name '" + name + "'");
     }
 
-    private static Condition<DeploymentResource> checksum(ChecksumX checksum) {
+    private static Condition<DeploymentResource> checksum(Checksum checksum) {
         return new Condition<>(deployment -> deployment.checksum().equals(checksum),
                 "deployment with checksum '" + checksum + "'");
     }

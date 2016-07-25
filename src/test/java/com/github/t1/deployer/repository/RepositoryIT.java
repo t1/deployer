@@ -106,7 +106,7 @@ public class RepositoryIT {
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
         assertThat(artifact.getVersion()).isEqualTo(version);
-        assertThat(artifact.getChecksum()).isEqualTo(ChecksumX.fromString("FACE0000198C532FB516A3E79549519DA78A0655"));
+        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("FACE0000198C532FB516A3E79549519DA78A0655"));
     }
 
     @Test
@@ -120,6 +120,6 @@ public class RepositoryIT {
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
         assertThat(artifact.getVersion()).isEqualTo(version);
-        assertThat(artifact.getChecksum()).isEqualTo(ChecksumX.fromString("F6E5786754116CC8E1E9261B2A117701747B1259"));
+        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259"));
     }
 }

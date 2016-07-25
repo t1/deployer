@@ -35,7 +35,7 @@ public class MavenCentralRepository extends Repository {
 
     private final RestContext rest;
 
-    @Override public Artifact searchByChecksum(ChecksumX checksum) {
+    @Override public Artifact searchByChecksum(Checksum checksum) {
         MavenCentralSearchResult result = rest
                 .createResource(searchUri())
                 .with("checksum", checksum)
@@ -54,7 +54,7 @@ public class MavenCentralRepository extends Repository {
         }
     }
 
-    private Artifact toArtifact(ChecksumX checksum, MavenCentralSearchResponseDocs doc) {
+    private Artifact toArtifact(Checksum checksum, MavenCentralSearchResponseDocs doc) {
         GroupId groupId = new GroupId(doc.g);
         ArtifactId artifactId = new ArtifactId(doc.a);
         Version version = new Version(doc.v);
@@ -91,9 +91,9 @@ public class MavenCentralRepository extends Repository {
                        .build();
     }
 
-    private ChecksumX downloadChecksum(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+    private Checksum downloadChecksum(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
         String checksum = resource(downloadPath(groupId, artifactId, version, type) + ".sha1").GET(String.class);
-        return ChecksumX.fromString(checksum);
+        return Checksum.fromString(checksum);
     }
 
     private InputStream download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
