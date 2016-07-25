@@ -162,7 +162,7 @@ public class DeployerIT {
 
         assertThat(container.allDeployments())
                 .hasSize(2)
-                .haveExactly(1, allOf(deployment("jolokia"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
+                .haveExactly(1, allOf(deployment("jolokia.war"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
         if (plan.isEmpty()) // TODO this should run with Jackson 2+
             assertThat(audits).containsExactly(
