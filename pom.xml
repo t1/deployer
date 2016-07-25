@@ -35,10 +35,13 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray-t1-javaee-helpers</id>
-            <name>t1-javaee-helpers-deployer</name>
-            <url>https://api.bintray.com/maven/t1/javaee-helpers/deployer</url>
+            <id>access-releases</id>
+            <url>https://artifactory.1and1.org/artifactory/access-release</url>
         </repository>
+        <snapshotRepository>
+            <id>access-snapshots</id>
+            <url>https://artifactory.1and1.org/artifactory/access-snapshot</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <build>
@@ -129,7 +132,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>test-tools</artifactId>
-            <version>1.1.1-SNAPSHOT</version>
+            <version>1.1.1</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -157,12 +160,12 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>rest-client</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.9</version>
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>problem-detail</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
