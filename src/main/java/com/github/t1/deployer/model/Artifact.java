@@ -17,11 +17,11 @@ public class Artifact {
     @NonNull private final Version version;
     @NonNull private final ArtifactType type;
 
-    private Checksum checksum;
-    private final Supplier<Checksum> checksumSupplier;
+    private ChecksumX checksum;
+    private final Supplier<ChecksumX> checksumSupplier;
     @NonNull private final Supplier<InputStream> inputStreamSupplier;
 
-    public Checksum getChecksum() {
+    public ChecksumX getChecksum() {
         if (checksum == null)
             checksum = checksumSupplier.get();
         return checksum;

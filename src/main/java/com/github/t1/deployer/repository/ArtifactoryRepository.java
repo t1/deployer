@@ -53,7 +53,7 @@ public class ArtifactoryRepository extends Repository {
      * <code>X-Result-Detail</code> header, it's not provided.
      */
     @Override
-    public Artifact searchByChecksum(Checksum checksum) {
+    public Artifact searchByChecksum(ChecksumX checksum) {
         log.debug("searchByChecksum({})", checksum);
         if (checksum == null || checksum.isEmpty())
             throw new IllegalArgumentException("empty or null checksum");
@@ -62,7 +62,7 @@ public class ArtifactoryRepository extends Repository {
         return artifactFromArtifactoryUri(checksum, uri);
     }
 
-    private URI findUriFor(Checksum checksum) {
+    private URI findUriFor(ChecksumX checksum) {
         List<ChecksumSearchResultItem> results = searchByChecksumResults(checksum);
         switch (results.size()) {
         case 0:
@@ -78,7 +78,7 @@ public class ArtifactoryRepository extends Repository {
         }
     }
 
-    private List<ChecksumSearchResultItem> searchByChecksumResults(Checksum checksum) {
+    private List<ChecksumSearchResultItem> searchByChecksumResults(ChecksumX checksum) {
         RestRequest<ChecksumSearchResult>
                 request = searchByChecksumRequest();
         List<ChecksumSearchResultItem> results;
@@ -116,7 +116,7 @@ public class ArtifactoryRepository extends Repository {
         URI downloadUri;
     }
 
-    private Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
+    private Artifact artifactFromArtifactoryUri(ChecksumX checksum, URI uri) {
         Path path = Paths.get(uri.getPath());
         return Artifact
                 .builder()
@@ -137,9 +137,9 @@ public class ArtifactoryRepository extends Repository {
     private static class FileInfo {
         boolean folder;
         URI uri, downloadUri;
-        Map<String, Checksum> checksums;
+        Map<String, ChecksumX> checksums;
 
-        public Checksum getChecksum() {
+        public ChecksumX getChecksum() {
             return checksums.get("sha1");
         }
     }

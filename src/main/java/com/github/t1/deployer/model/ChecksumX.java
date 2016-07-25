@@ -14,46 +14,46 @@ import static lombok.AccessLevel.*;
 @RequiredArgsConstructor(access = PRIVATE)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @XmlAccessorType(XmlAccessType.NONE)
-public class Checksum {
-    public static Checksum of(byte[] bytes) {
-        return new Checksum(bytes);
+public class ChecksumX {
+    public static ChecksumX of(byte[] bytes) {
+        return new ChecksumX(bytes);
     }
 
-    public static Checksum fromString(String hexString) {
+    public static ChecksumX fromString(String hexString) {
         return ofHexString(hexString);
     }
 
-    public static Checksum ofHexString(String hexString) {
+    public static ChecksumX ofHexString(String hexString) {
         return of(parseHexBinary(hexString));
     }
 
-    public static Checksum ofBase64(String hexString) {
+    public static ChecksumX ofBase64(String hexString) {
         return of(parseBase64Binary(hexString));
     }
 
-    public static Checksum sha1(Path path) {
+    public static ChecksumX sha1(Path path) {
         return of(path, "SHA-1");
     }
 
-    public static Checksum md5(Path path) {
+    public static ChecksumX md5(Path path) {
         return of(path, "MD5");
     }
 
     @SneakyThrows(IOException.class)
-    private static Checksum of(Path path, String algorithm) {
+    private static ChecksumX of(Path path, String algorithm) {
         return of(Files.readAllBytes(path), algorithm);
     }
 
-    public static Checksum sha1(byte[] bytes) {
+    public static ChecksumX sha1(byte[] bytes) {
         return of(bytes, "SHA-1");
     }
 
-    public static Checksum md5(byte[] bytes) {
+    public static ChecksumX md5(byte[] bytes) {
         return of(bytes, "MD5");
     }
 
     @SneakyThrows(NoSuchAlgorithmException.class)
-    private static Checksum of(byte[] bytes, String algorithm) {
+    private static ChecksumX of(byte[] bytes, String algorithm) {
         MessageDigest hash = MessageDigest.getInstance(algorithm);
         return of(hash.digest(bytes));
     }

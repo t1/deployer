@@ -124,7 +124,7 @@ public class DeployerBoundary {
     }
 
     /** find artifact in repository or return a dummy representing `unknown` or `error`. */
-    private Artifact lookupByChecksum(Checksum checksum) {
+    private Artifact lookupByChecksum(ChecksumX checksum) {
         if (checksum == null || checksum.isEmpty())
             return errorArtifact(checksum, "empty checksum");
         try {
@@ -137,7 +137,7 @@ public class DeployerBoundary {
         }
     }
 
-    private Artifact errorArtifact(Checksum checksum, String messageArtifactId) {
+    private Artifact errorArtifact(ChecksumX checksum, String messageArtifactId) {
         return Artifact
                 .builder()
                 .groupId(new GroupId("*error*"))

@@ -22,10 +22,10 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
     private final Repository repository;
     private final Container container;
     private final List<DeploymentResource> existing;
-    private final Function<Checksum, Artifact> lookupByChecksum;
+    private final Function<ChecksumX, Artifact> lookupByChecksum;
 
     public ArtifactDeployer(Repository repository, Container container, boolean managed, Audits audits,
-            Function<Checksum, Artifact> lookupByChecksum) {
+            Function<ChecksumX, Artifact> lookupByChecksum) {
         super(audits);
         this.repository = requireNonNull(repository);
         this.container = requireNonNull(container);

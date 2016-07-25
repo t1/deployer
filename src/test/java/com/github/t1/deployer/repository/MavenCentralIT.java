@@ -13,10 +13,10 @@ import static org.assertj.core.api.Assertions.*;
 
 @Ignore("requires internet connection")
 public class MavenCentralIT {
-    private static final Checksum JOLOKIA_133_CHECKSUM
-            = Checksum.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
-    private static final Checksum JOLOKIA_133_POM_CHECKSUM
-            = Checksum.fromString("a255283f2278ad0fb638d56683a456a3ddd7331e");
+    private static final ChecksumX JOLOKIA_133_CHECKSUM
+            = ChecksumX.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
+    private static final ChecksumX JOLOKIA_133_POM_CHECKSUM
+            = ChecksumX.fromString("a255283f2278ad0fb638d56683a456a3ddd7331e");
     private static final GroupId ORG_JOLOKIA = new GroupId("org.jolokia");
     private static final ArtifactId JOLOKIA_WAR = new ArtifactId("jolokia-war");
     private static final Version VERSION_1_3_3 = new Version("1.3.3");
@@ -25,7 +25,7 @@ public class MavenCentralIT {
     private final Repository repository = new MavenCentralRepository(rest);
 
 
-    private static void assertJolokia133(Artifact artifact, ArtifactType type, Checksum checksum) {
+    private static void assertJolokia133(Artifact artifact, ArtifactType type, ChecksumX checksum) {
         assertThat(artifact.getGroupId()).isEqualTo(ORG_JOLOKIA);
         assertThat(artifact.getArtifactId()).isEqualTo(JOLOKIA_WAR);
         assertThat(artifact.getVersion()).isEqualTo(VERSION_1_3_3);

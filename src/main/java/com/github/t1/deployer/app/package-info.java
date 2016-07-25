@@ -1,7 +1,7 @@
 @DependsUpon(packagesOf = {
         com.github.t1.deployer.container.Container.class,
         com.github.t1.deployer.repository.Repository.class,
-        com.github.t1.deployer.model.Checksum.class,
+        ChecksumX.class,
 
         com.github.t1.problem.ProblemDetail.class,
         com.github.t1.rest.fallback.ConverterTools.class,
@@ -12,4 +12,5 @@
 })
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.model.ChecksumX;
 import com.github.t1.testtools.DependsUpon;

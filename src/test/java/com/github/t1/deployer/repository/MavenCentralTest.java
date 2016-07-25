@@ -17,7 +17,7 @@ public class MavenCentralTest {
 
     @Test
     public void shouldDeserializeSearchByChecksumResult() throws Exception {
-        Checksum checksum = Checksum.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
+        ChecksumX checksum = ChecksumX.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
         mock.on(repository.searchUri().with("checksum", checksum))
             .GET()
             .respond("{\n"

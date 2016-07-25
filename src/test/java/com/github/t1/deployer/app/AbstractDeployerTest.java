@@ -187,7 +187,7 @@ public class AbstractDeployerTest {
 
         public class ArtifactFixture {
             @NonNull @Getter private final Version version;
-            @Getter private Checksum checksum;
+            @Getter private ChecksumX checksum;
             private String contents;
 
             public ArtifactFixture(Version version) {
@@ -236,7 +236,7 @@ public class AbstractDeployerTest {
 
             public DeploymentName deploymentName() { return ArtifactFixtureBuilder.this.deploymentName(); }
 
-            public ArtifactFixture checksum(Checksum checksum) {
+            public ArtifactFixture checksum(ChecksumX checksum) {
                 this.checksum = checksum;
                 when(repository.searchByChecksum(checksum)).then(i -> artifact());
                 return this;
@@ -311,7 +311,7 @@ public class AbstractDeployerTest {
 
             public void verifyRedeployed(Audits audits) {
                 // FIXME verify(artifacts).redeploy(deploymentName(), inputStream());
-                Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
+                ChecksumX oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
                 assertThat(audits.getAudits()).containsExactly(artifactAudit()
                         .change("checksum", oldChecksum, checksum)

@@ -45,9 +45,9 @@ public class ArtifactoryMock {
     static final java.nio.file.Path MAVEN_REPOSITORY = MAVEN_HOME.resolve("repository");
     static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
 
-    static final Map<Checksum, java.nio.file.Path> INDEX = new HashMap<>();
+    static final Map<ChecksumX, java.nio.file.Path> INDEX = new HashMap<>();
 
-    static Map<Checksum, java.nio.file.Path> index() {
+    static Map<ChecksumX, java.nio.file.Path> index() {
         if (INDEX.isEmpty())
             readIndex();
         return INDEX;
@@ -64,7 +64,7 @@ public class ArtifactoryMock {
                     int index = line.indexOf(":");
                     if (index != 40)
                         throw new IllegalStateException("unexpected line in index file");
-                    Checksum checksum = Checksum.ofHexString(line.substring(0, index));
+                    ChecksumX checksum = ChecksumX.ofHexString(line.substring(0, index));
                     java.nio.file.Path path = Paths.get(line.substring(index + 1));
                     INDEX.put(checksum, path);
                 }
@@ -73,9 +73,9 @@ public class ArtifactoryMock {
 
     private static final java.nio.file.Path REPO_NAME = Paths.get("libs-release-local");
 
-    static final Checksum FAILING_CHECKSUM = Checksum.ofHexString("1111111111111111111111111111111111111111");
-    static final Checksum AMBIGUOUS_CHECKSUM = Checksum.ofHexString("2222222222222222222222222222222222222222");
-    static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("3333333333333333333333333333333333333333");
+    static final ChecksumX FAILING_CHECKSUM = ChecksumX.ofHexString("1111111111111111111111111111111111111111");
+    static final ChecksumX AMBIGUOUS_CHECKSUM = ChecksumX.ofHexString("2222222222222222222222222222222222222222");
+    static final ChecksumX UNKNOWN_CHECKSUM = ChecksumX.ofHexString("3333333333333333333333333333333333333333");
 
     public static final DeploymentName FOO = new DeploymentName("foo");
     public static final DeploymentName BAR = new DeploymentName("bar");
@@ -145,7 +145,7 @@ public class ArtifactoryMock {
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
     public String searchByChecksum(@HeaderParam("Authorization") String authorization,
-            @QueryParam("sha1") Checksum checksum) {
+            @QueryParam("sha1") ChecksumX checksum) {
         checkAuthorization(authorization);
         log.info("search by checksum: {}", checksum);
         if (checksum == null)
@@ -164,7 +164,7 @@ public class ArtifactoryMock {
             throw new RuntimeException("wrong credentials");
     }
 
-    private String searchResultsFor(Checksum checksum) {
+    private String searchResultsFor(ChecksumX checksum) {
         if (fakeChecksumFor(FOO).equals(checksum)) {
             return fileSearchResult(FOO, CURRENT_FOO_VERSION);
         } else if (fakeChecksumFor(BAR).equals(checksum)) {
@@ -189,7 +189,7 @@ public class ArtifactoryMock {
         }
     }
 
-    public static Checksum fakeChecksumFor(DeploymentName name) {
+    public static ChecksumX fakeChecksumFor(DeploymentName name) {
         return fakeChecksumFor(name, fakeVersionFor(name));
     }
 
@@ -203,12 +203,12 @@ public class ArtifactoryMock {
         }
     }
 
-    public static Checksum fakeChecksumFor(String name, String version) {
+    public static ChecksumX fakeChecksumFor(String name, String version) {
         return fakeChecksumFor(new DeploymentName(name), new Version(version));
     }
 
-    public static Checksum fakeChecksumFor(DeploymentName name, Version version) {
-        Checksum result = Checksum.sha1((name + "@" + version).getBytes()); // arbitrary but fixed for name/version
+    public static ChecksumX fakeChecksumFor(DeploymentName name, Version version) {
+        ChecksumX result = ChecksumX.sha1((name + "@" + version).getBytes()); // arbitrary but fixed for name/version
         result.getBytes()[0] = (byte) 0xFA;
         result.getBytes()[1] = (byte) 0xCE;
         result.getBytes()[2] = (byte) 0x00;
@@ -238,18 +238,18 @@ public class ArtifactoryMock {
                 + "}";
     }
 
-    private boolean isIndexed(Checksum checksum) {
+    private boolean isIndexed(ChecksumX checksum) {
         return index().containsKey(checksum);
     }
 
-    private static DeploymentName fakeNameFor(Checksum checksum) {
+    private static DeploymentName fakeNameFor(ChecksumX checksum) {
         if (checksum.hexString().length() < 6)
             throw new RuntimeException("checkSum too short. must be at least 6 characters for fake context root: ["
                     + checksum.hexString() + "]");
         return new DeploymentName("fake-" + checksum.hexString().substring(0, 6));
     }
 
-    private static Version fakeVersionFor(Checksum checksum) {
+    private static Version fakeVersionFor(ChecksumX checksum) {
         return fakeVersionFor(checksum.getBytes());
     }
 
@@ -300,7 +300,7 @@ public class ArtifactoryMock {
             }
             Version version = versionFrom(path);
             log.info("foo info for {}", version);
-            return fileInfo(12345L, fakeChecksumFor(FOO, version), Checksum.fromString("1234567890abcdef"));
+            return fileInfo(12345L, fakeChecksumFor(FOO, version), ChecksumX.fromString("1234567890abcdef"));
         }
         java.nio.file.Path resolved = MAVEN_REPOSITORY.resolve(path);
         log.info("info from {}", resolved);
@@ -310,7 +310,7 @@ public class ArtifactoryMock {
             return fileInfo(resolved);
         if (FAKES) {
             log.info("fake file info for: {}", path);
-            Checksum checksum = fakeChecksumFor(new DeploymentName(path.getFileName().toString()));
+            ChecksumX checksum = fakeChecksumFor(new DeploymentName(path.getFileName().toString()));
             return fileInfo(12345, checksum, checksum);
         }
         throw new WebApplicationException(Response
@@ -416,13 +416,13 @@ public class ArtifactoryMock {
 
     private String fileInfo(java.nio.file.Path path) throws IOException {
         long size = Files.size(path);
-        Checksum sha1 = Checksum.sha1(path);
-        Checksum md5 = Checksum.md5(path);
+        ChecksumX sha1 = ChecksumX.sha1(path);
+        ChecksumX md5 = ChecksumX.md5(path);
         log.info("file info {}: size={}, sha1={}, md5={}", path, size, sha1, md5);
         return fileInfo(size, sha1, md5);
     }
 
-    private String fileInfo(long size, Checksum sha1, Checksum md5) {
+    private String fileInfo(long size, ChecksumX sha1, ChecksumX md5) {
         return "  \"mimeType\" : \"application/java-archive\",\n"
                 + "  \"size\" : \"" + size + "\",\n"
                 + "  \"checksums\" : {\n"

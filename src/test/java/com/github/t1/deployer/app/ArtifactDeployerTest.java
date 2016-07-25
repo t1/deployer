@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
-import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.ChecksumX;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -304,7 +304,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldUndeployWebArchiveWithAnyVersionWhenStateIsUndeployed() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
-        Checksum checksum = foo.getChecksum();
+        ChecksumX checksum = foo.getChecksum();
 
         Audits audits = deployer.apply(""
                 + "artifacts:\n"
