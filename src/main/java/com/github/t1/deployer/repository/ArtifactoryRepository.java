@@ -17,8 +17,23 @@ import static javax.ws.rs.core.Response.Status.*;
 @Slf4j
 @RequiredArgsConstructor
 public class ArtifactoryRepository extends Repository {
+    public static Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
+        Path path = Paths.get(uri.getPath());
+        return Artifact
+                .builder()
+                .groupId(groupIdFrom(path))
+                .artifactId(artifactIdFrom(path))
+                .version(versionFrom(path))
+                .type(typeFrom(path))
+                .checksum(checksum)
+                .inputStreamSupplier(() -> {
+                    throw new RuntimeException("already downloaded?");
+                })
+                .build();
+    }
+
     public static GroupId groupIdFrom(Path path) {
-        String string = path.subpath(5, path.getNameCount() - 3).toString().replace("/", ".");
+        String string = path.subpath(4, path.getNameCount() - 3).toString().replace("/", ".");
         return new GroupId(string);
     }
 
@@ -59,7 +74,9 @@ public class ArtifactoryRepository extends Repository {
             throw new IllegalArgumentException("empty or null checksum");
         URI uri = findUriFor(checksum);
         log.debug("got uri {}", uri);
-        return artifactFromArtifactoryUri(checksum, uri);
+        Artifact artifact = artifactFromArtifactoryUri(checksum, uri);
+        log.debug("found {}", artifact);
+        return artifact;
     }
 
     private URI findUriFor(Checksum checksum) {
@@ -114,21 +131,6 @@ public class ArtifactoryRepository extends Repository {
     private static class ChecksumSearchResultItem {
         URI uri;
         URI downloadUri;
-    }
-
-    private Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
-        Path path = Paths.get(uri.getPath());
-        return Artifact
-                .builder()
-                .groupId(groupIdFrom(path))
-                .artifactId(artifactIdFrom(path))
-                .version(versionFrom(path))
-                .type(typeFrom(path))
-                .checksum(checksum)
-                .inputStreamSupplier(() -> {
-                    throw new RuntimeException("already downloaded?");
-                })
-                .build();
     }
 
     @lombok.Data
