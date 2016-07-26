@@ -9,7 +9,7 @@ Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCo
 - Put this into a file `$JBOSS_CONFIG_DIR/root.deployer.config`:
 
 ```yaml
-deployments:
+artifacts:
   jolokia-war:
     groupId: org.jolokia
     version: 1.3.2
