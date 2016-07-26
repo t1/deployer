@@ -8,10 +8,12 @@ Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCo
 
 - Put this into a file `$JBOSS_CONFIG_DIR/root.deployer.config`:
 
-      deployments:
-        jolokia-war:
-          groupId: org.jolokia
-          version: 1.3.2
+```yaml
+deployments:
+  jolokia-war:
+    groupId: org.jolokia
+    version: 1.3.2
+```
 
 - Deploy the `deployer.war` to your container.
 On startup, it will find the `root-deployments.yaml`, pull jolokia from maven central, and deploy it to the container.
