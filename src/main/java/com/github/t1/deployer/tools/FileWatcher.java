@@ -15,11 +15,6 @@ import static java.util.concurrent.TimeUnit.*;
 public class FileWatcher extends Thread {
     private static final int POLL_TIMEOUT = 100;
     private static final WatchEvent.Kind[] EVENT_KINDS = { ENTRY_MODIFY, ENTRY_CREATE };
-    private static final WatchEvent.Modifier[] EVENT_MODIFIERS = resolveEventModifiers();
-
-    private static WatchEvent.Modifier[] resolveEventModifiers() {
-        return new WatchEvent.Modifier[] {};
-    }
 
     private final Path filePath;
     private final Runnable runnable;
@@ -36,8 +31,7 @@ public class FileWatcher extends Thread {
     public void run() {
         log.info("start watching {}", filePath);
         try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
-            Path path = filePath.getParent();
-            path.register(watcher, EVENT_KINDS, EVENT_MODIFIERS);
+            filePath.getParent().register(watcher, EVENT_KINDS);
             while (running.get()) {
                 WatchKey key = watcher.poll(POLL_TIMEOUT, MILLISECONDS);
                 if (key != null) {
