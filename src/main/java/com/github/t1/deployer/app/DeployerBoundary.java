@@ -41,7 +41,20 @@ public class DeployerBoundary {
 
     @POST
     public Response post() {
-        java.nio.file.Path root = getConfigPath();
+        Audits audits = apply();
+
+        return Response.ok(audits).build();
+    }
+
+    @Inject Container container;
+    @Inject Repository repository;
+
+    @Getter @Setter
+    private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
+
+
+    public Audits apply() {
+        Path root = getConfigPath();
 
         if (!Files.isRegularFile(root))
             throw new RuntimeException("config file '" + root + "' not found");
@@ -52,20 +65,12 @@ public class DeployerBoundary {
 
         if (log.isDebugEnabled())
             log.debug("audits:\n {}", audits.toYaml());
-
-        return Response.ok(audits).build();
+        return audits;
     }
 
 
-    @Inject Container container;
-    @Inject Repository repository;
-
-    @Getter @Setter
-    private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
-
-
     @SneakyThrows(IOException.class)
-    public Audits apply(Path plan) {
+    private Audits apply(Path plan) {
         try {
             return apply(Files.newBufferedReader(plan));
         } catch (WebApplicationApplicationException e) {
@@ -75,9 +80,9 @@ public class DeployerBoundary {
         }
     }
 
-    public Audits apply(String plan) { return apply(new StringReader(plan)); }
+    Audits apply(String plan) { return apply(new StringReader(plan)); }
 
-    public synchronized Audits apply(Reader reader) { return new Run().apply(reader); }
+    private synchronized Audits apply(Reader reader) { return new Run().apply(reader); }
 
     private class Run {
         private final Variables variables = new Variables();
@@ -88,7 +93,7 @@ public class DeployerBoundary {
         private final ArtifactDeployer artifactDeployer = new ArtifactDeployer(repository, container, managed, audits,
                 DeployerBoundary.this::lookupByChecksum);
 
-        public ConfigurationPlan read() {
+        private ConfigurationPlan read() {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
             logHandlerDeployer.read(builder);
             loggerDeployer.read(builder);
