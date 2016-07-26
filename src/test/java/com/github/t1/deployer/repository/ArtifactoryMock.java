@@ -134,9 +134,7 @@ public class ArtifactoryMock {
     @Context
     UriInfo uriInfo;
 
-    private URI base(String path) {
-        return uriInfo.getBaseUriBuilder().path(ArtifactoryMock.class).path(path).build();
-    }
+    private URI base(String path) { return uriInfo.getBaseUriBuilder().path(path).build(); }
 
     @Setter
     private boolean requireAuthorization = false;
@@ -144,7 +142,8 @@ public class ArtifactoryMock {
     @GET
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
-    public String searchByChecksum(@HeaderParam("Authorization") String authorization,
+    public String searchByChecksum(
+            @HeaderParam("Authorization") String authorization,
             @QueryParam("sha1") Checksum checksum) {
         checkAuthorization(authorization);
         log.info("search by checksum: {}", checksum);
