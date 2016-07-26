@@ -7,7 +7,7 @@ Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCo
 
 ## 1-Minute-Tutorial
 
-- Put this into a file `$JBOSS_CONFIG_DIR/root.deployer.config`:
+- Create a file `$JBOSS_CONFIG_DIR/deployer.root.bundle` containing:
 
 ```yaml
 artifacts:
@@ -17,7 +17,7 @@ artifacts:
 ```
 
 - Deploy the `deployer.war` to your container.
-On startup, it will find the `root-deployments.yaml`, pull jolokia from maven central, and deploy it to the container.
+On startup, it will find your file, pull jolokia from maven central, and deploy it to the container.
 If there is already a different version of jolokia deployed, it will replace it.
 
 - Change the file to version `1.3.3` and the deployer will pick up the change and upgrade jolokia.
