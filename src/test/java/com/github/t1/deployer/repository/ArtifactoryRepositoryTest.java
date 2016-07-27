@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.net.URI;
 import java.nio.file.*;
 
+import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
 import static com.github.t1.deployer.repository.RepositoryProducer.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -16,7 +17,7 @@ public class ArtifactoryRepositoryTest {
 
     @Test
     public void shouldDeriveArtifactFromUri() throws Exception {
-        Artifact artifact = ArtifactoryRepository.artifactFromArtifactoryUri(Checksum.fromString("1234"), APP_URI);
+        Artifact artifact = artifactFromArtifactoryUri(Checksum.fromString("1234"), APP_URI);
 
         assertThat(artifact.getGroupId()).hasToString("org.jolokia");
         assertThat(artifact.getArtifactId()).hasToString("jolokia-war");

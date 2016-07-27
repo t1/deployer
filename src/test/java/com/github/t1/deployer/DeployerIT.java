@@ -36,8 +36,12 @@ public class DeployerIT {
     private static final String DEPLOYER_IT_WAR = DEPLOYER_IT + ".war";
     private static final Checksum POSTGRESQL_9_4_1207_CHECKSUM = Checksum.fromString(
             "f2ea471fbe4446057991e284a6b4b3263731f319");
+    private static final Checksum JOLOKIA_1_3_1_CHECKSUM = Checksum.fromString(
+            "52709CBC859E208DC8E540EB5C7047C316D9653F");
     private static final Checksum JOLOKIA_1_3_2_CHECKSUM = Checksum.fromString(
             "9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330");
+    private static final Checksum JOLOKIA_1_3_3_CHECKSUM = Checksum.fromString(
+            "F6E5786754116CC8E1E9261B2A117701747B1259");
 
     private static Condition<DeploymentResource> deployment(String name) {
         return deployment(new DeploymentName(name));
@@ -56,7 +60,7 @@ public class DeployerIT {
     public static WebArchive createDeployment() {
         return new WebArchiveBuilder(DEPLOYER_IT_WAR)
                 .with(DeployerBoundary.class.getPackage())
-                .with(TestLoggerRule.class, FileMemento.class, LoggerMemento.class)
+                .with(TestLoggerRule.class, FileMemento.class, LoggerMemento.class, SystemPropertiesRule.class)
                 .library("org.assertj", "assertj-core")
                 .print()
                 .build();
@@ -77,11 +81,13 @@ public class DeployerIT {
 
     @Rule
     public LoggerMemento loggerMemento = new LoggerMemento()
-            .with("org.apache.http.wire", DEBUG)
+            .with("org.apache.http.headers", DEBUG)
+            // .with("org.apache.http.wire", DEBUG)
             .with("com.github.t1.rest", DEBUG)
             .with("com.github.t1.rest.ResponseConverter", INFO)
             .with("com.github.t1.deployer", DEBUG);
     @Rule public TestLoggerRule logger = new TestLoggerRule();
+    @Rule public SystemPropertiesRule systemProperty = new SystemPropertiesRule();
     private static FileMemento jbossConfig;
     private static boolean first = true;
 
@@ -149,33 +155,78 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 150)
+    @InSequence(value = 200)
     public void shouldDeployWebArchive() throws Exception {
         String plan = ""
                 + "artifacts:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
-                + "    version: 1.3.2\n";
+                + "    version: 1.3.1\n";
 
         List<Audit> audits = run(plan);
 
         assertThat(container.allDeployments())
                 .hasSize(2)
-                .haveExactly(1, allOf(deployment("jolokia.war"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
+                .haveExactly(1, allOf(deployment("jolokia.war"), checksum(JOLOKIA_1_3_1_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        if (plan.isEmpty()) // TODO this should run with Jackson 2+
-            assertThat(audits).containsExactly(
-                    Audit.ArtifactAudit.builder().name("jolokia")
-                                       .change("group-id", null, "org.jolokia")
-                                       .change("artifact-id", null, "jolokia-war")
-                                       .change("version", null, "1.3.2")
-                                       .change("type", null, "war")
-                                       .added());
+        assertThat(audits).containsExactly(
+                Audit.ArtifactAudit.builder().name("jolokia")
+                                   .change("group-id", null, "org.jolokia")
+                                   .change("artifact-id", null, "jolokia-war")
+                                   .change("version", null, "1.3.1")
+                                   .change("type", null, "war")
+                                   .change("checksum", null, JOLOKIA_1_3_1_CHECKSUM)
+                                   .added());
     }
 
     @Test
-    @InSequence(value = 200)
+    @InSequence(value = 300)
+    public void shouldNotUpdateWebArchiveWithSameVersion() throws Exception {
+        String plan = ""
+                + "artifacts:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: 1.3.1\n";
+
+        List<Audit> audits = run(plan);
+
+        assertThat(container.allDeployments())
+                .hasSize(2)
+                .haveExactly(1, allOf(deployment("jolokia.war"), checksum(JOLOKIA_1_3_1_CHECKSUM)))
+                .haveExactly(1, deployment(DEPLOYER_IT_WAR));
+        assertThat(audits).isEmpty();
+    }
+
+    @Test
+    @InSequence(value = 400)
+    public void shouldUpdateWebArchiveWithSystemVariable() throws Exception {
+        systemProperty.given("jolokia.version", "1.3.2");
+        String plan = ""
+                + "artifacts:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: ${jolokia.version}\n";
+
+        List<Audit> audits = run(plan);
+
+        logger.log("verify deployments");
+        assertThat(container.allDeployments())
+                .hasSize(2)
+                .haveExactly(1, allOf(deployment("jolokia.war"), checksum(JOLOKIA_1_3_2_CHECKSUM)))
+                .haveExactly(1, deployment(DEPLOYER_IT_WAR));
+        logger.log("verify audits");
+        assertThat(audits).containsExactly(
+                Audit.ArtifactAudit.builder().name("jolokia")
+                                   .change("checksum", JOLOKIA_1_3_1_CHECKSUM, JOLOKIA_1_3_2_CHECKSUM)
+                                   .change("version", "1.3.1", "1.3.2")
+                                   .changed());
+    }
+
+    @Test
+    @InSequence(value = 900)
     public void shouldUndeployWebArchive() throws Exception {
         String plan = ""
                 + "artifacts:\n"
@@ -190,18 +241,18 @@ public class DeployerIT {
         assertThat(container.allDeployments())
                 .hasSize(1)
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        if (plan.isEmpty()) // TODO this should run with Jackson 2+
-            assertThat(audits).containsExactly(
-                    Audit.ArtifactAudit.builder().name("jolokia")
-                                       .change("group-id", "org.jolokia", null)
-                                       .change("artifact-id", "jolokia-war", null)
-                                       .change("version", "1.3.2", null)
-                                       .change("type", "war", null)
-                                       .added());
+        assertThat(audits).containsExactly(
+                Audit.ArtifactAudit.builder().name("jolokia")
+                                   .change("group-id", "org.jolokia", null)
+                                   .change("artifact-id", "jolokia-war", null)
+                                   .change("version", "1.3.2", null)
+                                   .change("type", "war", null)
+                                   .change("checksum", JOLOKIA_1_3_2_CHECKSUM, null)
+                                   .removed());
     }
 
     @Test
-    @InSequence(value = 300)
+    @InSequence(value = 1000)
     public void shouldDeployJdbcDriver() throws Exception {
         String plan = ""
                 + "artifacts:\n"
@@ -216,14 +267,14 @@ public class DeployerIT {
                 .hasSize(2)
                 .haveExactly(1, allOf(deployment("postgresql"), checksum(POSTGRESQL_9_4_1207_CHECKSUM)))
                 .haveExactly(1, deployment(DEPLOYER_IT_WAR));
-        if (plan.isEmpty()) // TODO this should run with Jackson 2+
-            assertThat(audits).containsExactly(
-                    Audit.ArtifactAudit.builder().name("postgresql")
-                                       .change("group-id", null, "org.postgresql")
-                                       .change("artifact-id", null, "postgresql")
-                                       .change("version", null, "9.4.1207")
-                                       .change("type", null, "jar")
-                                       .added());
+        assertThat(audits).containsExactly(
+                Audit.ArtifactAudit.builder().name("postgresql")
+                                   .change("group-id", null, "org.postgresql")
+                                   .change("artifact-id", null, "postgresql")
+                                   .change("version", null, "9.4.1207")
+                                   .change("type", null, "jar")
+                                   .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
+                                   .added());
     }
 
     // TODO shouldUpdateDeployer (WOW!)
@@ -248,51 +299,4 @@ public class DeployerIT {
                                        .added());
         }
     }
-
-    // FIXME parking position: do we still need this?
-    // public static final ContextRoot UNDEFINED_CONTEXT_ROOT = new ContextRoot("?");
-    //
-    // public List<Deployment> getAllArtifacts() {
-    //     return execute(readDeployments())
-    //             .asList().stream()
-    //             .map(cliDeploymentMatch -> toDeployment(cliDeploymentMatch.get("result")))
-    //             .collect(toList());
-    // }
-    //
-    // private static ModelNode readDeployments() {
-    //     ModelNode request = new ModelNode();
-    //     request.get("address").add("deployment", "*");
-    //     return readResource(request);
-    // }
-    //
-    // private Deployment toDeployment(ModelNode cliDeployment) {
-    //     DeploymentName name = new DeploymentName(cliDeployment.get("name").asString());
-    //     ContextRoot contextRoot = getContextRoot(cliDeployment);
-    //     Checksum hash = Checksum.of(hash(cliDeployment));
-    //     log.debug("{} -> {} -> {}", name, contextRoot, hash);
-    //     return new Deployment(name, contextRoot, hash);
-    // }
-    //
-    // private byte[] hash(ModelNode cliDeployment) {
-    //     try {
-    //         return cliDeployment.get("content").get(0).get("hash").asBytes();
-    //     } catch (RuntimeException e) {
-    //         log.error("failed to get hash for {}", cliDeployment.get("name"));
-    //         return new byte[0];
-    //     }
-    // }
-    //
-    // private ContextRoot getContextRoot(ModelNode cliDeployment) {
-    //     ModelNode subsystems = cliDeployment.get("subsystem");
-    //     // JBoss 8+ uses 'undertow' while JBoss 7 uses 'web'
-    //     ModelNode web = (subsystems.has("web")) ? subsystems.get("web") : subsystems.get("undertow");
-    //     ModelNode contextRoot = web.get("context-root");
-    //     return toContextRoot(contextRoot);
-    // }
-    //
-    // private ContextRoot toContextRoot(ModelNode contextRoot) {
-    //     if (!contextRoot.isDefined())
-    //         return UNDEFINED_CONTEXT_ROOT;
-    //     return new ContextRoot(contextRoot.asString());
-    // }
 }

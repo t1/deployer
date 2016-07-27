@@ -134,7 +134,9 @@ public class ArtifactoryMock {
     @Context
     UriInfo uriInfo;
 
-    private URI base(String path) { return uriInfo.getBaseUriBuilder().path(path).build(); }
+    private URI base(String path) {
+        return uriInfo.getBaseUriBuilder().path("artifactory").path(path).build();
+    }
 
     @Setter
     private boolean requireAuthorization = false;
