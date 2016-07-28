@@ -162,7 +162,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>rest-client</artifactId>
-            <version>1.0.11</version>
+            <version>1.0.12</version>
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
