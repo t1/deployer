@@ -61,7 +61,7 @@ public class DeployerBoundary {
 
         log.debug("load config plan from: {}", root);
 
-        Audits audits = new Run().addVariables(variables).apply(root);
+        Audits audits = new Run().withVariables(variables).apply(root);
 
         if (log.isDebugEnabled())
             log.debug("audits:\n {}", audits.toYaml());
@@ -72,7 +72,7 @@ public class DeployerBoundary {
     Audits apply(String plan) { return new Run().apply(new StringReader(plan)); }
 
     private class Run {
-        private final Variables variables = new Variables();
+        private Variables variables = new Variables();
         private final Audits audits = new Audits();
 
         private final LogHandlerDeployer logHandlerDeployer = new LogHandlerDeployer(container, audits);
@@ -88,8 +88,8 @@ public class DeployerBoundary {
             return builder.build();
         }
 
-        public Run addVariables(Map<String, String> variables) {
-            this.variables.addAll(variables);
+        public Run withVariables(Map<String, String> variables) {
+            this.variables = this.variables.withAll(variables);
             return this;
         }
 

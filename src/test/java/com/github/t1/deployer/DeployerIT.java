@@ -90,8 +90,8 @@ public class DeployerIT {
 
     @Rule
     public LoggerMemento loggerMemento = new LoggerMemento()
-            // .with("org.apache.http.headers", DEBUG)
-            .with("org.apache.http.wire", DEBUG)
+            .with("org.apache.http.headers", DEBUG)
+            // .with("org.apache.http.wire", DEBUG)
             .with("com.github.t1.rest", DEBUG)
             .with("com.github.t1.rest.ResponseConverter", INFO)
             .with("com.github.t1.deployer", DEBUG);

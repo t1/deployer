@@ -1,9 +1,10 @@
 package com.github.t1.deployer.model;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.SneakyThrows;
 
 import java.io.*;
-import java.util.*;
+import java.util.Map;
 import java.util.regex.*;
 
 import static com.github.t1.problem.WebException.*;
@@ -11,14 +12,12 @@ import static com.github.t1.problem.WebException.*;
 public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
 
-    private Map<String, String> variables;
+    private final ImmutableMap<String, String> variables;
 
-    private Map<String, String> variables() {
-        if (variables == null)
-            //noinspection unchecked
-            variables = new HashMap<>((Map<String, String>) (Map) System.getProperties());
-        return variables;
-    }
+    @SuppressWarnings("unchecked")
+    public Variables() { this(ImmutableMap.copyOf((Map<String, String>) (Map) System.getProperties())); }
+
+    public Variables(ImmutableMap<String, String> variables) { this.variables = variables; }
 
 
     /**
@@ -43,7 +42,7 @@ public class Variables {
                     out.append(line.substring(matcher.start() + 1, matcher.end()));
                 } else {
                     String key = matcher.group(1);
-                    out.append(variables().getOrDefault(key, "${" + key + "}"));
+                    out.append(variables.getOrDefault(key, "${" + key + "}"));
                 }
                 tail = matcher.end();
             }
@@ -57,15 +56,16 @@ public class Variables {
         return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
-    public void addAll(Map<String, String> variables) {
-        if (variables != null)
-            for (Map.Entry<String, String> entry : variables.entrySet())
-                add(entry.getKey(), entry.getValue());
-    }
-
-    private void add(String key, String value) {
-        if (variables().containsKey(key))
-            throw badRequest("Variable named [" + key + "] already set. It's not allowed to overwrite.");
-        variables().put(key, value);
+    public Variables withAll(Map<String, String> variables) {
+        if (variables == null || variables.isEmpty())
+            return this;
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder().putAll(this.variables);
+        for (Map.Entry<String, String> entry : variables.entrySet()) {
+            String key = entry.getKey();
+            if (this.variables.containsKey(key))
+                throw badRequest("Variable named [" + key + "] already set. It's not allowed to overwrite.");
+            builder.put(key, entry.getValue());
+        }
+        return new Variables(builder.build());
     }
 }

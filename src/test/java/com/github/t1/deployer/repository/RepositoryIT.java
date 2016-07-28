@@ -33,15 +33,9 @@ public class RepositoryIT {
             // .with("com.github.t1.rest", DEBUG)
             .with("com.github.t1.deployer", DEBUG);
 
-    @Before
-    public void before() {
-        ArtifactoryMock.FAKES = true;
-    }
+    @BeforeClass public static void before() { ArtifactoryMock.FAKES = true; }
 
-    @After
-    public void after() {
-        ArtifactoryMock.FAKES = false;
-    }
+    @AfterClass public static void after() { ArtifactoryMock.FAKES = false; }
 
 
     @Test
@@ -65,6 +59,7 @@ public class RepositoryIT {
         assertThat(throwable).hasMessageContaining("unknown checksum: '" + UNKNOWN_CHECKSUM + "'");
     }
 
+    @Ignore
     @Test
     public void shouldSearchByChecksum() {
         Artifact artifact = repository.searchByChecksum(fakeChecksumFor(FOO));
@@ -76,6 +71,7 @@ public class RepositoryIT {
         assertThat(artifact.getType()).isEqualTo(war);
     }
 
+    @Ignore
     @Test
     public void shouldSearchByChecksumWithAuthorization() {
         try {
