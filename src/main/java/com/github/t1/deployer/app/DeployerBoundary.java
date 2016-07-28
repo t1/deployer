@@ -12,13 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ejb.*;
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
+import static java.util.Collections.*;
 
 @javax.ws.rs.Path("/")
 @Stateless
@@ -36,15 +37,14 @@ public class DeployerBoundary {
     @GET
     public ConfigurationPlan getEffectivePlan() { return new Run().read(); }
 
-    @Asynchronous
-    public void applyAsync() { post(); }
-
     @POST
-    public Response post() {
-        Audits audits = apply();
-
-        return Response.ok(audits).build();
+    public Audits post(Map<String, String> form) {
+        return apply(form);
     }
+
+    @Asynchronous
+    public void applyAsync() { apply(emptyMap()); }
+
 
     @Inject Container container;
     @Inject Repository repository;
@@ -53,7 +53,7 @@ public class DeployerBoundary {
     private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
 
 
-    public Audits apply() {
+    private Audits apply(Map<String, String> variables) {
         Path root = getConfigPath();
 
         if (!Files.isRegularFile(root))
@@ -61,28 +61,15 @@ public class DeployerBoundary {
 
         log.debug("load config plan from: {}", root);
 
-        Audits audits = apply(root);
+        Audits audits = new Run().addVariables(variables).apply(root);
 
         if (log.isDebugEnabled())
             log.debug("audits:\n {}", audits.toYaml());
         return audits;
     }
 
-
-    @SneakyThrows(IOException.class)
-    private Audits apply(Path plan) {
-        try {
-            return apply(Files.newBufferedReader(plan));
-        } catch (WebApplicationApplicationException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw new RuntimeException("can't run config plan [" + plan + "]", e);
-        }
-    }
-
-    Audits apply(String plan) { return apply(new StringReader(plan)); }
-
-    private synchronized Audits apply(Reader reader) { return new Run().apply(reader); }
+    // visible for testing
+    Audits apply(String plan) { return new Run().apply(new StringReader(plan)); }
 
     private class Run {
         private final Variables variables = new Variables();
@@ -93,7 +80,7 @@ public class DeployerBoundary {
         private final ArtifactDeployer artifactDeployer = new ArtifactDeployer(repository, container, managed, audits,
                 DeployerBoundary.this::lookupByChecksum);
 
-        private ConfigurationPlan read() {
+        public ConfigurationPlan read() {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
             logHandlerDeployer.read(builder);
             loggerDeployer.read(builder);
@@ -101,12 +88,26 @@ public class DeployerBoundary {
             return builder.build();
         }
 
-        private Audits apply(Reader reader) {
-            this.apply(ConfigurationPlan.load(variables.resolve(reader)));
-            return audits;
+        public Run addVariables(Map<String, String> variables) {
+            this.variables.addAll(variables);
+            return this;
         }
 
-        private void apply(ConfigurationPlan plan) {
+        public Audits apply(Path plan) {
+            try {
+                return apply(Files.newBufferedReader(plan));
+            } catch (WebApplicationApplicationException e) {
+                throw e;
+            } catch (IOException | RuntimeException e) {
+                throw new RuntimeException("can't apply config plan [" + plan + "]", e);
+            }
+        }
+
+        private Audits apply(Reader reader) {
+            return this.apply(ConfigurationPlan.load(variables.resolve(reader)));
+        }
+
+        private Audits apply(ConfigurationPlan plan) {
             plan.logHandlers().forEach(logHandlerDeployer::apply);
             logHandlerDeployer.cleanup(audits);
 
@@ -121,6 +122,8 @@ public class DeployerBoundary {
                     artifactDeployer.apply(deploymentPlan);
             });
             artifactDeployer.cleanup(audits);
+
+            return audits;
         }
     }
 

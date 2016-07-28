@@ -6,6 +6,8 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import static com.github.t1.problem.WebException.*;
+
 public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
 
@@ -53,5 +55,17 @@ public class Variables {
 
     private BufferedReader buffered(Reader reader) {
         return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
+    }
+
+    public void addAll(Map<String, String> variables) {
+        if (variables != null)
+            for (Map.Entry<String, String> entry : variables.entrySet())
+                add(entry.getKey(), entry.getValue());
+    }
+
+    private void add(String key, String value) {
+        if (variables().containsKey(key))
+            throw badRequest("Variable named [" + key + "] already set. It's not allowed to overwrite.");
+        variables().put(key, value);
     }
 }

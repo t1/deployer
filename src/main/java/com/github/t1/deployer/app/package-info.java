@@ -5,7 +5,6 @@
         com.github.t1.deployer.tools.FileWatcher.class,
 
         com.github.t1.problem.ProblemDetail.class,
-        com.github.t1.rest.fallback.ConverterTools.class,
         com.fasterxml.jackson.core.JsonGenerator.class,
         com.fasterxml.jackson.annotation.JacksonAnnotation.class,
         com.fasterxml.jackson.databind.ObjectMapper.class,
