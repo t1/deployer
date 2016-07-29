@@ -7,8 +7,6 @@ import io.dropwizard.testing.junit.DropwizardClientRule;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 
-import java.net.URI;
-
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.log.LogLevel.*;
@@ -20,8 +18,8 @@ public class RepositoryIT {
 
     @ClassRule
     public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(ARTIFACTORY_MOCK);
-    private final URI baseUri = URI.create(ARTIFACTORY.baseUri() + "/artifactory");
-    private RestContext config = REST.register("repository", baseUri);
+
+    private RestContext config = REST.register("repository", ARTIFACTORY.baseUri());
     private final ArtifactoryRepository repository = new ArtifactoryRepository(config, "snapshots", "releases");
 
     @Rule
@@ -29,7 +27,8 @@ public class RepositoryIT {
 
     @Rule
     public LoggerMemento loggerMemento = new LoggerMemento()
-            .with("org.apache.http.wire", DEBUG)
+            // .with("org.apache.http.wire", DEBUG)
+            .with("org.apache.http.headers", DEBUG)
             // .with("com.github.t1.rest", DEBUG)
             .with("com.github.t1.deployer", DEBUG);
 
@@ -59,7 +58,6 @@ public class RepositoryIT {
         assertThat(throwable).hasMessageContaining("unknown checksum: '" + UNKNOWN_CHECKSUM + "'");
     }
 
-    @Ignore
     @Test
     public void shouldSearchByChecksum() {
         Artifact artifact = repository.searchByChecksum(fakeChecksumFor(FOO));
@@ -71,11 +69,10 @@ public class RepositoryIT {
         assertThat(artifact.getType()).isEqualTo(war);
     }
 
-    @Ignore
     @Test
     public void shouldSearchByChecksumWithAuthorization() {
         try {
-            config = config.register(baseUri, new Credentials("foo", "bar"));
+            config = config.register(ARTIFACTORY.baseUri(), new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
             Artifact artifact = new ArtifactoryRepository(config, "snapshots", "releases")

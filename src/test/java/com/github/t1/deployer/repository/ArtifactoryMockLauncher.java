@@ -48,7 +48,7 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
     @Override
     public void run(Configuration configuration, Environment environment) {
         SimpleServerFactory serverConfig = new SimpleServerFactory();
-        serverConfig.setApplicationContextPath("");
+        serverConfig.setApplicationContextPath("/artifactory");
         configuration.setServerFactory(serverConfig);
 
         final HttpConnectorFactory connectorConfig = (HttpConnectorFactory) serverConfig.getConnector();

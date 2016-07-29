@@ -26,7 +26,7 @@ import static javax.ws.rs.core.Response.Status.*;
  * @see ArtifactoryMockIndexBuilder
  */
 @Slf4j
-@Path("/artifactory")
+@Path("/")
 public class ArtifactoryMock {
     private static final String BASIC_FOO_BAR_AUTHORIZATION = "Basic Zm9vOmJhcg==";
 
@@ -134,9 +134,7 @@ public class ArtifactoryMock {
     @Context
     UriInfo uriInfo;
 
-    private URI base(String path) {
-        return uriInfo.getBaseUriBuilder().path("artifactory").path(path).build();
-    }
+    private URI base(String path) { return uriInfo.getBaseUriBuilder().path(path).build(); }
 
     @Setter
     private boolean requireAuthorization = false;
@@ -280,7 +278,7 @@ public class ArtifactoryMock {
                 + "   \"lastModified\" : \"2014-04-02T16:21:31.385+02:00\",\n"
                 + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n"
                 + info(Paths.get(path))
-                + "   \"downloadUri\": \"http://localhost:8081/artifactory/" + repoKey + "/" + path + "\",\n"
+                + "   \"downloadUri\": \"" + base(repoKey + "/" + path) + "\",\n"
                 + "   \"remoteUrl\": \"http://jcenter.bintray.com/" + path + "\",\n"
                 + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n"
                 + "}\n";

@@ -96,16 +96,13 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private List<ChecksumSearchResultItem> searchByChecksumResults(Checksum checksum) {
-        RestRequest<ChecksumSearchResult>
-                request = searchByChecksumRequest();
-        List<ChecksumSearchResultItem> results;
+        RestRequest<ChecksumSearchResult> request = searchByChecksumRequest();
         try {
-            results = request.with("checkSum", checksum.hexString()).GET().getResults();
+            return request.with("checkSum", checksum.hexString()).GET().getResults();
         } catch (RuntimeException e) {
             log.error("can't search by checksum [" + checksum + "] in " + request, e);
             throw new ErrorWhileFetchingChecksumException(checksum);
         }
-        return results;
     }
 
     private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
