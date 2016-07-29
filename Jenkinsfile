@@ -10,4 +10,5 @@ node {
 
     stage 'Integration Test'
     sh "${mvnHome}/bin/mvn integration-test"
+    step([$class: 'JUnitResultArchiver', testResults: '**/target/failsafe-reports/TEST-*.xml'])
 }
