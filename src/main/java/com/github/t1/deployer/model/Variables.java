@@ -42,7 +42,9 @@ public class Variables {
                     out.append(line.substring(matcher.start() + 1, matcher.end()));
                 } else {
                     String key = matcher.group(1);
-                    out.append(variables.getOrDefault(key, "${" + key + "}"));
+                    if (!variables.containsKey(key))
+                        throw badRequest("unresolved variable key: " + key);
+                    out.append(variables.get(key));
                 }
                 tail = matcher.end();
             }

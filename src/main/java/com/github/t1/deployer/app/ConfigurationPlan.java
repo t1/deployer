@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
+import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -123,7 +124,12 @@ public class ConfigurationPlan {
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
         @NonNull private final ArtifactType type;
+        @NonNull private final Map<String, String> variables;
 
+        public static class DeploymentConfigBuilder {
+            @SuppressWarnings("unused")
+            private Map<String, String> variables = ImmutableMap.of();
+        }
 
         public static DeploymentConfig fromJson(DeploymentName name, JsonNode node) {
             if (node.isNull())
@@ -134,6 +140,18 @@ public class ConfigurationPlan {
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
+            if (node.has("var") && !node.get("var").isNull())
+                builder.variables(toMap(node.get("var")));
+            return builder.build();
+        }
+
+        private static Map<String, String> toMap(JsonNode node) {
+            ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                builder.put(field.getKey(), field.getValue().asText());
+            }
             return builder.build();
         }
 

@@ -117,13 +117,23 @@ public class DeployerBoundary {
             // TODO if we could move this recursion logic into the ArtifactDeployer, we could generalize the Deployers
             plan.artifacts().forEach(deploymentPlan -> {
                 if (deploymentPlan.getType() == bundle)
-                    apply(lookup(deploymentPlan).getReader());
+                    applyBundle(deploymentPlan);
                 else
                     artifactDeployer.apply(deploymentPlan);
             });
             artifactDeployer.cleanup(audits);
 
             return audits;
+        }
+
+        private Audits applyBundle(DeploymentConfig plan) {
+            Variables pop = this.variables;
+            try {
+                this.variables = this.variables.withAll(plan.getVariables());
+                return apply(lookup(plan).getReader());
+            } finally {
+                this.variables = pop;
+            }
         }
     }
 

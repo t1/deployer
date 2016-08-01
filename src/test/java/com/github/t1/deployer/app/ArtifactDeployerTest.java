@@ -2,6 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.Checksum;
+import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -151,16 +152,18 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldDeployWebArchiveWithUndefinedVariable() {
-        ArtifactFixture foo = givenArtifact("foo").version("${undefined}");
+    public void shouldFailToDeployWebArchiveWithUndefinedVariable() {
+        givenArtifact("foo").version("${undefined}");
 
-        Audits audits = deployer.apply(""
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "artifacts:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${undefined}\n");
+                + "    version: ${undefined}\n"));
 
-        foo.verifyDeployed(audits);
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("unresolved variable key: undefined");
     }
 
 
@@ -382,20 +385,55 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
         mockserver.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(
                 mockserver.addedAudit());
-        //         ArtifactAudit.builder()
-        //                      .name("should-deploy-bundle")
-        //                      .change("group-id", null, "artifact-deployer-test")
-        //                      .change("artifact-id", null, "should-deploy-bundle")
-        //                      .change("version", null, "1")
-        //                      .change("type", null, "bundle")
-        //                      .change("checksum", null, "face0000fa544508949608141c2e1f62fe9c82f3")
-        //                      .added()
-        // );
     }
 
 
-    // TODO shouldDeployBundleWithParams
+    @Test
+    public void shouldDeployBundleWithSystemParam() {
+        systemProperties.given("jolokia.version", "1.3.3");
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
+                .containing(""
+                        + "artifacts:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: ${jolokia.version}\n");
 
+        Audits audits = deployer.apply(""
+                + "artifacts:\n"
+                + "  should-deploy-bundle:\n"
+                + "    type: bundle\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployBundleWithPassedParam() {
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
+                .containing(""
+                        + "artifacts:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: ${jolokia.version}\n");
+
+        Audits audits = deployer.apply(""
+                + "artifacts:\n"
+                + "  should-deploy-bundle:\n"
+                + "    type: bundle\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    var:\n"
+                + "      jolokia.version: 1.3.3\n");
+
+        jolokia.verifyDeployed(audits);
+    }
 
     @Test
     public void shouldUndeployEverythingWhenManagedAndEmptyPlan() {

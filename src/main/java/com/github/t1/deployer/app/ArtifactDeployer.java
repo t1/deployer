@@ -82,6 +82,7 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
     @Override
     protected DeploymentResource buildResource(DeploymentConfig plan, ArtifactAuditBuilder audit) {
         Artifact artifact = lookupArtifact(plan);
+        assert artifact != null : "not found: " + plan;
         audit.name(plan.getName())
              .change("group-id", null, plan.getGroupId())
              .change("artifact-id", null, plan.getArtifactId())
