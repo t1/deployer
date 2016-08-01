@@ -3,6 +3,8 @@ package com.github.t1.deployer.app;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.deployer.container.*;
 import lombok.*;
 import lombok.experimental.Accessors;
@@ -23,12 +25,18 @@ import static lombok.AccessLevel.*;
 @JsonTypeInfo(use = NAME, include = PROPERTY, property = "type")
 @JsonSubTypes({ @Type(Audit.ArtifactAudit.class), @Type(Audit.LoggerAudit.class), @Type(Audit.LogHandlerAudit.class) })
 @JsonInclude(NON_EMPTY)
+@JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("ClassReferencesSubclass")
 public abstract class Audit {
     public enum Operation {add, change, remove}
 
     @Value
+    @JsonNaming(KebabCaseStrategy.class)
     public static class Change {
+        @JsonCreator public static Change fromJson(JsonNode node) {
+            return new Change(getText(node, "name"), getText(node, "old-value"), getText(node, "new-value"));
+        }
+
         @NonNull @JsonProperty private final String name;
         @JsonProperty private final String oldValue;
         @JsonProperty private final String newValue;
