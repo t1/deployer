@@ -1,6 +1,5 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.LoggingHandlerType;
 import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.experimental.Accessors;

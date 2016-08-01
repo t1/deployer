@@ -1,4 +1,4 @@
-package com.github.t1.deployer.model;
+package com.github.t1.deployer.container;
 
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;

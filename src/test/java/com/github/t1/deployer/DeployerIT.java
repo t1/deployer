@@ -24,7 +24,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.model.LoggingHandlerType.*;
+import static com.github.t1.deployer.container.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
 import static java.util.concurrent.TimeUnit.*;

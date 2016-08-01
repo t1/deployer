@@ -9,12 +9,13 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class AuditSerializationTest {
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = new ObjectMapper().setPropertyNamingStrategy(KEBAB_CASE);
 
     public Audit deserialize(String json) throws IOException {
         return JSON.readValue(json.replace('\'', '\"'), Audit.class);
@@ -40,7 +41,7 @@ public class AuditSerializationTest {
                      + "'type':'logger',"
                      + "'operation':'add',"
                      + "'changes':["
-                     + "{'name':'level','oldValue':'INFO','newValue':'DEBUG'}"
+                     + "{'name':'level','old-value':'INFO','new-value':'DEBUG'}"
                      + "],"
                      + "'category':'com.github.t1.deployer'"
                      + "},{"
@@ -57,8 +58,8 @@ public class AuditSerializationTest {
             + "  operation: add\n"
             + "  changes:\n"
             + "  - name: level\n"
-            + "    oldValue: INFO\n"
-            + "    newValue: DEBUG\n"
+            + "    old-value: INFO\n"
+            + "    new-value: DEBUG\n"
             + "  category: com.github.t1.deployer\n"
             + "- !<artifact>\n"
             + "  operation: remove\n"
@@ -95,10 +96,10 @@ public class AuditSerializationTest {
                 + "'type':'artifact',"
                 + "'operation':'add',"
                 + "'changes':["
-                + "{'name':'group-id','oldValue':null,'newValue':'org.jolokia'},"
-                + "{'name':'artifact-id','oldValue':null,'newValue':'jolokia-war'},"
-                + "{'name':'version','oldValue':null,'newValue':'1.3.2'},"
-                + "{'name':'type','oldValue':null,'newValue':'war'}"
+                + "{'name':'group-id','old-value':null,'new-value':'org.jolokia'},"
+                + "{'name':'artifact-id','old-value':null,'new-value':'jolokia-war'},"
+                + "{'name':'version','old-value':null,'new-value':'1.3.2'},"
+                + "{'name':'type','old-value':null,'new-value':'war'}"
                 + "],'name':'jolokia'}"
                 + "]}";
 
@@ -109,13 +110,13 @@ public class AuditSerializationTest {
                 + "  operation: add\n"
                 + "  changes:\n"
                 + "  - name: group-id\n"
-                + "    newValue: org.jolokia\n"
+                + "    new-value: org.jolokia\n"
                 + "  - name: artifact-id\n"
-                + "    newValue: jolokia-war\n"
+                + "    new-value: jolokia-war\n"
                 + "  - name: version\n"
-                + "    newValue: 1.3.2\n"
+                + "    new-value: 1.3.2\n"
                 + "  - name: type\n"
-                + "    newValue: war\n"
+                + "    new-value: war\n"
                 + "  name: jolokia\n");
     }
 
@@ -159,8 +160,8 @@ public class AuditSerializationTest {
                 + "'category':'com.github.t1.deployer',"
                 + "'changes':[{"
                 + "'name':'level',"
-                + "'oldValue':null,"
-                + "'newValue':'INFO'"
+                + "'old-value':null,"
+                + "'new-value':'INFO'"
                 + "}]}";
 
         Audit audit = deserialize(json);

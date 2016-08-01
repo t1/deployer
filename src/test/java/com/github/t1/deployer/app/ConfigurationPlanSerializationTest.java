@@ -7,9 +7,9 @@ import org.junit.Test;
 
 import java.io.StringReader;
 
+import static com.github.t1.deployer.container.LoggingHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 

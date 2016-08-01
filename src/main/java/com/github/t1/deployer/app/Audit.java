@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.LoggingHandlerType;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -30,10 +29,6 @@ public abstract class Audit {
 
     @Value
     public static class Change {
-        @JsonCreator public static Change fromJson(JsonNode node) {
-            return new Change(getText(node, "name"), getText(node, "oldValue"), getText(node, "newValue"));
-        }
-
         @NonNull @JsonProperty private final String name;
         @JsonProperty private final String oldValue;
         @JsonProperty private final String newValue;

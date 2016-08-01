@@ -2,8 +2,6 @@ package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
@@ -19,10 +17,11 @@ import java.util.stream.Stream;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
+import static com.github.t1.deployer.container.LoggingHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.model.LoggingHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.stream.Collectors.*;
@@ -37,7 +36,6 @@ import static lombok.AccessLevel.*;
 @EqualsAndHashCode
 @AllArgsConstructor(access = PRIVATE)
 @Slf4j
-@JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class ConfigurationPlan {
     public static final ObjectMapper YAML = new ObjectMapper(
@@ -45,7 +43,7 @@ public class ConfigurationPlan {
                     .enable(MINIMIZE_QUOTES)
                     .disable(WRITE_DOC_START_MARKER))
             .setSerializationInclusion(NON_EMPTY)
-            // preferable to @JsonNaming, but won't be picked up by JAX-RS: .setPropertyNamingStrategy(KEBAB_CASE)
+            .setPropertyNamingStrategy(KEBAB_CASE)
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             .findAndRegisterModules();
 
@@ -122,7 +120,6 @@ public class ConfigurationPlan {
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
-    @JsonNaming(KebabCaseStrategy.class)
     public static class DeploymentConfig implements AbstractConfig {
         @NonNull @JsonIgnore private final DeploymentName name;
         @NonNull private final DeploymentState state;
@@ -174,7 +171,6 @@ public class ConfigurationPlan {
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
-    @JsonNaming(KebabCaseStrategy.class)
     public static class LoggerConfig implements AbstractConfig {
         @NonNull @JsonIgnore private final LoggerCategory category;
         @NonNull private final DeploymentState state;
@@ -230,7 +226,6 @@ public class ConfigurationPlan {
     @Data
     @Builder
     @AllArgsConstructor(access = PRIVATE)
-    @JsonNaming(KebabCaseStrategy.class)
     public static class LogHandlerConfig implements AbstractConfig {
         private static final LogLevel DEFAULT_LEVEL = ALL;
 
