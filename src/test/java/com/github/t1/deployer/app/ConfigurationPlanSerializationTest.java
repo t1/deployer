@@ -115,6 +115,24 @@ public class ConfigurationPlanSerializationTest {
     }
 
 
+    @Test
+    public void shouldFailToDeserializePlanWithWarDeploymentWithVars() throws Exception {
+        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
+                + "artifacts:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1\n"
+                + "    var:\n"
+                + "      name: bar\n")));
+
+        assertThat(thrown).hasMessageContaining("exception while loading config plan");
+        assertThat(thrown.getCause()).hasMessageContaining("Instantiation of ").hasMessageContaining(" value failed");
+        assertThat(thrown.getCause().getCause())
+                .isInstanceOf(ConfigurationPlanLoadingException.class)
+                .hasMessageContaining("variables are only allowed for bundles");
+    }
+
+
     private static final String ONE_LOGGER_YAML = ""
             + "loggers:\n"
             + "  some.logger.category:\n"

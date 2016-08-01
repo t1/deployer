@@ -1,21 +1,18 @@
 package com.github.t1.deployer.container;
 
-import static com.github.t1.log.LogLevel.*;
+import com.github.t1.log.Logged;
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.as.controller.client.ModelControllerClient;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.*;
+import javax.management.*;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.nio.file.*;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.*;
-import javax.management.*;
-
-import org.jboss.as.controller.client.ModelControllerClient;
-
-import com.github.t1.log.Logged;
-
-import lombok.extern.slf4j.Slf4j;
+import static com.github.t1.log.LogLevel.*;
 
 @Slf4j
 @Logged(level = DEBUG)

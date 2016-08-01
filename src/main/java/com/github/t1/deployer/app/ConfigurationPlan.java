@@ -40,7 +40,7 @@ import static lombok.AccessLevel.*;
 @JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class ConfigurationPlan {
-    static final ObjectMapper YAML = new ObjectMapper(
+    public static final ObjectMapper YAML = new ObjectMapper(
             new YAMLFactory()
                     .enable(MINIMIZE_QUOTES)
                     .disable(WRITE_DOC_START_MARKER))
@@ -48,6 +48,12 @@ public class ConfigurationPlan {
             // preferable to @JsonNaming, but won't be picked up by JAX-RS: .setPropertyNamingStrategy(KEBAB_CASE)
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             .findAndRegisterModules();
+
+    public static class ConfigurationPlanLoadingException extends RuntimeException {
+        public ConfigurationPlanLoadingException(String message) { super(message); }
+
+        public ConfigurationPlanLoadingException(String message, Throwable cause) { super(message, cause); }
+    }
 
     private static final ConfigurationPlan EMPTY_PLAN = ConfigurationPlan.builder().build();
 
@@ -59,7 +65,7 @@ public class ConfigurationPlan {
             log.debug("config plan loaded:\n{}", plan);
             return plan;
         } catch (IOException e) {
-            throw new RuntimeException("exception while loading config plan", e);
+            throw new ConfigurationPlanLoadingException("exception while loading config plan", e);
         }
     }
 
@@ -133,7 +139,7 @@ public class ConfigurationPlan {
 
         public static DeploymentConfig fromJson(DeploymentName name, JsonNode node) {
             if (node.isNull())
-                throw new RuntimeException("no config in artifact '" + name + "'");
+                throw new ConfigurationPlanLoadingException("no config in artifact '" + name + "'");
             DeploymentConfigBuilder builder = builder().name(name);
             apply(node, "group-id", null, value -> builder.groupId(new GroupId(value)));
             apply(node, "artifact-id", name.getValue(), value -> builder.artifactId(new ArtifactId(value)));
@@ -141,7 +147,11 @@ public class ConfigurationPlan {
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
             if (node.has("var") && !node.get("var").isNull())
-                builder.variables(toMap(node.get("var")));
+                if (builder.type == bundle)
+                    builder.variables(toMap(node.get("var")));
+                else
+                    throw new ConfigurationPlanLoadingException(
+                            "variables are only allowed for bundles; maybe you forgot to add `type: bundle`?");
             return builder.build();
         }
 
@@ -175,7 +185,7 @@ public class ConfigurationPlan {
 
         private static LoggerConfig fromJson(LoggerCategory category, JsonNode node) {
             if (node.isNull())
-                throw new RuntimeException("no config in logger '" + category + "'");
+                throw new ConfigurationPlanLoadingException("no config in logger '" + category + "'");
             LoggerConfigBuilder builder = builder().category(category);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
@@ -206,7 +216,7 @@ public class ConfigurationPlan {
 
         private LoggerConfig validate() {
             if (useParentHandlers == FALSE && handlers.isEmpty())
-                throw new RuntimeException("Can't set use-parent-handlers of [" + category + "] "
+                throw new ConfigurationPlanLoadingException("Can't set use-parent-handlers of [" + category + "] "
                         + "to false when there are no handlers");
             return this;
         }
@@ -237,7 +247,7 @@ public class ConfigurationPlan {
 
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
             if (node.isNull())
-                throw new RuntimeException("no config in log-handler '" + name + "'");
+                throw new ConfigurationPlanLoadingException("no config in log-handler '" + name + "'");
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "level", DEFAULT_LEVEL.name(), value -> builder.level(LogLevel.valueOf(value)));
@@ -258,7 +268,7 @@ public class ConfigurationPlan {
                 // nothing more to load here
                 return;
             }
-            throw new UnsupportedOperationException("unhandled log-handler type [" + builder.type + "]"
+            throw new ConfigurationPlanLoadingException("unhandled log-handler type [" + builder.type + "]"
                     + " in [" + builder.name + "]");
         }
 
@@ -271,7 +281,8 @@ public class ConfigurationPlan {
 
         private LogHandlerConfig validate() {
             if (format == null && formatter == null || format != null && formatter != null)
-                throw new RuntimeException("log-handler [" + name + "] must either have a format or a formatter");
+                throw new ConfigurationPlanLoadingException(
+                        "log-handler [" + name + "] must either have a format or a formatter");
             return this;
         }
 
