@@ -130,12 +130,9 @@ public class ConfigurationPlan {
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
         @NonNull private final ArtifactType type;
-        @NonNull private final Map<String, String> variables;
+        @NonNull @Singular @JsonProperty("var") private final Map<String, String> variables;
 
-        public static class DeploymentConfigBuilder {
-            @SuppressWarnings("unused")
-            private Map<String, String> variables = ImmutableMap.of();
-        }
+        public static class DeploymentConfigBuilder {}
 
         public static DeploymentConfig fromJson(DeploymentName name, JsonNode node) {
             if (node.isNull())

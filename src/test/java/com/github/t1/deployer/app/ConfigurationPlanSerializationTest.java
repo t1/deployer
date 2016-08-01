@@ -115,6 +115,45 @@ public class ConfigurationPlanSerializationTest {
     }
 
 
+    private static final ConfigurationPlan BUNDLE_PLAN = ConfigurationPlan
+            .builder()
+            .artifact(DeploymentConfig
+                    .builder()
+                    .type(bundle)
+                    .name(new DeploymentName("foo"))
+                    .groupId(new GroupId("org.foo"))
+                    .artifactId(new ArtifactId("foo"))
+                    .version(new Version("1"))
+                    .variable("name", "bar")
+                    .state(deployed)
+                    .build())
+            .build();
+    private static final String BUNDLE_PLAN_YAML = ""
+            + "artifacts:\n"
+            + "  foo:\n"
+            + "    state: deployed\n"
+            + "    group-id: org.foo\n"
+            + "    artifact-id: foo\n"
+            + "    version: 1\n"
+            + "    type: bundle\n"
+            + "    var:\n"
+            + "      name: bar\n";
+
+    @Test
+    public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(BUNDLE_PLAN_YAML));
+
+        assertThat(plan).isEqualTo(BUNDLE_PLAN);
+    }
+
+    @Test
+    public void shouldSerializePlanWithBundleDeploymentWithVars() throws Exception {
+        String yaml = BUNDLE_PLAN.toYaml();
+
+        assertThat(yaml).isEqualTo(BUNDLE_PLAN_YAML);
+    }
+
+
     @Test
     public void shouldFailToDeserializePlanWithWarDeploymentWithVars() throws Exception {
         Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
