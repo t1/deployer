@@ -15,7 +15,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.*;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.*;
 import static com.github.t1.deployer.app.Audit.Operation.*;
-import static com.github.t1.deployer.model.Tools.*;
+import static com.github.t1.deployer.tools.Tools.*;
 import static lombok.AccessLevel.*;
 
 @Data

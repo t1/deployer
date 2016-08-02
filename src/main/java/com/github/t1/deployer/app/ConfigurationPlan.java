@@ -8,7 +8,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
-import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,6 +22,7 @@ import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.container.LoggingHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.deployer.tools.Tools.toMap;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.stream.Collectors.*;
@@ -125,7 +125,7 @@ public class ConfigurationPlan {
     @JsonNaming(KebabCaseStrategy.class)
     public static class DeploymentConfig implements AbstractConfig {
         @NonNull @JsonIgnore private final DeploymentName name;
-        @NonNull private final DeploymentState state;
+        private final DeploymentState state;
         @NonNull private final GroupId groupId;
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
@@ -140,7 +140,7 @@ public class ConfigurationPlan {
             DeploymentConfigBuilder builder = builder().name(name);
             apply(node, "group-id", null, value -> builder.groupId(new GroupId(value)));
             apply(node, "artifact-id", name.getValue(), value -> builder.artifactId(new ArtifactId(value)));
-            apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
+            apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
             if (node.has("var") && !node.get("var").isNull())
@@ -152,18 +152,10 @@ public class ConfigurationPlan {
             return builder.build();
         }
 
-        private static Map<String, String> toMap(JsonNode node) {
-            ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
-                builder.put(field.getKey(), field.getValue().asText());
-            }
-            return builder.build();
-        }
+        @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
-            return "«deployment:" + state + ":" + name + ":" + groupId + ":" + artifactId + ":" + version
+            return "«deployment:" + getState() + ":" + name + ":" + groupId + ":" + artifactId + ":" + version
                     + ":" + type + variables + "»";
         }
     }

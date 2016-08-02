@@ -18,7 +18,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
-import static com.github.t1.deployer.model.Tools.*;
+import static com.github.t1.deployer.tools.Tools.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j

@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.model.Tools.*;
+import static com.github.t1.deployer.tools.Tools.*;
 
 @Slf4j
 public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResource, LoggerAuditBuilder> {

@@ -21,7 +21,6 @@ public class ConfigurationPlanSerializationTest {
             .groupId(new GroupId("org.foo"))
             .artifactId(new ArtifactId("foo-war"))
             .version(new Version("1"))
-            .state(deployed)
             .build();
 
 
@@ -45,7 +44,6 @@ public class ConfigurationPlanSerializationTest {
     private static final String ONE_DEPLOYMENT_YAML = ""
             + "artifacts:\n"
             + "  foo:\n"
-            + "    state: deployed\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo-war\n"
             + "    version: 1\n"
@@ -74,13 +72,11 @@ public class ConfigurationPlanSerializationTest {
     private static final String TWO_DEPLOYMENTS_YAML = ""
             + "artifacts:\n"
             + "  foo:\n"
-            + "    state: deployed\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo-war\n"
             + "    version: 1\n"
             + "    type: war\n"
             + "  bar-name:\n"
-            + "    state: deployed\n"
             + "    group-id: org.bar\n"
             + "    artifact-id: bar-war\n"
             + "    version: 1.2.3\n"
@@ -131,7 +127,6 @@ public class ConfigurationPlanSerializationTest {
     private static final String BUNDLE_PLAN_YAML = ""
             + "artifacts:\n"
             + "  foo:\n"
-            + "    state: deployed\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo\n"
             + "    version: 1\n"

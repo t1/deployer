@@ -9,8 +9,8 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.net.*;
 
-import static com.github.t1.deployer.model.Tools.*;
 import static com.github.t1.deployer.repository.RepositoryType.*;
+import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.rest.RestContext.*;
 
 @Slf4j

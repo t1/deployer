@@ -81,7 +81,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldAddLoggerWithoutLevel() {
-        LoggerFixture logger = givenLogger("com.github.t1.deployer.app");
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(ALL);
 
         Audits audits = deployer.apply(""
                 + "loggers:\n"
