@@ -101,7 +101,7 @@ public class AbstractDeployerTest {
     }
 
     private void stubAllLogHandlers(LoggingHandlerType type) {
-        when(cli.execute(readResource("logging", type.getTypeName(), "*"))).then(i ->
+        when(cli.execute(readResource("logging", type.getHandlerName(), "*"))).then(i ->
                 toModelNode(allLogHandlers.getOrDefault(type, emptyList()).stream().collect(joining(",", "[", "]"))));
     }
 
@@ -116,7 +116,7 @@ public class AbstractDeployerTest {
         verify(cli, atLeast(0)).execute(readResource(null, "deployment", "*"));
         verify(cli, atLeast(0)).execute(readResource("logging", "logger", "*"));
         Arrays.stream(LoggingHandlerType.values()).forEach(type ->
-                verify(cli, atLeast(0)).execute(readResource("logging", type.getTypeName(), "*")));
+                verify(cli, atLeast(0)).execute(readResource("logging", type.getHandlerName(), "*")));
 
         verifyNoMoreInteractions(cli);
         // TODO verifyNoMoreInteractions(deploymentManager);
@@ -556,9 +556,9 @@ public class AbstractDeployerTest {
             this.name = new LogHandlerName(name);
             this.audit = LogHandlerAudit.builder().type(this.type).name(this.name);
 
-            when(cli.executeRaw(readResource("logging", type.getTypeName(), name))).then(i -> deployed
+            when(cli.executeRaw(readResource("logging", type.getHandlerName(), name))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
-                    : notDeployedNode("logging", type, name));
+                    : notDeployedNode("logging", type.getHandlerName(), name));
         }
 
         public String deployedNode() {
@@ -627,7 +627,7 @@ public class AbstractDeployerTest {
             return toModelNode("{" + logHandlerAddress() + "}");
         }
 
-        private String logHandlerAddress() { return address("logging", type.getTypeName(), name); }
+        private String logHandlerAddress() { return address("logging", type.getHandlerName(), name); }
 
 
         public <T> void verifyChange(String name, T oldValue, T newValue) {

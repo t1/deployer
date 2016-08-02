@@ -131,6 +131,8 @@ public class DeployerBoundary {
             try {
                 this.variables = this.variables.withAll(plan.getVariables());
                 return apply(lookup(plan).getReader());
+            } catch (RuntimeException e) {
+                throw new RuntimeException("can't apply bundle [" + plan + "]", e);
             } finally {
                 this.variables = pop;
             }

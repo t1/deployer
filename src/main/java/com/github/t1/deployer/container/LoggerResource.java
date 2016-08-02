@@ -111,6 +111,8 @@ public class LoggerResource extends AbstractResource {
 
     public void writeLevel(LogLevel newLevel) {
         checkDeployed();
+        if (newLevel == null)
+            newLevel = LogLevel.ALL;
         writeAttribute("level", newLevel.name());
     }
 

@@ -164,7 +164,7 @@ public class ConfigurationPlan {
 
         @Override public String toString() {
             return "«deployment:" + state + ":" + name + ":" + groupId + ":" + artifactId + ":" + version
-                    + ":" + type + "»";
+                    + ":" + type + variables + "»";
         }
     }
 
@@ -218,6 +218,8 @@ public class ConfigurationPlan {
             return this;
         }
 
+        public LogLevel getLevel() { return (level == null) ? ALL : level; }
+
         @Override public String toString() {
             return "«logger:" + state + ":" + category + ":" + level + ":"
                     + handlers + (useParentHandlers == TRUE ? "+" : "") + "»";
@@ -248,7 +250,8 @@ public class ConfigurationPlan {
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
             apply(node, "level", DEFAULT_LEVEL.name(), value -> builder.level(LogLevel.valueOf(value)));
-            apply(node, "type", periodicRotatingFile.name(), value -> builder.type(LoggingHandlerType.valueOf(value)));
+            apply(node, "type", periodicRotatingFile.getTypeName(), value ->
+                    builder.type(LoggingHandlerType.valueOfTypeName(value)));
             apply(node, "format", null, builder::format);
             apply(node, "formatter", null, builder::formatter);
             applyByType(node, builder);

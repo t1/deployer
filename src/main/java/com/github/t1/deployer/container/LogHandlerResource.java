@@ -48,11 +48,11 @@ public class LogHandlerResource extends AbstractResource {
     }
 
     private static LoggingHandlerType type(ModelNode node) {
-        return LoggingHandlerType.valueOfTypeName(new ArrayList<>(node.get("address").get(1).keys()).get(0));
+        return LoggingHandlerType.valueOfHandlerName(new ArrayList<>(node.get("address").get(1).keys()).get(0));
     }
 
     private static LogHandlerName name(ModelNode node) {
-        return new LogHandlerName(node.get("address").get(1).get(type(node).getTypeName()).asString());
+        return new LogHandlerName(node.get("address").get(1).get(type(node).getHandlerName()).asString());
     }
 
     private static LogHandlerResource toLoggerResource(LoggingHandlerType type, LogHandlerName name, CLI cli,
@@ -131,7 +131,7 @@ public class LogHandlerResource extends AbstractResource {
 
     public void updateFormat(String newFormat) {
         checkDeployed();
-        writeAttribute("format", newFormat);
+        writeAttribute("formatter", newFormat);
     }
 
     public void updateFormatter(String newFormatter) {
@@ -143,7 +143,7 @@ public class LogHandlerResource extends AbstractResource {
         ModelNode request = new ModelNode();
         request.get("address")
                .add("subsystem", "logging")
-               .add(type.getTypeName(), name.getValue());
+               .add(type.getHandlerName(), name.getValue());
         return request;
     }
 

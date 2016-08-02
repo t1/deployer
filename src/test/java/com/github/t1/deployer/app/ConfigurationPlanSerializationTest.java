@@ -210,16 +210,16 @@ public class ConfigurationPlanSerializationTest {
 
     private static final String ONE_LOGHANDLER_YAML = ""
             + "log-handlers:\n"
-            + "  CONSOLE:\n"
+            + "  FOO:\n"
             + "    state: deployed\n"
             + "    level: INFO\n"
-            + "    type: periodicRotatingFile\n"
+            + "    type: periodic-rotating-file\n"
             + "    format: the-format\n"
             + "    file: the-file\n"
             + "    suffix: the-suffix\n";
     private static final LogHandlerConfig LOGHANDLER = LogHandlerConfig
             .builder()
-            .name(new LogHandlerName("CONSOLE"))
+            .name(new LogHandlerName("FOO"))
             .state(deployed)
             .level(INFO)
             .type(periodicRotatingFile)
