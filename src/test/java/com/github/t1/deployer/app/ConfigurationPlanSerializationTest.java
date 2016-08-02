@@ -9,7 +9,6 @@ import java.io.StringReader;
 
 import static com.github.t1.deployer.container.LoggingHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -92,7 +91,6 @@ public class ConfigurationPlanSerializationTest {
                     .groupId(new GroupId("org.bar"))
                     .artifactId(new ArtifactId("bar-war"))
                     .version(new Version("1.2.3"))
-                    .state(deployed)
                     .build())
             .build();
 
@@ -121,7 +119,6 @@ public class ConfigurationPlanSerializationTest {
                     .artifactId(new ArtifactId("foo"))
                     .version(new Version("1"))
                     .variable("name", "bar")
-                    .state(deployed)
                     .build())
             .build();
     private static final String BUNDLE_PLAN_YAML = ""
@@ -170,7 +167,6 @@ public class ConfigurationPlanSerializationTest {
     private static final String ONE_LOGGER_YAML = ""
             + "loggers:\n"
             + "  some.logger.category:\n"
-            + "    state: deployed\n"
             + "    level: TRACE\n"
             + "    handlers:\n"
             + "    - CONSOLE\n"
@@ -178,7 +174,6 @@ public class ConfigurationPlanSerializationTest {
     private static final LoggerConfig LOGGER = LoggerConfig
             .builder()
             .category(LoggerCategory.of("some.logger.category"))
-            .state(deployed)
             .level(TRACE)
             .handler("CONSOLE")
             .useParentHandlers(true)
@@ -206,7 +201,6 @@ public class ConfigurationPlanSerializationTest {
     private static final String ONE_LOGHANDLER_YAML = ""
             + "log-handlers:\n"
             + "  FOO:\n"
-            + "    state: deployed\n"
             + "    level: INFO\n"
             + "    type: periodic-rotating-file\n"
             + "    format: the-format\n"
@@ -215,7 +209,6 @@ public class ConfigurationPlanSerializationTest {
     private static final LogHandlerConfig LOGHANDLER = LogHandlerConfig
             .builder()
             .name(new LogHandlerName("FOO"))
-            .state(deployed)
             .level(INFO)
             .type(periodicRotatingFile)
             .file("the-file")

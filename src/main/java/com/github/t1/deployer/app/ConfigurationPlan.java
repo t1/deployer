@@ -166,7 +166,7 @@ public class ConfigurationPlan {
     @JsonNaming(KebabCaseStrategy.class)
     public static class LoggerConfig implements AbstractConfig {
         @NonNull @JsonIgnore private final LoggerCategory category;
-        @NonNull private final DeploymentState state;
+        private final DeploymentState state;
         private final LogLevel level;
         @NonNull private final List<LogHandlerName> handlers;
         private final Boolean useParentHandlers;
@@ -176,7 +176,7 @@ public class ConfigurationPlan {
             if (node.isNull())
                 throw new ConfigurationPlanLoadingException("no config in logger '" + category + "'");
             LoggerConfigBuilder builder = builder().category(category);
-            apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
+            apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "handler", null, builder::handler);
             if (node.has("handlers")) {
@@ -210,10 +210,12 @@ public class ConfigurationPlan {
             return this;
         }
 
+        @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
+
         public LogLevel getLevel() { return (level == null) ? ALL : level; }
 
         @Override public String toString() {
-            return "«logger:" + state + ":" + category + ":" + level + ":"
+            return "«logger:" + getState() + ":" + category + ":" + getLevel() + ":"
                     + handlers + (useParentHandlers == TRUE ? "+" : "") + "»";
         }
     }
@@ -223,11 +225,9 @@ public class ConfigurationPlan {
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
     public static class LogHandlerConfig implements AbstractConfig {
-        private static final LogLevel DEFAULT_LEVEL = ALL;
-
         @NonNull @JsonIgnore private final LogHandlerName name;
-        @NonNull private final DeploymentState state;
-        @NonNull private final LogLevel level;
+        private final DeploymentState state;
+        private final LogLevel level;
         @NonNull private final LoggingHandlerType type;
         private final String format;
         private final String formatter;
@@ -240,8 +240,8 @@ public class ConfigurationPlan {
             if (node.isNull())
                 throw new ConfigurationPlanLoadingException("no config in log-handler '" + name + "'");
             LogHandlerConfigBuilder builder = builder().name(name);
-            apply(node, "state", deployed.name(), value -> builder.state(DeploymentState.valueOf(value)));
-            apply(node, "level", DEFAULT_LEVEL.name(), value -> builder.level(LogLevel.valueOf(value)));
+            apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
+            apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.getTypeName(), value ->
                     builder.type(LoggingHandlerType.valueOfTypeName(value)));
             apply(node, "format", null, builder::format);
@@ -264,12 +264,7 @@ public class ConfigurationPlan {
                     + " in [" + builder.name + "]");
         }
 
-        public static class LogHandlerConfigBuilder {
-            public LogHandlerConfigBuilder level(LogLevel level) {
-                this.level = (level == null) ? DEFAULT_LEVEL : level;
-                return this;
-            }
-        }
+        public static class LogHandlerConfigBuilder {}
 
         private LogHandlerConfig validate() {
             if (format == null && formatter == null || format != null && formatter != null)
@@ -278,9 +273,12 @@ public class ConfigurationPlan {
             return this;
         }
 
+        @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
+
+        public LogLevel getLevel() { return (level == null) ? ALL : level; }
+
         @Override public String toString() {
-            return "«log-handler:" + state + ":" + type + ":" + name + ":" + level
-                    + ":" + file + ":" + suffix
+            return "«log-handler:" + getState() + ":" + type + ":" + name + ":" + getLevel() + ":" + file + ":" + suffix
                     + ((format == null) ? "" : ":format=" + format)
                     + ((formatter == null) ? "" : ":formatter=" + formatter)
                     + "»";

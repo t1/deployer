@@ -23,7 +23,6 @@ import java.util.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.deployer.tools.Tools.*;
-import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
@@ -689,10 +688,9 @@ public class AbstractDeployerTest {
         public LogHandlerConfig asConfig() {
             return LogHandlerConfig
                     .builder()
-                    .state(DeploymentState.deployed)
                     .type(type)
                     .name(name)
-                    .level((level == null) ? ALL : level)
+                    .level(level)
                     .file(file())
                     .suffix((suffix == null) ? ".yyyy-MM-dd" : suffix)
                     .format(format)

@@ -119,7 +119,6 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddPeriodicRotatingFileHandlerWithDefaultLevel() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
-                .level(ALL)
                 .suffix("the-suffix")
                 .format("the-format");
 
@@ -130,7 +129,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.file("FOO").verifyAdded(audits);
+        fixture.level(ALL).file("FOO").verifyAdded(audits);
     }
 
 
