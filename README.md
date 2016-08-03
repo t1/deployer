@@ -11,8 +11,9 @@ Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCo
 
 ```yaml
 artifacts:
-  jolokia-war:
+  jolokia:
     groupId: org.jolokia
+    artifact-id: jolokia-war
     version: 1.3.2
 ```
 
@@ -26,11 +27,41 @@ If there is already a different version of jolokia deployed, it will replace it.
 
 ### Deployments
 
-`group-id`: Defaults to the system property `default.group-id` (see below).
+The key is the `name` of the deployment, i.e. a `war` named `foo` will be deployed as `foo.war`,
+so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
+
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See `managed`.
+- `group-id`: Defaults to the system property `default.group-id` (see below).
+- `artifact-id`: Defaults to the name of the deployment.
+- `version`: Mandatory.
+- `type`: `war`, `jar`, or `bundle`. Defautls to `war`.
+- `var`: The map of variables passed into a `bundle`. Forbidden for other types. Defaults to empty map.
 
 ### LogHandlers
 
+The key is the `name` of the log handler. This is conventionally an upper case string.
+
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See `managed`.
+- `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
+- `type`: One of `console` or `periodic-rotating-file`. Defaults to `periodic-rotating-file`.
+- `format`: The format used for log lines. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`.
+- `formatter`: The name of a named formatter. Wildfly 10.0.0 defines: `PATTERN` and `COLOR-PATTERN`.
+
+Only for `periodic-rotating-file`:
+- `file`: The base name of the file to log to. Defaults to the `name` of the log handler. 
+- `suffix`: The date/time suffix used when rotating, defining the rotation frequency. Defaults to `.yyyy-MM-dd`, i.e. daily rotation.
+
+
 ### Loggers
+
+The key is the `category` of the logger, usually the fully qualified name of the class producing the logs. 
+
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See `managed`.
+- `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
+- `handlers`: A list of log handler names. Defaults to the empty list.
+- `handler`: Alternative syntax for a single log handler name. Defaults to the empty list.
+- `use-parent-handlers`: Should the log handlers of the parent logger be used?
+Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
 
 ## Config
 
