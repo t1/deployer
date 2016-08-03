@@ -324,7 +324,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     public void shouldRenameWebArchiveWithSameChecksumWhenManaged() {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
         ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1");
-        deployer.setManaged(true);
+        givenManaged("artifacts");
 
         Audits audits = deployer.apply(""
                 + "artifacts:\n"
@@ -344,7 +344,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     public void shouldUndeployUnspecifiedWebArchiveWhenManaged() {
         givenArtifact("jolokia").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
-        deployer.setManaged(true);
+        givenManaged("artifacts");
 
         Audits audits = deployer.apply(""
                 + "artifacts:\n"
@@ -429,7 +429,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    type: bundle\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"
-                + "    var:\n"
+                + "    vars:\n"
                 + "      jolokia.version: 1.3.3\n");
 
         jolokia.verifyDeployed(audits);
@@ -439,7 +439,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     public void shouldUndeployEverythingWhenManagedAndEmptyPlan() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
-        deployer.setManaged(true);
+        givenManaged("artifacts", "loggers", "log-handlers");
 
         Audits audits = deployer.apply("---\n");
 

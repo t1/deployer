@@ -128,7 +128,7 @@ public class ConfigurationPlanSerializationTest {
             + "    artifact-id: foo\n"
             + "    version: 1\n"
             + "    type: bundle\n"
-            + "    var:\n"
+            + "    vars:\n"
             + "      name: bar\n";
 
     @Test
@@ -153,7 +153,7 @@ public class ConfigurationPlanSerializationTest {
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: 1\n"
-                + "    var:\n"
+                + "    vars:\n"
                 + "      name: bar\n")));
 
         assertThat(thrown).hasMessageContaining("exception while loading config plan");

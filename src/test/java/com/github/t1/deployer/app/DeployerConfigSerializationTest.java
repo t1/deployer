@@ -25,7 +25,7 @@ public class DeployerConfigSerializationTest {
         return Paths.get(folder.getRoot().getPath(), DEPLOYER_CONFIG_YAML);
     });
 
-    private static void assertConfig(ConfigProducer producer, RepositoryType repositoryType, URI uri,
+    private static void assertRepository(ConfigProducer producer, RepositoryType repositoryType, URI uri,
             String username, Password password) {
         assertThat(producer.repositoryType()).isEqualTo(repositoryType);
         assertThat(producer.repositoryUri()).isEqualTo(uri);
@@ -33,13 +33,14 @@ public class DeployerConfigSerializationTest {
         assertThat(producer.repositoryPassword()).isEqualTo(password);
     }
 
+
     @Test
     public void shouldReturnToDefaultWithoutConfigFile() throws Exception {
         // given no file
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, null, null, null, null);
+        assertRepository(producer, null, null, null, null);
     }
 
     @Test
@@ -48,7 +49,7 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, null, null, null, null);
+        assertRepository(producer, null, null, null, null);
     }
 
     @Test
@@ -59,7 +60,7 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, null, null, null, null);
+        assertRepository(producer, null, null, null, null);
     }
 
     @Test
@@ -69,7 +70,7 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, null, null, null, null);
+        assertRepository(producer, null, null, null, null);
     }
 
     @Test
@@ -80,7 +81,7 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, artifactory, null, null, null);
+        assertRepository(producer, artifactory, null, null, null);
     }
 
     @Test
@@ -91,7 +92,7 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, null, DUMMY_URI, null, null);
+        assertRepository(producer, null, DUMMY_URI, null, null);
     }
 
     @Test
@@ -103,7 +104,7 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, artifactory, DUMMY_URI, null, null);
+        assertRepository(producer, artifactory, DUMMY_URI, null, null);
     }
 
     @Test
@@ -117,11 +118,12 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertConfig(producer, artifactory, DUMMY_URI, "joe", SECRET);
+        assertRepository(producer, artifactory, DUMMY_URI, "joe", SECRET);
     }
 
+
     @Test
-    public void shouldLoadConfigFileWithDefaultGroupId() throws Exception {
+    public void shouldLoadConfigFileWithProperty() throws Exception {
         configFile.write(""
                 + "vars:\n"
                 + "  default.group-id: foo\n");
@@ -129,5 +131,17 @@ public class DeployerConfigSerializationTest {
         new ConfigProducer().init();
 
         assertThat(System.getProperty("default.group-id")).isEqualTo("foo");
+    }
+
+
+    @Test
+    public void shouldLoadConfigFileWithManagedArtifacts() throws Exception {
+        configFile.write(""
+                + "managed:\n"
+                + "- artifacts\n");
+
+        ConfigProducer producer = new ConfigProducer();
+
+        assertThat(producer.managedResources()).containsExactly("artifacts");
     }
 }

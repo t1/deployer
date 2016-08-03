@@ -18,12 +18,14 @@ import org.mockito.*;
 
 import javax.enterprise.inject.Instance;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.deployer.tools.Tools.*;
 import static java.lang.Boolean.*;
+import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.*;
@@ -120,6 +122,9 @@ public class AbstractDeployerTest {
         verifyNoMoreInteractions(cli);
         // TODO verifyNoMoreInteractions(deploymentManager);
     }
+
+
+    protected void givenManaged(String... resourceName) { deployer.managedResourceNames = asList(resourceName); }
 
 
     public ArtifactFixtureBuilder givenArtifact(String name) {

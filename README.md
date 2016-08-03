@@ -75,16 +75,19 @@ This is a map of system properties to set.
 
 ### `repository`
 
-* `type`
-* `uri`
-* `username`
-* `password`
-* `repositorySnapshots`
-* `repositoryReleases`
+- `type`: `maven-central` or `artifactory`. Defaults to `artifactory`, if it's running on `localhost:8081`, or `maven-central` otherwise.
+- `uri`: The base URI of the repository. For the defaults, see `type`.
+- `username`: The credentials required by `artifactory`.
+- `password`: The credentials required by `artifactory`.
+- `repository-snapshots`: The name of the snapshot repository. Defaults to `snapshots-virtual`.
+- `repository-releases`: The name of the release repository. Defaults to `releases-virtual`.
 
 ### `manage`
 
-TODO
+This is a list of resource type names (currently only `artifacts`) to be managed,
+i.e. resources of this kind existing in the container, but are not in the plan, are removed.
+Defaults to an empty list, i.e. things are left alone.
+
 
 ## History
 

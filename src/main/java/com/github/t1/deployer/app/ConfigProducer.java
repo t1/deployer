@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -14,7 +15,7 @@ import javax.inject.Singleton;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
-import java.util.Map;
+import java.util.*;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
@@ -48,7 +49,8 @@ public class ConfigProducer {
     @AllArgsConstructor(access = PRIVATE)
     private static class DeployerConfig {
         private final RepositoryConfig repository;
-        @Singular private final Map<String, String> vars;
+        @Singular @JsonProperty("vars") private final Map<String, String> variables;
+        @Singular @JsonProperty("managed") private final List<String> managedResourceNames;
 
         @Value
         @Builder
@@ -108,6 +110,11 @@ public class ConfigProducer {
     @Produces @Config("repository.releases")
     public String repositoryReleases() { return getRepository().getRepositoryReleases(); }
 
+
+    @Produces @Config("managed.resources")
+    public List<String> managedResources() { return config.getManagedResourceNames(); }
+
+
     @PostConstruct
-    public void init() { config.getVars().forEach(System::setProperty); }
+    public void init() { config.getVariables().forEach(System::setProperty); }
 }

@@ -6,7 +6,6 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.WebApplicationApplicationException;
-import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.*;
@@ -15,7 +14,7 @@ import javax.ws.rs.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
@@ -49,8 +48,7 @@ public class DeployerBoundary {
     @Inject Container container;
     @Inject Repository repository;
 
-    @Getter @Setter
-    private boolean managed; // TODO make configurable for artifacts; add for loggers and handlers (and maybe more)
+    @Inject @Config("managed.resources") List<String> managedResourceNames;
 
 
     private Audits apply(Map<String, String> variables) {
@@ -77,8 +75,12 @@ public class DeployerBoundary {
 
         private final LogHandlerDeployer logHandlerDeployer = new LogHandlerDeployer(container, audits);
         private final LoggerDeployer loggerDeployer = new LoggerDeployer(container, audits);
-        private final ArtifactDeployer artifactDeployer = new ArtifactDeployer(repository, container, managed, audits,
-                DeployerBoundary.this::lookupByChecksum);
+        private final ArtifactDeployer artifactDeployer = new ArtifactDeployer(container, audits, repository,
+                managed("artifacts"), DeployerBoundary.this::lookupByChecksum);
+
+        private boolean managed(String resourceName) {
+            return managedResourceNames != null && managedResourceNames.contains(resourceName);
+        }
 
         public ConfigurationPlan read() {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
