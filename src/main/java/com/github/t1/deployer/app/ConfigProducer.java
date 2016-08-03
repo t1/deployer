@@ -8,11 +8,13 @@ import com.github.t1.deployer.repository.RepositoryType;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
+import java.util.Map;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
@@ -46,6 +48,7 @@ public class ConfigProducer {
     @AllArgsConstructor(access = PRIVATE)
     private static class DeployerConfig {
         private final RepositoryConfig repository;
+        @Singular private final Map<String, String> vars;
 
         @Value
         @Builder
@@ -83,7 +86,7 @@ public class ConfigProducer {
         }
     }
 
-    public DeployerConfig.RepositoryConfig getRepository() {
+    private DeployerConfig.RepositoryConfig getRepository() {
         return nvl(config.getRepository(), DEFAULT_CONFIG.getRepository());
     }
 
@@ -104,4 +107,7 @@ public class ConfigProducer {
 
     @Produces @Config("repository.releases")
     public String repositoryReleases() { return getRepository().getRepositoryReleases(); }
+
+    @PostConstruct
+    public void init() { config.getVars().forEach(System::setProperty); }
 }

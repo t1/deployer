@@ -25,8 +25,29 @@ If there is already a different version of jolokia deployed, it will replace it.
 ## Reference
 
 ### Deployments
+
+`group-id`: Defaults to the system property `default.group-id` (see below).
+
 ### LogHandlers
+
 ### Loggers
+
+## Config
+
+The deployer itself can be configured with a file `deployer.config.yaml`.
+
+### `vars`
+
+This is a map of system properties to set.
+
+### `repository`
+
+* `type`
+* `uri`
+* `username`
+* `password`
+* `repositorySnapshots`
+* `repositoryReleases`
 
 
 ## History

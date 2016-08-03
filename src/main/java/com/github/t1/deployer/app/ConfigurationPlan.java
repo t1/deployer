@@ -138,7 +138,7 @@ public class ConfigurationPlan {
             if (node.isNull())
                 throw new ConfigurationPlanLoadingException("no config in artifact '" + name + "'");
             DeploymentConfigBuilder builder = builder().name(name);
-            apply(node, "group-id", null, value -> builder.groupId(new GroupId(value)));
+            apply(node, "group-id", defaultValue("group-id"), value -> builder.groupId(new GroupId(value)));
             apply(node, "artifact-id", name.getValue(), value -> builder.artifactId(new ArtifactId(value)));
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
@@ -150,6 +150,10 @@ public class ConfigurationPlan {
                     throw new ConfigurationPlanLoadingException(
                             "variables are only allowed for bundles; maybe you forgot to add `type: bundle`?");
             return builder.build();
+        }
+
+        private static String defaultValue(String name) {
+            return System.getProperty("default." + name);
         }
 
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }

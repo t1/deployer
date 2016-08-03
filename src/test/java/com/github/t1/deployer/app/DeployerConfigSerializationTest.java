@@ -119,4 +119,15 @@ public class DeployerConfigSerializationTest {
 
         assertConfig(producer, artifactory, DUMMY_URI, "joe", SECRET);
     }
+
+    @Test
+    public void shouldLoadConfigFileWithDefaultGroupId() throws Exception {
+        configFile.write(""
+                + "vars:\n"
+                + "  default.group-id: foo\n");
+
+        new ConfigProducer().init();
+
+        assertThat(System.getProperty("default.group-id")).isEqualTo("foo");
+    }
 }
