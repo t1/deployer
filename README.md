@@ -25,19 +25,19 @@ If there is already a different version of jolokia deployed, it will replace it.
 
 ## Bundle File Format
 
-The bundles – including the `deployer.root.bundle` – are yaml files with these fields:
+Bundles – including the `deployer.root.bundle` – are yaml files with the following sections:
 
 ### `artifacts`
 
 The key is the `name` of the deployment, i.e. a `war` named `foo` will be deployed as `foo.war`,
 so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
 
-- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [managed](#manage).
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [`manage`](#manage).
 - `group-id`: Defaults to the system property `default.group-id` (see below).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
-- `type`: `war`, `jar`, or `bundle`. Defautls to `war`.
-- `vars`: The map of variables passed into a `bundle`. Forbidden for other types. Defaults to empty map.
+- `type`: `war`, `jar`, or `bundle`. Defaults to `war`.
+- `vars`: The map of variables passed into a `bundle`; forbidden for other types. Defaults to an empty map.
 
 ### `log-handlers`
 
@@ -65,6 +65,25 @@ The key is the `category` of the logger, usually the fully qualified name of the
 - `use-parent-handlers`: Should the log handlers of the parent logger be used?
 Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
 
+### Variables
+
+Bundles can refer to variables in the `${name}` notation. To escape a `$`, simply duplicate `$$`.
+
+Variable values are:
+
+- system properties,
+- variables defined in the configuration [`vars`](#vars), and
+- variables passed into bundles (see below).
+
+Config variables are written into system properties. The deployer fails, if a variable passed in overwrites an existing
+variable (esp. system property), or if the resulting plan has unresolved variables.
+
+A variable name can contain the name of a function to be applied to the value:
+
+- `toUpperCase`: Turns the value into all upper case.
+- `toLowerCase`: Turns the value into all lower case.
+
+
 ## Config
 
 The deployer itself can be configured with a file `deployer.config.yaml`.
@@ -91,5 +110,5 @@ Defaults to an empty list, i.e. things are left alone.
 
 ## History
 
-Version 1.0.0 (which was never released) provided a rest api and html gui to manage deployments manually on each node.
-As this didn't scale for many instances and stages, 2.0 was initiated.
+Version 1.0.0 (which was never released) provided a rest api and html gui to manage deployments by remote requests or manually on each node.
+As this wasn't secure / didn't scale for many instances and stages, 2.0 was initiated.

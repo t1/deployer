@@ -153,8 +153,6 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToDeployWebArchiveWithUndefinedVariable() {
-        givenArtifact("foo").version("${undefined}");
-
         Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "artifacts:\n"
                 + "  foo:\n"
@@ -179,6 +177,49 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
                 + "    version: 1\n");
 
         foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithToUpperAndToLowerCaseVariables() {
+        systemProperties.given("foo", "Foo");
+        ArtifactFixture foo = givenArtifact("FOO", "org.foo", "Foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "artifacts:\n"
+                + "  ${toUpperCase(foo)}:\n"
+                + "    group-id: org.${toLowerCase(foo)}\n"
+                + "    artifact-id: ${foo}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithUndefinedVariableFunction() {
+        systemProperties.given("foo", "Foo");
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "artifacts:\n"
+                + "  ${bar(foo)}:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown).hasMessageContaining("undefined variable function: [bar]");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithUndefinedFunctionVariable() {
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "artifacts:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${toLowerCase(undefined)}\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("unresolved variable key: undefined");
     }
 
 

@@ -5,12 +5,15 @@ import lombok.SneakyThrows;
 
 import java.io.*;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.*;
 
 import static com.github.t1.problem.WebException.*;
+import static java.util.Locale.*;
 
 public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
+    private static final Pattern FUNCTION = Pattern.compile("(?<function>[-._a-zA-Z0-9]*)(\\((?<variable>[^)]*)\\))?");
 
     private final ImmutableMap<String, String> variables;
 
@@ -32,7 +35,6 @@ public class Variables {
         while ((line = buffered.readLine()) != null) {
             if (line.contains("#"))
                 line = line.substring(0, line.indexOf('#'));
-
             Matcher matcher = VAR.matcher(line);
             int tail = 0;
             while (matcher.find()) {
@@ -41,10 +43,7 @@ public class Variables {
                     // +1 to skip the var-$ as we already copied the escape-$
                     out.append(line.substring(matcher.start() + 1, matcher.end()));
                 } else {
-                    String key = matcher.group(1);
-                    if (!variables.containsKey(key))
-                        throw badRequest("unresolved variable key: " + key);
-                    out.append(variables.get(key));
+                    out.append(resolveVariable(matcher.group(1)));
                 }
                 tail = matcher.end();
             }
@@ -52,6 +51,35 @@ public class Variables {
             out.append('\n');
         }
         return new StringReader(out.toString());
+    }
+
+    private String resolveVariable(String key) {
+        Matcher matcher = FUNCTION.matcher(key);
+        if (!matcher.matches())
+            throw badRequest("unparseable variable key: " + key);
+        String variableName = matcher.group("variable");
+        Function<String, String> function;
+        if (variableName == null) {
+            function = Function.identity();
+            variableName = matcher.group("function");
+        } else {
+            function = function(matcher.group("function"));
+        }
+        if (!variables.containsKey(variableName))
+            throw badRequest("unresolved variable key: " + variableName);
+        String value = variables.get(variableName);
+        return function.apply(value);
+    }
+
+    private Function<String, String> function(String name) {
+        switch (name) {
+        case "toUpperCase":
+            return value -> value.toUpperCase(US);
+        case "toLowerCase":
+            return value -> value.toLowerCase(US);
+        default:
+            throw badRequest("undefined variable function: [" + name + "]");
+        }
     }
 
     private BufferedReader buffered(Reader reader) {
