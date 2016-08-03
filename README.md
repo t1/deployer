@@ -43,7 +43,7 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 
 The key is the `name` of the log handler. This is conventionally an upper case string.
 
-- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [managed](#manage).
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
 - `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
 - `type`: One of `console` or `periodic-rotating-file`. Defaults to `periodic-rotating-file`.
 - `format`: The format used for log lines. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`.
@@ -58,7 +58,7 @@ Only for `periodic-rotating-file`:
 
 The key is the `category` of the logger, usually the fully qualified name of the class producing the logs. 
 
-- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [managed](#manage).
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
 - `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
 - `handlers`: A list of log handler names. Defaults to the empty list.
 - `handler`: Alternative syntax for a single log handler name. Defaults to the empty list.
