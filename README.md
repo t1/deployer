@@ -23,25 +23,27 @@ If there is already a different version of jolokia deployed, it will replace it.
 
 - Change the file to version `1.3.3` and the deployer will pick up the change and upgrade jolokia.
 
-## Reference
+## Bundle File Format
 
-### Deployments
+The bundles – including the `deployer.root.bundle` – are yaml files with these fields:
+
+### `artifacts`
 
 The key is the `name` of the deployment, i.e. a `war` named `foo` will be deployed as `foo.war`,
 so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
 
-- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See `managed`.
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [managed](#manage).
 - `group-id`: Defaults to the system property `default.group-id` (see below).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
 - `type`: `war`, `jar`, or `bundle`. Defautls to `war`.
 - `vars`: The map of variables passed into a `bundle`. Forbidden for other types. Defaults to empty map.
 
-### LogHandlers
+### `log-handlers`
 
 The key is the `name` of the log handler. This is conventionally an upper case string.
 
-- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See `managed`.
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [managed](#manage).
 - `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
 - `type`: One of `console` or `periodic-rotating-file`. Defaults to `periodic-rotating-file`.
 - `format`: The format used for log lines. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`.
@@ -52,11 +54,11 @@ Only for `periodic-rotating-file`:
 - `suffix`: The date/time suffix used when rotating, defining the rotation frequency. Defaults to `.yyyy-MM-dd`, i.e. daily rotation.
 
 
-### Loggers
+### `loggers`
 
 The key is the `category` of the logger, usually the fully qualified name of the class producing the logs. 
 
-- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See `managed`.
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [managed](#manage).
 - `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
 - `handlers`: A list of log handler names. Defaults to the empty list.
 - `handler`: Alternative syntax for a single log handler name. Defaults to the empty list.
@@ -80,6 +82,9 @@ This is a map of system properties to set.
 * `repositorySnapshots`
 * `repositoryReleases`
 
+### `manage`
+
+TODO
 
 ## History
 
