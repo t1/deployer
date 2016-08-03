@@ -124,13 +124,15 @@ public class ConfigurationPlan {
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
     public static class DeploymentConfig implements AbstractConfig {
+        private static final String VARS = "vars";
+
         @NonNull @JsonIgnore private final DeploymentName name;
         private final DeploymentState state;
         @NonNull private final GroupId groupId;
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
         @NonNull private final ArtifactType type;
-        @NonNull @Singular @JsonProperty("var") private final Map<String, String> variables;
+        @NonNull @Singular @JsonProperty(VARS) private final Map<String, String> variables;
 
         public static class DeploymentConfigBuilder {}
 
@@ -143,9 +145,9 @@ public class ConfigurationPlan {
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
-            if (node.has("var") && !node.get("var").isNull())
+            if (node.has(VARS) && !node.get(VARS).isNull())
                 if (builder.type == bundle)
-                    builder.variables(toMap(node.get("var")));
+                    builder.variables(toMap(node.get(VARS)));
                 else
                     throw new ConfigurationPlanLoadingException(
                             "variables are only allowed for bundles; maybe you forgot to add `type: bundle`?");

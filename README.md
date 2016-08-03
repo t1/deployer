@@ -35,7 +35,7 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
 - `type`: `war`, `jar`, or `bundle`. Defautls to `war`.
-- `var`: The map of variables passed into a `bundle`. Forbidden for other types. Defaults to empty map.
+- `vars`: The map of variables passed into a `bundle`. Forbidden for other types. Defaults to empty map.
 
 ### LogHandlers
 
