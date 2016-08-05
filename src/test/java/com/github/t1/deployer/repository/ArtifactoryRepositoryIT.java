@@ -7,19 +7,22 @@ import io.dropwizard.testing.junit.DropwizardClientRule;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 
+import java.net.URI;
+
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class RepositoryIT {
+public class ArtifactoryRepositoryIT {
     private static ArtifactoryMock ARTIFACTORY_MOCK = new ArtifactoryMock();
 
     @ClassRule
     public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(ARTIFACTORY_MOCK);
 
-    private RestContext config = REST.register("repository", ARTIFACTORY.baseUri());
+    private URI baseUri = ARTIFACTORY.baseUri(); // URI.create("http://localhost:8081/artifactory");
+    private RestContext config = REST.register("repository", baseUri);
     private final ArtifactoryRepository repository = new ArtifactoryRepository(config, "snapshots", "releases");
 
     @Rule
@@ -72,7 +75,7 @@ public class RepositoryIT {
     @Test
     public void shouldSearchByChecksumWithAuthorization() {
         try {
-            config = config.register(ARTIFACTORY.baseUri(), new Credentials("foo", "bar"));
+            config = config.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
             Artifact artifact = new ArtifactoryRepository(config, "snapshots", "releases")

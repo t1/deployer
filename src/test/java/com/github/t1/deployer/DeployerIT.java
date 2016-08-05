@@ -36,6 +36,8 @@ import static org.assertj.core.api.Assertions.*;
 @RunWith(Arquillian.class)
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
+    private static final boolean USE_ARTIFACTORY_MOCK = false;
+
     private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it.war");
     private static final Checksum POSTGRESQL_9_4_1207_CHECKSUM = Checksum.fromString(
             "f2ea471fbe4446057991e284a6b4b3263731f319");
@@ -76,7 +78,7 @@ public class DeployerIT {
     }
 
     static {
-        if (runningOnClient())
+        if (USE_ARTIFACTORY_MOCK && runningOnClient())
             try {
                 // TODO can we instead deploy this? or use DropwizardClientRule?
                 new ArtifactoryMockLauncher().noConsole().run("server");

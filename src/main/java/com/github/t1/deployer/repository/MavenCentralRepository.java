@@ -92,8 +92,11 @@ public class MavenCentralRepository extends Repository {
     }
 
     private Checksum downloadChecksum(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        String checksum = resource(downloadPath(groupId, artifactId, version, type) + ".sha1").GET(String.class);
-        return Checksum.fromString(checksum);
+        EntityResponse<String> response = resource(downloadPath(groupId, artifactId, version, type) + ".sha1")
+                .accept(String.class).GET_Response();
+        if (response.status() == NOT_FOUND)
+            throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
+        return Checksum.fromString(response.expecting(OK).getBody());
     }
 
     private InputStream download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
