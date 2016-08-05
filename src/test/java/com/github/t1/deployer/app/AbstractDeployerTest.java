@@ -549,10 +549,13 @@ public class AbstractDeployerTest {
         private final LogHandlerName name;
         private final LogHandlerAuditBuilder audit;
         private LogLevel level;
-        private String file;
-        private String suffix = ".yyyy-MM-dd";
         private String format;
         private String formatter;
+        private String file;
+        private String suffix;
+        private String module;
+        private String class_;
+        private Map<String, String> properties;
         private boolean deployed;
 
         public LogHandlerFixture(LoggingHandlerType type, String name) {
@@ -569,41 +572,36 @@ public class AbstractDeployerTest {
             return ""
                     + "'outcome' => 'success',\n"
                     + "'result' => {\n"
+                    + "    'name' => '" + name + "',\n"
+                    + ((level == null) ? "" : "    'level' => '" + level + "',\n")
                     + "    'append' => true,\n"
                     + "    'autoflush' => true,\n"
                     + "    'enabled' => true,\n"
                     + "    'encoding' => undefined,\n"
-                    + "    'file' => {\n"
-                    + "        'relative-to' => 'jboss.server.log.dir',\n"
-                    + "        'path' => '" + file() + "'\n"
-                    + "    },\n"
-                    + "    'filter' => undefined,\n"
-                    + "    'filter-spec' => undefined,\n"
-                    + "    'formatter' => '" + ((format == null)
-                                                        ? "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n" : format) + "',\n"
-                    + ((level == null) ? "" : "    'level' => '" + level + "',\n")
-                    + "    'name' => '" + name + "',\n"
+                    + "    'formatter' => '"
+                    + ((format == null) ? "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n" : format) + "',\n"
                     + "    'named-formatter' => " + ((formatter == null) ? "undefined" : "'" + formatter + "'") + ",\n"
-                    + "    'suffix' => '" + suffix + "'\n"
+                    + ((file == null) ? "" :
+                    "    'file' => {\n"
+                            + "        'relative-to' => 'jboss.server.log.dir',\n"
+                            + "        'path' => '" + file + "'\n"
+                            + "    },\n")
+                    + ((suffix == null) ? "" : "    'suffix' => '" + suffix + "',\n")
+                    + ((module == null) ? "" : "    'module' => '" + module + "',\n")
+                    + ((class_ == null) ? "" : "    'class' => '" + class_ + "',\n")
+                    + ((properties == null) ? "" :
+                    "    'properties' => [\n        "
+                            + properties.entrySet().stream()
+                                        .map(entry -> "('" + entry.getKey() + "' => '" + entry.getValue() + "')")
+                                        .collect(joining(",\n        "))
+                            + "\n    ],\n")
+                    + "    'filter' => undefined,\n"
+                    + "    'filter-spec' => undefined\n"
                     + "}\n";
         }
 
         public LogHandlerFixture level(LogLevel level) {
             this.level = level;
-            return this;
-        }
-
-        private String file() {
-            return (file == null) ? name.getValue() : file;
-        }
-
-        public LogHandlerFixture file(String file) {
-            this.file = file;
-            return this;
-        }
-
-        public LogHandlerFixture suffix(String suffix) {
-            this.suffix = suffix;
             return this;
         }
 
@@ -616,6 +614,33 @@ public class AbstractDeployerTest {
         public LogHandlerFixture formatter(String formatter) {
             this.format = null;
             this.formatter = formatter;
+            return this;
+        }
+
+        public LogHandlerFixture file(String file) {
+            this.file = file;
+            return this;
+        }
+
+        public LogHandlerFixture suffix(String suffix) {
+            this.suffix = suffix;
+            return this;
+        }
+
+        public LogHandlerFixture module(String module) {
+            this.module = module;
+            return this;
+        }
+
+        public LogHandlerFixture class_(String class_) {
+            this.class_ = class_;
+            return this;
+        }
+
+        public LogHandlerFixture property(String key, String value) {
+            if (this.properties == null)
+                this.properties = new LinkedHashMap<>();
+            this.properties.put(key, value);
             return this;
         }
 
@@ -634,19 +659,31 @@ public class AbstractDeployerTest {
         private String logHandlerAddress() { return address("logging", type.getHandlerName(), name); }
 
 
-        public <T> void verifyChange(String name, T oldValue, T newValue) {
+        public <T> LogHandlerFixture verifyChange(String name, T oldValue, T newValue) {
             verifyWriteAttribute(name, newValue);
             expectChange(name, oldValue, newValue);
+            return this;
         }
 
         public <T> void verifyWriteAttribute(String name, T value) {
             verify(cli).writeAttribute(buildRequest(), name, toStringOrNull(value));
         }
 
-        public <T> void expectChange(String name, T oldValue, T newValue) { audit.change(name, oldValue, newValue); }
+        public <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
+            audit.change(name, oldValue, newValue);
+            return this;
+        }
 
         public void verifyChanged(Audits audits) {
             assertThat(audits.getAudits()).containsExactly(this.audit.changed());
+        }
+
+        public void verifyMapPut(String name, String key, String value) {
+            verify(cli).mapPut(buildRequest(), name, key, value);
+        }
+
+        public void verifyMapRemove(String name, String key) {
+            verify(cli).mapRemove(buildRequest(), name, key);
         }
 
         public void verifyAdded(Audits audits) {
@@ -654,24 +691,38 @@ public class AbstractDeployerTest {
                     + logHandlerAddress()
                     + "    'operation' => 'add'"
                     + ((level == null) ? "" : ",\n    'level' => '" + level + "'")
-                    + ",\n    'file' => {\n"
-                    + "        'path' => '" + file() + "',\n"
-                    + "        'relative-to' => 'jboss.server.log.dir'\n"
-                    + "    }"
-                    + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
-                    + ((format == null) ? "" : ",\n    'format' => '" + format + "'")
+                    + ((format == null) ? "" : ",\n    'formatter' => '" + format + "'")
                     + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
+                    + ((file == null) ? "" : ",\n    'file' => {\n"
+                    + "        'path' => '" + file + "',\n"
+                    + "        'relative-to' => 'jboss.server.log.dir'\n"
+                    + "    }")
+                    + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
+                    + ((module == null) ? "" : ",\n    'module' => '" + module + "'")
+                    + ((class_ == null) ? "" : ",\n    'class' => '" + class_ + "'")
+                    + ((properties == null) ? "" :
+                    ",\n    'properties' => [\n        "
+                            + properties.entrySet().stream()
+                                        .map(entry -> "('" + entry.getKey() + "' => '" + entry.getValue() + "')")
+                                        .collect(joining(",\n        "))
+                            + "\n    ]\n")
                     + "\n}"));
             if (level != null)
                 audit.change("level", null, level);
-            if (file != null)
-                audit.change("file", null, file);
-            if (suffix != null)
-                audit.change("suffix", null, suffix);
             if (format != null)
                 audit.change("format", null, format);
             if (formatter != null)
                 audit.change("formatter", null, formatter);
+            if (file != null)
+                audit.change("file", null, file);
+            if (suffix != null)
+                audit.change("suffix", null, suffix);
+            if (module != null)
+                audit.change("module", null, module);
+            if (class_ != null)
+                audit.change("class", null, class_);
+            if (properties != null)
+                properties.forEach((key, value) -> audit.change("property/" + key, null, value));
             assertThat(audits.getAudits()).containsExactly(audit.added());
         }
 
@@ -680,13 +731,21 @@ public class AbstractDeployerTest {
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));
-            audit.change("level", this.level, null)
-                 .change("file", this.file, null)
-                 .change("suffix", this.suffix, null);
+            audit.change("level", this.level, null);
             if (this.format != null)
                 audit.change("format", this.format, null);
             if (this.formatter != null)
                 audit.change("formatter", this.formatter, null);
+            if (this.file != null)
+                audit.change("file", this.file, null);
+            if (this.suffix != null)
+                audit.change("suffix", this.suffix, null);
+            if (this.module != null)
+                audit.change("module", this.module, null);
+            if (this.class_ != null)
+                audit.change("class", this.class_, null);
+            if (properties != null)
+                properties.forEach((key, value) -> audit.change("property/" + key, value, null));
             assertThat(audits.getAudits()).containsExactly(audit.removed());
         }
 
@@ -696,10 +755,13 @@ public class AbstractDeployerTest {
                     .type(type)
                     .name(name)
                     .level(level)
-                    .file(file())
-                    .suffix((suffix == null) ? ".yyyy-MM-dd" : suffix)
                     .format(format)
                     .formatter(formatter)
+                    .file(file)
+                    .suffix(suffix)
+                    .module(module)
+                    .class_(class_)
+                    .properties((properties == null) ? emptyMap() : properties)
                     .build();
         }
     }

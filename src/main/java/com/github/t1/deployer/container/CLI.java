@@ -37,20 +37,43 @@ public class CLI {
         return request;
     }
 
-    public void writeAttribute(ModelNode request, String name, String value) {
-        writeAttributeSet(request, name, node -> node.set(value));
+    public ModelNode writeAttribute(ModelNode request, String name, String value) {
+        return writeAttribute(request, name, node -> node.set(value));
     }
 
-    public void writeAttribute(ModelNode request, String name, boolean value) {
-        writeAttributeSet(request, name, node -> node.set(value));
+    public ModelNode writeAttribute(ModelNode request, String name, boolean value) {
+        return writeAttribute(request, name, node -> node.set(value));
     }
 
-    private void writeAttributeSet(ModelNode request, String name, Consumer<ModelNode> setValue) {
-        request.get("operation").set("write-attribute");
+    private ModelNode writeAttribute(ModelNode request, String name, Consumer<ModelNode> setValue) {
+        try {
+            request.get("operation").set("write-attribute");
+            request.get("name").set(name);
+            setValue.accept(request.get("value"));
+
+            return execute(request);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("can't write [" + request.get("address") + "][" + name + "]", e);
+        }
+    }
+
+
+    public ModelNode mapPut(ModelNode request, String name, String key, String value) {
+        request.get("operation").set("map-put");
         request.get("name").set(name);
-        setValue.accept(request.get("value"));
+        request.get("key").set(key);
+        request.get("value").set(value);
 
-        execute(request);
+        return execute(request);
+    }
+
+
+    public ModelNode mapRemove(ModelNode request, String name, String key) {
+        request.get("operation").set("map-remove");
+        request.get("name").set(name);
+        request.get("key").set(key);
+
+        return execute(request);
     }
 
 

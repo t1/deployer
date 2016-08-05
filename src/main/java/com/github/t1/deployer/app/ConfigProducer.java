@@ -78,7 +78,9 @@ public class ConfigProducer {
         if (Files.isRegularFile(path)) {
             log.info("load deployer config from '" + path + "'");
             try (Reader reader = Files.newBufferedReader(path)) {
-                this.config = nvl(YAML.readValue(reader, DeployerConfig.class), this.config);
+                DeployerConfig newConfig = YAML.readValue(reader, DeployerConfig.class);
+                if (newConfig != null)
+                    this.config = newConfig;
             } catch (IOException e) {
                 log.error("can't load config from '" + path + "'.\n"
                         + "--------- CONTINUE WITH DEFAULT CONFIG! ---------\n", e);
@@ -116,5 +118,8 @@ public class ConfigProducer {
 
 
     @PostConstruct
-    public void init() { config.getVariables().forEach(System::setProperty); }
+    public void init() {
+        if (config.getVariables() != null)
+            config.getVariables().forEach(System::setProperty);
+    }
 }

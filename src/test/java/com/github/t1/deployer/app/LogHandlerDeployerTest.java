@@ -167,7 +167,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    file: the-file\n"
                 + "    format: the-format\n");
 
-        fixture.suffix(".yyyy-MM-dd").verifyAdded(audits);
+        fixture.verifyAdded(audits);
     }
 
 
@@ -183,7 +183,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    level: ALL\n"
                 + "    format: the-format\n");
 
-        fixture.file("FOO").suffix(".yyyy-MM-dd").verifyAdded(audits);
+        fixture.file("FOO").verifyAdded(audits);
     }
 
 
@@ -450,7 +450,221 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
     // TODO shouldRemoveHandlerWhenManaged
     // TODO shouldAddConsoleHandler
-    // TODO shouldAddCustomHandler
+
+    @Test
+    public void shouldAddCustomHandler() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars");
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      foo: bar\n"
+                + "      foos: bars\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldUpdateCustomHandlerModule() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars")
+                .deployed();
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foos\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      foo: bar\n"
+                + "      foos: bars\n");
+
+        fixture.verifyChange("module", "org.foo", "org.foos").verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldUpdateCustomHandlerClass() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars")
+                .deployed();
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foos.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      foo: bar\n"
+                + "      foos: bars\n");
+
+        fixture.verifyChange("class", "org.foo.MyHandler", "org.foos.MyHandler").verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldAddCustomHandlerProperty() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars")
+                .deployed();
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      foo: bar\n"
+                + "      foos: bars\n"
+                + "      bax: bbb");
+
+        fixture.verifyMapPut("property", "bax", "bbb");
+        fixture.expectChange("property/bax", null, "bbb").verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldChangeCustomHandlerPropertyValue() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars")
+                .deployed();
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      foo: bax\n"
+                + "      foos: bars\n");
+
+        fixture.verifyMapPut("property", "foo", "bax");
+        fixture.expectChange("property/foo", "bar", "bax").verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldRemoveCustomHandlerProperty() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars")
+                .deployed();
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      foo: bar\n");
+
+        fixture.verifyMapRemove("property", "foos");
+        fixture.expectChange("property/foos", "bars", null).verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldChangeCustomHandlerPropertyKey() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars")
+                .deployed();
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      bax: bar\n"
+                + "      foos: bars\n");
+
+        fixture.verifyMapRemove("property", "foo");
+        fixture.verifyMapPut("property", "bax", "bar");
+        fixture.expectChange("property/bax", null, "bar")
+               .expectChange("property/foo", "bar", null)
+               .verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldRemoveCustomHandler() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .level(ALL)
+                .formatter("the-formatter")
+                .property("foo", "bar")
+                .property("foos", "bars")
+                .deployed();
+
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    level: ALL\n"
+                + "    formatter: the-formatter\n"
+                + "    properties:\n"
+                + "      foo: bar\n"
+                + "      foos: bars\n"
+                + "    state: undeployed");
+
+        fixture.verifyRemoved(audits);
+    }
 
     // TODO shouldAddLoggerAndHandler
 }

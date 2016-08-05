@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlValue;
 
@@ -12,7 +13,7 @@ import static lombok.AccessLevel.*;
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
 @JsonSerialize(using = ToStringSerializer.class)
-public class DeploymentName {
+public class DeploymentName implements Comparable<DeploymentName> {
     public static final DeploymentName ALL = new DeploymentName("*");
 
     @NonNull
@@ -24,4 +25,6 @@ public class DeploymentName {
     @Override public String toString() { return value; }
 
     public boolean matches(@NonNull DeploymentResource deployment) { return this.equals(deployment.name()); }
+
+    @Override public int compareTo(@NotNull DeploymentName that) { return this.value.compareTo(that.value); }
 }

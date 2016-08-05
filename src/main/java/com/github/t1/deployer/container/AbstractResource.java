@@ -48,14 +48,22 @@ public abstract class AbstractResource {
 
     protected void execute(ModelNode request) { cli.execute(request); }
 
-    protected ServerDeploymentManager openServerDeploymentManager() { return cli.openServerDeploymentManager(); }
+    public ServerDeploymentManager openServerDeploymentManager() { return cli.openServerDeploymentManager(); }
 
-    protected void writeAttribute(String name, String value) {
+    public void writeAttribute(String name, String value) {
         cli.writeAttribute(createRequestWithAddress(), name, value);
     }
 
-    protected void writeAttribute(String name, boolean value) {
+    public void writeAttribute(String name, boolean value) {
         cli.writeAttribute(createRequestWithAddress(), name, value);
+    }
+
+    public void mapPut(String name, String key, String value) {
+        cli.mapPut(createRequestWithAddress(), name, key, value);
+    }
+
+    protected void mapRemove(String name, String key) {
+        cli.mapRemove(createRequestWithAddress(), name, key);
     }
 
     public abstract void add();

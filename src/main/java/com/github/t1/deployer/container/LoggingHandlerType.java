@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 @JsonSerialize(using = ToStringSerializer.class)
 public enum LoggingHandlerType {
     console("console"),
-    periodicRotatingFile("periodic-rotating-file");
+    periodicRotatingFile("periodic-rotating-file"),
+    custom("custom");
 
     @Getter
     private final String typeName;

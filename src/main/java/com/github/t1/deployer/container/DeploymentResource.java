@@ -13,6 +13,7 @@ import java.util.concurrent.*;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.DeploymentName.*;
+import static java.util.Comparator.*;
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.stream.Collectors.*;
 
@@ -39,6 +40,7 @@ public class DeploymentResource extends AbstractResource {
         return cli.execute(readResource(new DeploymentResource(ALL, cli).createRequestWithAddress()))
                   .asList().stream()
                   .map(match -> toDeployment(match.get("result"), cli))
+                  .sorted(comparing(DeploymentResource::name))
                   .collect(toList());
     }
 

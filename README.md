@@ -45,14 +45,18 @@ The key is the `name` of the log handler. This is conventionally an upper case s
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
 - `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
-- `type`: One of `console` or `periodic-rotating-file`. Defaults to `periodic-rotating-file`.
+- `type`: One of `console`, `periodic-rotating-file`, or `custom`. Defaults to `periodic-rotating-file`.
 - `format`: The format used for log lines. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`.
-- `formatter`: The name of a named formatter. Wildfly 10.0.0 defines: `PATTERN` and `COLOR-PATTERN`.
+- `formatter`: Alternative to `format`: The name of a named formatter. Wildfly 10.0.0 defines: `PATTERN` and `COLOR-PATTERN`.
 
 Only for `periodic-rotating-file`:
 - `file`: The base name of the file to log to. Defaults to the `name` of the log handler. 
 - `suffix`: The date/time suffix used when rotating, defining the rotation frequency. Defaults to `.yyyy-MM-dd`, i.e. daily rotation.
 
+Only for `custom`:
+- `module`: The JBoss module name. Mandatory.
+- `class`: The fully qualified class name of the custom handler. Mandatory.
+- `properties`: A map of parameters passed to the custom handler. Defaults to an empty map.
 
 ### `loggers`
 
@@ -60,8 +64,8 @@ The key is the `category` of the logger, usually the fully qualified name of the
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
 - `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
-- `handlers`: A list of log handler names. Defaults to the empty list.
-- `handler`: Alternative syntax for a single log handler name. Defaults to the empty list.
+- `handlers`: A list of log handler names. Defaults to an empty list.
+- `handler`: Alternative syntax for a single log handler name. Defaults to an empty list.
 - `use-parent-handlers`: Should the log handlers of the parent logger be used?
 Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
 
@@ -96,8 +100,8 @@ This is a map of system properties to set.
 
 - `type`: `maven-central` or `artifactory`. Defaults to `artifactory`, if it's running on `localhost:8081`, or `maven-central` otherwise.
 - `uri`: The base URI of the repository. For the defaults, see `type`.
-- `username`: The credentials required by `artifactory`.
-- `password`: The credentials required by `artifactory`.
+- `username`: The credentials required by `artifactory`. Defaults to not using auth.
+- `password`: The credentials required by `artifactory`. Defaults to not using auth.
 - `repository-snapshots`: The name of the snapshot repository. Defaults to `snapshots-virtual`.
 - `repository-releases`: The name of the release repository. Defaults to `releases-virtual`.
 

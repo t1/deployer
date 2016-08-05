@@ -148,7 +148,7 @@ public class ConfigurationPlan {
             if (node.has(VARS) && !node.get(VARS).isNull())
                 if (builder.type == bundle)
                     builder.variables(toMap(node.get(VARS)));
-                else
+                else if (node.get(VARS).size() > 0)
                     throw new ConfigurationPlanLoadingException(
                             "variables are only allowed for bundles; maybe you forgot to add `type: bundle`?");
             return builder.build();
@@ -241,6 +241,10 @@ public class ConfigurationPlan {
         private final String file;
         private final String suffix;
 
+        private final String module;
+        @JsonProperty("class") private final String class_;
+        @Singular private final Map<String, String> properties;
+
 
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
             if (node.isNull())
@@ -258,24 +262,39 @@ public class ConfigurationPlan {
 
         private static void applyByType(JsonNode node, LogHandlerConfigBuilder builder) {
             switch (builder.type) {
-            case periodicRotatingFile:
-                apply(node, "file", builder.name.getValue(), builder::file);
-                apply(node, "suffix", ".yyyy-MM-dd", builder::suffix);
-                return;
             case console:
                 // nothing more to load here
+                return;
+            case periodicRotatingFile:
+                apply(node, "file", builder.name.getValue(), builder::file);
+                apply(node, "suffix", null, builder::suffix);
+                return;
+            case custom:
+                apply(node, "module", null, builder::module);
+                apply(node, "class", null, builder::class_);
+                if (node.has("properties") && !node.get("properties").isNull())
+                    node.get("properties").fieldNames().forEachRemaining(fieldName
+                            -> builder.property(fieldName, node.get("properties").get(fieldName).asText()));
                 return;
             }
             throw new ConfigurationPlanLoadingException("unhandled log-handler type [" + builder.type + "]"
                     + " in [" + builder.name + "]");
         }
 
-        public static class LogHandlerConfigBuilder {}
+        /* make builder fields visible */ public static class LogHandlerConfigBuilder {}
 
         private LogHandlerConfig validate() {
             if (format == null && formatter == null || format != null && formatter != null)
                 throw new ConfigurationPlanLoadingException(
                         "log-handler [" + name + "] must either have a format or a formatter");
+            if (type == custom) {
+                if (module == null)
+                    throw new ConfigurationPlanLoadingException(
+                            "log-handler [" + name + "] is of type [" + type + "], so it requires a 'module'");
+                if (class_ == null)
+                    throw new ConfigurationPlanLoadingException(
+                            "log-handler [" + name + "] is of type [" + type + "], so it requires a 'class'");
+            }
             return this;
         }
 
@@ -284,9 +303,14 @@ public class ConfigurationPlan {
         public LogLevel getLevel() { return (level == null) ? ALL : level; }
 
         @Override public String toString() {
-            return "«log-handler:" + getState() + ":" + type + ":" + name + ":" + getLevel() + ":" + file + ":" + suffix
+            return "«log-handler:" + getState() + ":" + type + ":" + name + ":" + getLevel()
                     + ((format == null) ? "" : ":format=" + format)
                     + ((formatter == null) ? "" : ":formatter=" + formatter)
+                    + ((file == null) ? "" : ":" + file)
+                    + ((suffix == null) ? "" : ":" + suffix)
+                    + ((module == null) ? "" : ":" + module)
+                    + ((class_ == null) ? "" : ":" + class_)
+                    + ((properties == null) ? "" : ":" + properties)
                     + "»";
         }
     }

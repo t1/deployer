@@ -90,6 +90,6 @@ public class TestClient {
     public void shouldGetEffectivePlan() throws Exception {
         ConfigurationPlan plan = deployer().GET(ConfigurationPlan.class);
 
-        System.out.println("plan:\n" + plan);
+        System.out.println("plan:\n" + plan.toYaml());
     }
 }

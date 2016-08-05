@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.tools.FileWatcher;
+import com.github.t1.log.Logged;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.*;
@@ -8,9 +9,12 @@ import javax.ejb.*;
 import javax.inject.Inject;
 import java.nio.file.Path;
 
+import static com.github.t1.log.LogLevel.*;
+
 @Slf4j
 @Singleton
 @Startup
+@Logged(level = INFO)
 public class RootFileWatcher {
     @Inject DeployerBoundary deployer;
 
@@ -18,7 +22,6 @@ public class RootFileWatcher {
 
     @PostConstruct
     void start() {
-        log.info("startup");
         deployer.applyAsync();
 
         Path rootBundle = DeployerBoundary.getConfigPath();

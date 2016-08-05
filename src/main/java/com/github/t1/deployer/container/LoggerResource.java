@@ -12,6 +12,7 @@ import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LoggerCategory.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
+import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 
 @Slf4j
@@ -40,8 +41,8 @@ public class LoggerResource extends AbstractResource {
                 cli.execute(request)
                    .asList().stream()
                    .map(node -> toLoggerResource(category(node), cli, node.get("result")))
+                   .sorted(comparing(LoggerResource::category))
                    .collect(toList());
-        Collections.sort(loggers, Comparator.comparing(LoggerResource::category));
         loggers.add(0, readRootLogger(cli));
         return loggers;
     }

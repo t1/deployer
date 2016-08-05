@@ -37,12 +37,10 @@ public class DeployerBoundary {
     public ConfigurationPlan getEffectivePlan() { return new Run().read(); }
 
     @POST
-    public Audits post(Map<String, String> form) {
-        return apply(form);
-    }
+    public Audits post(Map<String, String> form) { return apply(form); }
 
     @Asynchronous
-    public void applyAsync() { apply(emptyMap()); }
+    public synchronized void applyAsync() { apply(emptyMap()); }
 
 
     @Inject Container container;
@@ -62,7 +60,7 @@ public class DeployerBoundary {
         Audits audits = new Run().withVariables(variables).apply(root);
 
         if (log.isDebugEnabled())
-            log.debug("audits:\n {}", audits.toYaml());
+            log.debug("\n{}", audits.toYaml());
         return audits;
     }
 

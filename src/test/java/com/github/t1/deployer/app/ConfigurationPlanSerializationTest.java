@@ -233,4 +233,68 @@ public class ConfigurationPlanSerializationTest {
 
         assertThat(yaml).isEqualTo(ONE_LOGHANDLER_YAML);
     }
+
+
+    private static final String CUSTOM_HANDLER_YAML = ""
+            + "log-handlers:\n"
+            + "  FOO:\n"
+            + "    level: INFO\n"
+            + "    type: custom\n"
+            + "    format: the-format\n"
+            + "    module: org.foo\n"
+            + "    class: org.foo.MyHandler\n";
+    private static final ConfigurationPlan CUSTOM_HANDLER_PLAN = ConfigurationPlan
+            .builder()
+            .logHandler(LogHandlerConfig
+                    .builder()
+                    .name(new LogHandlerName("FOO"))
+                    .level(INFO)
+                    .type(custom)
+                    .format("the-format")
+                    .module("org.foo")
+                    .class_("org.foo.MyHandler")
+                    .build())
+            .build();
+
+    @Test
+    public void shouldDeserializePlanWithCustomLogHandler() throws Exception {
+        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(CUSTOM_HANDLER_YAML));
+
+        assertThat(plan).isEqualTo(CUSTOM_HANDLER_PLAN);
+    }
+
+    @Test
+    public void shouldSerializePlanWithCustomLogHandler() throws Exception {
+        String yaml = CUSTOM_HANDLER_PLAN.toYaml();
+
+        assertThat(yaml).isEqualTo(CUSTOM_HANDLER_YAML);
+    }
+
+    @Test
+    public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutModule() throws Exception {
+        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: INFO\n"
+                + "    type: custom\n"
+                + "    format: the-format\n"
+                + "    class: org.foo.MyHandler\n")));
+
+        assertThat(thrown.getCause())
+                .hasMessageContaining("log-handler [FOO] is of type [custom], so it requires a 'module'");
+    }
+
+    @Test
+    public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutClass() throws Exception {
+        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: INFO\n"
+                + "    type: custom\n"
+                + "    format: the-format\n"
+                + "    module: org.foo\n")));
+
+        assertThat(thrown.getCause())
+                .hasMessageContaining("log-handler [FOO] is of type [custom], so it requires a 'class'");
+    }
 }

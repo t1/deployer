@@ -61,7 +61,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
         ConfigurationPlan plan = deployer.getEffectivePlan();
 
-        assertThat(artifacts(plan)).containsExactly(foo.asConfig(), bar.asConfig());
+        assertThat(artifacts(plan)).containsExactly(bar.asConfig(), foo.asConfig());
     }
 
 
@@ -105,19 +105,20 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
         ConfigurationPlan plan = deployer.getEffectivePlan();
 
-        List<LogHandlerConfig> actual = logHandlers(plan);
-        LogHandlerConfig expected = foo.asConfig();
-        System.out.println(actual.equals(expected));
-        assertThat(actual).containsExactly(expected);
+        assertThat(logHandlers(plan)).containsExactly(foo.asConfig());
     }
 
     @Test
     public void shouldReadTwoLogHandlers() throws Exception {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "foo").deployed();
-        LogHandlerFixture bar = givenLogHandler(periodicRotatingFile, "bar").deployed();
+        LogHandlerFixture bar = givenLogHandler(custom, "bar")
+                .module("org.bar")
+                .class_("org.bar.MyHandler")
+                .property("bar", "baz")
+                .deployed();
 
         ConfigurationPlan plan = deployer.getEffectivePlan();
 
-        assertThat(logHandlers(plan)).containsExactly(foo.asConfig(), bar.asConfig());
+        assertThat(logHandlers(plan)).containsExactly(bar.asConfig(), foo.asConfig());
     }
 }
