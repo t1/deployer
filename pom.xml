@@ -3,7 +3,7 @@
 
     <groupId>com.github.t1</groupId>
     <artifactId>deployer</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>Deployer</name>
@@ -22,7 +22,7 @@
     </prerequisites>
     <scm>
         <developerConnection>scm:git:https://github.com/t1/deployer</developerConnection>
-        <tag>deployer-2.1.0</tag>
+        <tag>HEAD</tag>
     </scm>
     <licenses>
         <license>
