@@ -30,6 +30,7 @@ import static javax.ws.rs.core.Response.Status.*;
 @Path("/")
 public class ArtifactoryMock {
     private static final String BASIC_FOO_BAR_AUTHORIZATION = "Basic Zm9vOmJhcg==";
+    private static final String MAVEN_METADATA_XML = "maven-metadata.xml";
 
     static boolean FAKES = false;
 
@@ -444,12 +445,14 @@ public class ArtifactoryMock {
             @PathParam("path") String pathString)
             throws IOException {
         checkAuthorization(authorization);
-        String fileName = "maven-metadata.xml";
-        if (!pathString.endsWith(fileName))
-            throw notFound("mock can only serve xml for " + fileName);
-        pathString = pathString.substring(0, pathString.length() - fileName.length()) + "maven-metadata-local.xml";
+        if (!pathString.endsWith(MAVEN_METADATA_XML))
+            throw notFound("mock can only serve xml for " + MAVEN_METADATA_XML);
+        pathString = pathString.substring(0, pathString.length() - MAVEN_METADATA_XML.length())
+                + "maven-metadata-local.xml";
         java.nio.file.Path path = Paths.get(pathString);
         java.nio.file.Path repoPath = MAVEN_REPOSITORY.resolve(path);
+        if (!Files.isRegularFile(repoPath))
+            throw notFound("not found " + repoPath);
         log.info("return repository file stream: {}", repoPath);
         return Files.newInputStream(repoPath);
     }

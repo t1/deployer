@@ -6,6 +6,7 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.*;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.WebApplicationApplicationException;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.*;
@@ -40,7 +41,13 @@ public class DeployerBoundary {
     public Audits post(Map<String, String> form) { return apply(form); }
 
     @Asynchronous
-    public synchronized void applyAsync() { apply(emptyMap()); }
+    @SneakyThrows(InterruptedException.class)
+    public void applyAsync() {
+        Thread.sleep(1000);
+        apply();
+    }
+
+    public Audits apply() { return apply(emptyMap()); }
 
 
     @Inject Container container;
@@ -49,7 +56,7 @@ public class DeployerBoundary {
     @Inject @Config("managed.resources") List<String> managedResourceNames;
 
 
-    private Audits apply(Map<String, String> variables) {
+    private synchronized Audits apply(Map<String, String> variables) {
         Path root = getConfigPath();
 
         if (!Files.isRegularFile(root))
@@ -97,6 +104,7 @@ public class DeployerBoundary {
             try {
                 return apply(Files.newBufferedReader(plan));
             } catch (WebApplicationApplicationException e) {
+                log.info("can't apply config plan [{}]", plan);
                 throw e;
             } catch (IOException | RuntimeException e) {
                 throw new RuntimeException("can't apply config plan [" + plan + "]", e);
@@ -126,13 +134,16 @@ public class DeployerBoundary {
             return audits;
         }
 
-        private Audits applyBundle(DeploymentConfig plan) {
+        private Audits applyBundle(DeploymentConfig bundle) {
             Variables pop = this.variables;
             try {
-                this.variables = this.variables.withAll(plan.getVariables());
-                return apply(lookup(plan).getReader());
+                this.variables = this.variables.withAll(bundle.getVariables());
+                return apply(lookup(bundle).getReader());
+            } catch (WebApplicationApplicationException e) {
+                log.info("can't apply bundle [{}]", bundle);
+                throw e;
             } catch (RuntimeException e) {
-                throw new RuntimeException("can't apply bundle [" + plan + "]", e);
+                throw new RuntimeException("can't apply bundle [" + bundle + "]", e);
             } finally {
                 this.variables = pop;
             }

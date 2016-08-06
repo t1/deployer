@@ -26,7 +26,7 @@ public class RootFileWatcher {
 
         Path rootBundle = DeployerBoundary.getConfigPath();
         log.info("start file watcher on {}", rootBundle);
-        fileWatcher = new FileWatcher(rootBundle, () -> deployer.applyAsync());
+        fileWatcher = new FileWatcher(rootBundle, deployer::apply);
         fileWatcher.start();
     }
 
