@@ -1,6 +1,5 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.log.Logged;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 @Slf4j
-@Logged
 public class CLI {
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
         switch (severity) {
@@ -27,8 +25,7 @@ public class CLI {
         }
     };
 
-    @Inject
-    ModelControllerClient client;
+    @Inject ModelControllerClient client;
 
 
     public static ModelNode readResource(ModelNode request) {

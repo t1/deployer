@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response.Status;
+import javax.xml.bind.annotation.*;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.*;
@@ -13,6 +14,7 @@ import java.util.*;
 
 import static com.github.t1.problem.WebException.*;
 import static javax.ws.rs.core.Response.Status.*;
+import static javax.xml.bind.annotation.XmlAccessType.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -143,16 +145,80 @@ public class ArtifactoryRepository extends Repository {
         }
     }
 
+    @Data
+    @XmlRootElement(name = "metadata")
+    static class MavenMetadata {
+        private Versioning versioning;
+
+        @Data
+        @XmlAccessorType(FIELD)
+        static class Versioning {
+            @XmlElementWrapper
+            @XmlElement(name = "snapshotVersion")
+            private List<SnapshotVersion> snapshotVersions;
+
+            @Data
+            static class SnapshotVersion {
+                private String extension;
+                private String value;
+                private String updated;
+            }
+        }
+    }
+
     @Override
     public Artifact lookupArtifact(
             @NonNull GroupId groupId,
             @NonNull ArtifactId artifactId,
             @NonNull Version version,
             @NonNull ArtifactType type) {
-        UriTemplate template = rest
-                .nonQueryUri("repository")
-                .path("api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/{module}-{baseRev}.{ext}");
-        UriTemplate uri = template
+        String fileName = getFileName(groupId, artifactId, version, type);
+        FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),
+                "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
+                FileInfo.class, groupId, artifactId, version, type);
+        return Artifact
+                .builder()
+                .groupId(groupId)
+                .artifactId(artifactId)
+                .type(type)
+                .version(version)
+                .checksum(fileInfo.getChecksum())
+                .inputStreamSupplier(() -> download(fileInfo))
+                .build();
+    }
+
+    private String getFileName(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+        if (version.isSnapshot()) {
+            MavenMetadata metadata = fetch(rest.nonQueryUri("repository"),
+                    "{repoKey}/{*orgPath}/{module}/{baseRev}/maven-metadata.xml",
+                    MavenMetadata.class, groupId, artifactId, version, type);
+            String snapshot = metadata
+                    .getVersioning().getSnapshotVersions().stream()
+                    .filter(snapshotVersion -> type.extension().equals(snapshotVersion.getExtension()))
+                    .map(MavenMetadata.Versioning.SnapshotVersion::getValue)
+                    .findAny()
+                    .orElseThrow(() -> notFound("no metadata for extension [" + type.extension() + "]"));
+            return artifactId + "-" + snapshot + "." + type.extension();
+        } else {
+            return "{module}-{baseRev}.{ext}";
+        }
+    }
+
+    private <T> T fetch(UriTemplate base, String path, Class<T> type,
+            GroupId groupId, ArtifactId artifactId, Version version, ArtifactType artifactType) {
+        UriTemplate uri = resolve(base.nonQuery().path(path), groupId, artifactId, version, artifactType);
+        log.debug("fetch {} from {}", type.getSimpleName(), uri);
+        EntityResponse<T> response = rest.createResource(uri).GET_Response(type);
+        checkStatus(response, type.getSimpleName()
+                + " for " + groupId + ":" + artifactId + ":" + version + ":" + artifactType);
+        T result = response.getBody();
+        log.debug("found {}: {}", type.getSimpleName(), result);
+        return result;
+    }
+
+    private UriTemplate resolve(UriTemplate template,
+            GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+        return template
                 .with("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
                 .with("org", groupId)
                 .with("orgPath", groupId.asPath())
@@ -162,26 +228,15 @@ public class ArtifactoryRepository extends Repository {
                 // (-{fileItegRev})
                 // (-{classifier})
                 .with("ext", type)
-                .with("type", type)
-                // customTokenName<customTokenRegex>
-                ;
-        log.debug("fetch artifact info from {}", uri);
-        EntityResponse<FileInfo> response = rest.createResource(uri).GET_Response(FileInfo.class);
+                .with("type", type);
+    }
+
+    private void checkStatus(EntityResponse<?> response, String what) {
         switch ((Status) response.status()) {
         case OK:
-            FileInfo fileInfo = response.getBody();
-            log.debug("found artifact info: {}", fileInfo);
-            return Artifact
-                    .builder()
-                    .groupId(groupId)
-                    .artifactId(artifactId)
-                    .type(type)
-                    .version(version)
-                    .checksum(fileInfo.getChecksum())
-                    .inputStreamSupplier(() -> download(fileInfo))
-                    .build();
+            return;
         case NOT_FOUND:
-            throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
+            throw notFound("not in repository: " + what);
         default:
             throw new UnexpectedStatusException(response.status(), response.headers(), OK);
         }

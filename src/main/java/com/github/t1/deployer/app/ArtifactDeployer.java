@@ -62,7 +62,7 @@ public class ArtifactDeployer extends AbstractDeployer<DeploymentConfig, Deploym
         if (resource.checksum().equals(artifact.getChecksum())) {
             boolean removed = existing.removeIf(toResourceDeploymentName(plan)::matches);
             assert removed : "expected [" + resource + "] to be in existing " + existing;
-            log.info("already deployed with same checksum: {}", plan.getName());
+            log.info("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
         } else {
             container.deployment(toResourceDeploymentName(plan)).build().redeploy(artifact.getInputStream());
             audit.change("checksum", resource.checksum(), artifact.getChecksum());

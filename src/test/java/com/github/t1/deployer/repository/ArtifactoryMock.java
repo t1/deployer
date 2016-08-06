@@ -17,6 +17,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
+import static com.github.t1.problem.WebException.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -436,9 +437,30 @@ public class ArtifactoryMock {
 
     @GET
     @Path("/{repoKey}/{path:.*}")
+    @Produces(APPLICATION_XML)
+    public InputStream getMetaData(
+            @HeaderParam("Authorization") String authorization,
+            @SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
+            @PathParam("path") String pathString)
+            throws IOException {
+        checkAuthorization(authorization);
+        String fileName = "maven-metadata.xml";
+        if (!pathString.endsWith(fileName))
+            throw notFound("mock can only serve xml for " + fileName);
+        pathString = pathString.substring(0, pathString.length() - fileName.length()) + "maven-metadata-local.xml";
+        java.nio.file.Path path = Paths.get(pathString);
+        java.nio.file.Path repoPath = MAVEN_REPOSITORY.resolve(path);
+        log.info("return repository file stream: {}", repoPath);
+        return Files.newInputStream(repoPath);
+    }
+
+    @GET
+    @Path("/{repoKey}/{path:.*}")
     @Produces("application/java-archive")
-    public InputStream getFileStream(@HeaderParam("Authorization") String authorization,
-            @SuppressWarnings("unused") @PathParam("repoKey") String repoKey, @PathParam("path") String pathString)
+    public InputStream getFileStream(
+            @HeaderParam("Authorization") String authorization,
+            @SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
+            @PathParam("path") String pathString)
             throws IOException {
         checkAuthorization(authorization);
         java.nio.file.Path path = Paths.get(pathString);

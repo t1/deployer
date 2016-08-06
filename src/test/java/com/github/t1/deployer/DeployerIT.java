@@ -31,12 +31,13 @@ import static java.util.concurrent.TimeUnit.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assume.*;
 
 @Slf4j
 @RunWith(Arquillian.class)
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
-    private static final boolean USE_ARTIFACTORY_MOCK = false;
+    private static final boolean USE_ARTIFACTORY_MOCK = true;
 
     private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it.war");
     private static final Checksum POSTGRESQL_9_4_1207_CHECKSUM = Checksum.fromString(
@@ -45,8 +46,10 @@ public class DeployerIT {
             "52709CBC859E208DC8E540EB5C7047C316D9653F");
     private static final Checksum JOLOKIA_1_3_2_CHECKSUM = Checksum.fromString(
             "9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330");
-    private static final Checksum JOLOKIA_1_3_3_CHECKSUM = Checksum.fromString(
+    public static final Checksum JOLOKIA_1_3_3_CHECKSUM = Checksum.fromString(
             "F6E5786754116CC8E1E9261B2A117701747B1259");
+    public static final Checksum JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM = Checksum.fromString(
+            "C8BB60C0CE61C2BEEC370D9127ED340DCA5F566D");
     private static final String PLAN_JOLOKIA_WITH_VERSION_VAR = ""
             + "artifacts:\n"
             + "  jolokia:\n"
@@ -169,7 +172,8 @@ public class DeployerIT {
 
         assertThat(theDeployments()).isEmpty();
         assertThat(response.readEntity(String.class))
-                .contains("artifact not in repository: org.jolokia:jolokia-war:9999:war");
+                .contains("not in repository")
+                .contains("org.jolokia:jolokia-war:9999:war");
     }
 
     @Test
@@ -310,7 +314,7 @@ public class DeployerIT {
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
-                + "    version: 1.3.3\n"
+                + "    version: xxx\n"
                 + "    state: undeployed\n";
 
         List<Audit> audits = post(plan);
@@ -320,9 +324,60 @@ public class DeployerIT {
                 Audit.ArtifactAudit.builder().name("jolokia")
                                    .change("group-id", "org.jolokia", null)
                                    .change("artifact-id", "jolokia-war", null)
-                                   .change("version", "1.3.3", null)
+                                   .change("version", "xxx", null)
                                    .change("type", "war", null)
                                    .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
+                                   .removed());
+    }
+
+    @Test
+    @InSequence(value = 950)
+    public void shouldDeploySnapshotWebArchive() throws Exception {
+        assumeTrue(USE_ARTIFACTORY_MOCK);
+
+        String plan = ""
+                + "artifacts:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: 1.3.4-SNAPSHOT\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM));
+        assertThat(audits).containsExactly(
+                Audit.ArtifactAudit.builder().name("jolokia")
+                                   .change("group-id", null, "org.jolokia")
+                                   .change("artifact-id", null, "jolokia-war")
+                                   .change("version", null, "1.3.4-SNAPSHOT")
+                                   .change("type", null, "war")
+                                   .change("checksum", null, JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM)
+                                   .added());
+    }
+
+    @Test
+    @InSequence(value = 960)
+    public void shouldUndeploySnapshotWebArchive() throws Exception {
+        assumeTrue(USE_ARTIFACTORY_MOCK);
+
+        String plan = ""
+                + "artifacts:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: xxx\n"
+                + "    state: undeployed\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(theDeployments()).isEmpty();
+        assertThat(audits).containsExactly(
+                Audit.ArtifactAudit.builder().name("jolokia")
+                                   .change("group-id", "org.jolokia", null)
+                                   .change("artifact-id", "jolokia-war", null)
+                                   .change("version", "xxx", null)
+                                   .change("type", "war", null)
+                                   .change("checksum", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM, null)
                                    .removed());
     }
 
