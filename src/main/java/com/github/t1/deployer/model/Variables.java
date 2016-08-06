@@ -13,6 +13,7 @@ import static java.util.Locale.*;
 
 public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
+    private static final Pattern VARIABLE_VALUE_PATTERN = Pattern.compile("^[-._a-zA-Z0-9]{1,256}$");
     private static final Pattern FUNCTION = Pattern.compile("(?<function>[-._a-zA-Z0-9]*)(\\((?<variable>[^)]*)\\))?");
 
     private final ImmutableMap<String, String> variables;
@@ -68,6 +69,8 @@ public class Variables {
         if (!variables.containsKey(variableName))
             throw badRequest("unresolved variable key: " + variableName);
         String value = variables.get(variableName);
+        if (!VARIABLE_VALUE_PATTERN.matcher(value).matches())
+            throw badRequest("invalid character in variable value for [" + variableName + "]");
         return function.apply(value);
     }
 

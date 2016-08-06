@@ -91,6 +91,31 @@ public class ArtifactDeployerTest extends AbstractDeployerTest {
     }
 
 
+    @Test public void shouldFailToReplaceVariableWithNewline() { shouldFailToReplaceVariableWith("foo\nbar"); }
+
+    @Test public void shouldFailToReplaceVariableWithOpeningCurly() { shouldFailToReplaceVariableWith("foo{bar"); }
+
+    @Test public void shouldFailToReplaceVariableWithClosingCurly() { shouldFailToReplaceVariableWith("foo}bar"); }
+
+    @Test public void shouldFailToReplaceVariableWithOnlyOpeningCurly() { shouldFailToReplaceVariableWith("{"); }
+
+    @Test public void shouldFailToReplaceVariableWithCurlies() { shouldFailToReplaceVariableWith("{}"); }
+
+    @Test public void shouldFailToReplaceVariableWithAsterisk() { shouldFailToReplaceVariableWith("foo*bar"); }
+
+    private void shouldFailToReplaceVariableWith(String value) {
+        systemProperties.given("foo", value);
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "artifacts:\n"
+                + "  ${foo}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1\n"));
+
+        assertThat(thrown).hasMessageContaining("invalid character in variable value for [foo]");
+    }
+
+
     @Test
     public void shouldDeployWebArchiveWithTwoVariablesInOneLine() {
         systemProperties.given("orgVar", "org");
