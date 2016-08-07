@@ -52,7 +52,15 @@ public abstract class Audit {
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     @JsonProperty private final List<Change> changes;
 
-    @Override public String toString() { return getClass().getSimpleName() + ":" + operation; }
+    @Override public String toString() { return getType() + ":" + operation; }
+
+    public String getType() {
+        String type = getClass().getSimpleName();
+        String suffix = Audit.class.getSimpleName();
+        if (type.endsWith(suffix))
+            type = type.substring(0, type.length() - suffix.length());
+        return type.toLowerCase();
+    }
 
     public int changeCount() { return (changes == null) ? 0 : changes.size(); }
 

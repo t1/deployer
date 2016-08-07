@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.github.t1.deployer.app.ConfigurationPlan.*;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 @Data
@@ -22,4 +23,6 @@ public class Audits {
 
     @SneakyThrows(IOException.class)
     public String toYaml() { return YAML.writeValueAsString(this); }
+
+    @Override public String toString() { return audits.stream().map(Audit::toString).collect(joining("\n", "", "\n")); }
 }

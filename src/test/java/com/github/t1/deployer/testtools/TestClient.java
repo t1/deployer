@@ -83,13 +83,13 @@ public class TestClient {
     public void shouldPostUpdate() throws Exception {
         Audits audits = postUpdate();
 
-        System.out.println(audits.toYaml());
+        System.out.println("------------------\n" + audits + "------------------");
     }
 
     @Test
     public void shouldGetEffectivePlan() throws Exception {
         ConfigurationPlan plan = deployer().GET(ConfigurationPlan.class);
 
-        System.out.println("plan:\n" + plan.toYaml());
+        System.out.println("------------------\n" + plan + "------------------");
     }
 }

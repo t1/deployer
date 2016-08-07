@@ -322,9 +322,13 @@ public class ConfigurationPlan {
 
     @Override public String toString() {
         return ""
-                + "log-handlers:\n  - " + logHandlers().map(Object::toString).collect(joining("\n  - "))
-                + "\nloggers:\n  - " + loggers().map(Object::toString).collect(joining("\n  - "))
-                + "\nartifacts:\n  - " + artifacts().map(Object::toString).collect(joining("\n  - "));
+                + "log-handlers:\n" + toStringList(logHandlers())
+                + "loggers:\n" + toStringList(loggers())
+                + "artifacts:\n" + toStringList(artifacts());
+    }
+
+    private String toStringList(Stream<?> stream) {
+        return stream.map(Object::toString).collect(joining("\n  - ", "  - ", "\n"));
     }
 
     @SneakyThrows(IOException.class)
