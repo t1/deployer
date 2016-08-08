@@ -4,7 +4,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static com.github.t1.deployer.container.LoggingHandlerType.*;
+import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -17,12 +17,14 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
     }
 
     @Test
-    public void shouldFailToAddLogHandlersWithoutItem() {
-        Throwable thrown = catchThrowable(() -> deployer.apply(""
-                + "log-handlers:\n"
-                + "  foo:\n"));
+    public void shouldAddLogHandlersWithAllDefaults() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO");
 
-        assertThat(thrown.getCause()).hasMessageContaining("no config in log-handler 'foo'");
+        Audits audits = deployer.apply(""
+                + "log-handlers:\n"
+                + "  FOO:\n");
+
+        fixture.verifyAdded(audits);
     }
 
     @Test
@@ -66,20 +68,6 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldFailToParsePlanWithLogHandlerWithNeitherFormatNorFormatter() {
-        Throwable throwable = catchThrowable(() -> deployer.apply(""
-                + "log-handlers:\n"
-                + "  FOO:\n"
-                + "    level: ALL\n"
-                + "    file: the-file\n"
-                + "    suffix: the-suffix\n"));
-
-        assertThat(throwable.getCause().getCause())
-                .hasMessage("log-handler [FOO] must either have a format or a formatter");
-    }
-
-
-    @Test
     public void shouldFailToParsePlanWithLogHandlerWithBothFormatAndFormatter() {
         Throwable throwable = catchThrowable(() -> deployer.apply(""
                 + "log-handlers:\n"
@@ -91,7 +79,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    formatter: the-formatter\n"));
 
         assertThat(throwable.getCause().getCause())
-                .hasMessage("log-handler [FOO] must either have a format or a formatter");
+                .hasMessage("log-handler [FOO] can't have both a format and a formatter");
     }
 
 
@@ -129,7 +117,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.level(ALL).file("FOO").verifyAdded(audits);
+        fixture.verifyAdded(audits);
     }
 
 
@@ -148,7 +136,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.file("FOO").verifyAdded(audits);
+        fixture.verifyAdded(audits);
     }
 
 
@@ -183,7 +171,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    level: ALL\n"
                 + "    format: the-format\n");
 
-        fixture.file("FOO").verifyAdded(audits);
+        fixture.verifyAdded(audits);
     }
 
 

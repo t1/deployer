@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
-import static com.github.t1.deployer.container.LoggingHandlerType.*;
+import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.tools.Tools.toMap;
@@ -231,10 +231,12 @@ public class ConfigurationPlan {
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
     public static class LogHandlerConfig implements AbstractConfig {
+        public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
+
         @NonNull @JsonIgnore private final LogHandlerName name;
         private final DeploymentState state;
         private final LogLevel level;
-        @NonNull private final LoggingHandlerType type;
+        @NonNull private final LogHandlerType type;
         private final String format;
         private final String formatter;
 
@@ -247,14 +249,13 @@ public class ConfigurationPlan {
 
 
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
-            if (node.isNull())
-                throw new ConfigurationPlanLoadingException("no config in log-handler '" + name + "'");
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.getTypeName(), value ->
-                    builder.type(LoggingHandlerType.valueOfTypeName(value)));
-            apply(node, "format", null, builder::format);
+                    builder.type(LogHandlerType.valueOfTypeName(value)));
+            String defaultFormat = node.has("formatter") ? null : DEFAULT_LOG_FORMAT;
+            apply(node, "format", defaultFormat, builder::format);
             apply(node, "formatter", null, builder::formatter);
             applyByType(node, builder);
             return builder.build().validate();
@@ -266,7 +267,7 @@ public class ConfigurationPlan {
                 // nothing more to load here
                 return;
             case periodicRotatingFile:
-                apply(node, "file", builder.name.getValue(), builder::file);
+                apply(node, "file", builder.name.getValue().toLowerCase() + ".log", builder::file);
                 apply(node, "suffix", null, builder::suffix);
                 return;
             case custom:
@@ -284,9 +285,9 @@ public class ConfigurationPlan {
         /* make builder fields visible */ public static class LogHandlerConfigBuilder {}
 
         private LogHandlerConfig validate() {
-            if (format == null && formatter == null || format != null && formatter != null)
+            if (format != null && formatter != null)
                 throw new ConfigurationPlanLoadingException(
-                        "log-handler [" + name + "] must either have a format or a formatter");
+                        "log-handler [" + name + "] can't have both a format and a formatter");
             if (type == custom) {
                 if (module == null)
                     throw new ConfigurationPlanLoadingException(

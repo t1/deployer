@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.*;
 public class LogHandlerResource extends AbstractResource {
     private static final String DEFAULT_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
 
-    @NonNull @Getter private final LoggingHandlerType type;
+    @NonNull @Getter private final LogHandlerType type;
     @NonNull @Getter private final LogHandlerName name;
 
     private LogLevel level;
@@ -35,18 +35,18 @@ public class LogHandlerResource extends AbstractResource {
     private String class_;
     private Map<String, String> properties;
 
-    private LogHandlerResource(LoggingHandlerType type, LogHandlerName name, CLI cli) {
+    private LogHandlerResource(LogHandlerType type, LogHandlerName name, CLI cli) {
         super(cli);
         this.type = type;
         this.name = name;
     }
 
-    public static LogHandlerResourceBuilder builder(LoggingHandlerType type, LogHandlerName name, CLI cli) {
+    public static LogHandlerResourceBuilder builder(LogHandlerType type, LogHandlerName name, CLI cli) {
         return doNotCallThisBuilderExternally().cli(cli).type(type).name(name);
     }
 
     public static List<LogHandlerResource> allHandlers(CLI cli) {
-        return Arrays.stream(LoggingHandlerType.values())
+        return Arrays.stream(LogHandlerType.values())
                      .flatMap(type -> {
                          ModelNode request = readResource(
                                  new LogHandlerResource(type, ALL, cli).createRequestWithAddress());
@@ -58,15 +58,15 @@ public class LogHandlerResource extends AbstractResource {
                      .collect(toList());
     }
 
-    private static LoggingHandlerType type(ModelNode node) {
-        return LoggingHandlerType.valueOfHandlerName(new ArrayList<>(node.get("address").get(1).keys()).get(0));
+    private static LogHandlerType type(ModelNode node) {
+        return LogHandlerType.valueOfHandlerName(new ArrayList<>(node.get("address").get(1).keys()).get(0));
     }
 
     private static LogHandlerName name(ModelNode node) {
-        return new LogHandlerName(node.get("address").get(1).get(type(node).getHandlerName()).asString());
+        return new LogHandlerName(node.get("address").get(1).get(type(node).getHandlerTypeName()).asString());
     }
 
-    private static LogHandlerResource toLoggerResource(LoggingHandlerType type, LogHandlerName name, CLI cli,
+    private static LogHandlerResource toLoggerResource(LogHandlerType type, LogHandlerName name, CLI cli,
             ModelNode node) {
         LogHandlerResource logger = new LogHandlerResource(type, name, cli);
         logger.readFrom(node);
@@ -205,7 +205,7 @@ public class LogHandlerResource extends AbstractResource {
         ModelNode request = new ModelNode();
         request.get("address")
                .add("subsystem", "logging")
-               .add(type.getHandlerName(), name.getValue());
+               .add(type.getHandlerTypeName(), name.getValue());
         return request;
     }
 

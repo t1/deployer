@@ -21,9 +21,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.*;
 
+import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
+import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.deployer.tools.Tools.*;
+import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
@@ -54,7 +57,7 @@ public class AbstractDeployerTest {
 
     private List<String> allDeployments = new ArrayList<>();
     private List<String> allLoggers = new ArrayList<>();
-    private Map<LoggingHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
+    private Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
 
     @Before
     public void before() {
@@ -80,7 +83,7 @@ public class AbstractDeployerTest {
         when(cli.executeRaw(readResource("logging", "root-logger", "ROOT"))).then(i -> rootLoggerResponse());
         when(cli.execute(readResource("logging", "logger", "*"))).then(
                 i -> toModelNode(allLoggers.stream().collect(joining(",", "[", "]"))));
-        Arrays.stream(LoggingHandlerType.values()).forEach(this::stubAllLogHandlers);
+        Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
         when(cli.execute(readResource(null, "deployment", "*"))).then(i -> allDeploymentsResponse());
         when(cli.openServerDeploymentManager()).then(i -> deploymentManager);
     }
@@ -101,8 +104,8 @@ public class AbstractDeployerTest {
                 + "}");
     }
 
-    private void stubAllLogHandlers(LoggingHandlerType type) {
-        when(cli.execute(readResource("logging", type.getHandlerName(), "*"))).then(i ->
+    private void stubAllLogHandlers(LogHandlerType type) {
+        when(cli.execute(readResource("logging", type.getHandlerTypeName(), "*"))).then(i ->
                 toModelNode(allLogHandlers.getOrDefault(type, emptyList()).stream().collect(joining(",", "[", "]"))));
     }
 
@@ -116,8 +119,8 @@ public class AbstractDeployerTest {
         verify(cli, atLeast(0)).openServerDeploymentManager();
         verify(cli, atLeast(0)).execute(readResource(null, "deployment", "*"));
         verify(cli, atLeast(0)).execute(readResource("logging", "logger", "*"));
-        Arrays.stream(LoggingHandlerType.values()).forEach(type ->
-                verify(cli, atLeast(0)).execute(readResource("logging", type.getHandlerName(), "*")));
+        Arrays.stream(LogHandlerType.values()).forEach(type ->
+                verify(cli, atLeast(0)).execute(readResource("logging", type.getHandlerTypeName(), "*")));
 
         verifyNoMoreInteractions(cli);
         // TODO verifyNoMoreInteractions(deploymentManager);
@@ -539,13 +542,13 @@ public class AbstractDeployerTest {
     public static ModelNode toModelNode(String string) { return ModelNode.fromString(string.replace('\'', '\"')); }
 
 
-    public LogHandlerFixture givenLogHandler(LoggingHandlerType type, String name) {
+    public LogHandlerFixture givenLogHandler(LogHandlerType type, String name) {
         return new LogHandlerFixture(type, name);
     }
 
     @Getter
     public class LogHandlerFixture {
-        private final LoggingHandlerType type;
+        private final LogHandlerType type;
         private final LogHandlerName name;
         private final LogHandlerAuditBuilder audit;
         private LogLevel level;
@@ -558,14 +561,14 @@ public class AbstractDeployerTest {
         private Map<String, String> properties;
         private boolean deployed;
 
-        public LogHandlerFixture(LoggingHandlerType type, String name) {
+        public LogHandlerFixture(LogHandlerType type, String name) {
             this.type = type;
             this.name = new LogHandlerName(name);
             this.audit = LogHandlerAudit.builder().type(this.type).name(this.name);
 
-            when(cli.executeRaw(readResource("logging", type.getHandlerName(), name))).then(i -> deployed
+            when(cli.executeRaw(readResource("logging", type.getHandlerTypeName(), name))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
-                    : notDeployedNode("logging", type.getHandlerName(), name));
+                    : notDeployedNode("logging", type.getHandlerTypeName(), name));
         }
 
         public String deployedNode() {
@@ -656,7 +659,7 @@ public class AbstractDeployerTest {
             return toModelNode("{" + logHandlerAddress() + "}");
         }
 
-        private String logHandlerAddress() { return address("logging", type.getHandlerName(), name); }
+        private String logHandlerAddress() { return address("logging", type.getHandlerTypeName(), name); }
 
 
         public <T> LogHandlerFixture verifyChange(String name, T oldValue, T newValue) {
@@ -687,14 +690,15 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAdded(Audits audits) {
-            verify(cli).execute(toModelNode("{\n"
+            ModelNode expectedAdd = toModelNode("{\n"
                     + logHandlerAddress()
                     + "    'operation' => 'add'"
-                    + ((level == null) ? "" : ",\n    'level' => '" + level + "'")
-                    + ((format == null) ? "" : ",\n    'formatter' => '" + format + "'")
-                    + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
-                    + ((file == null) ? "" : ",\n    'file' => {\n"
-                    + "        'path' => '" + file + "',\n"
+                    + ",\n    'level' => '" + ((level == null) ? "ALL" : level) + "'"
+                    + ",\n    " + ((formatter == null)
+                                           ? "'formatter' => '" + ((format == null) ? DEFAULT_LOG_FORMAT : format) + "'"
+                                           : "'named-formatter' => '" + formatter + "'")
+                    + ((type != periodicRotatingFile) ? "" : ",\n    'file' => {\n"
+                    + "        'path' => '" + ((file == null) ? name.getValue().toLowerCase() + ".log" : file) + "',\n"
                     + "        'relative-to' => 'jboss.server.log.dir'\n"
                     + "    }")
                     + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
@@ -706,15 +710,17 @@ public class AbstractDeployerTest {
                                         .map(entry -> "('" + entry.getKey() + "' => '" + entry.getValue() + "')")
                                         .collect(joining(",\n        "))
                             + "\n    ]\n")
-                    + "\n}"));
-            if (level != null)
-                audit.change("level", null, level);
+                    + "\n}");
+            verify(cli).execute(expectedAdd);
+            audit.change("level", null, (level == null) ? ALL : level);
+            if (format == null && formatter == null)
+                audit.change("format", null, DEFAULT_LOG_FORMAT);
             if (format != null)
                 audit.change("format", null, format);
             if (formatter != null)
                 audit.change("formatter", null, formatter);
-            if (file != null)
-                audit.change("file", null, file);
+            if (type == periodicRotatingFile)
+                audit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
             if (suffix != null)
                 audit.change("suffix", null, suffix);
             if (module != null)
