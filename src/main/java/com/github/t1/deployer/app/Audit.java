@@ -54,7 +54,7 @@ public abstract class Audit {
 
     @Override public String toString() { return getType() + ":" + operation; }
 
-    public String getType() {
+    @JsonIgnore public String getType() {
         String type = getClass().getSimpleName();
         String suffix = Audit.class.getSimpleName();
         if (type.endsWith(suffix))
@@ -127,7 +127,7 @@ public abstract class Audit {
     @JsonTypeName("log-handler")
     @NoArgsConstructor(access = PRIVATE, force = true)
     public static class LogHandlerAudit extends Audit {
-        @NonNull @JsonProperty private final LoggingHandlerType type;
+        @NonNull @JsonProperty private final LogHandlerType type;
         @NonNull @JsonProperty private final LogHandlerName name;
 
         @Override public String toString() { return super.toString() + ":" + type + ":" + name + ":" + super.changes; }
@@ -138,7 +138,7 @@ public abstract class Audit {
             @Override protected LogHandlerAudit build() { return new LogHandlerAudit(operation, changes, type, name); }
         }
 
-        private LogHandlerAudit(Operation operation, List<Change> changes, LoggingHandlerType type,
+        private LogHandlerAudit(Operation operation, List<Change> changes, LogHandlerType type,
                 LogHandlerName name) {
             super(operation, changes);
             this.type = type;

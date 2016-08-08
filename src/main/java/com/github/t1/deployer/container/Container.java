@@ -16,7 +16,7 @@ import java.util.List;
 public class Container {
     @Inject public CLI cli;
 
-    public LogHandlerResourceBuilder logHandler(LoggingHandlerType type, LogHandlerName name) {
+    public LogHandlerResourceBuilder logHandler(LogHandlerType type, LogHandlerName name) {
         return LogHandlerResource.builder(type, name, cli);
     }
 

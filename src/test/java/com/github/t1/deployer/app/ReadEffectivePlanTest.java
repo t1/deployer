@@ -10,7 +10,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.github.t1.deployer.container.LoggingHandlerType.*;
+import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
