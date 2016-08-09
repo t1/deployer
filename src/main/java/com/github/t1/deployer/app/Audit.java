@@ -54,13 +54,7 @@ public abstract class Audit {
 
     @Override public String toString() { return getType() + ":" + operation; }
 
-    @JsonIgnore public String getType() {
-        String type = getClass().getSimpleName();
-        String suffix = Audit.class.getSimpleName();
-        if (type.endsWith(suffix))
-            type = type.substring(0, type.length() - suffix.length());
-        return type.toLowerCase();
-    }
+    @JsonIgnore public String getType() { return getClass().getAnnotation(JsonTypeName.class).value(); }
 
     public int changeCount() { return (changes == null) ? 0 : changes.size(); }
 
