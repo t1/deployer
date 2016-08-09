@@ -40,6 +40,13 @@
             <url>https://api.bintray.com/maven/t1/javaee-helpers/deployer/;publish=1</url>
         </repository>
     </distributionManagement>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>bintray</name>
+            <url>http://jcenter.bintray.com</url>
+        </repository>
+    </repositories>
 
     <build>
         <finalName>${project.artifactId}</finalName>
