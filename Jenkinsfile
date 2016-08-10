@@ -9,6 +9,12 @@ node {
     step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
 
     stage 'Integration Test'
-    sh "${mvnHome}/bin/mvn failsafe:integration-test failsafe:verify -DtrimStackTrace=false -DuseFile=false"
+    try {
+        sh "${mvnHome}/bin/mvn failsafe:integration-test failsafe:verify -DtrimStackTrace=false -DuseFile=false"
+    } catch (err) {
+        echo "error during integration-test"
+        echo "${err}"
+        currentBuild.result = 'UNSTABLE'
+    }
     step([$class: 'JUnitResultArchiver', testResults: '**/target/failsafe-reports/TEST-*.xml'])
 }
