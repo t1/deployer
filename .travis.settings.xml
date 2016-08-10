@@ -8,7 +8,7 @@
                 <repository>
                     <id>central</id>
                     <name>central</name>
-                    <url>https://repo1.maven.org/maven2/</url>
+                    <url>https://repository.apache.org/releases</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
