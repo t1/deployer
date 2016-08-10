@@ -24,7 +24,7 @@
                 <repository>
                     <id>javaee-helpers</id>
                     <name>javaee-helpers</name>
-                    <url>https://bintray.com/t1/javaee-helpers</url>
+                    <url>https://dl.bintray.com/t1/javaee-helpers</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
