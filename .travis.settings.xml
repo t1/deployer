@@ -7,8 +7,16 @@
             <repositories>
                 <repository>
                     <id>central</id>
+                    <name>central</name>
+                    <url>https://repo1.maven.org/maven2/</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>bintray</id>
                     <name>bintray</name>
-                    <url>http://jcenter.bintray.com</url>
+                    <url>https://jcenter.bintray.com</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
@@ -22,16 +30,6 @@
                     </snapshots>
                 </repository>
             </repositories>
-            <pluginRepositories>
-                <pluginRepository>
-                    <id>central</id>
-                    <name>bintray-plugins</name>
-                    <url>http://jcenter.bintray.com</url>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                </pluginRepository>
-            </pluginRepositories>
         </profile>
     </profiles>
     <activeProfiles>
