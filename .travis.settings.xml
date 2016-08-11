@@ -6,25 +6,9 @@
             <id>bintray</id>
             <repositories>
                 <repository>
-                    <id>central</id>
-                    <name>central</name>
-                    <url>https://repository.apache.org/releases</url>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                </repository>
-                <repository>
                     <id>bintray</id>
                     <name>bintray</name>
-                    <url>https://jcenter.bintray.com</url>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                </repository>
-                <repository>
-                    <id>javaee-helpers</id>
-                    <name>javaee-helpers</name>
-                    <url>https://dl.bintray.com/t1/javaee-helpers</url>
+                    <url>http://jcenter.bintray.com</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>

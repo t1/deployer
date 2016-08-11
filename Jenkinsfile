@@ -12,8 +12,7 @@ node {
     try {
         sh "${mvnHome}/bin/mvn failsafe:integration-test failsafe:verify -DtrimStackTrace=false -DuseFile=false"
     } catch (err) {
-        echo "error during integration-test"
-        echo "${err}"
+        echo "error during integration-test: ${err}"
         currentBuild.result = 'UNSTABLE'
     }
     step([$class: 'JUnitResultArchiver', testResults: '**/target/failsafe-reports/TEST-*.xml'])
