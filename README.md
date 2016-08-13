@@ -50,4 +50,4 @@ They may be configured to use a real MavenCentral and/or locally running Artifac
 
 ## Contribute
 
-Feel free to simply open issues. Pull requests are also welcome.
+You can [join the chat](https://gitter.im/t1/deployer) or feel free to simply open issues. Pull requests are also welcome.
