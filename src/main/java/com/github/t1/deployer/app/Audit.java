@@ -23,7 +23,11 @@ import static lombok.AccessLevel.*;
 @RequiredArgsConstructor(access = PROTECTED)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @JsonTypeInfo(use = NAME, include = PROPERTY, property = "type")
-@JsonSubTypes({ @Type(Audit.ArtifactAudit.class), @Type(Audit.LoggerAudit.class), @Type(Audit.LogHandlerAudit.class) })
+@JsonSubTypes({
+                      @Type(Audit.DeployableAudit.class),
+                      @Type(Audit.LoggerAudit.class),
+                      @Type(Audit.LogHandlerAudit.class)
+              })
 @JsonInclude(NON_EMPTY)
 @JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("ClassReferencesSubclass")
@@ -61,29 +65,29 @@ public abstract class Audit {
     @Value
     @Builder
     @EqualsAndHashCode(callSuper = true)
-    @JsonTypeName("artifact")
+    @JsonTypeName("deployable")
     @NoArgsConstructor(access = PRIVATE, force = true)
-    public static class ArtifactAudit extends Audit {
+    public static class DeployableAudit extends Audit {
         @NonNull @JsonProperty private final DeploymentName name;
 
         @Override public String toString() {
             return super.toString() + ":" + name + ((super.changes == null) ? "" : ":" + super.changes);
         }
 
-        public static class ArtifactAuditBuilder extends AuditBuilder<ArtifactAudit> {
-            public ArtifactAuditBuilder name(String name) { return name(new DeploymentName(name)); }
+        public static class DeployableAuditBuilder extends AuditBuilder<DeployableAudit> {
+            public DeployableAuditBuilder name(String name) { return name(new DeploymentName(name)); }
 
-            public ArtifactAuditBuilder name(DeploymentName name) {
+            public DeployableAuditBuilder name(DeploymentName name) {
                 this.name = name;
                 return this;
             }
 
-            @Override protected ArtifactAudit build() {
-                return new ArtifactAudit(operation, changes, name);
+            @Override protected DeployableAudit build() {
+                return new DeployableAudit(operation, changes, name);
             }
         }
 
-        public ArtifactAudit(Operation operation, List<Change> changes, DeploymentName name) {
+        public DeployableAudit(Operation operation, List<Change> changes, DeploymentName name) {
             super(operation, changes);
             this.name = name;
         }

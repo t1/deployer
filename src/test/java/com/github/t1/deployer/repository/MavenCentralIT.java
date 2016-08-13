@@ -46,7 +46,7 @@ public class MavenCentralIT {
 
         // maven central returns the info for the 'war', even when we search by the checksum of the pom
         // to find out what classifier the checksum is for, we would have to download the checksums for each classifier
-        // the use case is currently only for the audit log when undeploying managed artifacts,
+        // the use case is currently only for the audit log when undeploying managed deployables,
         // which doesn't include the classifier anyway
         assertJolokia133(artifact, war, JOLOKIA_133_POM_CHECKSUM);
     }

@@ -1,4 +1,4 @@
-artifacts:
+deployables:
   postgresql:
     group-id: org.postgresql
     version: 9.4.1208

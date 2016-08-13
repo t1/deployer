@@ -135,13 +135,13 @@ public class DeployerConfigSerializationTest {
 
 
     @Test
-    public void shouldLoadConfigFileWithManagedArtifacts() throws Exception {
+    public void shouldLoadConfigFileWithManagedDeployables() throws Exception {
         configFile.write(""
                 + "managed:\n"
-                + "- artifacts\n");
+                + "- deployables\n");
 
         ConfigProducer producer = new ConfigProducer();
 
-        assertThat(producer.managedResources()).containsExactly("artifacts");
+        assertThat(producer.managedResources()).containsExactly("deployables");
     }
 }

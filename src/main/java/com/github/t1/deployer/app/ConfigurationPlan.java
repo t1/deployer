@@ -73,7 +73,7 @@ public class ConfigurationPlan {
         ConfigurationPlanBuilder builder = builder();
         readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerConfig::fromJson, builder::logHandler);
         readAll(json.get("loggers"), LoggerCategory::of, LoggerConfig::fromJson, builder::logger);
-        readAll(json.get("artifacts"), DeploymentName::new, DeploymentConfig::fromJson, builder::artifact);
+        readAll(json.get("deployables"), DeploymentName::new, DeployableConfig::fromJson, builder::deployable);
         return builder.build();
     }
 
@@ -86,18 +86,18 @@ public class ConfigurationPlan {
 
     @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
     @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
-    @NonNull @JsonProperty private final Map<DeploymentName, DeploymentConfig> artifacts;
+    @NonNull @JsonProperty private final Map<DeploymentName, DeployableConfig> deployables;
 
     public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
 
     public Stream<LoggerConfig> loggers() { return loggers.values().stream(); }
 
-    public Stream<DeploymentConfig> artifacts() { return artifacts.values().stream(); }
+    public Stream<DeployableConfig> deployables() { return deployables.values().stream(); }
 
     public static class ConfigurationPlanBuilder {
         private Map<LogHandlerName, LogHandlerConfig> logHandlers = new LinkedHashMap<>();
         private Map<LoggerCategory, LoggerConfig> loggers = new LinkedHashMap<>();
-        private Map<DeploymentName, DeploymentConfig> artifacts = new LinkedHashMap<>();
+        private Map<DeploymentName, DeployableConfig> deployables = new LinkedHashMap<>();
 
         public ConfigurationPlanBuilder logHandler(LogHandlerConfig config) {
             this.logHandlers.put(config.getName(), config);
@@ -109,8 +109,8 @@ public class ConfigurationPlan {
             return this;
         }
 
-        public ConfigurationPlanBuilder artifact(DeploymentConfig config) {
-            this.artifacts.put(config.getName(), config);
+        public ConfigurationPlanBuilder deployable(DeployableConfig config) {
+            this.deployables.put(config.getName(), config);
             return this;
         }
     }
@@ -123,7 +123,7 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class DeploymentConfig implements AbstractConfig {
+    public static class DeployableConfig implements AbstractConfig {
         private static final String VARS = "vars";
 
         @NonNull @JsonIgnore private final DeploymentName name;
@@ -134,12 +134,12 @@ public class ConfigurationPlan {
         @NonNull private final ArtifactType type;
         @NonNull @Singular @JsonProperty(VARS) private final Map<String, String> variables;
 
-        public static class DeploymentConfigBuilder {}
+        public static class DeployableConfigBuilder {}
 
-        public static DeploymentConfig fromJson(DeploymentName name, JsonNode node) {
+        public static DeployableConfig fromJson(DeploymentName name, JsonNode node) {
             if (node.isNull())
-                throw new ConfigurationPlanLoadingException("no config in artifact '" + name + "'");
-            DeploymentConfigBuilder builder = builder().name(name);
+                throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
+            DeployableConfigBuilder builder = builder().name(name);
             apply(node, "group-id", defaultValue("group-id"), value -> builder.groupId(new GroupId(value)));
             apply(node, "artifact-id", name.getValue(), value -> builder.artifactId(new ArtifactId(value)));
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
@@ -325,7 +325,7 @@ public class ConfigurationPlan {
         return ""
                 + "log-handlers:\n" + toStringList(logHandlers())
                 + "loggers:\n" + toStringList(loggers())
-                + "artifacts:\n" + toStringList(artifacts());
+                + "deployables:\n" + toStringList(deployables());
     }
 
     private String toStringList(Stream<?> stream) {

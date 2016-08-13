@@ -26,8 +26,8 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
             .handler("FILE")
             .build();
 
-    private static List<DeploymentConfig> artifacts(ConfigurationPlan plan) {
-        return plan.artifacts().collect(Collectors.toList());
+    private static List<DeployableConfig> deployables(ConfigurationPlan plan) {
+        return plan.deployables().collect(Collectors.toList());
     }
 
     private static List<LoggerConfig> loggers(ConfigurationPlan plan) {
@@ -42,7 +42,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
     public void shouldReadZeroDeployments() throws Exception {
         ConfigurationPlan plan = deployer.getEffectivePlan();
 
-        assertThat(artifacts(plan)).isEmpty();
+        assertThat(deployables(plan)).isEmpty();
     }
 
     @Test
@@ -51,7 +51,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
         ConfigurationPlan plan = deployer.getEffectivePlan();
 
-        assertThat(artifacts(plan)).containsExactly(foo.asConfig());
+        assertThat(deployables(plan)).containsExactly(foo.asConfig());
     }
 
     @Test
@@ -61,7 +61,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
         ConfigurationPlan plan = deployer.getEffectivePlan();
 
-        assertThat(artifacts(plan)).containsExactly(bar.asConfig(), foo.asConfig());
+        assertThat(deployables(plan)).containsExactly(bar.asConfig(), foo.asConfig());
     }
 
 

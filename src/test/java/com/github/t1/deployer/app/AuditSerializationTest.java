@@ -2,7 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.deployer.app.Audit.*;
-import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
+import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.container.LoggerCategory;
 import org.junit.Test;
@@ -22,9 +22,9 @@ public class AuditSerializationTest {
     }
 
 
-    private static final ArtifactAuditBuilder JOLOKIA = ArtifactAudit.builder().name("jolokia");
+    private static final DeployableAuditBuilder JOLOKIA = DeployableAudit.builder().name("jolokia");
 
-    private static final ArtifactAuditBuilder MOCKSERVER = ArtifactAudit.builder().name("mockserver");
+    private static final DeployableAuditBuilder MOCKSERVER = DeployableAudit.builder().name("mockserver");
 
     private static LoggerAuditBuilder deployerLog() {
         return LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer"));
@@ -45,7 +45,7 @@ public class AuditSerializationTest {
                      + "],"
                      + "'category':'com.github.t1.deployer'"
                      + "},{"
-                     + "'type':'artifact',"
+                     + "'type':'deployable',"
                      + "'operation':'remove',"
                      + "'name':'mockserver'"
                      + "}]}"
@@ -61,13 +61,13 @@ public class AuditSerializationTest {
             + "    old-value: INFO\n"
             + "    new-value: DEBUG\n"
             + "  category: com.github.t1.deployer\n"
-            + "- !<artifact>\n"
+            + "- !<deployable>\n"
             + "  operation: remove\n"
             + "  name: mockserver\n";
 
 
     @Test
-    public void shouldFailToDeserializeUnknownArtifactType() throws Exception {
+    public void shouldFailToDeserializeUnknownDeployableType() throws Exception {
         String json = "{'type':'xxx','operation':'add'}";
 
         assertThatThrownBy(() -> deserialize(json))
@@ -76,9 +76,9 @@ public class AuditSerializationTest {
 
 
     @Test
-    public void shouldDeserializeDeployedArtifactAudit() throws Exception {
+    public void shouldDeserializeDeployedDeployableAudit() throws Exception {
         String json = "{"
-                + "'type':'artifact',"
+                + "'type':'deployable',"
                 + "'operation':'add',"
                 + "'name':'jolokia'"
                 + "}";
@@ -93,7 +93,7 @@ public class AuditSerializationTest {
     public void shouldDeserializeChangeAudit() throws Exception {
         String json = "{'audits':["
                 + "{"
-                + "'type':'artifact',"
+                + "'type':'deployable',"
                 + "'operation':'add',"
                 + "'changes':["
                 + "{'name':'group-id','old-value':null,'new-value':'org.jolokia'},"
@@ -106,7 +106,7 @@ public class AuditSerializationTest {
         Audits audits = JSON.readValue(json.replace('\'', '\"'), Audits.class);
 
         assertThat(audits.toYaml()).isEqualTo("audits:\n"
-                + "- !<artifact>\n"
+                + "- !<deployable>\n"
                 + "  operation: add\n"
                 + "  changes:\n"
                 + "  - name: group-id\n"
@@ -122,9 +122,9 @@ public class AuditSerializationTest {
 
 
     @Test
-    public void shouldDeserializeUndeployedArtifactAudit() throws Exception {
+    public void shouldDeserializeUndeployedDeployableAudit() throws Exception {
         String json = "{"
-                + "'type':'artifact',"
+                + "'type':'deployable',"
                 + "'operation':'remove',"
                 + "'name':'mockserver'"
                 + "}";
@@ -136,13 +136,13 @@ public class AuditSerializationTest {
 
 
     @Test
-    public void shouldFailToDeserializeArtifactAuditWithUnknownState() throws Exception {
+    public void shouldFailToDeserializeDeployableAuditWithUnknownState() throws Exception {
         String json = "{"
-                + "'type':'artifact',"
+                + "'type':'deployable',"
                 + "'operation':'xxx',"
                 + "'name':'mockserver',"
-                + "'groupId':'org.mock-server',"
-                + "'artifactId':'mockserver-war',"
+                + "'group-id':'org.mock-server',"
+                + "'artifact-id':'mockserver-war',"
                 + "'version':'3.10.4'"
                 + "}";
 

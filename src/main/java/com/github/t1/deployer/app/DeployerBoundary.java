@@ -80,8 +80,8 @@ public class DeployerBoundary {
 
         private final LogHandlerDeployer logHandlerDeployer = new LogHandlerDeployer(container, audits);
         private final LoggerDeployer loggerDeployer = new LoggerDeployer(container, audits);
-        private final ArtifactDeployer artifactDeployer = new ArtifactDeployer(container, audits, repository,
-                managed("artifacts"), DeployerBoundary.this::lookupByChecksum);
+        private final DeployableDeployer deployableDeployer = new DeployableDeployer(container, audits, repository,
+                managed("deployables"), DeployerBoundary.this::lookupByChecksum);
 
         private boolean managed(String resourceName) {
             return managedResourceNames != null && managedResourceNames.contains(resourceName);
@@ -91,7 +91,7 @@ public class DeployerBoundary {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
             logHandlerDeployer.read(builder);
             loggerDeployer.read(builder);
-            artifactDeployer.read(builder);
+            deployableDeployer.read(builder);
             return builder.build();
         }
 
@@ -122,19 +122,19 @@ public class DeployerBoundary {
             plan.loggers().forEach(loggerDeployer::apply);
             loggerDeployer.cleanup(audits);
 
-            // TODO if we could move this recursion logic into the ArtifactDeployer, we could generalize the Deployers
-            plan.artifacts().forEach(deploymentPlan -> {
+            // TODO if we could move this recursion logic into the DeployableDeployer, we could generalize the Deployers
+            plan.deployables().forEach(deploymentPlan -> {
                 if (deploymentPlan.getType() == bundle)
                     applyBundle(deploymentPlan);
                 else
-                    artifactDeployer.apply(deploymentPlan);
+                    deployableDeployer.apply(deploymentPlan);
             });
-            artifactDeployer.cleanup(audits);
+            deployableDeployer.cleanup(audits);
 
             return audits;
         }
 
-        private Audits applyBundle(DeploymentConfig bundle) {
+        private Audits applyBundle(DeployableConfig bundle) {
             Variables pop = this.variables;
             try {
                 this.variables = this.variables.withAll(bundle.getVariables());
@@ -151,7 +151,7 @@ public class DeployerBoundary {
     }
 
 
-    private Artifact lookup(DeploymentConfig deploymentPlan) {
+    private Artifact lookup(DeployableConfig deploymentPlan) {
         return repository.lookupArtifact(deploymentPlan.getGroupId(), deploymentPlan.getArtifactId(),
                 deploymentPlan.getVersion(), deploymentPlan.getType());
     }

@@ -51,7 +51,7 @@ public class DeployerIT {
     public static final Checksum JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM = Checksum.fromString(
             "C8BB60C0CE61C2BEEC370D9127ED340DCA5F566D");
     private static final String PLAN_JOLOKIA_WITH_VERSION_VAR = ""
-            + "artifacts:\n"
+            + "deployables:\n"
             + "  jolokia:\n"
             + "    group-id: org.jolokia\n"
             + "    artifact-id: jolokia-war\n"
@@ -125,7 +125,7 @@ public class DeployerIT {
             container.logHandler(console, new LogHandlerName("CONSOLE")).build().updateLevel(ALL);
             container.logger(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).build().add();
 
-            log.info("artifacts: {}", container.allDeployments());
+            log.info("deployables: {}", container.allDeployments());
             assertThat(theDeployments()).isEmpty();
         }
     }
@@ -163,7 +163,7 @@ public class DeployerIT {
     @InSequence(value = 100)
     public void shouldFailToDeployWebArchiveWithUnknownVersion() throws Exception {
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  jolokia-war:\n"
                 + "    group-id: org.jolokia\n"
                 + "    version: 9999\n";
@@ -180,7 +180,7 @@ public class DeployerIT {
     @InSequence(value = 200)
     public void shouldDeployWebArchive() throws Exception {
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
@@ -190,20 +190,20 @@ public class DeployerIT {
 
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_1_CHECKSUM));
         assertThat(audits).containsExactly(
-                Audit.ArtifactAudit.builder().name("jolokia")
-                                   .change("group-id", null, "org.jolokia")
-                                   .change("artifact-id", null, "jolokia-war")
-                                   .change("version", null, "1.3.1")
-                                   .change("type", null, "war")
-                                   .change("checksum", null, JOLOKIA_1_3_1_CHECKSUM)
-                                   .added());
+                Audit.DeployableAudit.builder().name("jolokia")
+                                     .change("group-id", null, "org.jolokia")
+                                     .change("artifact-id", null, "jolokia-war")
+                                     .change("version", null, "1.3.1")
+                                     .change("type", null, "war")
+                                     .change("checksum", null, JOLOKIA_1_3_1_CHECKSUM)
+                                     .added());
     }
 
     @Test
     @InSequence(value = 300)
     public void shouldNotUpdateWebArchiveWithSameVersion() throws Exception {
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
@@ -226,17 +226,17 @@ public class DeployerIT {
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_2_CHECKSUM));
         logger.log("verify audits");
         assertThat(audits).containsExactly(
-                Audit.ArtifactAudit.builder().name("jolokia")
-                                   .change("checksum", JOLOKIA_1_3_1_CHECKSUM, JOLOKIA_1_3_2_CHECKSUM)
-                                   .change("version", "1.3.1", "1.3.2")
-                                   .changed());
+                Audit.DeployableAudit.builder().name("jolokia")
+                                     .change("checksum", JOLOKIA_1_3_1_CHECKSUM, JOLOKIA_1_3_2_CHECKSUM)
+                                     .change("version", "1.3.1", "1.3.2")
+                                     .changed());
     }
 
     @Test
     @InSequence(value = 500)
     public void shouldUpdateWebArchiveWithPostParameter() throws Exception {
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
@@ -249,10 +249,10 @@ public class DeployerIT {
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
         logger.log("verify audits");
         assertThat(audits.getAudits()).containsExactly(
-                Audit.ArtifactAudit.builder().name("jolokia")
-                                   .change("checksum", JOLOKIA_1_3_2_CHECKSUM, JOLOKIA_1_3_3_CHECKSUM)
-                                   .change("version", "1.3.2", "1.3.3")
-                                   .changed());
+                Audit.DeployableAudit.builder().name("jolokia")
+                                     .change("checksum", JOLOKIA_1_3_2_CHECKSUM, JOLOKIA_1_3_3_CHECKSUM)
+                                     .change("version", "1.3.2", "1.3.3")
+                                     .changed());
     }
 
     @Test
@@ -310,7 +310,7 @@ public class DeployerIT {
     @InSequence(value = 900)
     public void shouldUndeployWebArchive() throws Exception {
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
@@ -321,13 +321,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).isEmpty();
         assertThat(audits).containsExactly(
-                Audit.ArtifactAudit.builder().name("jolokia")
-                                   .change("group-id", "org.jolokia", null)
-                                   .change("artifact-id", "jolokia-war", null)
-                                   .change("version", "xxx", null)
-                                   .change("type", "war", null)
-                                   .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
-                                   .removed());
+                Audit.DeployableAudit.builder().name("jolokia")
+                                     .change("group-id", "org.jolokia", null)
+                                     .change("artifact-id", "jolokia-war", null)
+                                     .change("version", "xxx", null)
+                                     .change("type", "war", null)
+                                     .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
+                                     .removed());
     }
 
     @Test
@@ -336,7 +336,7 @@ public class DeployerIT {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
@@ -346,13 +346,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM));
         assertThat(audits).containsExactly(
-                Audit.ArtifactAudit.builder().name("jolokia")
-                                   .change("group-id", null, "org.jolokia")
-                                   .change("artifact-id", null, "jolokia-war")
-                                   .change("version", null, "1.3.4-SNAPSHOT")
-                                   .change("type", null, "war")
-                                   .change("checksum", null, JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM)
-                                   .added());
+                Audit.DeployableAudit.builder().name("jolokia")
+                                     .change("group-id", null, "org.jolokia")
+                                     .change("artifact-id", null, "jolokia-war")
+                                     .change("version", null, "1.3.4-SNAPSHOT")
+                                     .change("type", null, "war")
+                                     .change("checksum", null, JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM)
+                                     .added());
     }
 
     @Test
@@ -361,7 +361,7 @@ public class DeployerIT {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
@@ -372,20 +372,20 @@ public class DeployerIT {
 
         assertThat(theDeployments()).isEmpty();
         assertThat(audits).containsExactly(
-                Audit.ArtifactAudit.builder().name("jolokia")
-                                   .change("group-id", "org.jolokia", null)
-                                   .change("artifact-id", "jolokia-war", null)
-                                   .change("version", "xxx", null)
-                                   .change("type", "war", null)
-                                   .change("checksum", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM, null)
-                                   .removed());
+                Audit.DeployableAudit.builder().name("jolokia")
+                                     .change("group-id", "org.jolokia", null)
+                                     .change("artifact-id", "jolokia-war", null)
+                                     .change("version", "xxx", null)
+                                     .change("type", "war", null)
+                                     .change("checksum", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM, null)
+                                     .removed());
     }
 
     @Test
     @InSequence(value = 1000)
     public void shouldDeployJdbcDriver() throws Exception {
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  postgresql:\n"
                 + "    group-id: org.postgresql\n"
                 + "    version: \"9.4.1207\"\n"
@@ -395,13 +395,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
         assertThat(audits).containsExactly(
-                Audit.ArtifactAudit.builder().name("postgresql")
-                                   .change("group-id", null, "org.postgresql")
-                                   .change("artifact-id", null, "postgresql")
-                                   .change("version", null, "9.4.1207")
-                                   .change("type", null, "jar")
-                                   .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
-                                   .added());
+                Audit.DeployableAudit.builder().name("postgresql")
+                                     .change("group-id", null, "org.postgresql")
+                                     .change("artifact-id", null, "postgresql")
+                                     .change("version", null, "9.4.1207")
+                                     .change("type", null, "jar")
+                                     .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
+                                     .added());
     }
 
     @NotNull
@@ -413,7 +413,7 @@ public class DeployerIT {
     @InSequence(value = 1090)
     public void shouldUndeployJdbcDriver() throws Exception {
         String plan = ""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  postgresql:\n"
                 + "    group-id: org.postgresql\n"
                 + "    version: \"9.4.1207\"\n"
@@ -424,13 +424,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).isEmpty();
         assertThat(audits).containsExactly(
-                Audit.ArtifactAudit.builder().name("postgresql")
-                                   .change("group-id", "org.postgresql", null)
-                                   .change("artifact-id", "postgresql", null)
-                                   .change("version", "9.4.1207", null)
-                                   .change("type", "jar", null)
-                                   .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
-                                   .removed());
+                Audit.DeployableAudit.builder().name("postgresql")
+                                     .change("group-id", "org.postgresql", null)
+                                     .change("artifact-id", "postgresql", null)
+                                     .change("version", "9.4.1207", null)
+                                     .change("type", "jar", null)
+                                     .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
+                                     .removed());
     }
 
     // TODO shouldUpdateDeployer (WOW!)
@@ -447,12 +447,12 @@ public class DeployerIT {
         if (plan.isEmpty()) { // TODO make this run
             assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
             assertThat(audits).containsExactly(
-                    Audit.ArtifactAudit.builder().name("postgresql")
-                                       .change("group-id", "org.postgresql", null)
-                                       .change("artifact-id", "postgresql", null)
-                                       .change("version", "9.4.1207", null)
-                                       .change("type", "jar", null)
-                                       .added());
+                    Audit.DeployableAudit.builder().name("postgresql")
+                                         .change("group-id", "org.postgresql", null)
+                                         .change("artifact-id", "postgresql", null)
+                                         .change("version", "9.4.1207", null)
+                                         .change("type", "jar", null)
+                                         .added());
         }
     }
 }

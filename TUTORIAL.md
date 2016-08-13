@@ -1,10 +1,10 @@
 # Tutorial
 
-After you've read the 1-Minute-Tutorial in the README, you can already nicely install and update artifacts.
+After you've read the 1-Minute-Tutorial in the README, you can already nicely install and update deployables.
 But the deployer can do much more, and this tutorial will show you how to basically configure resources,
 how to combine them into bundles, and how to integrate it all into a CI or even CD pipeline.
 
-'Resources' are all the things that the deployer can change, e.g. applications (artifacts like `war` files)
+'Resources' are all the things that the deployer can change, e.g. applications (deployables like `war` files)
 as well as loggers, etc.
 
 ## GET config
@@ -29,7 +29,7 @@ This makes the deployer _remove_ all resources that are _not_ listed.
 
 ## Configuring Resources
 
-The deployer can be used to configure more than just artifacts.
+The deployer can be used to configure more than just deployables.
 Here, we'll only scratch on configuring just loggers and log-handlers, so we can build on that to combine things.
 For the full details, please refer to the [reference](REFERENCE.md).
 
@@ -55,7 +55,7 @@ loggers:
 ## Bundles
 
 Now that you know about the building blocks, you should start to actually use them.
-Do it for maybe two or three artifacts and their loggers, then come back.
+Do it for maybe two or three deployables and their loggers, then come back.
 Yeah: Take a break from reading this tutorial. Do it for real. Now!
 
 Welcome back! You now have a `deployer.root.bundle` that looks somewhat similar to this:
@@ -73,7 +73,7 @@ loggers:
   mygroup.myapp:
     level: DEBUG
     handler: MYAPP
-artifacts:
+deployables:
   jolokia:
     groupId: org.jolokia
     artifact-id: jolokia-war
@@ -103,7 +103,7 @@ loggers:
   org.jolokia:
     level: DEBUG
     handler: JOLOKIA
-artifacts:
+deployables:
   jolokia:
     groupId: org.jolokia
     artifact-id: jolokia-war
@@ -120,7 +120,7 @@ loggers:
   mygroup.myapp:
     level: DEBUG
     handler: MYAPP
-artifacts:
+deployables:
   myapp:
     groupId: mygroup
     version: 1.0.0-SNAPSHOT
@@ -131,13 +131,11 @@ And include them in the root bundle:
 ### `deployer.root.bundle`
 
 ```yaml
-artifacts:
+bundles:
   jolokia:
-    type: bundle
     groupId: mygroup
     version: 1.3.4
   myapp:
-    type: bundle
     groupId: mygroup
     version: 1.0.0-SNAPSHOT
 ```

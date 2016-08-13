@@ -13,7 +13,7 @@ import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class ConfigurationPlanSerializationTest {
-    private static final DeploymentConfig FOO = DeploymentConfig
+    private static final DeployableConfig FOO = DeployableConfig
             .builder()
             .type(war)
             .name(new DeploymentName("foo"))
@@ -41,7 +41,7 @@ public class ConfigurationPlanSerializationTest {
 
 
     private static final String ONE_DEPLOYMENT_YAML = ""
-            + "artifacts:\n"
+            + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo-war\n"
@@ -50,7 +50,7 @@ public class ConfigurationPlanSerializationTest {
 
     private static final ConfigurationPlan ONE_DEPLOYMENT_PLAN = ConfigurationPlan
             .builder()
-            .artifact(FOO)
+            .deployable(FOO)
             .build();
 
     @Test
@@ -69,7 +69,7 @@ public class ConfigurationPlanSerializationTest {
 
 
     private static final String TWO_DEPLOYMENTS_YAML = ""
-            + "artifacts:\n"
+            + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo-war\n"
@@ -83,8 +83,8 @@ public class ConfigurationPlanSerializationTest {
 
     private static final ConfigurationPlan TWO_DEPLOYMENTS_PLAN = ConfigurationPlan
             .builder()
-            .artifact(FOO)
-            .artifact(DeploymentConfig
+            .deployable(FOO)
+            .deployable(DeployableConfig
                     .builder()
                     .type(war)
                     .name(new DeploymentName("bar-name"))
@@ -111,7 +111,7 @@ public class ConfigurationPlanSerializationTest {
 
     private static final ConfigurationPlan BUNDLE_PLAN = ConfigurationPlan
             .builder()
-            .artifact(DeploymentConfig
+            .deployable(DeployableConfig
                     .builder()
                     .type(bundle)
                     .name(new DeploymentName("foo"))
@@ -122,7 +122,7 @@ public class ConfigurationPlanSerializationTest {
                     .build())
             .build();
     private static final String BUNDLE_PLAN_YAML = ""
-            + "artifacts:\n"
+            + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo\n"
@@ -149,7 +149,7 @@ public class ConfigurationPlanSerializationTest {
     @Test
     public void shouldFailToDeserializePlanWithWarDeploymentWithVars() throws Exception {
         Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
-                + "artifacts:\n"
+                + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: 1\n"

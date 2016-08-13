@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.*;
-import com.github.t1.deployer.app.Audit.ArtifactAudit.ArtifactAuditBuilder;
+import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
@@ -288,7 +288,7 @@ public class AbstractDeployerTest {
             }
 
 
-            public ArtifactAuditBuilder artifactAudit() { return ArtifactAudit.builder().name(deploymentName()); }
+            public DeployableAuditBuilder artifactAudit() { return DeployableAudit.builder().name(deploymentName()); }
 
 
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
@@ -317,7 +317,7 @@ public class AbstractDeployerTest {
             }
 
             public void verifyRedeployed(Audits audits) {
-                // FIXME verify(artifacts).redeploy(deploymentName(), inputStream());
+                // FIXME verify(deployables).redeploy(deploymentName(), inputStream());
                 Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
                 assertThat(audits.getAudits()).containsExactly(artifactAudit()
@@ -346,8 +346,8 @@ public class AbstractDeployerTest {
                         .removed();
             }
 
-            public DeploymentConfig asConfig() {
-                return DeploymentConfig
+            public DeployableConfig asConfig() {
+                return DeployableConfig
                         .builder()
                         .name(deploymentName())
                         .groupId(groupId())
