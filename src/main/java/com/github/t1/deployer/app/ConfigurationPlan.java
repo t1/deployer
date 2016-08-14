@@ -25,6 +25,7 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.tools.Tools.toMap;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
+import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
 
@@ -74,6 +75,7 @@ public class ConfigurationPlan {
         readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerConfig::fromJson, builder::logHandler);
         readAll(json.get("loggers"), LoggerCategory::of, LoggerConfig::fromJson, builder::logger);
         readAll(json.get("deployables"), DeploymentName::new, DeployableConfig::fromJson, builder::deployable);
+        readAll(json.get("bundles"), BundleName::new, BundleConfig::fromJson, builder::bundle);
         return builder.build();
     }
 
@@ -87,6 +89,7 @@ public class ConfigurationPlan {
     @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
     @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
     @NonNull @JsonProperty private final Map<DeploymentName, DeployableConfig> deployables;
+    @NonNull @JsonProperty private final Map<BundleName, BundleConfig> bundles;
 
     public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
 
@@ -94,10 +97,13 @@ public class ConfigurationPlan {
 
     public Stream<DeployableConfig> deployables() { return deployables.values().stream(); }
 
+    public Stream<BundleConfig> bundles() { return bundles.values().stream(); }
+
     public static class ConfigurationPlanBuilder {
         private Map<LogHandlerName, LogHandlerConfig> logHandlers = new LinkedHashMap<>();
         private Map<LoggerCategory, LoggerConfig> loggers = new LinkedHashMap<>();
         private Map<DeploymentName, DeployableConfig> deployables = new LinkedHashMap<>();
+        private Map<BundleName, BundleConfig> bundles = new LinkedHashMap<>();
 
         public ConfigurationPlanBuilder logHandler(LogHandlerConfig config) {
             this.logHandlers.put(config.getName(), config);
@@ -113,6 +119,11 @@ public class ConfigurationPlan {
             this.deployables.put(config.getName(), config);
             return this;
         }
+
+        public ConfigurationPlanBuilder bundle(BundleConfig config) {
+            this.bundles.put(config.getName(), config);
+            return this;
+        }
     }
 
     public interface AbstractConfig {
@@ -123,35 +134,47 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class DeployableConfig implements AbstractConfig {
-        private static final String VARS = "vars";
-
-        @NonNull @JsonIgnore private final DeploymentName name;
+    public static class AbstractArtifactConfig implements AbstractConfig {
         private final DeploymentState state;
         @NonNull private final GroupId groupId;
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
         @NonNull private final ArtifactType type;
-        @NonNull @Singular @JsonProperty(VARS) private final Map<String, String> variables;
 
-        public static class DeployableConfigBuilder {}
+        @SuppressWarnings("unchecked")
+        public static class AbstractArtifactConfigBuilder<T extends AbstractArtifactConfigBuilder> {
+            public T state(DeploymentState state) {
+                this.state = state;
+                return (T) this;
+            }
 
-        public static DeployableConfig fromJson(DeploymentName name, JsonNode node) {
-            if (node.isNull())
-                throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
-            DeployableConfigBuilder builder = builder().name(name);
+            public T groupId(GroupId groupId) {
+                this.groupId = groupId;
+                return (T) this;
+            }
+
+            public T artifactId(ArtifactId artifactId) {
+                this.artifactId = artifactId;
+                return (T) this;
+            }
+
+            public T version(Version version) {
+                this.version = version;
+                return (T) this;
+            }
+
+            public T type(ArtifactType type) {
+                this.type = type;
+                return (T) this;
+            }
+        }
+
+        public static void fromJson(JsonNode node, AbstractArtifactConfigBuilder builder, String defaultArtifactId) {
             apply(node, "group-id", defaultValue("group-id"), value -> builder.groupId(new GroupId(value)));
-            apply(node, "artifact-id", name.getValue(), value -> builder.artifactId(new ArtifactId(value)));
+            apply(node, "artifact-id", defaultArtifactId, value -> builder.artifactId(new ArtifactId(value)));
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
-            if (node.has(VARS) && !node.get(VARS).isNull())
-                if (builder.type == bundle)
-                    builder.variables(toMap(node.get(VARS)));
-                else if (node.get(VARS).size() > 0)
-                    throw new ConfigurationPlanLoadingException(
-                            "variables are only allowed for bundles; maybe you forgot to add `type: bundle`?");
-            return builder.build();
         }
 
         private static String defaultValue(String name) {
@@ -161,8 +184,91 @@ public class ConfigurationPlan {
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
-            return "«deployment:" + getState() + ":" + name + ":" + groupId + ":" + artifactId + ":" + version
-                    + ":" + type + variables + "»";
+            return getState() + ":" + groupId + ":" + artifactId + ":" + version + ":" + type;
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @Builder
+    @JsonNaming(KebabCaseStrategy.class)
+    public static class DeployableConfig extends AbstractArtifactConfig {
+        @NonNull @JsonIgnore private final DeploymentName name;
+
+        public static class DeployableConfigBuilder extends AbstractArtifactConfigBuilder<DeployableConfigBuilder> {
+            @Override public DeployableConfig build() {
+                AbstractArtifactConfig a = super.build();
+                return new DeployableConfig(name, a.state, a.groupId, a.artifactId, a.version, a.type);
+            }
+        }
+
+        private DeployableConfig(DeploymentName name, DeploymentState state,
+                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+            super(state, groupId, artifactId, version, type);
+            this.name = name;
+        }
+
+        public static DeployableConfig fromJson(DeploymentName name, JsonNode node) {
+            if (node.isNull())
+                throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
+            DeployableConfigBuilder builder = builder().name(name);
+            AbstractArtifactConfig.fromJson(node, builder, name.getValue());
+            return builder.build();
+        }
+
+        @Override public String toString() { return "«deployment:" + name + ":" + super.toString() + "»"; }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @Builder
+    @JsonNaming(KebabCaseStrategy.class)
+    public static class BundleConfig extends AbstractArtifactConfig {
+        private static final String VARS = "vars";
+
+        @NonNull @JsonIgnore private final BundleName name;
+        @NonNull @Singular @JsonProperty(VARS) private final Map<String, String> variables;
+
+        public static class BundleConfigBuilder extends AbstractArtifactConfigBuilder<BundleConfigBuilder> {
+            @Override public BundleConfig build() {
+                super.type(bundle);
+                AbstractArtifactConfig a = super.build();
+                Map<String, String> variables = buildMap(variables$key, variables$value);
+                return new BundleConfig(name, variables, a.state, a.groupId, a.artifactId, a.version, a.type);
+            }
+
+            private Map<String, String> buildMap(List<String> keys, List<String> values) {
+                if (keys == null)
+                    return emptyMap();
+                Map<String, String> map = new LinkedHashMap<>();
+                for (int i = 0; i < keys.size(); i++)
+                    map.put(keys.get(i), values.get(i));
+                return map;
+            }
+        }
+
+        private BundleConfig(BundleName name, Map<String, String> variables, DeploymentState state,
+                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+            super(state, groupId, artifactId, version, type);
+            this.variables = variables;
+            this.name = name;
+        }
+
+
+        public static BundleConfig fromJson(BundleName name, JsonNode node) {
+            if (node.isNull())
+                throw new ConfigurationPlanLoadingException("no config in bundle '" + name + "'");
+            BundleConfigBuilder builder = builder().name(name);
+            AbstractArtifactConfig.fromJson(node, builder, name.getValue());
+            if (node.has(VARS) && !node.get(VARS).isNull())
+                builder.variables(toMap(node.get(VARS)));
+            return builder.build();
+        }
+
+        @JsonIgnore @Override public ArtifactType getType() { return super.getType(); }
+
+        @Override public String toString() {
+            return "«bundle:" + name + ":" + super.toString() + ":" + variables + "»";
         }
     }
 
@@ -325,7 +431,8 @@ public class ConfigurationPlan {
         return ""
                 + "log-handlers:\n" + toStringList(logHandlers())
                 + "loggers:\n" + toStringList(loggers())
-                + "deployables:\n" + toStringList(deployables());
+                + "deployables:\n" + toStringList(deployables())
+                + "bundles:\n" + toStringList(bundles());
     }
 
     private String toStringList(Stream<?> stream) {

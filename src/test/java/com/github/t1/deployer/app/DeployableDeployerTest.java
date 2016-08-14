@@ -441,10 +441,9 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: 3.10.4\n");
 
         Audits audits = deployer.apply(""
-                + "deployables:\n"
+                + "bundles:\n"
                 + "  should-deploy-bundle:\n"
                 + "    group-id: artifact-deployer-test\n"
-                + "    type: bundle\n"
                 + "    version: 1\n");
 
         // #after(): jolokia not re-deployed
@@ -468,9 +467,8 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: ${jolokia.version}\n");
 
         Audits audits = deployer.apply(""
-                + "deployables:\n"
+                + "bundles:\n"
                 + "  should-deploy-bundle:\n"
-                + "    type: bundle\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n");
 
@@ -490,9 +488,8 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: ${jolokia.version}\n");
 
         Audits audits = deployer.apply(""
-                + "deployables:\n"
+                + "bundles:\n"
                 + "  should-deploy-bundle:\n"
-                + "    type: bundle\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"
                 + "    vars:\n"

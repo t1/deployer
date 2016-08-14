@@ -122,19 +122,16 @@ public class DeployerBoundary {
             plan.loggers().forEach(loggerDeployer::apply);
             loggerDeployer.cleanup(audits);
 
-            // TODO if we could move this recursion logic into the DeployableDeployer, we could generalize the Deployers
-            plan.deployables().forEach(deploymentPlan -> {
-                if (deploymentPlan.getType() == bundle)
-                    applyBundle(deploymentPlan);
-                else
-                    deployableDeployer.apply(deploymentPlan);
-            });
+            // TODO generalize the Deployers
+            plan.deployables().forEach(deployableDeployer::apply);
             deployableDeployer.cleanup(audits);
+
+            plan.bundles().forEach(this::applyBundle);
 
             return audits;
         }
 
-        private Audits applyBundle(DeployableConfig bundle) {
+        private Audits applyBundle(BundleConfig bundle) {
             Variables pop = this.variables;
             try {
                 this.variables = this.variables.withAll(bundle.getVariables());
@@ -151,7 +148,7 @@ public class DeployerBoundary {
     }
 
 
-    private Artifact lookup(DeployableConfig deploymentPlan) {
+    private Artifact lookup(AbstractArtifactConfig deploymentPlan) {
         return repository.lookupArtifact(deploymentPlan.getGroupId(), deploymentPlan.getArtifactId(),
                 deploymentPlan.getVersion(), deploymentPlan.getType());
     }

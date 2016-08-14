@@ -111,10 +111,9 @@ public class ConfigurationPlanSerializationTest {
 
     private static final ConfigurationPlan BUNDLE_PLAN = ConfigurationPlan
             .builder()
-            .deployable(DeployableConfig
+            .bundle(BundleConfig
                     .builder()
-                    .type(bundle)
-                    .name(new DeploymentName("foo"))
+                    .name(new BundleName("foo"))
                     .groupId(new GroupId("org.foo"))
                     .artifactId(new ArtifactId("foo"))
                     .version(new Version("1"))
@@ -122,12 +121,11 @@ public class ConfigurationPlanSerializationTest {
                     .build())
             .build();
     private static final String BUNDLE_PLAN_YAML = ""
-            + "deployables:\n"
+            + "bundles:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo\n"
             + "    version: 1\n"
-            + "    type: bundle\n"
             + "    vars:\n"
             + "      name: bar\n";
 
@@ -143,24 +141,6 @@ public class ConfigurationPlanSerializationTest {
         String yaml = BUNDLE_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(BUNDLE_PLAN_YAML);
-    }
-
-
-    @Test
-    public void shouldFailToDeserializePlanWithWarDeploymentWithVars() throws Exception {
-        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1\n"
-                + "    vars:\n"
-                + "      name: bar\n")));
-
-        assertThat(thrown).hasMessageContaining("exception while loading config plan");
-        assertThat(thrown.getCause()).hasMessageContaining("Instantiation of ").hasMessageContaining(" value failed");
-        assertThat(thrown.getCause().getCause())
-                .isInstanceOf(ConfigurationPlanLoadingException.class)
-                .hasMessageContaining("variables are only allowed for bundles");
     }
 
 

@@ -170,7 +170,7 @@ public class AbstractDeployerTest {
                     : toModelNode("{" + deployed.deployedNode() + "}"));
         }
 
-        @NotNull protected String typeSuffix() {return (this.type == war) ? ".war" : "";}
+        @NotNull protected String typeSuffix() { return (this.type == war) ? ".war" : ""; }
 
         public ArtifactFixtureBuilder groupId(String groupId) {
             this.groupId = groupId;
@@ -317,7 +317,7 @@ public class AbstractDeployerTest {
             }
 
             public void verifyRedeployed(Audits audits) {
-                // FIXME verify(deployables).redeploy(deploymentName(), inputStream());
+                // FIXME verify(artifacts).redeploy(deploymentName(), inputStream());
                 Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
                 assertThat(audits.getAudits()).containsExactly(artifactAudit()
