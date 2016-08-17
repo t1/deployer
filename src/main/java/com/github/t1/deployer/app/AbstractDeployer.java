@@ -35,7 +35,7 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
 
     protected abstract Stream<PLAN> of(ConfigurationPlan plan);
 
-    public boolean isManaged() { return managedResourceNames.contains(getType()); }
+    public boolean isManaged() { return managedResourceNames != null && managedResourceNames.contains(getType()); }
 
     protected abstract String getType();
 
