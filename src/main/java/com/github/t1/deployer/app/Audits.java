@@ -3,16 +3,22 @@ package com.github.t1.deployer.app;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.context.RequestScoped;
 import java.io.IOException;
 import java.util.*;
 
 import static com.github.t1.deployer.app.ConfigurationPlan.*;
 import static java.util.stream.Collectors.*;
 
+
+/**
+ * Collector of {@link Audit}s per request. Can't be returned directly from JAX-RS, as the serialisation by Jackson
+ * fails on the helper fields in the CDI proxy object.
+ */
 @Slf4j
 @Data
+@RequestScoped
 public class Audits {
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private final List<Audit> audits = new ArrayList<>();
 
     public Audits audit(Audit audit) {

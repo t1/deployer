@@ -6,19 +6,21 @@ import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.tools.Tools.*;
 
 @Slf4j
 public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResource, LoggerAuditBuilder> {
-    private final Container container;
+    @Inject Container container;
 
-    public LoggerDeployer(Container container, Audits audits) {
-        super(audits);
-        this.container = container;
-    }
+
+    @Override protected Stream<LoggerConfig> of(ConfigurationPlan plan) { return plan.loggers(); }
+
+    @Override protected String getType() { return "loggers"; }
 
     @Override
     protected LoggerAuditBuilder buildAudit(LoggerResource logger) {

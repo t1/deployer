@@ -50,7 +50,7 @@ public class RepositoryProducer {
             log.info("{} did reply... choose artifactory", resource.uri());
             return artifactory;
         }
-        log.info("{} did NOT reply... choose maven central", resource.uri());
+        log.info("{} did NOT reply... fall back to maven central", resource.uri());
         return mavenCentral;
     }
 

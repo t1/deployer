@@ -20,6 +20,7 @@ import javax.enterprise.inject.Instance;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
@@ -41,6 +42,10 @@ public class AbstractDeployerTest {
     @InjectMocks DeployerBoundary deployer;
 
     @Spy private Audits audits;
+    @Spy private LogHandlerDeployer logHandlerDeployer;
+    @Spy private LoggerDeployer loggerDeployer;
+    @Spy private DeployableDeployer deployableDeployer;
+    @Mock Instance<AbstractDeployer> deployers;
     @Mock Instance<Audits> auditsInstance;
 
     @Mock Repository repository;
@@ -55,14 +60,36 @@ public class AbstractDeployerTest {
     @Mock DeploymentPlan deploymentPlan;
     @Mock ServerDeploymentPlanResult planResult;
 
-    private List<String> allDeployments = new ArrayList<>();
-    private List<String> allLoggers = new ArrayList<>();
-    private Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
+    private final List<String> managedResourceNames = new ArrayList<>();
+    private final List<String> allDeployments = new ArrayList<>();
+    private final List<String> allLoggers = new ArrayList<>();
+    private final Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
 
     @Before
     public void before() {
         container.cli = cli;
 
+        logHandlerDeployer.managedResourceNames
+                = loggerDeployer.managedResourceNames
+                = deployableDeployer.managedResourceNames
+                = managedResourceNames;
+        deployableDeployer.repository
+                = repository;
+        logHandlerDeployer.container
+                = loggerDeployer.container
+                = deployableDeployer.container
+                = container;
+        logHandlerDeployer.audits
+                = loggerDeployer.audits
+                = deployableDeployer.audits
+                = audits;
+
+        //noinspection unchecked
+        doAnswer(i -> {
+            asList(logHandlerDeployer, loggerDeployer, deployableDeployer)
+                    .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
+            return null;
+        }).when(deployers).forEach(any(Consumer.class));
         when(auditsInstance.get()).thenReturn(audits);
 
         when(deploymentManager.newDeploymentPlan()).then(i -> planBuilder);
@@ -127,7 +154,7 @@ public class AbstractDeployerTest {
     }
 
 
-    protected void givenManaged(String... resourceName) { deployer.managedResourceNames = asList(resourceName); }
+    protected void givenManaged(String... resourceName) { this.managedResourceNames.addAll(asList(resourceName)); }
 
 
     public ArtifactFixtureBuilder givenArtifact(String name) {
@@ -246,6 +273,7 @@ public class AbstractDeployerTest {
             public ArtifactFixture checksum(Checksum checksum) {
                 this.checksum = checksum;
                 when(repository.searchByChecksum(checksum)).then(i -> artifact());
+                when(repository.lookupByChecksum(checksum)).then(i -> artifact());
                 return this;
             }
 

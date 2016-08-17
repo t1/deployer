@@ -3,17 +3,41 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Audit.AuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.AbstractResource;
+import com.github.t1.deployer.model.Config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.inject.Inject;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 @RequiredArgsConstructor
 abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends AbstractResource, AUDIT extends AuditBuilder> {
-    private final Audits audits;
-
+    @Inject Audits audits;
+    @Inject @Config("managed.resources") List<String> managedResourceNames;
 
     public abstract void read(ConfigurationPlanBuilder builder);
 
+
+    public void apply(ConfigurationPlan plan) {
+        if (log.isDebugEnabled())
+            log.debug("apply {} -> {}", of(plan).collect(toList()), this.getClass().getSimpleName());
+        init();
+        of(plan).forEach(this::apply);
+        if (isManaged())
+            this.cleanup(audits);
+    }
+
+    protected void init() {}
+
+    protected abstract Stream<PLAN> of(ConfigurationPlan plan);
+
+    public boolean isManaged() { return managedResourceNames.contains(getType()); }
+
+    protected abstract String getType();
 
     public void apply(PLAN plan) {
         RESOURCE resource = getResource(plan);

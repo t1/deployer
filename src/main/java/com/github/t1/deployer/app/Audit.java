@@ -82,9 +82,7 @@ public abstract class Audit {
                 return this;
             }
 
-            @Override protected DeployableAudit build() {
-                return new DeployableAudit(operation, changes, name);
-            }
+            @Override protected DeployableAudit build() { return new DeployableAudit(operation, changes, name); }
         }
 
         public DeployableAudit(Operation operation, List<Change> changes, DeploymentName name) {

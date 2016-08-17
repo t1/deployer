@@ -14,4 +14,4 @@ cp ${WAR} .
 
 docker build --tag=${TAG} .
 
-echo ${TAG} built. run: docker run -it --rm -p 8080:8080 --name wildfly ${TAG}
+echo ${TAG} built. run: docker run -it --rm -p 8080:8080 -p 9990:9990 --name wildfly ${TAG}

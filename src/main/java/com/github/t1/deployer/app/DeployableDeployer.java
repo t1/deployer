@@ -4,12 +4,13 @@ import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Artifact;
 import com.github.t1.deployer.repository.Repository;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.*;
-import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
@@ -18,32 +19,27 @@ import static java.util.Objects.*;
 @Slf4j
 public class DeployableDeployer extends AbstractDeployer<DeployableConfig, DeploymentResource, DeployableAuditBuilder> {
     private static final String WAR_SUFFIX = ".war";
-    private final boolean managed;
-    private final Repository repository;
-    private final Container container;
-    private final List<DeploymentResource> existing;
-    private final Function<Checksum, Artifact> lookupByChecksum;
+    private List<DeploymentResource> existing;
 
-    public DeployableDeployer(Container container, Audits audits, Repository repository, boolean managed,
-            Function<Checksum, Artifact> lookupByChecksum) {
-        super(audits);
-        this.repository = requireNonNull(repository);
-        this.container = requireNonNull(container);
-        this.managed = managed;
-        this.lookupByChecksum = requireNonNull(lookupByChecksum);
+    @Inject Container container;
+    @Inject Repository repository;
 
-        this.existing = requireNonNull(container.allDeployments());
-    }
+
+    @Override protected void init() { this.existing = requireNonNull(container.allDeployments()); }
+
+    @Override protected Stream<DeployableConfig> of(ConfigurationPlan plan) { return plan.deployables(); }
+
+    @Override protected String getType() { return "deployables"; }
 
     @Override protected DeployableAuditBuilder buildAudit(DeploymentResource resource) {
         return DeployableAudit.builder().name(toPlanDeploymentName(resource));
     }
 
     @Override protected DeploymentResource getResource(DeployableConfig plan) {
-        return container.deployment(toResourceDeploymentName(plan)).build();
+        return container.deployment(getResourceDeploymentNameOf(plan)).build();
     }
 
-    private DeploymentName toResourceDeploymentName(DeployableConfig plan) {
+    private DeploymentName getResourceDeploymentNameOf(DeployableConfig plan) {
         if (plan.getType() == war && !plan.getName().getValue().endsWith(".war"))
             return new DeploymentName(plan.getName() + ".war");
         return plan.getName();
@@ -60,14 +56,14 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
     protected void update(DeploymentResource resource, DeployableConfig plan, DeployableAuditBuilder audit) {
         Artifact artifact = lookupArtifact(plan);
         if (resource.checksum().equals(artifact.getChecksum())) {
-            boolean removed = existing.removeIf(toResourceDeploymentName(plan)::matches);
+            boolean removed = existing.removeIf(getResourceDeploymentNameOf(plan)::matches);
             assert removed : "expected [" + resource + "] to be in existing " + existing;
             log.info("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
         } else {
-            container.deployment(toResourceDeploymentName(plan)).build().redeploy(artifact.getInputStream());
+            container.deployment(getResourceDeploymentNameOf(plan)).build().redeploy(artifact.getInputStream());
             audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
-            Artifact old = lookupByChecksum.apply(resource.checksum());
+            Artifact old = repository.lookupByChecksum(resource.checksum());
             if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
                 audit.change("group-id", old.getGroupId(), artifact.getGroupId());
             if (!Objects.equals(old.getArtifactId(), artifact.getArtifactId()))
@@ -89,7 +85,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
              .change("version", null, plan.getVersion())
              .change("type", null, plan.getType())
              .change("checksum", null, artifact.getChecksum());
-        return container.deployment(toResourceDeploymentName(plan)).inputStream(artifact.getInputStream()).build();
+        return container.deployment(getResourceDeploymentNameOf(plan)).inputStream(artifact.getInputStream()).build();
     }
 
     private Artifact lookupArtifact(DeployableConfig plan) {
@@ -106,24 +102,23 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
     }
 
     @Override public void cleanup(Audits audits) {
-        if (managed)
-            for (DeploymentResource deployment : existing) {
-                Artifact artifact = lookupByChecksum.apply(deployment.checksum());
-                DeployableAuditBuilder audit = DeployableAudit.builder().name(toPlanDeploymentName(deployment));
-                audit.change("group-id", artifact.getGroupId(), null);
-                audit.change("artifact-id", artifact.getArtifactId(), null);
-                audit.change("version", artifact.getVersion(), null);
-                audit.change("type", artifact.getType(), null);
-                audit.change("checksum", deployment.checksum(), null);
-                audits.audit(audit.removed());
-                deployment.remove();
-            }
+        for (DeploymentResource deployment : existing) {
+            Artifact artifact = repository.lookupByChecksum(deployment.checksum());
+            DeployableAuditBuilder audit = DeployableAudit.builder().name(toPlanDeploymentName(deployment));
+            audit.change("group-id", artifact.getGroupId(), null);
+            audit.change("artifact-id", artifact.getArtifactId(), null);
+            audit.change("version", artifact.getVersion(), null);
+            audit.change("type", artifact.getType(), null);
+            audit.change("checksum", deployment.checksum(), null);
+            audits.audit(audit.removed());
+            deployment.remove();
+        }
     }
 
 
     @Override public void read(ConfigurationPlanBuilder builder) {
         for (DeploymentResource deployment : container.allDeployments()) {
-            Artifact artifact = lookupByChecksum.apply(deployment.checksum());
+            Artifact artifact = repository.lookupByChecksum(deployment.checksum());
             builder.deployable(DeployableConfig
                     .builder()
                     .name(toPlanDeploymentName(deployment))

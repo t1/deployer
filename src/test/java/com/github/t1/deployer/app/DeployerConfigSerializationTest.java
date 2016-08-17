@@ -45,7 +45,7 @@ public class DeployerConfigSerializationTest {
 
     @Test
     public void shouldReturnToDefaultWithEmptyConfigFile() throws Exception {
-        configFile.write("");
+        configFile.write("---\n");
 
         ConfigProducer producer = new ConfigProducer();
 

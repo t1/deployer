@@ -224,7 +224,7 @@ public class DeployerIT {
 
         logger.log("verify deployments");
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_2_CHECKSUM));
-        logger.log("verify audits");
+        logger.log("verify audits: " + audits);
         assertThat(audits).containsExactly(
                 Audit.DeployableAudit.builder().name("jolokia")
                                      .change("checksum", JOLOKIA_1_3_1_CHECKSUM, JOLOKIA_1_3_2_CHECKSUM)
@@ -247,7 +247,7 @@ public class DeployerIT {
 
         logger.log("verify deployments");
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
-        logger.log("verify audits");
+        logger.log("verify audits: " + audits.getAudits());
         assertThat(audits.getAudits()).containsExactly(
                 Audit.DeployableAudit.builder().name("jolokia")
                                      .change("checksum", JOLOKIA_1_3_2_CHECKSUM, JOLOKIA_1_3_3_CHECKSUM)

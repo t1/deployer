@@ -3,10 +3,10 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.*;
+import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.WebApplicationApplicationException;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.*;
@@ -17,7 +17,6 @@ import java.nio.file.*;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
 
@@ -37,8 +36,14 @@ public class DeployerBoundary {
     @GET
     public ConfigurationPlan getEffectivePlan() { return new Run().read(); }
 
+    /** see {@link Audits} */
+    @Value
+    public static class AuditsResponse {
+        List<Audit> audits;
+    }
+
     @POST
-    public Audits post(Map<String, String> form) { return apply(form); }
+    public AuditsResponse post(Map<String, String> form) { return new AuditsResponse(apply(form).getAudits()); }
 
     @Asynchronous
     @SneakyThrows(InterruptedException.class)
@@ -53,7 +58,11 @@ public class DeployerBoundary {
     @Inject Container container;
     @Inject Repository repository;
 
-    @Inject @Config("managed.resources") List<String> managedResourceNames;
+    @Inject Audits audits;
+    // TODO @Inject Instance<AbstractDeployer> deployers;
+    @Inject DeployableDeployer deployableDeployer;
+    @Inject LogHandlerDeployer logHandlerDeployer;
+    @Inject LoggerDeployer loggerDeployer;
 
 
     private synchronized Audits apply(Map<String, String> variables) {
@@ -64,7 +73,7 @@ public class DeployerBoundary {
 
         log.debug("load config plan from: {}", root);
 
-        Audits audits = new Run().withVariables(variables).apply(root);
+        new Run().withVariables(variables).apply(root);
 
         if (log.isDebugEnabled())
             log.debug("\n{}", audits.toYaml());
@@ -72,23 +81,17 @@ public class DeployerBoundary {
     }
 
     // visible for testing
-    Audits apply(String plan) { return new Run().apply(new StringReader(plan)); }
+    Audits apply(String plan) {
+        new Run().apply(new StringReader(plan));
+        return audits;
+    }
 
     private class Run {
         private Variables variables = new Variables();
-        private final Audits audits = new Audits();
-
-        private final LogHandlerDeployer logHandlerDeployer = new LogHandlerDeployer(container, audits);
-        private final LoggerDeployer loggerDeployer = new LoggerDeployer(container, audits);
-        private final DeployableDeployer deployableDeployer = new DeployableDeployer(container, audits, repository,
-                managed("deployables"), DeployerBoundary.this::lookupByChecksum);
-
-        private boolean managed(String resourceName) {
-            return managedResourceNames != null && managedResourceNames.contains(resourceName);
-        }
 
         public ConfigurationPlan read() {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
+            // TODO deployers.forEach(deployer -> deployer.read(builder));
             logHandlerDeployer.read(builder);
             loggerDeployer.read(builder);
             deployableDeployer.read(builder);
@@ -100,9 +103,9 @@ public class DeployerBoundary {
             return this;
         }
 
-        public Audits apply(Path plan) {
+        public void apply(Path plan) {
             try {
-                return apply(Files.newBufferedReader(plan));
+                apply(Files.newBufferedReader(plan));
             } catch (WebApplicationApplicationException e) {
                 log.info("can't apply config plan [{}]", plan);
                 throw e;
@@ -111,31 +114,24 @@ public class DeployerBoundary {
             }
         }
 
-        private Audits apply(Reader reader) {
-            return this.apply(ConfigurationPlan.load(variables.resolve(reader)));
+        private void apply(Reader reader) {
+            this.apply(ConfigurationPlan.load(variables.resolve(reader)));
         }
 
-        private Audits apply(ConfigurationPlan plan) {
-            plan.logHandlers().forEach(logHandlerDeployer::apply);
-            logHandlerDeployer.cleanup(audits);
-
-            plan.loggers().forEach(loggerDeployer::apply);
-            loggerDeployer.cleanup(audits);
-
-            // TODO generalize the Deployers
-            plan.deployables().forEach(deployableDeployer::apply);
-            deployableDeployer.cleanup(audits);
+        private void apply(ConfigurationPlan plan) {
+            // TODO deployers.forEach(deployer -> deployer.apply(plan));
+            logHandlerDeployer.apply(plan);
+            loggerDeployer.apply(plan);
+            deployableDeployer.apply(plan);
 
             plan.bundles().forEach(this::applyBundle);
-
-            return audits;
         }
 
-        private Audits applyBundle(BundleConfig bundle) {
+        private void applyBundle(BundleConfig bundle) {
             Variables pop = this.variables;
             try {
                 this.variables = this.variables.withAll(bundle.getVariables());
-                return apply(lookup(bundle).getReader());
+                apply(lookup(bundle).getReader());
             } catch (WebApplicationApplicationException e) {
                 log.info("can't apply bundle [{}]", bundle);
                 throw e;
@@ -147,37 +143,8 @@ public class DeployerBoundary {
         }
     }
 
-
-    private Artifact lookup(AbstractArtifactConfig deploymentPlan) {
-        return repository.lookupArtifact(deploymentPlan.getGroupId(), deploymentPlan.getArtifactId(),
-                deploymentPlan.getVersion(), deploymentPlan.getType());
-    }
-
-    /** find artifact in repository or return a dummy representing `unknown` or `error`. */
-    private Artifact lookupByChecksum(Checksum checksum) {
-        if (checksum == null || checksum.isEmpty())
-            return errorArtifact(checksum, "empty checksum");
-        try {
-            return repository.searchByChecksum(checksum);
-        } catch (UnknownChecksumException e) {
-            return errorArtifact(checksum, "unknown");
-        } catch (RuntimeException e) {
-            log.error("error retrieving artifact by checksum " + checksum, e);
-            return errorArtifact(checksum, "error");
-        }
-    }
-
-    private Artifact errorArtifact(Checksum checksum, String messageArtifactId) {
-        return Artifact
-                .builder()
-                .groupId(new GroupId("*error*"))
-                .artifactId(new ArtifactId(messageArtifactId))
-                .version(new Version("unknown"))
-                .type(unknown)
-                .checksum(checksum)
-                .inputStreamSupplier(() -> {
-                    throw new UnsupportedOperationException();
-                })
-                .build();
+    private Artifact lookup(AbstractArtifactConfig plan) {
+        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(),
+                plan.getVersion(), plan.getType());
     }
 }
