@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
+import com.github.t1.deployer.app.ConfigurationPlan.ConfigurationPlanLoadingException;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
@@ -53,7 +54,22 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    group-id: org.foo\n"
                 + "    state: deployed\n"));
 
-        assertThat(thrown.getCause()).hasMessageContaining("version");
+        assertThat(thrown).isInstanceOf(ConfigurationPlanLoadingException.class);
+        assertThat(thrown.getCause()).hasMessageContaining("failed (java.lang.NullPointerException): version");
+    }
+
+
+    @Test
+    public void shouldFailToDeployBundleAsDeployable() {
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "deployables:\n"
+                + "  foo-war:\n"
+                + "    type: bundle\n"
+                + "    version: 1.0\n"
+                + "    group-id: org.foo\n"));
+
+        assertThat(thrown.getCause())
+                .hasMessageContaining("a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
     }
 
 

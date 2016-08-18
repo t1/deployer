@@ -207,3 +207,12 @@ And there are many ways to do it. One way is to build it with the `build-helper-
 
 You may also need a `distribution-management` section, but then you can `mvn clean deploy` your bundle. 
 
+TODO:
+
+Using [httpie](http://httpie.org/):
+
+    http --json --verify=no POST :8080/deployer version=1.0.0-SNAPSHOT
+
+or (more wordy) as CURL:
+
+    curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"version":"1.0.0-SNAPSHOT"}' http://localhost:8080/deployer

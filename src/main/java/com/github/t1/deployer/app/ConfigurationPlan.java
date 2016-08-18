@@ -213,7 +213,14 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
             DeployableConfigBuilder builder = builder().name(name);
             AbstractArtifactConfig.fromJson(node, builder, name.getValue());
-            return builder.build();
+            return builder.build().verify();
+        }
+
+        private DeployableConfig verify() {
+            if (getType() == bundle)
+                throw new ConfigurationPlanLoadingException(
+                        "a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
+            return this;
         }
 
         @Override public String toString() { return "«deployment:" + name + ":" + super.toString() + "»"; }
