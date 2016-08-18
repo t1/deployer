@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.app.ConfigurationPlan.ConfigurationPlanLoadingException;
 import com.github.t1.deployer.model.Checksum;
-import com.github.t1.problem.WebApplicationApplicationException;
+import com.github.t1.deployer.model.Variables.UnresolvedVariableException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -201,7 +201,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    version: ${undefined}\n"));
 
         assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
+                .isInstanceOf(UnresolvedVariableException.class)
                 .hasMessageContaining("unresolved variable key: undefined");
     }
 
@@ -259,7 +259,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    version: ${toLowerCase(undefined)}\n"));
 
         assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
+                .isInstanceOf(UnresolvedVariableException.class)
                 .hasMessageContaining("unresolved variable key: undefined");
     }
 

@@ -1,7 +1,8 @@
 package com.github.t1.deployer.model;
 
+import com.github.t1.problem.*;
 import com.google.common.collect.ImmutableMap;
-import lombok.SneakyThrows;
+import lombok.*;
 
 import java.io.*;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.regex.*;
 
 import static com.github.t1.problem.WebException.*;
 import static java.util.Locale.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
@@ -67,7 +69,7 @@ public class Variables {
             function = function(matcher.group("function"));
         }
         if (!variables.containsKey(variableName))
-            throw badRequest("unresolved variable key: " + variableName);
+            throw new UnresolvedVariableException(variableName);
         String value = variables.get(variableName);
         if (!VARIABLE_VALUE_PATTERN.matcher(value).matches())
             throw badRequest("invalid character in variable value for [" + variableName + "]");
@@ -100,5 +102,15 @@ public class Variables {
             builder.put(key, entry.getValue());
         }
         return new Variables(builder.build());
+    }
+
+    @ReturnStatus(BAD_REQUEST)
+    public static class UnresolvedVariableException extends WebApplicationApplicationException {
+        @Getter private final String variableName;
+
+        protected UnresolvedVariableException(String variableName) {
+            super("unresolved variable key: " + variableName);
+            this.variableName = variableName;
+        }
     }
 }

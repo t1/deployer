@@ -3,6 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Variables.UnresolvedVariableException;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.WebApplicationApplicationException;
@@ -49,7 +50,12 @@ public class DeployerBoundary {
     @SneakyThrows(InterruptedException.class)
     public void applyAsync() {
         Thread.sleep(1000);
-        apply();
+        try {
+            apply();
+        } catch (UnresolvedVariableException e) {
+            // not really nice, but seems - over all - better than splitting and repeating the overall control flow
+            log.info("skip async run for unresolved variable: {}", e.getVariableName());
+        }
     }
 
     public Audits apply() { return apply(emptyMap()); }
@@ -114,9 +120,7 @@ public class DeployerBoundary {
             }
         }
 
-        private void apply(Reader reader) {
-            this.apply(ConfigurationPlan.load(variables.resolve(reader)));
-        }
+        private void apply(Reader reader) { this.apply(ConfigurationPlan.load(variables.resolve(reader))); }
 
         private void apply(ConfigurationPlan plan) {
             // TODO deployers.forEach(deployer -> deployer.apply(plan));
