@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 public class ContainerTest {
     private static final LogLevel ROOT_LEVEL = DEBUG;
     private static final LogLevel FOO_LEVEL = WARN;
-    private static final LogLevel BAR_LEVEL = INFO;
 
     private static final LogHandlerName FILE = new LogHandlerName("FILE");
     private static final LoggerCategory BAR = LoggerCategory.of("bar");
@@ -32,7 +31,7 @@ public class ContainerTest {
     @Mock
     ModelControllerClient client;
 
-    private Map<String, LogLevel> loggers = new LinkedHashMap<>();
+    private Map<String, String> loggers = new LinkedHashMap<>();
 
     @Before
     @SneakyThrows(IOException.class)
@@ -53,7 +52,7 @@ public class ContainerTest {
                         + "        \"level\" => \"" + ROOT_LEVEL + "\"\n"
                         + "    }")));
         when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class)))
-                .then(invocation -> ModelNode.fromString(successCli(readLoggersCliResult(this.loggers))));
+                .then(invocation -> ModelNode.fromString(successCli(readLoggersCliResult())));
     }
 
     private static String successCli(String result) {
@@ -91,8 +90,12 @@ public class ContainerTest {
                         + "}"));
     }
 
-    @SneakyThrows(IOException.class)
     private void givenLogger(String category, LogLevel level, boolean useParentHandlers, String... handlers) {
+        givenLogger(category, level.name(), useParentHandlers, handlers);
+    }
+
+    @SneakyThrows(IOException.class)
+    private void givenLogger(String category, String level, boolean useParentHandlers, String... handlers) {
         this.loggers.put(category, level);
         when(client.execute(eq(readLoggersCli(category)), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString(successCli("{" + logger(level, useParentHandlers, handlers) + "}")));
@@ -106,10 +109,10 @@ public class ContainerTest {
         return node;
     }
 
-    private String readLoggersCliResult(Map<String, LogLevel> loggers) {
+    private String readLoggersCliResult() {
         StringBuilder out = new StringBuilder();
         out.append("[");
-        for (Map.Entry<String, LogLevel> logger : loggers.entrySet()) {
+        for (Map.Entry<String, String> logger : loggers.entrySet()) {
             if (out.length() > 1)
                 out.append(", ");
             out.append("{")
@@ -129,7 +132,7 @@ public class ContainerTest {
         return verify(client).execute(eq(node), any(OperationMessageHandler.class));
     }
 
-    private String logger(LogLevel level, boolean useParentHandlers, String... handlers) {
+    private String logger(String level, boolean useParentHandlers, String... handlers) {
         return ""
                 + "\"category\" => undefined," // deprecated: \"" + logger.getCategory() + "\","
                 + "\"filter\" => undefined,"
@@ -231,6 +234,82 @@ public class ContainerTest {
         verifyLoggerRead("foo");
         verifyLoggerRead("bar");
     }
+
+
+    @Test
+    public void shouldReadLoggerWithLevelOff() throws Exception {
+        shouldReadLoggerWithLevel("OFF", OFF);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelTrace() throws Exception {
+        shouldReadLoggerWithLevel("TRACE", TRACE);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelFinest() throws Exception {
+        shouldReadLoggerWithLevel("FINEST", TRACE);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelFiner() throws Exception {
+        shouldReadLoggerWithLevel("FINER", DEBUG);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelFine() throws Exception {
+        shouldReadLoggerWithLevel("FINE", DEBUG);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelDebug() throws Exception {
+        shouldReadLoggerWithLevel("DEBUG", DEBUG);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelConfig() throws Exception {
+        shouldReadLoggerWithLevel("CONFIG", INFO);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelInfo() throws Exception {
+        shouldReadLoggerWithLevel("INFO", INFO);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelWarn() throws Exception {
+        shouldReadLoggerWithLevel("WARN", WARN);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelWarning() throws Exception {
+        shouldReadLoggerWithLevel("WARNING", WARN);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelSevere() throws Exception {
+        shouldReadLoggerWithLevel("SEVERE", ERROR);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelError() throws Exception {
+        shouldReadLoggerWithLevel("ERROR", ERROR);
+    }
+
+    @Test
+    public void shouldReadLoggerWithLevelAll() throws Exception {
+        shouldReadLoggerWithLevel("ALL", LogLevel.ALL);
+    }
+
+    public void shouldReadLoggerWithLevel(String from, LogLevel to) throws IOException {
+        givenLogger("foo", from, true);
+
+        LoggerResource foo = container.logger(FOO).build();
+
+        assertThat(foo.level()).isEqualTo(to);
+        verifyLoggerRead("foo");
+    }
+
 
     @Test
     public void shouldAddLogger() throws IOException {

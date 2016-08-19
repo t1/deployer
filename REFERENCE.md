@@ -90,3 +90,22 @@ This is a list of resource type names (currently only `artifacts`) to be managed
 i.e. resources of this kind existing in the container, but are not in the plan, are removed.
 Defaults to an empty list, i.e. things are left alone.
 
+## Miscellaneous
+
+### Log Levels
+
+The deployer uses the log levels of [slf4j](http://www.slf4j.org).
+The JBoss CLI additionally allows log levels from Java Util Logging,
+so when reading these levels, the Deployer maps them as follows:
+
+| jul | slf4j |
+| --- | --- |
+| ALL | ALL |
+| SEVERE | ERROR |
+| WARNING | WARN |
+| INFO | INFO |
+| CONFIG | INFO |
+| FINE | DEBUG |
+| FINER | DEBUG |
+| FINEST | TRACE |
+| OFF | OFF |

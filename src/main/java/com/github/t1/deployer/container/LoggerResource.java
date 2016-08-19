@@ -10,6 +10,7 @@ import java.util.*;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LoggerCategory.*;
+import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
 import static java.util.Comparator.*;
@@ -36,7 +37,7 @@ public class LoggerResource extends AbstractResource {
     }
 
     public static List<LoggerResource> allLoggers(CLI cli) {
-        ModelNode request = readResource(new LoggerResource(ALL, cli).createRequestWithAddress());
+        ModelNode request = readResource(new LoggerResource(LoggerCategory.ALL, cli).createRequestWithAddress());
         List<LoggerResource> loggers =
                 cli.execute(request)
                    .asList().stream()
@@ -119,7 +120,7 @@ public class LoggerResource extends AbstractResource {
 
 
     @Override protected void readFrom(ModelNode response) {
-        this.level = (response.get("level").isDefined()) ? LogLevel.valueOf(response.get("level").asString()) : null;
+        this.level = (response.get("level").isDefined()) ? mapLogLevel(response.get("level").asString()) : null;
 
         this.useParentHandlers = (response.get("use-parent-handlers").isDefined())
                 ? response.get("use-parent-handlers").asBoolean() : null;
@@ -132,6 +133,34 @@ public class LoggerResource extends AbstractResource {
                           .map(LogHandlerName::new)
                           .collect(toList())
                 : emptyList();
+    }
+
+    private LogLevel mapLogLevel(String level) {
+        switch (level) {
+        case "ALL":
+            return LogLevel.ALL;
+        case "ERROR":
+        case "SEVERE":
+            return ERROR;
+        case "WARN":
+        case "WARNING":
+            return WARN;
+        case "INFO":
+        case "CONFIG":
+            return INFO;
+        case "DEBUG":
+        case "FINE":
+        case "FINER":
+            return DEBUG;
+        case "TRACE":
+        case "FINEST":
+            return TRACE;
+        case "OFF":
+            return OFF;
+        default:
+            log.error("unmapped log level: '{}'", level);
+            return WARN;
+        }
     }
 
 
