@@ -4,7 +4,8 @@
 
 Bundles – including the `deployer.root.bundle` – are yaml files with the following sections:
 
-### `artifacts`
+
+### `deployables`
 
 The key is the `name` of the deployment, i.e. a `war` named `foo` will be deployed as `foo.war`,
 so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
@@ -13,8 +14,18 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 - `group-id`: Defaults to the system property `default.group-id` (see below).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
-- `type`: `war`, `jar`, or `bundle`. Defaults to `war`.
+- `type`: `war` or `jar`. Defaults to `war`.
+
+
+### `bundles`
+
+The key is the `name` of the bundle. 
+
+- `group-id`: Defaults to the system property `default.group-id` (see below).
+- `artifact-id`: Defaults to the name of the deployment.
+- `version`: Mandatory.
 - `vars`: The map of variables passed into a `bundle`; forbidden for other types. Defaults to an empty map.
+
 
 ### `log-handlers`
 
@@ -35,6 +46,7 @@ Only for `custom`:
 - `class`: The fully qualified class name of the custom handler. Mandatory.
 - `properties`: A map of parameters passed to the custom handler. Defaults to an empty map.
 
+
 ### `loggers`
 
 The key is the `category` of the logger, usually the fully qualified name of the class producing the logs. 
@@ -45,6 +57,7 @@ The key is the `category` of the logger, usually the fully qualified name of the
 - `handler`: Alternative syntax for a single log handler name. Defaults to an empty list.
 - `use-parent-handlers`: Should the log handlers of the parent logger be used?
 Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
+
 
 ### Variables
 
@@ -69,9 +82,10 @@ A variable name can contain the name of a function to be applied to the value:
 
 The deployer itself can be configured with a file `deployer.config.yaml`.
 
+
 ### `repository`
 
-Where and how to access the repository containing artifacts (`war`, `bundle`, etc.).
+Where and how to access the repository containing deployables (`war`, etc.) and bundles.
 
 - `type`: `maven-central` or `artifactory`. Defaults to `artifactory`, if it's running on `localhost:8081`, or `maven-central` otherwise.
 - `uri`: The base URI of the repository. For the defaults, see `type`.
@@ -80,17 +94,21 @@ Where and how to access the repository containing artifacts (`war`, `bundle`, et
 - `repository-snapshots`: The name of the snapshot repository. Defaults to `snapshots-virtual`.
 - `repository-releases`: The name of the release repository. Defaults to `releases-virtual`.
 
+
 ### `vars`
 
 This is a map of system properties to set.
 
+
 ### `manage`
 
-This is a list of resource type names (currently only `artifacts`) to be managed,
+This is a list of resource type names (currently only `deployables`) to be managed,
 i.e. resources of this kind existing in the container, but are not in the plan, are removed.
 Defaults to an empty list, i.e. things are left alone.
 
+
 ## Miscellaneous
+
 
 ### Log Levels
 

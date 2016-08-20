@@ -13,7 +13,7 @@ for Java EE containers (currently only JBoss 7+) pulling from a maven repository
 - Create a file `$JBOSS_CONFIG_DIR/deployer.root.bundle` containing:
 
 ```yaml
-artifacts:
+deployments:
   jolokia:
     groupId: org.jolokia
     artifact-id: jolokia-war
@@ -28,13 +28,15 @@ If there is already a different version of jolokia deployed, it will replace it.
 
 ## Full Tutorial
 
-You can find an introduction to the concepts and best practices [here](TUTORIAL.md).
+You can find an introduction to the concepts and best practices [here](docs/TUTORIAL.md).
 
 ## Reference
 
-For a comprehensive list of all details, see [here](REFERENCE.md).
+For a comprehensive list of all details, see [here](docs/REFERENCE.md).
 
-## History
+## Versioning
+
+We use [Semantic Versioning](http://semver.org).
 
 Version 1.0.0 (which was never released) provided a rest api and html gui to manage deployments by remote requests or manually on each node.
 As this wasn't secure / didn't scale for many instances and stages, 2.0 was initiated.
