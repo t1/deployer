@@ -5,10 +5,7 @@ baseurl: ""
 url: "https://t1.github.io/deployer"
 
 # Build settings
-markdown: kramdown
 theme: minima
-exclude:
-  - Gemfile
 
 defaults:
   -
