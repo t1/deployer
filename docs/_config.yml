@@ -2,7 +2,7 @@ title: The Deployer
 description: >
   Simple Infrastructure As Code solution for Java EE containers (currently only JBoss 7+) pulling from a maven repository.
 baseurl: ""
-url: "https://t1.github.io/deployer/"
+url: "https://t1.github.io/deployer"
 
 # Build settings
 markdown: kramdown
