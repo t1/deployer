@@ -131,11 +131,7 @@ public class DeployerIT {
     }
 
     public List<Audit> post(String expectedStatus) {
-        return post(null, expectedStatus);
-    }
-
-    public List<Audit> post(Entity<?> entity, String expectedStatus) {
-        return post(expectedStatus, entity, OK).readEntity(Audits.class).getAudits();
+        return post(expectedStatus, null, OK).readEntity(Audits.class).getAudits();
     }
 
     @SneakyThrows(IOException.class)
@@ -177,14 +173,33 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 200)
-    public void shouldDeployWebArchive() throws Exception {
+    @InSequence(value = 150)
+    public void shouldFailToDeployWebArchiveWithIncorrectChecksum() throws Exception {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
-                + "    version: 1.3.1\n";
+                + "    version: 1.3.1\n"
+                + "    checksum: ffffffffffffffffffffffffffffffffffffffff";
+
+        String detail = post(plan, null, BAD_REQUEST).readEntity(String.class);
+
+        assertThat(theDeployments()).isEmpty();
+        assertThat(detail).contains("Repository checksum [52709cbc859e208dc8e540eb5c7047c316d9653f] "
+                + "does not match planned checksum [ffffffffffffffffffffffffffffffffffffffff]");
+    }
+
+    @Test
+    @InSequence(value = 200)
+    public void shouldDeployWebArchiveWithCorrectChecksum() throws Exception {
+        String plan = ""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: 1.3.1\n"
+                + "    checksum: 52709cbc859e208dc8e540eb5c7047c316d9653f";
 
         List<Audit> audits = post(plan);
 
@@ -213,6 +228,23 @@ public class DeployerIT {
 
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_1_CHECKSUM));
         assertThat(audits).isEmpty();
+    }
+
+    @Test
+    @InSequence(value = 350)
+    public void shouldFailToUpdateWebArchiveWithWrongChecksum() throws Exception {
+        String plan = ""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: 1.3.2\n"
+                + "    checksum: ffffffffffffffffffffffffffffffffffffffff";
+
+        String detail = post(plan, null, BAD_REQUEST).readEntity(String.class);
+
+        assertThat(detail).contains("Repository checksum [9e29add9df1fa9540654c452dcbf0a2e47cc5330] "
+                + "does not match planned checksum [ffffffffffffffffffffffffffffffffffffffff]");
     }
 
     @Test

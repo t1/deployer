@@ -140,7 +140,7 @@ public class ConfigurationPlan {
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
         @NonNull private final ArtifactType type;
-        @NonNull private final Checksum checksum;
+        private final Checksum checksum;
 
         @SuppressWarnings("unchecked")
         public static class AbstractArtifactConfigBuilder<T extends AbstractArtifactConfigBuilder> {
@@ -181,6 +181,8 @@ public class ConfigurationPlan {
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
+            apply(node, "checksum", null,
+                    value -> builder.checksum((value == null) ? null : Checksum.fromString(value)));
         }
 
         private static String defaultValue(String name) {

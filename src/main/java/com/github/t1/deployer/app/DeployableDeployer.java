@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.problem.WebException.*;
 import static java.util.Objects.*;
 
 @Slf4j
@@ -60,6 +61,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
             assert removed : "expected [" + resource + "] to be in existing " + existing;
             log.info("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
         } else {
+            checkChecksums(plan, artifact);
             container.deployment(getResourceDeploymentNameOf(plan)).build().redeploy(artifact.getInputStream());
             audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
@@ -75,10 +77,20 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
         }
     }
 
+    private void checkChecksums(DeployableConfig plan, Artifact artifact) {
+        if (plan.getChecksum() != null && !plan.getChecksum().equals(artifact.getChecksum()))
+            throw badRequest("Repository checksum ["
+                    + artifact.getChecksum()
+                    + "] does not match planned checksum ["
+                    + plan.getChecksum()
+                    + "]");
+    }
+
     @Override
     protected DeploymentResource buildResource(DeployableConfig plan, DeployableAuditBuilder audit) {
         Artifact artifact = lookupArtifact(plan);
         assert artifact != null : "not found: " + plan;
+        checkChecksums(plan, artifact);
         audit.name(plan.getName())
              .change("group-id", null, plan.getGroupId())
              .change("artifact-id", null, plan.getArtifactId())

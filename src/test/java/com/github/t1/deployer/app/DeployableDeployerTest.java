@@ -28,6 +28,68 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     }
 
     @Test
+    public void shouldDeployWebArchiveWithCorrectChecksum() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    checksum: " + foo.getChecksum() + "\n"
+        );
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithIncorrectChecksum() {
+        givenArtifact("foo").version("1.3.2");
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
+
+        assertThat(thrown).hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f]"
+                + " does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+    }
+
+    @Test
+    public void shouldUpdateWebArchiveWithCorrectChecksum() {
+        givenArtifact("foo").version("1.3.1").deployed();
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    checksum: " + foo.getChecksum() + "\n"
+        );
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldFailToUpdateWebArchiveWithIncorrectChecksum() {
+        givenArtifact("foo").version("1.3.1").deployed();
+        givenArtifact("foo").version("1.3.2");
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
+
+        assertThat(thrown).hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f] "
+                + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+    }
+
+    @Test
     public void shouldDeployEmptyDeployables() {
         Audits audits = deployer.apply(""
                 + "deployables:\n");
