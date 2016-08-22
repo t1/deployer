@@ -14,17 +14,21 @@ There are very good IaC solutions capable of deploying applications to and confi
 [Ansible](http://docs.ansible.com/ansible/jboss_module.html),
 [Salt](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.jboss7.html), and
 [Puppet](https://forge.puppet.com/biemond/wildfly) (to name just a few) all have good support for Wildfly.
-They can do much more than just this, they can even install the JBoss itself.
+They are very powerful and can do much more than just this; they can even install the JBoss itself.
 And that's exactly the problem I had: Great power comes with great responsibility.
-Too much power for me as a simple developer and application operator.
-As a JEE developer, it also takes some time and dedication to learn those tools... and even more so to add to them.
-I'd rather have a very limited tool, that does only what I want it to do... living in the environment I know best: JEE.
-And this simplicity also brings some security, I suppose.
-I don't have any central instance that can mess with any aspect of my system... rather a honey pot.
+Too much power for me as a simple developer and operator of JEE applications, working in an environment where the
+platform and infrastructure is managed by dedicated operations teams.
 
-The Deployer instead tries to keep away from container specifics, so the configuration files you'll write should run
-on any JEE container, given that The Deployer supports it. I must admit that this is currently quite esoteric, but I'm
-trying to keep that in mind.
+As a JEE developer, it also takes some time and dedication to learn those tools... and even more so to add to them.
+I'd rather have a very limited tool, that's easy to understand and does only what I want it to do...
+living in the environment I know best: JEE.
+
+And this simplicity also brings some security, I suppose.
+A central instance that can mess with any aspect of my system is a real honey pot to any attacker.
+
+The Deployer tries to keep away from container specifics, so the configuration files you'll write should run
+on any JEE container, given that The Deployer supports it. I must admit that this is rather academic at the moment,
+given that only JBoss 7+ is currently supported, but it may prove worth trying to keep extensibility in mind.
 
 
 ## 1-Minute-Tutorial
