@@ -1,7 +1,4 @@
-# The Deployer
-
-[![Join the chat at https://gitter.im/t1/deployer](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/t1/deployer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Download](https://api.bintray.com/packages/t1/javaee-helpers/deployer/images/download.svg)](https://bintray.com/t1/javaee-helpers/deployer/_latestVersion)
+# The Deployer [![Join the chat at https://gitter.im/t1/deployer](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/t1/deployer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Download](https://api.bintray.com/packages/t1/javaee-helpers/deployer/images/download.svg)](https://bintray.com/t1/javaee-helpers/deployer/_latestVersion)
 
 Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCode.html) solution
 for Java EE containers (currently only JBoss 7+) pulling from a maven repository
@@ -11,13 +8,13 @@ for Java EE containers (currently only JBoss 7+) pulling from a maven repository
 ## Motivation
 
 There are very good IaC solutions capable of deploying applications to and configuring resources in JEE containers.
-[Ansible](http://docs.ansible.com/ansible/jboss_module.html),
+There's good support for Wildfly in [Ansible](http://docs.ansible.com/ansible/jboss_module.html),
 [Salt](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.jboss7.html), and
-[Puppet](https://forge.puppet.com/biemond/wildfly) (to name just a few) all have good support for Wildfly.
+[Puppet](https://forge.puppet.com/biemond/wildfly) (to name just a few).
 They are very powerful and can do much more than just this; they can even install the JBoss itself.
 And that's exactly the problem I had: Great power comes with great responsibility.
-Too much power for me as a simple developer and operator of JEE applications, working in an environment where the
-platform and infrastructure is managed by dedicated operations teams.
+Too much responsibility for me as a simple developer and operator of JEE applications,
+working in an environment where the platform and infrastructure is managed by dedicated operations teams.
 
 As a JEE developer, it also takes some time and dedication to learn those tools... and even more so to add to them.
 I'd rather have a very limited tool, that's easy to understand and does only what I want it to do...
@@ -26,8 +23,8 @@ living in the environment I know best: JEE.
 And this simplicity also brings some security, I suppose.
 A central instance that can mess with any aspect of my system is a real honey pot to any attacker.
 
-The Deployer tries to keep away from container specifics, so the configuration files you'll write should run
-on any JEE container, given that The Deployer supports it. I must admit that this is rather academic at the moment,
+OTOH, The Deployer tries to keep away from container specifics, so the configuration files you'll write should run
+on any JEE container The Deployer supports. I must admit that this is rather academic at the moment,
 given that only JBoss 7+ is currently supported, but it may prove worth trying to keep extensibility in mind.
 
 

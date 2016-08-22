@@ -114,7 +114,7 @@ Defaults to an empty list, i.e. things are left alone.
 
 The deployer uses the log levels of [slf4j](http://www.slf4j.org).
 The JBoss CLI additionally allows log levels from Java Util Logging,
-so when reading these levels, the Deployer maps them as follows:
+so when reading these levels, The Deployer maps them as follows:
 
 | jul | slf4j |
 | --- | --- |

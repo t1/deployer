@@ -148,7 +148,7 @@ Note that:
 
 ## Packaging Bundles
 
-This is actually outside of the Deployer itself, but it's an important step.
+This is actually outside of The Deployer itself, but it's an important step.
 And there are many ways to do it. One way is to build it with the `build-helper-maven-plugin`:
 
 - Create your project directory
