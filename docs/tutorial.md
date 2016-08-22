@@ -1,5 +1,3 @@
----
----
 # Tutorial
 
 After you've read the 1-Minute-Tutorial in the README, you can already nicely install and update deployables.
@@ -26,22 +24,14 @@ When is it safe to remove that cruft?
 How do you make sure that a freshly set up node looks exactly as one running for years?
 Manually keeping track of this all is not very infrastructure-as-code-ish.
 
-<<<<<<< HEAD:docs/tutorial.md
 You can instead tell the deployer to [manage](reference.md#manage) a specific type of resource.
-=======
-You can instead tell the deployer to [manage](REFERENCE.html#manage) a specific type of resource.
->>>>>>> 7fc60fb646144005819d532319220e16410ca6a1:docs/tutorial.md
 This makes the deployer _remove_ all resources that are _not_ listed.
 
 ## Configuring Resources
 
 The deployer can be used to configure more than just deployables.
 Here, we'll only scratch on configuring just loggers and log-handlers, so we can build on that to combine things.
-<<<<<<< HEAD:docs/tutorial.md
 For the full details, please refer to the [reference](reference.md).
-=======
-For the full details, please refer to the [reference](REFERENCE.html).
->>>>>>> 7fc60fb646144005819d532319220e16410ca6a1:docs/tutorial.md
 
 If you have several applications running in one container,
 you'll want to have the logs for every app in a separate file and not everything clumped into the `server.log`.
