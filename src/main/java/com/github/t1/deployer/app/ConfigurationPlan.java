@@ -140,6 +140,7 @@ public class ConfigurationPlan {
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
         @NonNull private final ArtifactType type;
+        @NonNull private final Checksum checksum;
 
         @SuppressWarnings("unchecked")
         public static class AbstractArtifactConfigBuilder<T extends AbstractArtifactConfigBuilder> {
@@ -165,6 +166,11 @@ public class ConfigurationPlan {
 
             public T type(ArtifactType type) {
                 this.type = type;
+                return (T) this;
+            }
+
+            public T checksum(Checksum checksum) {
+                this.checksum = checksum;
                 return (T) this;
             }
         }
@@ -198,13 +204,13 @@ public class ConfigurationPlan {
         public static class DeployableConfigBuilder extends AbstractArtifactConfigBuilder<DeployableConfigBuilder> {
             @Override public DeployableConfig build() {
                 AbstractArtifactConfig a = super.build();
-                return new DeployableConfig(name, a.state, a.groupId, a.artifactId, a.version, a.type);
+                return new DeployableConfig(name, a.state, a.groupId, a.artifactId, a.version, a.type, a.checksum);
             }
         }
 
         private DeployableConfig(DeploymentName name, DeploymentState state,
-                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-            super(state, groupId, artifactId, version, type);
+                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, Checksum checksum) {
+            super(state, groupId, artifactId, version, type, checksum);
             this.name = name;
         }
 
@@ -241,7 +247,8 @@ public class ConfigurationPlan {
                 super.type(bundle);
                 AbstractArtifactConfig a = super.build();
                 Map<String, String> variables = buildMap(variables$key, variables$value);
-                return new BundleConfig(name, variables, a.state, a.groupId, a.artifactId, a.version, a.type);
+                return new BundleConfig(name, variables, a.state, a.groupId, a.artifactId, a.version, a.type,
+                        a.checksum);
             }
 
             private Map<String, String> buildMap(List<String> keys, List<String> values) {
@@ -255,8 +262,8 @@ public class ConfigurationPlan {
         }
 
         private BundleConfig(BundleName name, Map<String, String> variables, DeploymentState state,
-                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-            super(state, groupId, artifactId, version, type);
+                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, Checksum checksum) {
+            super(state, groupId, artifactId, version, type, checksum);
             this.variables = variables;
             this.name = name;
         }

@@ -127,6 +127,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
                     .version(artifact.getVersion())
                     .type(artifact.getType())
                     .state(deployed)
+                    .checksum(artifact.getChecksum())
                     .build());
         }
     }

@@ -1,5 +1,7 @@
 package com.github.t1.deployer.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.*;
 
 import javax.xml.bind.annotation.*;
@@ -14,6 +16,7 @@ import static lombok.AccessLevel.*;
 @RequiredArgsConstructor(access = PRIVATE)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @XmlAccessorType(XmlAccessType.NONE)
+@JsonSerialize(using = ToStringSerializer.class)
 public class Checksum {
     public static Checksum of(byte[] bytes) {
         return new Checksum(bytes);

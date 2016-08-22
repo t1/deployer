@@ -383,6 +383,7 @@ public class AbstractDeployerTest {
                         .version(version)
                         .type(type)
                         .state(deployed == null ? DeploymentState.undeployed : DeploymentState.deployed)
+                        .checksum(checksum)
                         .build();
             }
         }
