@@ -7,6 +7,7 @@ Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCo
 for Java EE containers (currently only JBoss 7+) pulling from a maven repository
 (currently full support only for Maven Central and Artifactory Pro, as we need to be able to search by checksum).
 
+
 ## 1-Minute-Tutorial
 
 - Create a file `$JBOSS_CONFIG_DIR/deployer.root.bundle` containing:
