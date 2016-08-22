@@ -28,11 +28,11 @@ If there is already a different version of jolokia deployed, it will replace it.
 
 ## Full Tutorial
 
-You can find an introduction to the concepts and best practices [here](docs/TUTORIAL.md).
+You can find an introduction to the concepts and best practices [here](docs/tutorial.md).
 
 ## Reference
 
-For a comprehensive list of all details, see [here](docs/REFERENCE.md).
+For a comprehensive list of all details, see [here](docs/reference.md).
 
 ## Versioning
 

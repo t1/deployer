@@ -24,14 +24,14 @@ When is it safe to remove that cruft?
 How do you make sure that a freshly set up node looks exactly as one running for years?
 Manually keeping track of this all is not very infrastructure-as-code-ish.
 
-You can instead tell the deployer to [manage](REFERENCE.md#manage) a specific type of resource.
+You can instead tell the deployer to [manage](reference.md#manage) a specific type of resource.
 This makes the deployer _remove_ all resources that are _not_ listed.
 
 ## Configuring Resources
 
 The deployer can be used to configure more than just deployables.
 Here, we'll only scratch on configuring just loggers and log-handlers, so we can build on that to combine things.
-For the full details, please refer to the [reference](REFERENCE.md).
+For the full details, please refer to the [reference](reference.md).
 
 If you have several applications running in one container,
 you'll want to have the logs for every app in a separate file and not everything clumped into the `server.log`.
