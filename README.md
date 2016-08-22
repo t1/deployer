@@ -8,6 +8,25 @@ for Java EE containers (currently only JBoss 7+) pulling from a maven repository
 (currently full support only for Maven Central and Artifactory Pro, as we need to be able to search by checksum).
 
 
+## Motivation
+
+There are very good IaC solutions capable of deploying applications to and configuring resources in JEE containers.
+[Ansible](http://docs.ansible.com/ansible/jboss_module.html),
+[Salt](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.jboss7.html), and
+[Puppet](https://forge.puppet.com/biemond/wildfly) (to name just a few) all have good support for Wildfly.
+They can do much more than just this, they can even install the JBoss itself.
+And that's exactly the problem I had: Great power comes with great responsibility.
+Too much power for me as a simple developer and application operator.
+As a JEE developer, it also takes some time and dedication to learn those tools... and even more so to add to them.
+I'd rather have a very limited tool, that does only what I want it to do... living in the environment I know best: JEE.
+And this simplicity also brings some security, I suppose.
+I don't have any central instance that can mess with any aspect of my system... rather a honey pot.
+
+The Deployer instead tries to keep away from container specifics, so the configuration files you'll write should run
+on any JEE container, given that The Deployer supports it. I must admit that this is currently quite esoteric, but I'm
+trying to keep that in mind.
+
+
 ## 1-Minute-Tutorial
 
 - Create a file `$JBOSS_CONFIG_DIR/deployer.root.bundle` containing:
