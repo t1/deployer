@@ -1,3 +1,5 @@
+---
+---
 # Tutorial
 
 After you've read the 1-Minute-Tutorial in the README, you can already nicely install and update deployables.
@@ -24,14 +26,22 @@ When is it safe to remove that cruft?
 How do you make sure that a freshly set up node looks exactly as one running for years?
 Manually keeping track of this all is not very infrastructure-as-code-ish.
 
+<<<<<<< HEAD:docs/tutorial.md
 You can instead tell the deployer to [manage](reference.md#manage) a specific type of resource.
+=======
+You can instead tell the deployer to [manage](REFERENCE.html#manage) a specific type of resource.
+>>>>>>> 7fc60fb646144005819d532319220e16410ca6a1:docs/tutorial.md
 This makes the deployer _remove_ all resources that are _not_ listed.
 
 ## Configuring Resources
 
 The deployer can be used to configure more than just deployables.
 Here, we'll only scratch on configuring just loggers and log-handlers, so we can build on that to combine things.
+<<<<<<< HEAD:docs/tutorial.md
 For the full details, please refer to the [reference](reference.md).
+=======
+For the full details, please refer to the [reference](REFERENCE.html).
+>>>>>>> 7fc60fb646144005819d532319220e16410ca6a1:docs/tutorial.md
 
 If you have several applications running in one container,
 you'll want to have the logs for every app in a separate file and not everything clumped into the `server.log`.
@@ -39,17 +49,17 @@ To define a log-handler for `myapp`, simply add this to your `deployer.root.bund
 
 ```yaml
 log-handlers:
-  MYAPP:
-    file: myapp.log
+MYAPP:
+file: myapp.log
 ```
 
 To define a logger for `com.mycompany.myapp`, simply add this:
 
 ```yaml
 loggers:
-  com.mycompany.myapp
-    level: DEBUG
-    handler: MYAPP
+com.mycompany.myapp
+level: DEBUG
+handler: MYAPP
 ```
 
 ## Bundles
@@ -62,29 +72,29 @@ Welcome back! You now have a `deployer.root.bundle` that looks somewhat similar 
 
 ```yaml
 log-handlers:
-  JOLOKIA:
-    file: jolokia.log
-  MYAPP:
-    file: myapp.log
+JOLOKIA:
+file: jolokia.log
+MYAPP:
+file: myapp.log
 loggers:
-  org.jolokia:
-    level: DEBUG
-    handler: JOLOKIA
-  mygroup.myapp:
-    level: DEBUG
-    handler: MYAPP
+org.jolokia:
+level: DEBUG
+handler: JOLOKIA
+mygroup.myapp:
+level: DEBUG
+handler: MYAPP
 deployables:
-  jolokia:
-    groupId: org.jolokia
-    artifact-id: jolokia-war
-    version: 1.3.4
-  myapp:
-    groupId: mygroup
-    version: 1.0.0-SNAPSHOT
+jolokia:
+groupId: org.jolokia
+artifact-id: jolokia-war
+version: 1.3.4
+myapp:
+groupId: mygroup
+version: 1.0.0-SNAPSHOT
 ```
 
 Even with only two apps, you'll notice that it's not easy to find all the things belonging to one app.
-They are spread over all the resource types. 
+They are spread over all the resource types.
 And this will be getting worse as you add more and more apps and more and more resource types.
 The Deployer was designed to keep the resource types together, not the applications they belong to.
 Grouping by application has the drawback that you may need more than one level of grouping.
@@ -97,33 +107,33 @@ So let's define one bundle for each app above:
 
 ```yaml
 log-handlers:
-  JOLOKIA:
-    file: jolokia.log
+JOLOKIA:
+file: jolokia.log
 loggers:
-  org.jolokia:
-    level: DEBUG
-    handler: JOLOKIA
+org.jolokia:
+level: DEBUG
+handler: JOLOKIA
 deployables:
-  jolokia:
-    groupId: org.jolokia
-    artifact-id: jolokia-war
-    version: 1.3.4
+jolokia:
+groupId: org.jolokia
+artifact-id: jolokia-war
+version: 1.3.4
 ```
 
 ### `myapp.bundle`
 
 ```yaml
 log-handlers:
-  MYAPP:
-    file: myapp.log
+MYAPP:
+file: myapp.log
 loggers:
-  mygroup.myapp:
-    level: DEBUG
-    handler: MYAPP
+mygroup.myapp:
+level: DEBUG
+handler: MYAPP
 deployables:
-  myapp:
-    groupId: mygroup
-    version: 1.0.0-SNAPSHOT
+myapp:
+groupId: mygroup
+version: 1.0.0-SNAPSHOT
 ```
 
 And include them in the root bundle:
@@ -132,12 +142,12 @@ And include them in the root bundle:
 
 ```yaml
 bundles:
-  jolokia:
-    groupId: mygroup
-    version: 1.3.4
-  myapp:
-    groupId: mygroup
-    version: 1.0.0-SNAPSHOT
+jolokia:
+groupId: mygroup
+version: 1.3.4
+myapp:
+groupId: mygroup
+version: 1.0.0-SNAPSHOT
 ```
 
 Note that:
@@ -205,14 +215,14 @@ And there are many ways to do it. One way is to build it with the `build-helper-
 </project>
 ```
 
-You may also need a `distribution-management` section, but then you can `mvn clean deploy` your bundle. 
+You may also need a `distribution-management` section, but then you can `mvn clean deploy` your bundle.
 
 TODO:
 
 Using [httpie](http://httpie.org/):
 
-    http --json --verify=no POST :8080/deployer version=1.0.0-SNAPSHOT
+http --json --verify=no POST :8080/deployer version=1.0.0-SNAPSHOT
 
 or (more wordy) as CURL:
 
-    curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"version":"1.0.0-SNAPSHOT"}' http://localhost:8080/deployer
+curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"version":"1.0.0-SNAPSHOT"}' http://localhost:8080/deployer
