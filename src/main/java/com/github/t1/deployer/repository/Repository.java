@@ -15,7 +15,11 @@ public abstract class Repository {
         if (checksum == null || checksum.isEmpty())
             return errorArtifact(checksum, "empty checksum");
         try {
-            return searchByChecksum(checksum);
+            Artifact artifact = searchByChecksum(checksum);
+            if (!artifact.getChecksumRaw().equals(checksum))
+                throw new AssertionError("expected checksum from repository [" + artifact.getChecksumRaw() + "] "
+                        + "to be equal to the checksum requested with [" + checksum + "]");
+            return artifact;
         } catch (UnknownChecksumException e) {
             return errorArtifact(checksum, "unknown");
         } catch (RuntimeException e) {

@@ -56,6 +56,7 @@ public class DeployerIT {
             + "    group-id: org.jolokia\n"
             + "    artifact-id: jolokia-war\n"
             + "    version: ${jolokia.version}\n";
+    private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
     private static Condition<DeploymentResource> deployment(String name) {
         return deployment(new DeploymentName(name));
@@ -181,13 +182,13 @@ public class DeployerIT {
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
                 + "    version: 1.3.1\n"
-                + "    checksum: ffffffffffffffffffffffffffffffffffffffff";
+                + "    checksum: " + UNKNOWN_CHECKSUM;
 
         String detail = post(plan, null, BAD_REQUEST).readEntity(String.class);
 
         assertThat(theDeployments()).isEmpty();
         assertThat(detail).contains("Repository checksum [52709cbc859e208dc8e540eb5c7047c316d9653f] "
-                + "does not match planned checksum [ffffffffffffffffffffffffffffffffffffffff]");
+                + "does not match planned checksum [" + UNKNOWN_CHECKSUM + "]");
     }
 
     @Test
@@ -239,12 +240,12 @@ public class DeployerIT {
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
                 + "    version: 1.3.2\n"
-                + "    checksum: ffffffffffffffffffffffffffffffffffffffff";
+                + "    checksum: " + UNKNOWN_CHECKSUM;
 
         String detail = post(plan, null, BAD_REQUEST).readEntity(String.class);
 
         assertThat(detail).contains("Repository checksum [9e29add9df1fa9540654c452dcbf0a2e47cc5330] "
-                + "does not match planned checksum [ffffffffffffffffffffffffffffffffffffffff]");
+                + "does not match planned checksum [" + UNKNOWN_CHECKSUM + "]");
     }
 
     @Test
@@ -356,7 +357,7 @@ public class DeployerIT {
                 Audit.DeployableAudit.builder().name("jolokia")
                                      .change("group-id", "org.jolokia", null)
                                      .change("artifact-id", "jolokia-war", null)
-                                     .change("version", "xxx", null)
+                                     .change("version", "1.3.3", null)
                                      .change("type", "war", null)
                                      .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
                                      .removed());
@@ -407,7 +408,7 @@ public class DeployerIT {
                 Audit.DeployableAudit.builder().name("jolokia")
                                      .change("group-id", "org.jolokia", null)
                                      .change("artifact-id", "jolokia-war", null)
-                                     .change("version", "xxx", null)
+                                     .change("version", "1.3.4-SNAPSHOT", null)
                                      .change("type", "war", null)
                                      .change("checksum", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM, null)
                                      .removed());

@@ -4,7 +4,7 @@ import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,17 +55,17 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
 
     @Override
     protected void update(DeploymentResource resource, DeployableConfig plan, DeployableAuditBuilder audit) {
-        Artifact artifact = lookupArtifact(plan);
+        Artifact old = repository.lookupByChecksum(resource.checksum());
+        Artifact artifact = lookupDeployedArtifact(plan, old);
+        checkChecksums(plan, artifact);
         if (resource.checksum().equals(artifact.getChecksum())) {
             boolean removed = existing.removeIf(getResourceDeploymentNameOf(plan)::matches);
             assert removed : "expected [" + resource + "] to be in existing " + existing;
             log.info("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
         } else {
-            checkChecksums(plan, artifact);
             container.deployment(getResourceDeploymentNameOf(plan)).build().redeploy(artifact.getInputStream());
             audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
-            Artifact old = repository.lookupByChecksum(resource.checksum());
             if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
                 audit.change("group-id", old.getGroupId(), artifact.getGroupId());
             if (!Objects.equals(old.getArtifactId(), artifact.getArtifactId()))
@@ -88,8 +88,9 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
 
     @Override
     protected DeploymentResource buildResource(DeployableConfig plan, DeployableAuditBuilder audit) {
-        Artifact artifact = lookupArtifact(plan);
-        assert artifact != null : "not found: " + plan;
+        Artifact artifact = lookupArtifact(plan, plan.getVersion());
+        if (artifact == null)
+            throw badRequest("artifact not found: " + plan);
         checkChecksums(plan, artifact);
         audit.name(plan.getName())
              .change("group-id", null, plan.getGroupId())
@@ -100,17 +101,28 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
         return container.deployment(getResourceDeploymentNameOf(plan)).inputStream(artifact.getInputStream()).build();
     }
 
-    private Artifact lookupArtifact(DeployableConfig plan) {
-        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), plan.getVersion(), plan.getType());
+    private Artifact lookupDeployedArtifact(DeployableConfig plan, Artifact old) {
+        Version version = plan.getVersion();
+        if (version.matches("CURRENT"))
+            version = old.getVersion();
+        return lookupArtifact(plan, version);
+    }
+
+    private Artifact lookupArtifact(DeployableConfig plan, Version version) {
+        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), version, plan.getType());
     }
 
     @Override
     protected void auditRemove(DeploymentResource resource, DeployableConfig plan, DeployableAuditBuilder audit) {
-        audit.change("group-id", plan.getGroupId(), null);
-        audit.change("artifact-id", plan.getArtifactId(), null);
-        audit.change("version", plan.getVersion(), null);
-        audit.change("type", plan.getType(), null);
-        audit.change("checksum", resource.checksum(), null);
+        if (plan.getChecksum() != null && !plan.getChecksum().equals(resource.checksum()))
+            throw badRequest("Planned to undeploy artifact with checksum [" + plan.getChecksum() + "] "
+                    + "but deployed is [" + resource.checksum() + "]");
+        Artifact old = repository.lookupByChecksum(resource.checksum());
+        audit.change("group-id", old.getGroupId(), null);
+        audit.change("artifact-id", old.getArtifactId(), null);
+        audit.change("version", old.getVersion(), null);
+        audit.change("type", old.getType(), null);
+        audit.change("checksum", old.getChecksum(), null);
     }
 
     @Override public void cleanup(Audits audits) {

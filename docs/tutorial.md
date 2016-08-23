@@ -225,18 +225,27 @@ Your apps should now get deployed and the logging configured.
 
 Nice and well, but there's no much use to it all, if you still have to copy the `deployer.root.bundle` to all of your machines by hand!
 And every time you have to update a version, you'd have to repeat that process. Suboptimal.
-
 We'd like to be able to update an application from the _outside_, e.g. from a Jenkins job.
-Simply replace the `version` of `myapp1` by `${myapp1.version}`.
+
+To do that, simply replace the `version` of `myapp1` by `${myapp1.version}`.
 Then, using [httpie](http://httpie.org/), you can do:
 
-http --json --verify=no POST :8080/deployer myapp1.version=1.0
+http --json POST :8080/deployer myapp1.version=1.0
 
 ... or (more wordy) using CURL:
 
 curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"myapp1.version":"1.0"}' http://localhost:8080/deployer
 
-TODO: multiple versions
+You can use variables for many things, but this is the most common use case.
+
+But we have _two_ artifacts. How should the build job of `myapp1` know about the version of `myapp2`?
+Why should it care about the existence of `myapp2` at all?
+
+Easy: Just don't. The default `version` (i.e. the effective `version` for an deployable already deployed) is `CURRENT`,
+which resolves to the version currently installed.
+So while you can't use this for the initial deployment, you _can_ use it to update one deployable, while all others remain the same.
+Note that this doesn't work for bundles, as they are not actually deployed in the container, so there's not CURRENT version for them.
+
 
 ## Default Group-Id
 

@@ -175,11 +175,13 @@ public class ConfigurationPlan {
             }
         }
 
-        public static void fromJson(JsonNode node, AbstractArtifactConfigBuilder builder, String defaultArtifactId) {
+        public static void fromJson(JsonNode node, AbstractArtifactConfigBuilder builder,
+                String defaultArtifactId, String defaultVersion) {
             apply(node, "group-id", defaultValue("group-id"), value -> builder.groupId(new GroupId(value)));
             apply(node, "artifact-id", defaultArtifactId, value -> builder.artifactId(new ArtifactId(value)));
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "version", null, value -> builder.version((value == null) ? null : new Version(value)));
+            apply(node, "version", defaultVersion,
+                    value -> builder.version((value == null) ? null : new Version(value)));
             apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
             apply(node, "checksum", null,
                     value -> builder.checksum((value == null) ? null : Checksum.fromString(value)));
@@ -216,7 +218,7 @@ public class ConfigurationPlan {
             if (node.isNull())
                 throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
             DeployableConfigBuilder builder = builder().name(name);
-            AbstractArtifactConfig.fromJson(node, builder, name.getValue());
+            AbstractArtifactConfig.fromJson(node, builder, name.getValue(), "CURRENT");
             return builder.build().verify();
         }
 
@@ -271,7 +273,7 @@ public class ConfigurationPlan {
             if (node.isNull())
                 throw new ConfigurationPlanLoadingException("no config in bundle '" + name + "'");
             BundleConfigBuilder builder = builder().name(name);
-            AbstractArtifactConfig.fromJson(node, builder, name.getValue());
+            AbstractArtifactConfig.fromJson(node, builder, name.getValue(), null);
             if (node.has(VARS) && !node.get(VARS).isNull())
                 builder.variables(toMap(node.get(VARS)));
             return builder.build();

@@ -13,8 +13,9 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [`manage`](#manage).
 - `group-id`: Defaults to the variable `default.group-id` (see below).
 - `artifact-id`: Defaults to the name of the deployment.
-- `version`: Mandatory.
+- `version`: Defaults to `CURRENT`, which is the currently deployed version of this artifact.
 - `type`: `war` or `jar`. Defaults to `war`.
+- `checksum`: The SHA-1 checksum of the artifact file. Optional to check for integrity.
 
 
 ### `bundles`
@@ -61,7 +62,7 @@ Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log h
 
 ### Variables
 
-Bundles can refer to variables in the `${name}` notation. To escape a `$`, simply duplicate `$$`.
+Bundles can refer to variables in the `${name}` notation. To escape a `$`, duplicate it to `$$`.
 
 Variable values are:
 
@@ -69,8 +70,9 @@ Variable values are:
 - variables defined in the configuration [`vars`](#vars), and
 - variables passed into bundles (see below).
 
-Config variables are written into system properties. The deployer fails, if a variable passed in overwrites an existing
-variable (esp. system property), or if the resulting plan has unresolved variables.
+Config variables are written into system properties.
+The deployer fails, if a variable passed in overwrites an existing variable (esp. system property),
+or if the resulting plan has unresolved variables.
 
 A variable name can contain the name of a function to be applied to the value:
 

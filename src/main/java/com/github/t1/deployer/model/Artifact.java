@@ -21,6 +21,8 @@ public class Artifact {
     private final Supplier<Checksum> checksumSupplier;
     @NonNull private final Supplier<InputStream> inputStreamSupplier;
 
+    public Checksum getChecksumRaw() { return checksum; }
+
     public Checksum getChecksum() {
         if (checksum == null)
             checksum = checksumSupplier.get();

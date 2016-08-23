@@ -78,4 +78,6 @@ public class Version implements Comparable<Version> {
 
         private boolean isNumeric(String string) { return string.matches("\\d+"); }
     };
+
+    public boolean matches(String pattern) { return this.compareTo(new Version(pattern)) == 0; }
 }

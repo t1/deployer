@@ -1,9 +1,9 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
-import com.github.t1.deployer.app.ConfigurationPlan.ConfigurationPlanLoadingException;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Variables.UnresolvedVariableException;
+import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -13,6 +13,8 @@ import static org.assertj.core.api.Assertions.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeployableDeployerTest extends AbstractDeployerTest {
+    private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
+
     @Test
     public void shouldDeployWebArchive() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
@@ -53,8 +55,10 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    version: 1.3.2\n"
                 + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
-        assertThat(thrown).hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f]"
-                + " does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f]"
+                        + " does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
     @Test
@@ -85,8 +89,27 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    version: 1.3.2\n"
                 + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
-        assertThat(thrown).hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f] "
-                + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f] "
+                        + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+    }
+
+    @Test
+    public void shouldFailToCheckWebArchiveWithIncorrectChecksum() {
+        givenArtifact("foo").version("1.3.1").deployed();
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.1\n"
+                + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("Repository checksum [face000094d353f082e6939015af81d263ba0f8f] "
+                        + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
     @Test
@@ -110,14 +133,17 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToDeployWebArchiveWithoutVersion() {
+        givenArtifact("foo").version("1.3.2");
+
         Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "deployables:\n"
-                + "  foo-war:\n"
+                + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    state: deployed\n"));
 
-        assertThat(thrown).isInstanceOf(ConfigurationPlanLoadingException.class);
-        assertThat(thrown.getCause()).hasMessageContaining("failed (java.lang.NullPointerException): version");
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("artifact not found: «deployment:foo:deployed:org.foo:foo:CURRENT:war»");
     }
 
 
@@ -190,7 +216,9 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    group-id: org.foo\n"
                 + "    version: 1\n"));
 
-        assertThat(thrown).hasMessageContaining("invalid character in variable value for [foo]");
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("invalid character in variable value for [foo]");
     }
 
 
@@ -309,7 +337,9 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    artifact-id: foo\n"
                 + "    version: 1.3.2\n"));
 
-        assertThat(thrown).hasMessageContaining("undefined variable function: [bar]");
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("undefined variable function: [bar]");
     }
 
     @Test
@@ -437,30 +467,78 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldFailToUndeployWebArchiveWithoutVersion() {
-        Throwable thrown = catchThrowable(() -> deployer.apply(""
-                + "deployables:\n"
-                + "  foo-war:\n"
-                + "    group-id: org.foo\n"
-                + "    state: undeployed\n"));
+    public void shouldUndeployWebArchiveWithoutVersionAndGroupId() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        assertThat(thrown.getCause()).hasMessageContaining("version");
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    state: undeployed\n");
+
+        foo.verifyRemoved(audits);
     }
 
 
     @Test
-    public void shouldUndeployWebArchiveWithAnyVersionWhenStateIsUndeployed() {
+    public void shouldUndeployWebArchiveWithOtherVersionWhenStateIsUndeployed() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
-        Checksum checksum = foo.getChecksum();
 
         Audits audits = deployer.apply(""
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: '*'\n"
+                + "    version: 999\n"
                 + "    state: undeployed\n");
 
-        foo.version("*").checksum(checksum).verifyRemoved(audits);
+        foo.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldUndeployWebArchiveWithOtherGroupIdWhenStateIsUndeployed() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.bar\n"
+                + "    version: 1.3.2\n"
+                + "    state: undeployed\n");
+
+        foo.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldUndeployWebArchiveWithOtherArtifactIdWhenStateIsUndeployed() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: bar\n"
+                + "    version: 1.3.2\n"
+                + "    state: undeployed\n");
+
+        foo.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldFailToUndeployWebArchiveWithWrongChecksum() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    checksum: " + UNKNOWN_CHECKSUM + "\n"
+                + "    state: undeployed\n"
+        ));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("Planned to undeploy artifact with checksum [" + UNKNOWN_CHECKSUM + "] "
+                        + "but deployed is [face000097269fd347ce0e93059890430c01f17f]");
     }
 
 
