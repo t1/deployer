@@ -11,7 +11,7 @@ The key is the `name` of the deployment, i.e. a `war` named `foo` will be deploy
 so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [`manage`](#manage).
-- `group-id`: Defaults to the system property `default.group-id` (see below).
+- `group-id`: Defaults to the variable `default.group-id` (see below).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
 - `type`: `war` or `jar`. Defaults to `war`.
@@ -21,7 +21,7 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 
 The key is the `name` of the bundle. 
 
-- `group-id`: Defaults to the system property `default.group-id` (see below).
+- `group-id`: Defaults to the variable `default.group-id` (see below).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
 - `vars`: The map of variables passed into a `bundle`; forbidden for other types. Defaults to an empty map.
@@ -97,7 +97,7 @@ Where and how to access the repository containing deployables (`war`, etc.) and 
 
 ### `vars`
 
-This is a map of system properties to set.
+This is a map of variables to set.
 
 
 ### `manage`

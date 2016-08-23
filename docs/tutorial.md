@@ -1,17 +1,16 @@
 # Tutorial
 
 After you've read the 1-Minute-Tutorial in the README, you can already nicely install and update deployables.
-But the deployer can do much more, and this tutorial will show you how to basically configure resources,
+But the deployer can do more, and this tutorial will show you how to configure resources,
 how to combine them into bundles, and how to integrate it all into a CI or even CD pipeline.
 
-'Resources' are all the things that the deployer can change, e.g. applications (deployables like `war` files)
-as well as loggers, etc.
+'Resources' are all the things that the deployer can change, e.g. deployables (`war` files, etc.) as well as loggers, etc.
 
 ## GET config
 
 Before we start, you can also _read_ the currently effective configuration by simply GETting `http://localhost:8080/deployer`.
-This resource provides a concise overview of the relevant configuration without providing confidential data like passwords.
-Still it may not be wise to make this information freely available in the internet.
+This resource provides a concise overview of the relevant configuration without providing confidential data like passwords
+(it may still not be wise to make this information freely available in the internet).
 
 ## Undeploy & Manage
 
@@ -27,10 +26,19 @@ Manually keeping track of this all is not very infrastructure-as-code-ish.
 You can instead tell the deployer to [manage](reference.md#manage) a specific type of resource.
 This makes the deployer _remove_ all resources that are _not_ listed.
 
+To do so, add the following snippet to a file `deployer.config.yaml`:
+
+```yaml
+managed:
+- deployables
+```
+
+See the section [config](reference.md#config) in the reference for details.
+
 ## Configuring Resources
 
 The deployer can be used to configure more than just deployables.
-Here, we'll only scratch on configuring just loggers and log-handlers, so we can build on that to combine things.
+Here, we'll only scratch on the subject and just configure simple loggers and log-handlers, to build on that and combine things.
 For the full details, please refer to the [reference](reference.md).
 
 If you have several applications running in one container,
@@ -39,17 +47,17 @@ To define a log-handler for `myapp`, simply add this to your `deployer.root.bund
 
 ```yaml
 log-handlers:
-MYAPP:
-file: myapp.log
+  MYAPP:
+    file: myapp.log
 ```
 
-To define a logger for `com.mycompany.myapp`, simply add this:
+To define a logger (a.k.a. category) for `com.mycompany.myapp` to log to this file, simply add this:
 
 ```yaml
 loggers:
-com.mycompany.myapp
-level: DEBUG
-handler: MYAPP
+  com.mycompany.myapp
+    level: DEBUG
+    handler: MYAPP
 ```
 
 ## Bundles
@@ -62,98 +70,101 @@ Welcome back! You now have a `deployer.root.bundle` that looks somewhat similar 
 
 ```yaml
 log-handlers:
-JOLOKIA:
-file: jolokia.log
-MYAPP:
-file: myapp.log
+  MYAPP1:
+    file: myapp1.log
+  MYAPP2:
+    file: myapp2.log
 loggers:
-org.jolokia:
-level: DEBUG
-handler: JOLOKIA
-mygroup.myapp:
-level: DEBUG
-handler: MYAPP
+  mygroup.myapp1:
+    level: DEBUG
+    handler: MYAPP1
+  mygroup.myapp2:
+    level: DEBUG
+    handler: MYAPP2
 deployables:
-jolokia:
-groupId: org.jolokia
-artifact-id: jolokia-war
-version: 1.3.4
-myapp:
-groupId: mygroup
-version: 1.0.0-SNAPSHOT
+  myapp1:
+    groupId: mygroup
+    version: 1.0
+  myapp2:
+    groupId: mygroup
+    version: 2.0
 ```
+
+Note that you don't have to specify an `artifact-id` if it's the same as the `name` of the `deployable`.
+
+Also note that the `version` can be a `-SNAPSHOT` version;
+The Deployer will resolve it to the latest of those snapshots in the repository.
 
 Even with only two apps, you'll notice that it's not easy to find all the things belonging to one app.
 They are spread over all the resource types.
 And this will be getting worse as you add more and more apps and more and more resource types.
 The Deployer was designed to keep the resource types together, not the applications they belong to.
-Grouping by application has the drawback that you may need more than one level of grouping.
 
-To allow for a app centric view, the deployer allows you to group things into so called bundles.
-You already know how they look: The `deployer.root.bundle` is one.
+To allow for an app centric view, the deployer allows you to group things into so called bundles.
+You already know how bundles look: The `deployer.root.bundle` is one.
 So let's define one bundle for each app above:
 
-### `jolokia.bundle`
+### `myapp1.bundle`
 
 ```yaml
 log-handlers:
-JOLOKIA:
-file: jolokia.log
+  MYAPP1:
+    file: myapp1.log
 loggers:
-org.jolokia:
-level: DEBUG
-handler: JOLOKIA
+  mygroup.myapp1:
+    level: DEBUG
+    handler: MYAPP1
 deployables:
-jolokia:
-groupId: org.jolokia
-artifact-id: jolokia-war
-version: 1.3.4
+  myapp1:
+    groupId: mygroup
+    version: 1.0
 ```
 
 ### `myapp.bundle`
 
 ```yaml
 log-handlers:
-MYAPP:
-file: myapp.log
+  MYAPP2:
+    file: myapp2.log
 loggers:
-mygroup.myapp:
-level: DEBUG
-handler: MYAPP
+  mygroup.myapp2:
+    level: DEBUG
+    handler: MYAPP2
 deployables:
-myapp:
-groupId: mygroup
-version: 1.0.0-SNAPSHOT
+  myapp2:
+    groupId: mygroup
+    version: 2.0
 ```
 
-And include them in the root bundle:
+We will include them in the root bundle, after we've published them to our Maven repository:
 
 ### `deployer.root.bundle`
 
 ```yaml
 bundles:
-jolokia:
-groupId: mygroup
-version: 1.3.4
-myapp:
-groupId: mygroup
-version: 1.0.0-SNAPSHOT
+  myapp1:
+    groupId: mygroup
+    version: 1.0
+  myapp2:
+    groupId: mygroup
+    version: 2.0
 ```
 
 Note that:
 
-- Both the `jolokia.bundle` as well as the `myapp.bundle` are in group-id `mygroup`.
-- The version of the bundles is "coincidentally" the version of the applications within.
-- You'll also have to get the bundles into your repository:
+- The `version` of the bundles is "coincidentally" the `version` of the applications within.
+- The `group-id` of the bundles is "coincidentally" the `group-id` of the applications within.
+
+Now let's get these bundles into a repository:
 
 ## Packaging Bundles
 
-This is actually outside of The Deployer itself, but it's an important step.
-And there are many ways to do it. One way is to build it with the `build-helper-maven-plugin`:
+This step is actually completely outside of The Deployer itself, but it's an important step.
+There are many ways to do it; here we build the bundles with the `build-helper-maven-plugin`:
 
 - Create your project directory
 - Create a sub folder `src/main/resrouces`
-- Put your `myapp.bundle` file in there.
+- Put your `myapp1.bundle` file in there.
 - And finally add a `pom.xml` like this:
 
 ```xml
@@ -162,8 +173,8 @@ And there are many ways to do it. One way is to build it with the `build-helper-
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>mygroup</groupId>
-    <artifactId>myapp.bundle</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>myapp1.bundle</artifactId>
+    <version>1.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -192,7 +203,7 @@ And there are many ways to do it. One way is to build it with the `build-helper-
                         <configuration>
                             <artifacts>
                                 <artifact>
-                                    <file>target/classes/myapp.bundle</file>
+                                    <file>target/classes/${project.artifactId}</file>
                                     <type>bundle</type>
                                 </artifact>
                             </artifacts>
@@ -205,14 +216,43 @@ And there are many ways to do it. One way is to build it with the `build-helper-
 </project>
 ```
 
-You may also need a `distribution-management` section, but then you can `mvn clean deploy` your bundle.
+You may also need a `distribution-management` section. Then you can `mvn clean deploy` your bundle.
 
-TODO:
+After you did this for `myapp1` and `myapp2`, you can make the change to the `deployer.root.bundle` described above.
+Your apps should now get deployed and the logging configured.
 
-Using [httpie](http://httpie.org/):
+## Variables
 
-http --json --verify=no POST :8080/deployer version=1.0.0-SNAPSHOT
+Nice and well, but there's no much use to it all, if you still have to copy the `deployer.root.bundle` to all of your machines by hand!
+And every time you have to update a version, you'd have to repeat that process. Suboptimal.
 
-or (more wordy) as CURL:
+We'd like to be able to update an application from the _outside_, e.g. from a Jenkins job.
+Simply replace the `version` of `myapp1` by `${myapp1.version}`.
+Then, using [httpie](http://httpie.org/), you can do:
 
-curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"version":"1.0.0-SNAPSHOT"}' http://localhost:8080/deployer
+http --json --verify=no POST :8080/deployer myapp1.version=1.0
+
+... or (more wordy) using CURL:
+
+curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"myapp1.version":"1.0"}' http://localhost:8080/deployer
+
+TODO: multiple versions
+
+## Default Group-Id
+
+One thing you'll be repeating all over the place, is the `group-id`.
+Put this section into the `deployer.config.yaml`:
+
+```yaml
+vars:
+  default.group-id: mygroup
+```
+
+Then can now simply remove this `group-id` throughout your configuration files.
+
+If you find that you often repeat other values, you can also add them to the `vars` section
+and use them as `${myvar}`. Note that this is especially useful if a value can change some time.
+
+
+## Application Schema Bundles
+

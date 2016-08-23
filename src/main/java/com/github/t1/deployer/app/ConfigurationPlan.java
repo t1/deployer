@@ -185,10 +185,6 @@ public class ConfigurationPlan {
                     value -> builder.checksum((value == null) ? null : Checksum.fromString(value)));
         }
 
-        private static String defaultValue(String name) {
-            return System.getProperty("default." + name);
-        }
-
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
@@ -436,6 +432,10 @@ public class ConfigurationPlan {
                     + ((properties == null) ? "" : ":" + properties)
                     + "»";
         }
+    }
+
+    private static String defaultValue(String name) {
+        return System.getProperty("default." + name);
     }
 
     private static void apply(JsonNode node, String fieldName, String defaultValue, Consumer<String> setter) {

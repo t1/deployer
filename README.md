@@ -11,10 +11,11 @@ There are very good IaC solutions capable of deploying applications to and confi
 There's good support for Wildfly in [Ansible](http://docs.ansible.com/ansible/jboss_module.html),
 [Salt](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.jboss7.html), and
 [Puppet](https://forge.puppet.com/biemond/wildfly) (to name just a few).
-They are very powerful and can do much more than just this; they can even install the JBoss itself.
-And that's exactly the problem I had: Great power comes with great responsibility.
-Too much responsibility for me as a simple developer and operator of JEE applications,
-working in an environment where the platform and infrastructure is managed by dedicated operations teams.
+They are very powerful and can do much more than just this; e.g., they can install the JBoss itself.
+And that's exactly the problem _I_ had: Great power comes with great responsibility...
+too much responsibility for me as a simple developer and operator of JEE applications,
+working in an environment where the infrastructure and platform is managed by dedicated operations teams,
+using those other IaC tools.
 
 As a JEE developer, it also takes some time and dedication to learn those tools... and even more so to add to them.
 I'd rather have a very limited tool, that's easy to understand and does only what I want it to do...
@@ -26,6 +27,8 @@ A central instance that can mess with any aspect of my system is a real honey po
 OTOH, The Deployer tries to keep away from container specifics, so the configuration files you'll write should run
 on any JEE container The Deployer supports. I must admit that this is rather academic at the moment,
 given that only JBoss 7+ is currently supported, but it may prove worth trying to keep extensibility in mind.
+
+Configuration quickly grows unwieldy. So it's all about reducing it to the essential, driving repetition out.
 
 
 ## 1-Minute-Tutorial
@@ -42,7 +45,6 @@ deployments:
 
 - Deploy the `deployer.war` to your container.
 On startup, it will find your file, pull jolokia from maven central, and deploy it to the container.
-If there is already a different version of jolokia deployed, it will replace it.
 
 - Change the file to version `1.3.3` and the deployer will pick up the change and upgrade jolokia.
 
@@ -58,8 +60,8 @@ For a comprehensive list of all details, see [here](docs/reference.md).
 
 We use [Semantic Versioning](http://semver.org).
 
-Version 1.0.0 (which was never released) provided a rest api and html gui to manage deployments by remote requests or manually on each node.
-As this wasn't secure / didn't scale for many instances and stages, 2.0 was initiated.
+Version 1.0 (which was never released) provided a rest api and html gui to manage deployments by remote requests or manually on each node.
+As this didn't scale for many instances and stages, 2.0 was initiated, rewriting the complete application layer.
 
 ## Building
 
