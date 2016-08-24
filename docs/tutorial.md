@@ -12,6 +12,12 @@ Before we start, you can also _read_ the currently effective configuration by si
 This resource provides a concise overview of the relevant configuration without providing confidential data like passwords
 (it may still not be wise to make this information freely available in the internet).
 
+You can GET this data as `application/yaml`, `application/json`, or `text/html`,
+i.e. you can view it as a simple table with your browser.
+Note that this is very simplistic and some information is missing.
+
+(currently `application/xml` doesn't work... but it seems out-of-fashion anyway ;-)
+
 ## Undeploy & Manage
 
 Every resource has an implicit parameter `state` set to `deployed`.
