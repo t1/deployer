@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
@@ -137,7 +138,7 @@ public class DeployerIT {
 
     @SneakyThrows(IOException.class)
     public Response post(String plan, Entity<?> entity, Status expectedStatus) {
-        try (FileMemento memento = new FileMemento(DeployerBoundary.getConfigPath()).setup()) {
+        try (FileMemento memento = new FileMemento(getRootBundlePath()).setup()) {
             memento.write(plan);
 
             Response response = ClientBuilder

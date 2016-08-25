@@ -76,8 +76,8 @@ or if the resulting plan has unresolved variables.
 
 A variable name can contain the name of a function to be applied to the value:
 
-- `toUpperCase(value)`: Turns the variable `value` into all upper case.
-- `toLowerCase(value)`: Turns the variable `value` into all lower case.
+- `toUpperCase(x)`: Turns the value of the variable `x` into all upper case.
+- `toLowerCase(x)`: Turns the value of the variable `x` into all lower case.
 - `hostName()`: Returns the DNS name of the local host (without the domain name).
 - `domainName()`: Returns the DNS domain of the local host.
 
@@ -86,9 +86,33 @@ E.g. `toLowerCase(foo) or bar` will resolve to `foo`, if this variable is set to
 or fall back to `bar` if `foo` is not set.
 
 
+### Default Root Bundle
+
+If there is no file `deployer.root.bundle`, the following default applies:
+
+```yaml
+bundles:
+  ${default.root-bundle-name or hostName()}:
+    group-id: ${default.root-bundle-group or default.group-id or domainName()}
+    version: ${version}
+```
+
+So you if you have a bundle artifact with `artifact-id` = `myhost` and `group-id` = `mydomain.org`
+and pass the `version` to the POST, you're ready to go.
+
+If your host names are very technical and/or change very often,
+you may be better off to [configure](#vars) a `default.root-bundle-name` variable.
+
+If your domain names are very generic, like `local` or `server.lan`,
+you may be better off to [configure](#vars) a `default.group-id` variable.
+If you already need a different default `group-id`, you can use the `default.root-bundle-name` variable.
+
+
 ## Config
 
 The deployer itself can be configured with a file `deployer.config.yaml`.
+
+Restart The Deployer for changes to this file to be picked up.
 
 
 ### `repository`
@@ -106,6 +130,14 @@ Where and how to access the repository containing deployables (`war`, etc.) and 
 ### `vars`
 
 This is a map of variables to set.
+
+Special values:
+
+| name | usage |
+| --- | --- |
+| default.group-id | `group-id` to be used, if none is specified. |
+| default.root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
+| default.root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
 
 
 ### `manage`

@@ -27,8 +27,13 @@ import static java.util.Collections.*;
 @Slf4j
 public class DeployerBoundary {
     public static final String ROOT_BUNDLE = "deployer.root.bundle";
+    private static final String DEFAULT_ROOT_BUNDLE = ""
+            + "bundles:\n"
+            + "  ${default.root-bundle-name or hostName()}:\n"
+            + "    group-id: ${default.root-bundle-group or default.group-id or domainName()}\n"
+            + "    version: ${version}\n";
 
-    public static java.nio.file.Path getConfigPath() { return getConfigPath(ROOT_BUNDLE); }
+    public static java.nio.file.Path getRootBundlePath() { return getConfigPath(ROOT_BUNDLE); }
 
     public static java.nio.file.Path getConfigPath(String fileName) {
         return Paths.get(System.getProperty("jboss.server.config.dir"), fileName);
@@ -72,23 +77,17 @@ public class DeployerBoundary {
 
 
     private synchronized Audits apply(Map<String, String> variables) {
-        Path root = getConfigPath();
+        Run run = new Run().withVariables(variables);
 
-        if (!Files.isRegularFile(root))
-            throw new RuntimeException("config file '" + root + "' not found");
-
-        log.debug("load config plan from: {}", root);
-
-        new Run().withVariables(variables).apply(root);
+        Path root = getRootBundlePath();
+        if (Files.isRegularFile(root)) {
+            run.apply(root);
+        } else {
+            run.applyDefaultRoot();
+        }
 
         if (log.isDebugEnabled())
             log.debug("\n{}", audits.toYaml());
-        return audits;
-    }
-
-    // visible for testing
-    Audits apply(String plan) {
-        new Run().apply(new StringReader(plan));
         return audits;
     }
 
@@ -110,17 +109,31 @@ public class DeployerBoundary {
         }
 
         public void apply(Path plan) {
+            log.info("load config plan from: {}", plan);
+            String message = "can't apply config plan [" + plan + "]";
             try {
-                apply(Files.newBufferedReader(plan));
-            } catch (WebApplicationApplicationException e) {
-                log.info("can't apply config plan [{}]", plan);
-                throw e;
-            } catch (IOException | RuntimeException e) {
-                throw new RuntimeException("can't apply config plan [" + plan + "]", e);
+                BufferedReader reader = Files.newBufferedReader(plan);
+                apply(reader, message);
+            } catch (IOException e) {
+                throw new RuntimeException(message, e);
             }
         }
 
-        private void apply(Reader reader) { this.apply(ConfigurationPlan.load(variables.resolve(reader))); }
+        public void applyDefaultRoot() {
+            log.info("load default root plan");
+            apply(new StringReader(DEFAULT_ROOT_BUNDLE), "can't apply default root bundle");
+        }
+
+        private void apply(Reader reader, String message) {
+            try {
+                this.apply(ConfigurationPlan.load(variables.resolve(reader)));
+            } catch (WebApplicationApplicationException e) {
+                log.info(message);
+                throw e;
+            } catch (RuntimeException e) {
+                throw new RuntimeException(message, e);
+            }
+        }
 
         private void apply(ConfigurationPlan plan) {
             // TODO deployers.forEach(deployer -> deployer.apply(plan));
@@ -135,12 +148,7 @@ public class DeployerBoundary {
             Variables pop = this.variables;
             try {
                 this.variables = this.variables.withAll(bundle.getVariables());
-                apply(lookup(bundle).getReader());
-            } catch (WebApplicationApplicationException e) {
-                log.info("can't apply bundle [{}]", bundle);
-                throw e;
-            } catch (RuntimeException e) {
-                throw new RuntimeException("can't apply bundle [" + bundle + "]", e);
+                apply(lookup(bundle).getReader(), "can't apply bundle [" + bundle + "]");
             } finally {
                 this.variables = pop;
             }

@@ -3,6 +3,7 @@ package com.github.t1.deployer.model;
 import com.github.t1.problem.*;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.*;
@@ -14,6 +15,7 @@ import static com.github.t1.problem.WebException.*;
 import static java.util.Locale.*;
 import static javax.ws.rs.core.Response.Status.*;
 
+@Slf4j
 public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
     private static final Pattern VARIABLE_VALUE_PATTERN = Pattern.compile("^[- ._a-zA-Z0-9]{1,256}$");
@@ -59,6 +61,7 @@ public class Variables {
 
     private String resolveVariable(String expression) {
         for (String key : expression.split(" or ")) {
+            log.trace("try to resolve variable expression [{}]", key);
             Matcher matcher = FUNCTION.matcher(key);
             if (!matcher.matches())
                 throw badRequest("unparseable variable key: " + key);
@@ -68,9 +71,12 @@ public class Variables {
                 function = null;
                 variableName = matcher.group("function");
             } else {
-                function = function(matcher.group("function"));
+                String functionName = matcher.group("function");
+                log.trace("found function name [{}]", functionName);
+                function = function(functionName);
             }
             if (variables.containsKey(variableName) || (variableName.isEmpty() && function != null)) {
+                log.trace("did resolve [{}]", variableName);
                 String value = variables.get(variableName);
                 if (value != null && !VARIABLE_VALUE_PATTERN.matcher(value).matches())
                     throw badRequest("invalid character in variable value for [" + variableName + "]");
@@ -78,7 +84,9 @@ public class Variables {
                     value = function.apply(value);
                 return value;
             }
+            log.debug("failed to resolve variable expression [{}]", key);
         }
+        log.debug("failed to resolve [{}]", expression);
         throw new UnresolvedVariableException(expression);
     }
 

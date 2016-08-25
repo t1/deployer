@@ -260,8 +260,7 @@ public class ConfigurationPlanSerializationTest {
                 + "    format: the-format\n"
                 + "    class: org.foo.MyHandler\n")));
 
-        assertThat(thrown.getCause())
-                .hasMessageContaining("log-handler [FOO] is of type [custom], so it requires a 'module'");
+        assertThat(thrown).hasStackTraceContaining("log-handler [FOO] is of type [custom], so it requires a 'module'");
     }
 
     @Test
@@ -274,7 +273,6 @@ public class ConfigurationPlanSerializationTest {
                 + "    format: the-format\n"
                 + "    module: org.foo\n")));
 
-        assertThat(thrown.getCause())
-                .hasMessageContaining("log-handler [FOO] is of type [custom], so it requires a 'class'");
+        assertThat(thrown).hasStackTraceContaining("log-handler [FOO] is of type [custom], so it requires a 'class'");
     }
 }

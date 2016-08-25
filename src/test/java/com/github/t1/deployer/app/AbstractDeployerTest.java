@@ -8,7 +8,7 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
-import com.github.t1.testtools.SystemPropertiesRule;
+import com.github.t1.testtools.*;
 import lombok.*;
 import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
@@ -17,12 +17,14 @@ import org.junit.*;
 import org.mockito.*;
 
 import javax.enterprise.inject.Instance;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
 import java.util.function.Consumer;
 
 import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
+import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
@@ -39,14 +41,27 @@ import static org.mockito.Mockito.*;
 public class AbstractDeployerTest {
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
 
+    @Rule public FileMemento rootBundle = new FileMemento(this::rootBundlePath);
+
+    @SneakyThrows(IOException.class)
+    private Path rootBundlePath() {
+        systemProperties.given("jboss.server.config.dir", Files.createTempDirectory("deployer.test"));
+        return getRootBundlePath();
+    }
+
+    @SneakyThrows(IOException.class)
+    Audits deploy(String plan) {
+        rootBundle.write(plan);
+        return deployer.apply();
+    }
+
+
     @InjectMocks DeployerBoundary deployer;
 
-    @Spy private Audits audits;
     @Spy private LogHandlerDeployer logHandlerDeployer;
     @Spy private LoggerDeployer loggerDeployer;
     @Spy private DeployableDeployer deployableDeployer;
     @Mock Instance<AbstractDeployer> deployers;
-    @Mock Instance<Audits> auditsInstance;
 
     @Mock Repository repository;
 
@@ -79,10 +94,11 @@ public class AbstractDeployerTest {
                 = loggerDeployer.container
                 = deployableDeployer.container
                 = container;
-        logHandlerDeployer.audits
+        deployer.audits
+                = logHandlerDeployer.audits
                 = loggerDeployer.audits
                 = deployableDeployer.audits
-                = audits;
+                = new Audits();
 
         //noinspection unchecked
         doAnswer(i -> {
@@ -90,7 +106,6 @@ public class AbstractDeployerTest {
                     .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
             return null;
         }).when(deployers).forEach(any(Consumer.class));
-        when(auditsInstance.get()).thenReturn(audits);
 
         when(deploymentManager.newDeploymentPlan()).then(i -> planBuilder);
 

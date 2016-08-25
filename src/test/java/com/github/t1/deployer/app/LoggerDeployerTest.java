@@ -12,24 +12,24 @@ import static org.assertj.core.api.Assertions.*;
 public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddEmptyLoggers() {
-        deployer.apply(""
+        deploy(""
                 + "loggers:\n");
     }
 
     @Test
     public void shouldFailToAddLoggerWithoutItem() {
-        Throwable thrown = catchThrowable(() -> deployer.apply(""
+        Throwable thrown = catchThrowable(() -> deploy(""
                 + "loggers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown.getCause()).hasMessageContaining("no config in logger 'foo'");
+        assertThat(thrown).hasStackTraceContaining("no config in logger 'foo'");
     }
 
     @Test
     public void shouldAddLogger() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
@@ -42,7 +42,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldNotAddExistingLogger() {
         givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n");
@@ -56,7 +56,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldUpdateLogLevel() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: INFO\n");
@@ -69,7 +69,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldAddLoggerWithExplicitState() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -83,7 +83,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldAddLoggerWithoutLevel() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(ALL);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    state: deployed\n");
@@ -100,7 +100,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .handler("FOO")
                 .useParentHandlers(false);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -120,7 +120,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .handler("BAR")
                 .useParentHandlers(false);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -138,7 +138,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .handler("FOO")
                 .useParentHandlers(true);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -157,7 +157,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .handler("FOO")
                 .useParentHandlers(false);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -174,7 +174,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .level(DEBUG)
                 .useParentHandlers(true);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -191,13 +191,13 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(false)
                 .deployed();
 
-        Throwable thrown = catchThrowable(() -> deployer.apply(""
+        Throwable thrown = catchThrowable(() -> deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer:\n"
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: false"));
 
-        assertThat(thrown.getCause()).hasMessageContaining("Can't set use-parent-handlers of [com.github.t1.deployer]"
+        assertThat(thrown).hasStackTraceContaining("Can't set use-parent-handlers of [com.github.t1.deployer]"
                 + " to false when there are no handlers");
     }
 
@@ -210,7 +210,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(false)
                 .deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -229,7 +229,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(false)
                 .deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -248,7 +248,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(true)
                 .deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -266,7 +266,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(false)
                 .deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -283,13 +283,13 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(true)
                 .deployed();
 
-        Throwable thrown = catchThrowable(() -> deployer.apply(""
+        Throwable thrown = catchThrowable(() -> deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer:\n"
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: false\n"));
 
-        assertThat(thrown.getCause()).hasMessageContaining("Can't set use-parent-handlers of [com.github.t1.deployer]"
+        assertThat(thrown).hasStackTraceContaining("Can't set use-parent-handlers of [com.github.t1.deployer]"
                 + " to false when there are no handlers");
     }
 
@@ -302,7 +302,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(false)
                 .deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -321,7 +321,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .useParentHandlers(false)
                 .deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
@@ -340,7 +340,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 .handler("BAR")
                 .deployed();
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    state: undeployed\n");
@@ -353,7 +353,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     public void shouldRemoveNonExistingLoggerWhenStateIsUndeployed() {
         givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
-        Audits audits = deployer.apply(""
+        Audits audits = deploy(""
                 + "loggers:\n"
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: DEBUG\n"
