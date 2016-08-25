@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.*;
 
 import java.io.*;
+import java.net.*;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.*;
@@ -15,7 +16,7 @@ import static javax.ws.rs.core.Response.Status.*;
 
 public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
-    private static final Pattern VARIABLE_VALUE_PATTERN = Pattern.compile("^[-._a-zA-Z0-9]{1,256}$");
+    private static final Pattern VARIABLE_VALUE_PATTERN = Pattern.compile("^[- ._a-zA-Z0-9]{1,256}$");
     private static final Pattern FUNCTION = Pattern.compile("(?<function>[-._a-zA-Z0-9]*)(\\((?<variable>[^)]*)\\))?");
 
     private final ImmutableMap<String, String> variables;
@@ -64,16 +65,18 @@ public class Variables {
             String variableName = matcher.group("variable");
             Function<String, String> function;
             if (variableName == null) {
-                function = Function.identity();
+                function = null;
                 variableName = matcher.group("function");
             } else {
                 function = function(matcher.group("function"));
             }
-            if (variables.containsKey(variableName)) {
+            if (variables.containsKey(variableName) || (variableName.isEmpty() && function != null)) {
                 String value = variables.get(variableName);
-                if (!VARIABLE_VALUE_PATTERN.matcher(value).matches())
+                if (value != null && !VARIABLE_VALUE_PATTERN.matcher(value).matches())
                     throw badRequest("invalid character in variable value for [" + variableName + "]");
-                return function.apply(value);
+                if (function != null)
+                    value = function.apply(value);
+                return value;
             }
         }
         throw new UnresolvedVariableException(expression);
@@ -85,9 +88,18 @@ public class Variables {
             return value -> value.toUpperCase(US);
         case "toLowerCase":
             return value -> value.toLowerCase(US);
+        case "hostName":
+            return this::hostName;
         default:
             throw badRequest("undefined variable function: [" + name + "]");
         }
+    }
+
+    @SneakyThrows(UnknownHostException.class)
+    private String hostName(String value) {
+        if (value != null)
+            throw badRequest("the 'hostName' function takes no arguments but found [" + value + "]");
+        return InetAddress.getLocalHost().getHostName().split("\\.")[0];
     }
 
     private BufferedReader buffered(Reader reader) {

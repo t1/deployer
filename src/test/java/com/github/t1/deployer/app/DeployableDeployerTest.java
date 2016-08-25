@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.net.InetAddress;
+
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -266,6 +268,36 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    version: 1.3.2\n");
 
         foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithHostnameVariable() throws Exception {
+        String hostName = InetAddress.getLocalHost().getHostName().split("\\.")[0];
+        ArtifactFixture foo = givenArtifact("foo").groupId(hostName).version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${hostName()}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToResolveHostnameWithParameter() throws Exception {
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${hostName(os.name)}\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("the 'hostName' function takes no arguments "
+                        + "but found [" + System.getProperty("os.name") + "]");
     }
 
 

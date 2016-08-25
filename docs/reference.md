@@ -76,8 +76,9 @@ or if the resulting plan has unresolved variables.
 
 A variable name can contain the name of a function to be applied to the value:
 
-- `toUpperCase`: Turns the value into all upper case.
-- `toLowerCase`: Turns the value into all lower case.
+- `toUpperCase(value)`: Turns the variable `value` into all upper case.
+- `toLowerCase(value)`: Turns the variable `value` into all lower case.
+- `hostName()`: Returns the DNS name of the local host (without the domain name).
 
 You can chain variable expressions, by separating them with ` or `.
 E.g. `toLowerCase(foo) or bar` will resolve to `foo`, if this variable is set to `FOO`,
