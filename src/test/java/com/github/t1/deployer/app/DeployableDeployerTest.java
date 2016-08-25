@@ -195,6 +195,80 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     }
 
 
+    @Test
+    public void shouldDeployWebArchiveWithFirstOfTwoOrVariables() {
+        systemProperties.given("fooVersion", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${fooVersion or version}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithSecondOfTwoOrVariables() {
+        systemProperties.given("version", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${fooVersion or version}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithFirstOfThreeOrFunctionVariables() {
+        systemProperties.given("fooName", "FOO");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithSecondOfThreeOrFunctionVariables() {
+        systemProperties.given("barName", "FOO");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithThirdOfThreeOrFunctionVariables() {
+        systemProperties.given("bazName", "FOO");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
     @Test public void shouldFailToReplaceVariableWithNewline() { shouldFailToReplaceVariableWith("foo\nbar"); }
 
     @Test public void shouldFailToReplaceVariableWithOpeningCurly() { shouldFailToReplaceVariableWith("foo{bar"); }
@@ -292,7 +366,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(UnresolvedVariableException.class)
-                .hasMessageContaining("unresolved variable key: undefined");
+                .hasMessageContaining("unresolved variable expression: undefined");
     }
 
 
@@ -352,7 +426,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(UnresolvedVariableException.class)
-                .hasMessageContaining("unresolved variable key: undefined");
+                .hasMessageContaining("unresolved variable expression: toLowerCase(undefined)");
     }
 
 
@@ -524,7 +598,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToUndeployWebArchiveWithWrongChecksum() {
-        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+        givenArtifact("foo").version("1.3.2").deployed();
 
         Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "deployables:\n"

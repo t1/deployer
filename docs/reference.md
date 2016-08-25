@@ -79,6 +79,10 @@ A variable name can contain the name of a function to be applied to the value:
 - `toUpperCase`: Turns the value into all upper case.
 - `toLowerCase`: Turns the value into all lower case.
 
+You can chain variable expressions, by separating them with ` or `.
+E.g. `toLowerCase(foo) or bar` will resolve to `foo`, if this variable is set to `FOO`,
+or fall back to `bar` if `foo` is not set.
+
 
 ## Config
 

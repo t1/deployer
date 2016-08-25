@@ -56,24 +56,27 @@ public class Variables {
         return new StringReader(out.toString());
     }
 
-    private String resolveVariable(String key) {
-        Matcher matcher = FUNCTION.matcher(key);
-        if (!matcher.matches())
-            throw badRequest("unparseable variable key: " + key);
-        String variableName = matcher.group("variable");
-        Function<String, String> function;
-        if (variableName == null) {
-            function = Function.identity();
-            variableName = matcher.group("function");
-        } else {
-            function = function(matcher.group("function"));
+    private String resolveVariable(String expression) {
+        for (String key : expression.split(" or ")) {
+            Matcher matcher = FUNCTION.matcher(key);
+            if (!matcher.matches())
+                throw badRequest("unparseable variable key: " + key);
+            String variableName = matcher.group("variable");
+            Function<String, String> function;
+            if (variableName == null) {
+                function = Function.identity();
+                variableName = matcher.group("function");
+            } else {
+                function = function(matcher.group("function"));
+            }
+            if (variables.containsKey(variableName)) {
+                String value = variables.get(variableName);
+                if (!VARIABLE_VALUE_PATTERN.matcher(value).matches())
+                    throw badRequest("invalid character in variable value for [" + variableName + "]");
+                return function.apply(value);
+            }
         }
-        if (!variables.containsKey(variableName))
-            throw new UnresolvedVariableException(variableName);
-        String value = variables.get(variableName);
-        if (!VARIABLE_VALUE_PATTERN.matcher(value).matches())
-            throw badRequest("invalid character in variable value for [" + variableName + "]");
-        return function.apply(value);
+        throw new UnresolvedVariableException(expression);
     }
 
     private Function<String, String> function(String name) {
@@ -106,11 +109,11 @@ public class Variables {
 
     @ReturnStatus(BAD_REQUEST)
     public static class UnresolvedVariableException extends WebApplicationApplicationException {
-        @Getter private final String variableName;
+        @Getter private final String expression;
 
-        protected UnresolvedVariableException(String variableName) {
-            super("unresolved variable key: " + variableName);
-            this.variableName = variableName;
+        protected UnresolvedVariableException(String expression) {
+            super("unresolved variable expression: " + expression);
+            this.expression = expression;
         }
     }
 }
