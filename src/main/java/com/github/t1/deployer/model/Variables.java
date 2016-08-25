@@ -90,6 +90,8 @@ public class Variables {
             return value -> value.toLowerCase(US);
         case "hostName":
             return this::hostName;
+        case "domainName":
+            return this::domainName;
         default:
             throw badRequest("undefined variable function: [" + name + "]");
         }
@@ -100,6 +102,13 @@ public class Variables {
         if (value != null)
             throw badRequest("the 'hostName' function takes no arguments but found [" + value + "]");
         return InetAddress.getLocalHost().getHostName().split("\\.")[0];
+    }
+
+    @SneakyThrows(UnknownHostException.class)
+    private String domainName(String value) {
+        if (value != null)
+            throw badRequest("the 'domainName' function takes no arguments but found [" + value + "]");
+        return InetAddress.getLocalHost().getHostName().split("\\.", 2)[1];
     }
 
     private BufferedReader buffered(Reader reader) {

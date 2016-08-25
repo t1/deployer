@@ -272,7 +272,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldDeployWebArchiveWithHostnameVariable() throws Exception {
+    public void shouldDeployWebArchiveWithHostNameVariable() throws Exception {
         String hostName = InetAddress.getLocalHost().getHostName().split("\\.")[0];
         ArtifactFixture foo = givenArtifact("foo").groupId(hostName).version("1.3.2");
 
@@ -287,7 +287,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldFailToResolveHostnameWithParameter() throws Exception {
+    public void shouldFailToResolveHostNameWithParameter() throws Exception {
         Throwable thrown = catchThrowable(() -> deployer.apply(""
                 + "deployables:\n"
                 + "  foo:\n"
@@ -297,6 +297,36 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
                 .hasMessageContaining("the 'hostName' function takes no arguments "
+                        + "but found [" + System.getProperty("os.name") + "]");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithDomainNameVariable() throws Exception {
+        String domainName = InetAddress.getLocalHost().getHostName().split("\\.",2)[1];
+        ArtifactFixture foo = givenArtifact("foo").groupId(domainName).version("1.3.2");
+
+        Audits audits = deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${domainName()}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToResolveDomainNameWithParameter() throws Exception {
+        Throwable thrown = catchThrowable(() -> deployer.apply(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${domainName(os.name)}\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("the 'domainName' function takes no arguments "
                         + "but found [" + System.getProperty("os.name") + "]");
     }
 

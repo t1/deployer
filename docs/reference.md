@@ -79,6 +79,7 @@ A variable name can contain the name of a function to be applied to the value:
 - `toUpperCase(value)`: Turns the variable `value` into all upper case.
 - `toLowerCase(value)`: Turns the variable `value` into all lower case.
 - `hostName()`: Returns the DNS name of the local host (without the domain name).
+- `domainName()`: Returns the DNS domain of the local host.
 
 You can chain variable expressions, by separating them with ` or `.
 E.g. `toLowerCase(foo) or bar` will resolve to `foo`, if this variable is set to `FOO`,
