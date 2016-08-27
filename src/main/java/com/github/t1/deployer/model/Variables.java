@@ -120,7 +120,7 @@ public class Variables {
         }
     }
 
-    private static final Pattern LITERAL = Pattern.compile("«(" + VARIABLE_VALUE + ")»");
+    private static final Pattern LITERAL = Pattern.compile("«(\\V*)»");
 
     private class LiteralResolver extends Resolver {
         private final Matcher matcher;
@@ -128,7 +128,7 @@ public class Variables {
         public LiteralResolver(String key) {
             this.matcher = LITERAL.matcher(key);
             this.match = matcher.matches();
-            this.value = match ? checkValue(key, matcher.group(1)) : null;
+            this.value = match ? matcher.group(1) : null;
         }
     }
 
@@ -170,7 +170,7 @@ public class Variables {
             this.match = matcher.matches();
             this.functionName = match ? matcher.group("name") : null;
             this.params = match ? params() : null;
-            this.value = match ? checkValue(expression, resolve()) : null;
+            this.value = match ? resolve() : null;
         }
 
         private List<Supplier<String>> params() {
@@ -185,16 +185,18 @@ public class Variables {
         }
 
         private String resolve() {
-            log.trace("found function name [{}]", functionName);
+            log.trace("found function name [{}] with {} params", functionName, params.size());
             switch (functionName + "#" + params.size()) {
-            case "toUpperCase#1":
-                return apply1(s -> s.toUpperCase(US));
-            case "toLowerCase#1":
-                return apply1(s -> s.toLowerCase(US));
             case "hostName#0":
                 return hostName();
             case "domainName#0":
                 return domainName();
+            case "toUpperCase#1":
+                return apply1(s -> s.toUpperCase(US));
+            case "toLowerCase#1":
+                return apply1(s -> s.toLowerCase(US));
+            case "regex#2":
+                return apply2(this::regex);
             default:
                 throw badRequest(
                         "undefined variable function with " + params.size() + " params: [" + functionName + "]");
@@ -202,12 +204,13 @@ public class Variables {
         }
 
         private String apply1(Function<String, String> function) {
-            return param(0)
-                    .map(function)
-                    .orElseGet(() -> {
-                        match = false;
-                        return null;
-                    });
+            return param(0).map(function).orElseGet(this::fail);
+        }
+
+        private String apply2(BiFunction<String, String, String> function) {
+            Optional<String> param0 = param(0);
+            Optional<String> param1 = param(1);
+            return param0.isPresent() && param1.isPresent() ? function.apply(param0.get(), param1.get()) : fail();
         }
 
         private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
@@ -217,6 +220,16 @@ public class Variables {
 
         @SneakyThrows(UnknownHostException.class)
         private String domainName() { return InetAddress.getLocalHost().getHostName().split("\\.", 2)[1]; }
+
+        private String regex(String text, String pattern) {
+            Matcher matcher = Pattern.compile(pattern).matcher(text);
+            return matcher.matches() ? matcher.group(1) : fail();
+        }
+
+        private String fail() {
+            match = false;
+            return null;
+        }
     }
 
     private static List<String> split(String expression, String pattern) {

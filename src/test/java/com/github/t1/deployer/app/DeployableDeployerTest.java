@@ -356,6 +356,34 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     }
 
 
+    @Test
+    public void shouldDeployWebArchiveWithRegexSuffix() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${regex(«org.foo01», «(.*?)\\d*»)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithRegexPrefix() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${regex(«qa.org.foo», «(?:qa\\.)(.*?)»)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
     @Test public void shouldFailToReplaceVariableWithNewline() { shouldFailToReplaceVariableWith("foo\nbar"); }
 
     @Test public void shouldFailToReplaceVariableWithOpeningCurly() { shouldFailToReplaceVariableWith("foo{bar"); }

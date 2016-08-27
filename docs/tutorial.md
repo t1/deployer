@@ -271,3 +271,27 @@ and use them as `${myvar}`. Note that this is especially useful if a value can c
 
 ## Application Schema Bundles
 
+
+
+## Default Root Bundle
+
+If there is no file `deployer.root.bundle`, a [default root bundle](reference#Default Root Bundle) applies.
+This is how it works:
+
+Say you have a host `myhost.mydomain.org`.
+Create a bundle artifact with `artifact-id` = `myhost` and `group-id` = `mydomain.org`
+and pass the `version` to the POST. Done!
+This works even if your host names end with digits, which is a common pattern for node names in a cluster,
+i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`, as trailing digits are stripped.
+
+As domain names are often very generic, like `local` or `server.lan`,
+it's generally better to use the [`default.group-id`](Default Group-Id).
+If you already need a different `default.group-id`, you can define a `root-bundle-name` variable.
+
+If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them, too,
+by setting a variable `bundle-to-host-name` to `(.*?)(dev|qa)?\d*` for suffixes or `(?:dev|qa)?(.*?)\d*` for prefixes.
+The first capturing group of the expression is used, so remember to mark ay leading groups as non-capturing
+by using `(?:X)`, as shown for the prefix.
+
+If your host names are very technical and/or change very often,
+you may be better off to configure an explicit `root-bundle-name` variable.

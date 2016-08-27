@@ -76,10 +76,12 @@ or if the resulting plan has unresolved variables.
 
 A variable name can contain the name of a function to be applied to the value:
 
+- `«x»`: The literal string `x` – useful for, e.g., ` or ` expressions. This quote type has the advantage of being nestable.
 - `toUpperCase(x)`: Turns the value of the variable `x` into all upper case.
 - `toLowerCase(x)`: Turns the value of the variable `x` into all lower case.
 - `hostName()`: Returns the DNS name of the local host (without the domain name).
 - `domainName()`: Returns the DNS domain of the local host.
+- `regex(a, b)`: Apply the regular expression `b` to `a`, returning the first matching group.
 
 You can chain variable expressions, by separating them with ` or `.
 E.g. `toLowerCase(foo) or bar` will resolve to `foo`, if this variable is set to `FOO`,
@@ -92,21 +94,10 @@ If there is no file `deployer.root.bundle`, the following default applies:
 
 ```yaml
 bundles:
-  ${default.root-bundle-name or hostName()}:
-    group-id: ${default.root-bundle-group or default.group-id or domainName()}
+  ${regex(root-bundle-name or hostName(), bundle-to-host-name or «(.*?)\d*»)}:
+    group-id: ${root-bundle-group or default.group-id or domainName()}
     version: ${version}
 ```
-
-So you if you have a bundle artifact with `artifact-id` = `myhost` and `group-id` = `mydomain.org`
-and pass the `version` to the POST, you're ready to go.
-
-If your host names are very technical and/or change very often,
-you may be better off to [configure](#vars) a `default.root-bundle-name` variable.
-
-If your domain names are very generic, like `local` or `server.lan`,
-you may be better off to [configure](#vars) a `default.group-id` variable.
-If you already need a different default `group-id`, you can use the `default.root-bundle-name` variable.
-
 
 ## Config
 

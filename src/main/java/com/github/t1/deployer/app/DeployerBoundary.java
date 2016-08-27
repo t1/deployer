@@ -29,8 +29,8 @@ public class DeployerBoundary {
     public static final String ROOT_BUNDLE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
             + "bundles:\n"
-            + "  ${default.root-bundle-name or hostName()}:\n"
-            + "    group-id: ${default.root-bundle-group or default.group-id or domainName()}\n"
+            + "  ${regex(root-bundle-name or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:\n"
+            + "    group-id: ${root-bundle-group or default.group-id or domainName()}\n"
             + "    version: ${version}\n";
 
     public static java.nio.file.Path getRootBundlePath() { return getConfigPath(ROOT_BUNDLE); }
