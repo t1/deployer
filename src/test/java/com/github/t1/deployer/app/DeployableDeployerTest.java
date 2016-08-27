@@ -272,7 +272,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldDeployWebArchiveWithHostNameVariable() throws Exception {
+    public void shouldDeployWebArchiveWithHostNameFunction() throws Exception {
         String hostName = InetAddress.getLocalHost().getHostName().split("\\.")[0];
         ArtifactFixture foo = givenArtifact("foo").groupId(hostName).version("1.3.2");
 
@@ -287,7 +287,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldFailToResolveHostNameWithParameter() throws Exception {
+    public void shouldFailToResolveHostNameFunctionWithParameter() throws Exception {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
@@ -296,13 +296,12 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("the 'hostName' function takes no arguments "
-                        + "but found [" + System.getProperty("os.name") + "]");
+                .hasMessageContaining("undefined variable function with 1 params: [hostName]");
     }
 
 
     @Test
-    public void shouldDeployWebArchiveWithDomainNameVariable() throws Exception {
+    public void shouldDeployWebArchiveWithDomainNameFunction() throws Exception {
         String domainName = InetAddress.getLocalHost().getHostName().split("\\.", 2)[1];
         ArtifactFixture foo = givenArtifact("foo").groupId(domainName).version("1.3.2");
 
@@ -315,9 +314,8 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
         foo.verifyDeployed(audits);
     }
 
-
     @Test
-    public void shouldFailToResolveDomainNameWithParameter() throws Exception {
+    public void shouldFailToResolveDomainNameFunctionWithParameter() throws Exception {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
@@ -326,8 +324,35 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("the 'domainName' function takes no arguments "
-                        + "but found [" + System.getProperty("os.name") + "]");
+                .hasMessageContaining("undefined variable function with 1 params: [domainName]");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithStringLiteral() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${undefined or «org.foo»}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithOrParam() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${undefined0 or toLowerCase(undefined1 or «org.FOO»)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
     }
 
 
@@ -342,6 +367,8 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     @Test public void shouldFailToReplaceVariableWithCurlies() { shouldFailToReplaceVariableWith("{}"); }
 
     @Test public void shouldFailToReplaceVariableWithAsterisk() { shouldFailToReplaceVariableWith("foo*bar"); }
+
+    @Test public void shouldFailToReplaceFunctionWithLeadingStar() { shouldFailToReplaceVariableWith("*foo(bar)"); }
 
     private void shouldFailToReplaceVariableWith(String value) {
         systemProperties.given("foo", value);
@@ -475,16 +502,31 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("undefined variable function: [bar]");
+                .hasMessageContaining("undefined variable function with 1 params: [bar]");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithVariableFunctionMissingParam() {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  ${toLowerCase()}:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("undefined variable function with 0 params: [toLowerCase]");
     }
 
     @Test
     public void shouldFailToDeployWebArchiveWithUndefinedFunctionVariable() {
-        Throwable thrown = catchThrowable(() -> deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: ${toLowerCase(undefined)}\n"));
+        Throwable thrown = catchThrowable(() ->
+                deploy(""
+                        + "deployables:\n"
+                        + "  foo:\n"
+                        + "    group-id: org.foo\n"
+                        + "    version: ${toLowerCase(undefined)}\n"));
 
         assertThat(thrown)
                 .isInstanceOf(UnresolvedVariableException.class)
