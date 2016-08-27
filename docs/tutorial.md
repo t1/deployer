@@ -256,21 +256,17 @@ Note that this doesn't work for bundles, as they are not actually deployed in th
 ## Default Group-Id
 
 One thing you'll be repeating all over the place, is the `group-id`.
-Put this section into the `deployer.config.yaml`:
+Put this section into the `deployer.config.yaml`, instead:
 
 ```yaml
 vars:
   default.group-id: mygroup
 ```
 
-Then can now simply remove this `group-id` throughout your configuration files.
+Then can simply remove this `group-id` throughout your configuration files.
 
 If you find that you often repeat other values, you can also add them to the `vars` section
-and use them as `${myvar}`. Note that this is especially useful if a value can change some time.
-
-
-## Application Schema Bundles
-
+and use them as `${myvar}`. Note that this is especially useful if a value may change some time.
 
 
 ## Default Root Bundle
@@ -295,3 +291,8 @@ by using `(?:X)`, as shown for the prefix.
 
 If your host names are very technical and/or change very often,
 you may be better off to configure an explicit `root-bundle-name` variable.
+
+
+## Application Schema Bundles
+
+Now that you know all the parts, you
