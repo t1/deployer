@@ -275,7 +275,7 @@ and use them as `${myvar}`. Note that this is especially useful if a value can c
 
 ## Default Root Bundle
 
-If there is no file `deployer.root.bundle`, a [default root bundle](reference#Default Root Bundle) applies.
+If there is no file `deployer.root.bundle`, a [default root bundle](reference.md#default-root-bundle) applies.
 This is how it works:
 
 Say you have a host `myhost.mydomain.org`.
@@ -285,7 +285,7 @@ This works even if your host names end with digits, which is a common pattern fo
 i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`, as trailing digits are stripped.
 
 As domain names are often very generic, like `local` or `server.lan`,
-it's generally better to use the [`default.group-id`](Default Group-Id).
+it's generally better to use the [`default.group-id`](#default-group-id).
 If you already need a different `default.group-id`, you can define a `root-bundle-name` variable.
 
 If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them, too,
