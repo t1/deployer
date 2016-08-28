@@ -33,11 +33,7 @@ public class DeployerBoundary {
             + "    group-id: ${root-bundle-group or default.group-id or domainName()}\n"
             + "    version: ${version}\n";
 
-    public static java.nio.file.Path getRootBundlePath() { return getConfigPath(ROOT_BUNDLE); }
-
-    public static java.nio.file.Path getConfigPath(String fileName) {
-        return Paths.get(System.getProperty("jboss.server.config.dir"), fileName);
-    }
+    public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
 
     @GET
     public ConfigurationPlan getEffectivePlan() { return new Run().read(); }

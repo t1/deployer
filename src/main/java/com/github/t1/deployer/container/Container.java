@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.nio.file.*;
 import java.util.List;
 
 @Slf4j
@@ -15,6 +16,8 @@ import java.util.List;
 @Stateless
 public class Container {
     @Inject public CLI cli;
+
+    public Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
 
     public LogHandlerResourceBuilder logHandler(LogHandlerType type, LogHandlerName name) {
         return LogHandlerResource.builder(type, name, cli);

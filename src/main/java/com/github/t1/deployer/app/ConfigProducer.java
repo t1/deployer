@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.RepositoryType;
 import lombok.*;
@@ -11,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Produces;
-import javax.inject.Singleton;
+import javax.inject.*;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
@@ -20,7 +21,6 @@ import java.util.*;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
-import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.tools.Tools.*;
 import static lombok.AccessLevel.*;
 
@@ -73,8 +73,11 @@ public class ConfigProducer {
 
     private DeployerConfig config = DEFAULT_CONFIG;
 
-    public ConfigProducer() {
-        Path path = getConfigPath(DEPLOYER_CONFIG_YAML);
+    @Inject Container container;
+
+    @PostConstruct
+    public void initConfig() {
+        Path path = container.getConfigDir().resolve(DEPLOYER_CONFIG_YAML);
         if (Files.isRegularFile(path)) {
             log.info("load deployer config from '" + path + "'");
             try (Reader reader = Files.newBufferedReader(path)) {
@@ -88,7 +91,10 @@ public class ConfigProducer {
         } else {
             log.info("no deployer config file at '" + path + "'");
         }
+        if (config.getVariables() != null)
+            config.getVariables().forEach(System::setProperty);
     }
+
 
     private DeployerConfig.RepositoryConfig getRepository() {
         return nvl(config.getRepository(), DEFAULT_CONFIG.getRepository());
@@ -115,11 +121,4 @@ public class ConfigProducer {
 
     @Produces @Config("managed.resources")
     public List<String> managedResources() { return config.getManagedResourceNames(); }
-
-
-    @PostConstruct
-    public void init() {
-        if (config.getVariables() != null)
-            config.getVariables().forEach(System::setProperty);
-    }
 }

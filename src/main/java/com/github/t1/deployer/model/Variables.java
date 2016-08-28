@@ -9,11 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.*;
 import java.util.function.*;
 import java.util.regex.*;
 
 import static com.github.t1.problem.WebException.*;
+import static java.util.Arrays.*;
 import static java.util.Locale.*;
 import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -80,27 +82,20 @@ public class Variables {
         @Override public String toString() { return getClass().getSimpleName() + ":" + match + ":" + value; }
     }
 
+    private static final List<Class<? extends Resolver>> RESOLVERS
+            = asList(LiteralResolver.class, FunctionResolver.class, VariableResolver.class);
+
     private class OrResolver extends Resolver {
         public OrResolver(String expression) {
             for (String key : split(expression, " or ")) {
                 log.trace("try to resolve variable expression [{}]", key);
-                Resolver resolver = create(LiteralResolver.class, key);
-                if (resolver.isMatch()) {
-                    this.match = true;
-                    this.value = resolver.getValue();
-                    return;
-                }
-                resolver = create(FunctionResolver.class, key);
-                if (resolver.isMatch()) {
-                    this.match = true;
-                    this.value = resolver.getValue();
-                    return;
-                }
-                resolver = create(VariableResolver.class, key);
-                if (resolver.isMatch()) {
-                    this.match = true;
-                    this.value = resolver.getValue();
-                    return;
+                for (Class<? extends Resolver> resolverType : RESOLVERS) {
+                    Resolver resolver = create(resolverType, key);
+                    if (resolver.isMatch()) {
+                        this.match = true;
+                        this.value = resolver.getValue();
+                        return;
+                    }
                 }
             }
             this.match = false;

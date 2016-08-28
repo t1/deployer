@@ -10,7 +10,6 @@ import javax.management.*;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.*;
-import java.nio.file.*;
 
 import static com.github.t1.log.LogLevel.*;
 
@@ -19,9 +18,6 @@ import static com.github.t1.log.LogLevel.*;
 @ApplicationScoped
 public class ContainerProducer implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    private static final String JBOSS_SERVER_CONFIG = System.getProperty("jboss.server.config.dir");
-    static Path CONFIG_FILE = Paths.get(JBOSS_SERVER_CONFIG, "deployer.war").resolve("config.json").toAbsolutePath();
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
     private static final String SOCKET_BINDING =

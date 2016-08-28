@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.DeployerIT;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
@@ -24,7 +25,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
-import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
@@ -40,13 +40,12 @@ import static org.mockito.Mockito.*;
 
 public class AbstractDeployerTest {
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
-
     @Rule public FileMemento rootBundle = new FileMemento(this::rootBundlePath);
 
     @SneakyThrows(IOException.class)
     private Path rootBundlePath() {
         systemProperties.given("jboss.server.config.dir", Files.createTempDirectory("deployer.test"));
-        return getRootBundlePath();
+        return DeployerIT.ROOT_BUNDLE_PATH.get();
     }
 
     @SneakyThrows(IOException.class)

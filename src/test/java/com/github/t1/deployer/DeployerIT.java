@@ -21,7 +21,9 @@ import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.*;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
@@ -38,6 +40,8 @@ import static org.junit.Assume.*;
 @RunWith(Arquillian.class)
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
+    public static final Supplier<Path> ROOT_BUNDLE_PATH = () ->
+            Paths.get(System.getProperty("jboss.server.config.dir")).resolve(ROOT_BUNDLE);
     private static final boolean USE_ARTIFACTORY_MOCK = true;
 
     private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it.war");
@@ -138,7 +142,7 @@ public class DeployerIT {
 
     @SneakyThrows(IOException.class)
     public Response post(String plan, Entity<?> entity, Status expectedStatus) {
-        try (FileMemento memento = new FileMemento(getRootBundlePath()).setup()) {
+        try (FileMemento memento = new FileMemento(ROOT_BUNDLE_PATH).setup()) {
             memento.write(plan);
 
             Response response = ClientBuilder

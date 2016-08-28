@@ -11,7 +11,7 @@ The key is the `name` of the deployment, i.e. a `war` named `foo` will be deploy
 so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [`manage`](#manage).
-- `group-id`: Defaults to the variable `default.group-id` (see below).
+- `group-id`: Defaults to the variable [`default.group-id`](#vars).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Defaults to `CURRENT`, which is the currently deployed version of this artifact.
 - `type`: `war` or `jar`. Defaults to `war`.
@@ -22,7 +22,7 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 
 The key is the `name` of the bundle. 
 
-- `group-id`: Defaults to the variable `default.group-id` (see below).
+- `group-id`: Defaults to the variable [`default.group-id`](#vars).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
 - `vars`: The map of variables passed into a `bundle`; forbidden for other types. Defaults to an empty map.
@@ -33,7 +33,7 @@ The key is the `name` of the bundle.
 The key is the `name` of the log handler. This is conventionally an upper case string.
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
-- `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
+- `level`: The [log level](#log-levels). Defaults to `ALL`.
 - `type`: One of `console`, `periodic-rotating-file`, or `custom`. Defaults to `periodic-rotating-file`.
 - `format`: The format used for log lines. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`.
 - `formatter`: Alternative to `format`: The name of a named formatter. Wildfly 10.0.0 defines: `PATTERN` and `COLOR-PATTERN`.
@@ -53,7 +53,7 @@ Only for `custom`:
 The key is the `category` of the logger, usually the fully qualified name of the class producing the logs. 
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
-- `level`: The log level; one of `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or `OFF`. Defaults to `ALL`.
+- `level`: The [log level](#log-levels). Defaults to `default.log-level or «DEBUG»`.
 - `handlers`: A list of log handler names. Defaults to an empty list.
 - `handler`: Alternative syntax for a single log handler name. Defaults to an empty list.
 - `use-parent-handlers`: Should the log handlers of the parent logger be used?
@@ -143,7 +143,9 @@ Defaults to an empty list, i.e. things are left alone.
 
 ### Log Levels
 
-The deployer uses the log levels of [slf4j](http://www.slf4j.org).
+The deployer uses the log levels of [slf4j](http://www.slf4j.org):
+`ALL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`, and `OFF`.
+
 The JBoss CLI additionally allows log levels from Java Util Logging,
 so when reading these levels, The Deployer maps them as follows:
 

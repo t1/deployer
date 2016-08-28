@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.Password;
 import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.testtools.*;
@@ -25,6 +26,13 @@ public class DeployerConfigSerializationTest {
         return Paths.get(folder.getRoot().getPath(), DEPLOYER_CONFIG_YAML);
     });
 
+    public ConfigProducer loadConfig() {
+        ConfigProducer configProducer = new ConfigProducer();
+        configProducer.container = new Container();
+        configProducer.initConfig();
+        return configProducer;
+    }
+
     private static void assertRepository(ConfigProducer producer, RepositoryType repositoryType, URI uri,
             String username, Password password) {
         assertThat(producer.repositoryType()).isEqualTo(repositoryType);
@@ -38,7 +46,7 @@ public class DeployerConfigSerializationTest {
     public void shouldReturnToDefaultWithoutConfigFile() throws Exception {
         // given no file
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, null, null, null, null);
     }
@@ -47,7 +55,7 @@ public class DeployerConfigSerializationTest {
     public void shouldReturnToDefaultWithEmptyConfigFile() throws Exception {
         configFile.write("---\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, null, null, null, null);
     }
@@ -58,7 +66,7 @@ public class DeployerConfigSerializationTest {
                 + "#comment\n"
                 + "other: true\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, null, null, null, null);
     }
@@ -68,7 +76,7 @@ public class DeployerConfigSerializationTest {
         configFile.write(""
                 + "repository:\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, null, null, null, null);
     }
@@ -79,7 +87,7 @@ public class DeployerConfigSerializationTest {
                 + "repository:\n"
                 + "  type: artifactory\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, artifactory, null, null, null);
     }
@@ -90,7 +98,7 @@ public class DeployerConfigSerializationTest {
                 + "repository:\n"
                 + "  uri: " + DUMMY_URI + "\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, null, DUMMY_URI, null, null);
     }
@@ -102,7 +110,7 @@ public class DeployerConfigSerializationTest {
                 + "  type: artifactory\n"
                 + "  uri: " + DUMMY_URI + "\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, artifactory, DUMMY_URI, null, null);
     }
@@ -116,7 +124,7 @@ public class DeployerConfigSerializationTest {
                 + "  username: joe\n"
                 + "  password: " + SECRET.getValue() + "\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertRepository(producer, artifactory, DUMMY_URI, "joe", SECRET);
     }
@@ -128,7 +136,7 @@ public class DeployerConfigSerializationTest {
                 + "vars:\n"
                 + "  default.group-id: foo\n");
 
-        new ConfigProducer().init();
+        loadConfig();
 
         assertThat(System.getProperty("default.group-id")).isEqualTo("foo");
     }
@@ -140,7 +148,7 @@ public class DeployerConfigSerializationTest {
                 + "managed:\n"
                 + "- deployables\n");
 
-        ConfigProducer producer = new ConfigProducer();
+        ConfigProducer producer = loadConfig();
 
         assertThat(producer.managedResources()).containsExactly("deployables");
     }
