@@ -5,12 +5,13 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import org.junit.Test;
 
-import java.io.StringReader;
+import java.io.*;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class ConfigurationPlanSerializationTest {
     private static final DeployableConfig FOO = DeployableConfig
@@ -21,6 +22,11 @@ public class ConfigurationPlanSerializationTest {
             .artifactId(new ArtifactId("foo-war"))
             .version(new Version("1"))
             .build();
+    private static Variables variables = mock(Variables.class);
+
+    static {
+        when(variables.resolve(any(Reader.class))).then(invocation -> invocation.getArgument(0));
+    }
 
 
     @Test
@@ -34,7 +40,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializeEmptyPlan() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader("{}"));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader("{}"));
 
         assertThat(plan).isEqualTo(ConfigurationPlan.builder().build());
     }
@@ -55,7 +61,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneDeployment() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(ONE_DEPLOYMENT_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_DEPLOYMENT_YAML));
 
         assertThat(plan).isEqualTo(ONE_DEPLOYMENT_PLAN);
     }
@@ -96,7 +102,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithTwoDeployments() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(TWO_DEPLOYMENTS_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(TWO_DEPLOYMENTS_YAML));
 
         assertThat(plan).isEqualTo(TWO_DEPLOYMENTS_PLAN);
     }
@@ -131,7 +137,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(BUNDLE_PLAN_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(BUNDLE_PLAN_YAML));
 
         assertThat(plan).isEqualTo(BUNDLE_PLAN);
     }
@@ -165,7 +171,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogger() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(ONE_LOGGER_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGGER_YAML));
 
         assertThat(plan).isEqualTo(ONE_LOGGER_PLAN);
     }
@@ -202,7 +208,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(ONE_LOGHANDLER_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGHANDLER_YAML));
 
         assertThat(plan).isEqualTo(ONE_LOGHANDLER_PLAN);
     }
@@ -238,7 +244,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithCustomLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(new StringReader(CUSTOM_HANDLER_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(CUSTOM_HANDLER_YAML));
 
         assertThat(plan).isEqualTo(CUSTOM_HANDLER_PLAN);
     }
@@ -252,7 +258,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutModule() throws Exception {
-        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
+        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(variables, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: INFO\n"
@@ -265,7 +271,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutClass() throws Exception {
-        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(new StringReader(""
+        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(variables, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: INFO\n"

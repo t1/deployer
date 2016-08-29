@@ -122,7 +122,7 @@ public class DeployerBoundary {
 
         private void apply(Reader reader, String message) {
             try {
-                this.apply(ConfigurationPlan.load(variables.resolve(reader)));
+                this.apply(ConfigurationPlan.load(variables, reader));
             } catch (WebApplicationApplicationException e) {
                 log.info(message);
                 throw e;

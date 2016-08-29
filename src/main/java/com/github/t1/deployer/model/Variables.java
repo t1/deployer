@@ -54,7 +54,7 @@ public class Variables {
                     out.append(line.substring(matcher.start() + 1, matcher.end()));
                 } else {
                     String expression = matcher.group(1);
-                    String value = resolveVariable(expression);
+                    String value = resolveExpression(expression);
                     if (value == null)
                         throw new UnresolvedVariableException(expression);
                     out.append(value);
@@ -67,7 +67,7 @@ public class Variables {
         return new StringReader(out.toString());
     }
 
-    private String resolveVariable(String expression) {
+    public String resolveExpression(String expression) {
         Resolver resolver = new OrResolver(expression);
         if (resolver.isMatch())
             return resolver.getValue();

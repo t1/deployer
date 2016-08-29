@@ -5,15 +5,12 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Variables.UnresolvedVariableException;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.net.InetAddress;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static org.assertj.core.api.Assertions.*;
 
-@RunWith(MockitoJUnitRunner.class)
 public class DeployableDeployerTest extends AbstractDeployerTest {
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 

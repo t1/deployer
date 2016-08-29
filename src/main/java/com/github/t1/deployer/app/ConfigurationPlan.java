@@ -58,15 +58,20 @@ public class ConfigurationPlan {
 
     private static final ConfigurationPlan EMPTY_PLAN = ConfigurationPlan.builder().build();
 
-    public static ConfigurationPlan load(Reader reader) {
+    private static Variables variables = null;
+
+    synchronized public static ConfigurationPlan load(Variables variables, Reader reader) {
+        ConfigurationPlan.variables = variables;
         try {
-            ConfigurationPlan plan = YAML.readValue(reader, ConfigurationPlan.class);
+            ConfigurationPlan plan = YAML.readValue(variables.resolve(reader), ConfigurationPlan.class);
             if (plan == null)
                 plan = EMPTY_PLAN;
             log.debug("config plan loaded:\n{}", plan);
             return plan;
         } catch (IOException e) {
             throw new ConfigurationPlanLoadingException("exception while loading config plan", e);
+        } finally {
+            ConfigurationPlan.variables = null;
         }
     }
 
@@ -303,7 +308,7 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("no config in logger '" + category + "'");
             LoggerConfigBuilder builder = builder().category(category);
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
+            apply(node, "level", null, value -> builder.level(logLevel(value)));
             apply(node, "handler", null, builder::handler);
             if (node.has("handlers")) {
                 Iterator<JsonNode> handlers = node.get("handlers").elements();
@@ -317,6 +322,10 @@ public class ConfigurationPlan {
                     builder.useParentHandlers(Boolean.valueOf(value));
                 });
             return builder.build().validate();
+        }
+
+        private static LogLevel logLevel(String value) {
+            return LogLevel.valueOf((value == null) ? variables.resolveExpression("default.log-level or «DEBUG»") : value);
         }
 
         public static class LoggerConfigBuilder {
@@ -337,8 +346,6 @@ public class ConfigurationPlan {
         }
 
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
-
-        public LogLevel getLevel() { return (level == null) ? ALL : level; }
 
         @Override public String toString() {
             return "«logger:" + getState() + ":" + category + ":" + getLevel() + ":"
@@ -371,7 +378,7 @@ public class ConfigurationPlan {
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", null, value -> builder.level((value == null) ? null : LogLevel.valueOf(value)));
+            apply(node, "level", null, value -> builder.level((value == null) ? ALL : LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.getTypeName(), value ->
                     builder.type(LogHandlerType.valueOfTypeName(value)));
             String defaultFormat = node.has("formatter") ? null : DEFAULT_LOG_FORMAT;
@@ -420,8 +427,6 @@ public class ConfigurationPlan {
         }
 
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
-
-        public LogLevel getLevel() { return (level == null) ? ALL : level; }
 
         @Override public String toString() {
             return "«log-handler:" + getState() + ":" + type + ":" + name + ":" + getLevel()

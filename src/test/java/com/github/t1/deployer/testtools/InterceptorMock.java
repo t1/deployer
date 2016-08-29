@@ -1,6 +1,5 @@
 package com.github.t1.deployer.testtools;
 
-import org.mockito.internal.util.MockUtil;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.*;
 
@@ -11,6 +10,7 @@ import java.util.Map;
 
 import static java.util.Collections.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.internal.util.MockUtil.*;
 
 /** Adds an {@link Interceptor} around a target object by using Mockito. */
 public class InterceptorMock<T> {
@@ -31,8 +31,7 @@ public class InterceptorMock<T> {
     @SuppressWarnings("unchecked")
     private Class<T> type(T target) {
         if (mockingDetails(target).isMock()) {
-            // getTypeToMock should be supplied by MockingDetails
-            return new MockUtil().getMockSettings(target).getTypeToMock();
+            return getMockSettings(target).getTypeToMock();
         } else {
             return (Class<T>) target.getClass();
         }
@@ -68,9 +67,8 @@ public class InterceptorMock<T> {
 
     private Object[] args(int n) {
         Object[] args = new Object[n];
-        for (int i = 0; i < n; i++) {
-            args[i] = anyObject();
-        }
+        for (int i = 0; i < n; i++)
+            args[i] = any();
         return args;
     }
 

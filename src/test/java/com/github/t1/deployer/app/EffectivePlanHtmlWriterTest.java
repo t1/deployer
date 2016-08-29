@@ -35,6 +35,7 @@ public class EffectivePlanHtmlWriterTest {
                         .builder()
                         .category(LoggerCategory.of("org.foo"))
                         .handler("FOO")
+                        .level(ALL)
                         .build())
                 .deployable(DeployableConfig
                         .builder()
@@ -56,7 +57,7 @@ public class EffectivePlanHtmlWriterTest {
 
         writer.writeTo(plan, ConfigurationPlan.class, ConfigurationPlan.class, null, TEXT_HTML_TYPE, null, out);
 
-        URI expected = Paths.get("src/test/java/com/github/t1/deployer/app/expected.html").toUri();
+        URI expected = Paths.get("src/test/java/com/github/t1/deployer/app/expected-plan.html").toUri();
         assertThat(out.toString()).isEqualTo(contentOf(expected.toURL()));
     }
 }

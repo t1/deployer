@@ -1,14 +1,11 @@
 package com.github.t1.deployer.app;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddEmptyLoggers() {
@@ -80,8 +77,22 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldAddLoggerWithoutLevel() {
-        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(ALL);
+    public void shouldAddLoggerWithDefaultLevel() {
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG);
+
+        Audits audits = deploy(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app:\n"
+                + "    state: deployed\n");
+
+        logger.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddLoggerWithDefaultVariableLevel() {
+        systemProperties.given("default.log-level", "WARN");
+        LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(WARN);
 
         Audits audits = deploy(""
                 + "loggers:\n"

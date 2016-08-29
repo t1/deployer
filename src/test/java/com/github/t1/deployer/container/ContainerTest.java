@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
-import java.util.*;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.container.LoggerCategory.*;
@@ -31,8 +30,6 @@ public class ContainerTest {
     @Mock
     ModelControllerClient client;
 
-    private Map<String, String> loggers = new LinkedHashMap<>();
-
     @Before
     @SneakyThrows(IOException.class)
     public void setup() {
@@ -51,8 +48,6 @@ public class ContainerTest {
                         + "        ],\n"
                         + "        \"level\" => \"" + ROOT_LEVEL + "\"\n"
                         + "    }")));
-        when(client.execute(eq(readLoggersCli("*")), any(OperationMessageHandler.class)))
-                .then(invocation -> ModelNode.fromString(successCli(readLoggersCliResult())));
     }
 
     private static String successCli(String result) {
@@ -96,7 +91,6 @@ public class ContainerTest {
 
     @SneakyThrows(IOException.class)
     private void givenLogger(String category, String level, boolean useParentHandlers, String... handlers) {
-        this.loggers.put(category, level);
         when(client.execute(eq(readLoggersCli(category)), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString(successCli("{" + logger(level, useParentHandlers, handlers) + "}")));
     }
@@ -107,25 +101,6 @@ public class ContainerTest {
         node.get("operation").set("read-resource");
         node.get("recursive").set(true);
         return node;
-    }
-
-    private String readLoggersCliResult() {
-        StringBuilder out = new StringBuilder();
-        out.append("[");
-        for (Map.Entry<String, String> logger : loggers.entrySet()) {
-            if (out.length() > 1)
-                out.append(", ");
-            out.append("{")
-               .append("\"address\" => [")
-               .append("(\"subsystem\" => \"logging\"),")
-               .append("(\"logger\" => \"").append(logger.getKey()).append("\")")
-               .append("],");
-            out.append("\"outcome\" => \"success\","
-                    + "\"result\" => {").append(logger(logger.getValue(), true)).append("}\n");
-            out.append("}");
-        }
-        out.append("]");
-        return out.toString();
     }
 
     private ModelNode verifyExecute(ModelNode node) throws IOException {

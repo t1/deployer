@@ -84,7 +84,7 @@ A variable name can contain the name of a function to be applied to the value:
 - `regex(a, b)`: Apply the regular expression `b` to `a`, returning the first matching group.
 
 You can chain variable expressions, by separating them with ` or `.
-E.g. `toLowerCase(foo) or bar` will resolve to `foo`, if this variable is set to `FOO`,
+E.g. `toLowerCase(foo) or bar` will resolve to `baz`, if the variable `foo` is set to `BAZ`,
 or fall back to `bar` if `foo` is not set.
 
 
@@ -127,8 +127,9 @@ Special values:
 | name | usage |
 | --- | --- |
 | default.group-id | `group-id` to be used, if none is specified. |
-| default.root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
-| default.root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
+| default.log-level | `level` to be used for `loggers` (not `log-handlers`!), if none is specified. |
+| root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
+| root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
 
 
 ### `manage`

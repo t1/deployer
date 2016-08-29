@@ -15,14 +15,15 @@ import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
+import org.junit.runner.RunWith;
 import org.mockito.*;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.enterprise.inject.Instance;
 import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
@@ -38,6 +39,7 @@ import static org.apache.commons.lang3.concurrent.ConcurrentUtils.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AbstractDeployerTest {
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
     @Rule public FileMemento rootBundle = new FileMemento(this::rootBundlePath);
@@ -100,11 +102,11 @@ public class AbstractDeployerTest {
                 = new Audits();
 
         //noinspection unchecked
-        doAnswer(i -> {
-            asList(logHandlerDeployer, loggerDeployer, deployableDeployer)
-                    .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
-            return null;
-        }).when(deployers).forEach(any(Consumer.class));
+        // doAnswer(i -> {
+        //     asList(logHandlerDeployer, loggerDeployer, deployableDeployer)
+        //             .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
+        //     return null;
+        // }).when(deployers).forEach(any(Consumer.class));
 
         when(deploymentManager.newDeploymentPlan()).then(i -> planBuilder);
 
@@ -153,6 +155,8 @@ public class AbstractDeployerTest {
     private ModelNode allDeploymentsResponse() {
         return toModelNode(allDeployments.stream().collect(joining(",", "[", "]")));
     }
+
+    @Test public void dummyTestToStopJUnitFromComplainingAboutMissingTestsInAbstractDeployerTest() {}
 
     @After
     public void after() {

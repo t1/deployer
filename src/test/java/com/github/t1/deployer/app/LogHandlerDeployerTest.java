@@ -1,14 +1,11 @@
 package com.github.t1.deployer.app;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LogHandlerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldAddEmptyLogHandlers() {

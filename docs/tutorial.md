@@ -13,10 +13,10 @@ This resource provides a concise overview of the relevant configuration without 
 (it may still not be wise to make this information freely available in the internet).
 
 You can GET this data as `application/yaml`, `application/json`, or `text/html`,
-i.e. you can view it as a simple table with your browser.
-Note that this is very simplistic and some information is missing.
+i.e. you can view it as simple tables with your browser.
+Note that this is very simplistic and some information may be missing.
 
-(currently `application/xml` doesn't work... but it seems out-of-fashion anyway ;-)
+(currently `application/xml` doesn't work... but xml seems out-of-fashion anyway ;-)
 
 ## Undeploy & Manage
 
@@ -26,10 +26,10 @@ This is how to get rid again of, e.g., an application.
 
 But how long are you going to keep those undeployed resources in your plans?
 When is it safe to remove that cruft?
-How do you make sure that a freshly set up node looks exactly as one running for years?
+How do you make sure that a freshly set up node looks exactly as a node that's been running for years?
 Manually keeping track of this all is not very infrastructure-as-code-ish.
 
-You can instead tell the deployer to [manage](reference.md#manage) a specific type of resource.
+So you can tell the deployer to [manage](reference.md#manage) a specific type of resource.
 This makes the deployer _remove_ all resources that are _not_ listed.
 
 To do so, add the following snippet to a file `deployer.config.yaml`:
@@ -40,6 +40,7 @@ managed:
 ```
 
 See the section [config](reference.md#config) in the reference for details.
+
 
 ## Configuring Resources
 
@@ -57,6 +58,9 @@ log-handlers:
     file: myapp.log
 ```
 
+See the section [loggers](reference.md#loggers) in the reference for more details.
+
+
 To define a logger (a.k.a. category) for `com.mycompany.myapp` to log to this file, simply add this:
 
 ```yaml
@@ -65,6 +69,9 @@ loggers:
     level: DEBUG
     handler: MYAPP
 ```
+
+See the section [log-handlers](reference.md#log-handlers) in the reference for more details.
+
 
 ## Bundles
 
@@ -106,7 +113,7 @@ They are spread over all the resource types.
 And this will be getting worse as you add more and more apps and more and more resource types.
 The Deployer was designed to keep the resource types together, not the applications they belong to.
 
-To allow for an app centric view, the deployer allows you to group things into so called bundles.
+To take an app centric view, you can group things into so called bundles.
 You already know how bundles look: The `deployer.root.bundle` is one.
 So let's define one bundle for each app above:
 
@@ -126,7 +133,7 @@ deployables:
     version: 1.0
 ```
 
-### `myapp.bundle`
+### `myapp2.bundle`
 
 ```yaml
 log-handlers:
@@ -142,7 +149,7 @@ deployables:
     version: 2.0
 ```
 
-We will include them in the root bundle, after we've published them to our Maven repository:
+If these were in the repository, we could include them in the root bundle as seen before:
 
 ### `deployer.root.bundle`
 
@@ -161,15 +168,25 @@ Note that:
 - The `version` of the bundles is "coincidentally" the `version` of the applications within.
 - The `group-id` of the bundles is "coincidentally" the `group-id` of the applications within.
 
-Now let's get these bundles into a repository:
+So let's get those bundles into the repository:
 
 ## Packaging Bundles
 
-This step is actually completely outside of The Deployer itself, but it's an important step.
-There are many ways to do it; here we build the bundles with the `build-helper-maven-plugin`:
+This procedure is actually completely outside of The Deployer itself, but it's an important step,
+so we'll describe it here. There are actually many ways to do it.
+We _could_ deploy these files with the GUI of the repository, or with a Maven command similar to this:
+
+```
+mvn deploy:deploy-file -DgroupId=mygroup -DartifactId=myapp1 -Dversion=1.0 -Dtype=bundle
+-Durl=http://localhost:8081/artifactory/libs-release-local/mygroup/myapp1/1.0/myapp1-1.0.bundle
+-Dfile=myapp1.bundle
+```
+
+But we'd rather deploy artifacts automatically.
+So we'll build the bundles with the `build-helper-maven-plugin`:
 
 - Create your project directory
-- Create a sub folder `src/main/resrouces`
+- Create a sub folder `src/main/resources`
 - Put your `myapp1.bundle` file in there.
 - And finally add a `pom.xml` like this:
 
@@ -225,7 +242,7 @@ There are many ways to do it; here we build the bundles with the `build-helper-m
 You may also need a `distribution-management` section. Then you can `mvn clean deploy` your bundle.
 
 After you did this for `myapp1` and `myapp2`, you can make the change to the `deployer.root.bundle` described above.
-Your apps should now get deployed and the logging configured.
+Your apps should now get deployed and all the logging be configured.
 
 ## Variables
 
@@ -236,63 +253,137 @@ We'd like to be able to update an application from the _outside_, e.g. from a Je
 To do that, simply replace the `version` of `myapp1` by `${myapp1.version}`.
 Then, using [httpie](http://httpie.org/), you can do:
 
-http --json POST :8080/deployer myapp1.version=1.0
+    http --json POST :8080/deployer myapp1.version=1.0
 
 ... or (more wordy) using CURL:
 
-curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"myapp1.version":"1.0"}' http://localhost:8080/deployer
+    curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"myapp1.version":"1.0"}' http://localhost:8080/deployer
 
-You can use variables for many things, but this is the most common use case.
-
-But we have _two_ artifacts. How should the build job of `myapp1` know about the version of `myapp2`?
-Why should it care about the existence of `myapp2` at all?
+But we have _two_ artifacts. If we replace the second version `2.0` with `${myapp2.version}`,
+how should the build job of `myapp1` know about the version of `myapp2`?
+Why should it even care about the existence of `myapp2` at all?
 
 Easy: Just don't. The default `version` (i.e. the effective `version` for an deployable already deployed) is `CURRENT`,
 which resolves to the version currently installed.
 So while you can't use this for the initial deployment, you _can_ use it to update one deployable, while all others remain the same.
 Note that this doesn't work for bundles, as they are not actually deployed in the container, so there's not CURRENT version for them.
 
-
-## Default Group-Id
-
-One thing you'll be repeating all over the place, is the `group-id`.
-Put this section into the `deployer.config.yaml`, instead:
+The dollar-curlies syntax is used for variables and variable expressions.
+You can use variables for many things, but passing in versions is probably the most common use case.
+Another interesting one is the log level. Maybe you want `DEBUG` on QA, but `INFO` in production.
+But it would be cumbersome to pass this to every POST request.
+Gladly, you can also define variables in the `deployer.config.yaml`; just add this section:
 
 ```yaml
 vars:
-  default.group-id: mygroup
+  default.log-level: DEBUG
 ```
 
-Then can simply remove this `group-id` throughout your configuration files.
+... for the QA stage, and with `INFO` for production.
 
-If you find that you often repeat other values, you can also add them to the `vars` section
-and use them as `${myvar}`. Note that this is especially useful if a value may change some time.
+You now could use `${default.log-level}` in all your `loggers`, but this variable happens to be the default for loggers.
+Only if this variable is _not_ set, it defaults to `DEBUG`.
+
+Another thing you'll be repeating all over the place, is the `group-id`.
+You can also add this to your `deployer.config.yaml`, and then remove the `group-id` throughout your configuration files.
+But there's no other fallback, i.e. if you don't have this variable set, The Deployer will fail with an undefined variable error.
+
+Not all values can be set in this way; e.g., there's no much use in defining a `default.artifact-id`, is it.
+But for a complete list, see the [reference](reference.md#vars).
 
 
 ## Default Root Bundle
 
+Still, something's missing. We still need to copy the root bundle to all nodes to bootstrap or when we add an artifact.
+Wouldn't it be nice to have a way to deploy the root bundle itself?
+Of course there is, but we'll need another level of indirection.
 If there is no file `deployer.root.bundle`, a [default root bundle](reference.md#default-root-bundle) applies.
 This is how it works:
 
 Say you have a host `myhost.mydomain.org`.
-Create a bundle artifact with `artifact-id` = `myhost` and `group-id` = `mydomain.org`
-and pass the `version` to the POST. Done!
+Create a bundle artifact with the bundle you used as a root bundle,
+and deploy it with `artifact-id` = `myhost` and `group-id` = `mydomain.org`.
+Now you can pass the `version` to the POST and your done!
 This works even if your host names end with digits, which is a common pattern for node names in a cluster,
 i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`, as trailing digits are stripped.
 
 As domain names are often very generic, like `local` or `server.lan`,
-it's generally better to use the [`default.group-id`](#default-group-id).
+it's generally better to use the `default.group-id`.
 If you already need a different `default.group-id`, you can define a `root-bundle-name` variable.
 
 If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them, too,
 by setting a variable `bundle-to-host-name` to `(.*?)(dev|qa)?\d*` for suffixes or `(?:dev|qa)?(.*?)\d*` for prefixes.
-The first capturing group of the expression is used, so remember to mark ay leading groups as non-capturing
+The first capturing group of the expression is used, so remember to mark any leading groups as non-capturing
 by using `(?:X)`, as shown for the prefix.
 
 If your host names are very technical and/or change very often,
 you may be better off to configure an explicit `root-bundle-name` variable.
 
 
-## Application Schema Bundles
+## Schema Bundles
 
-Now that you know all the parts, you
+Now that you know all the parts, you should go ahead and use it for a while. 
+To apply things to your own environment is not only an important step to let it sink in,
+it's also critical to feel the need for the next, more advanced topic. Good bye! ;-)
+
+Welcome back! You now probably have several application bundles that look quite similar:
+
+```yaml
+log-handlers:
+  MYAPP:
+    file: myapp.log
+loggers:
+  ${default.group-id}.myapp:
+    level: DEBUG
+    handler: MYAPP
+deployables:
+  myapp:
+    version: 1.0
+```
+
+Not too bad, you may say. There's not so much repetition. You can live with that.
+And you're absolutely right... as long as you only have hand full of applications to manage.
+If you have hundreds of applications, things may start to look different.
+Are you really sure, all of them follow the same scheme?
+What happens, if you have a central change, e.g. add a second log handler to all applications.
+Things like this don't happen too often, but if they do, you wish you had started differently... without even this repetition.
+But... how _can_ you?
+
+Bundles can not only be created for single applications. By passing variables into a bundle, you can reuse them!
+This type of bundles are called schema bundles, but they work technically like any other bundle does.
+For example, create a bundle `apps`:
+
+```yaml
+log-handlers:
+  ${toUpperCase(name)}:
+    type: periodic-rotating-file
+    file: logstash/${name}.log
+    suffix: .yyyy-MM-dd
+    format: "%d{yyyy-MM-dd HH:mm:ss,SSS}|%X{version}|%X{client}|%t|%X{reference}|%c|%p|%s%e%n"
+loggers:
+  ${group-id or default.group-id}.${name}:
+    level: ${log-level or default.log-level or «DEBUG»}
+    handler: ${toUpperCase(name)}
+deployables:
+  ${name}:
+    group-id: ${group-id or default.group-id}
+    version: ${version}
+```
+
+Note the `toUpperCase` [function](reference.md#variables) used in the variable expressions,
+and the ` or ` syntax used to chain potential sub expressions... the first non-null will be picked.
+
+You can use this bundle, as normal, but instead of passing the variables `name` and `version` to the POST request
+or define them in the `deployer.config.yaml`, we'll pass them to the bundle:
+
+```yaml
+bundles:
+  apps:
+    version: 1.0.0-SNAPSHOT
+    vars:
+      name: myapp1
+      version: 1.0
+```
+
+The variables `log-level` and `group-id` can also be passed in, but they are optional.
+

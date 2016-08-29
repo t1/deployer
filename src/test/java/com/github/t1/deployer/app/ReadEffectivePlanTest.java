@@ -4,8 +4,6 @@ import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.Ar
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.LoggerCategory;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,7 +13,6 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ReadEffectivePlanTest extends AbstractDeployerTest {
     private static final LoggerConfig ROOT = LoggerConfig
             .builder()
