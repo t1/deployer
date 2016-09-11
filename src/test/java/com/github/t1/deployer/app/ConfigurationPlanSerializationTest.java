@@ -3,6 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.io.*;
@@ -123,7 +124,8 @@ public class ConfigurationPlanSerializationTest {
                     .groupId(new GroupId("org.foo"))
                     .artifactId(new ArtifactId("foo"))
                     .version(new Version("1"))
-                    .variable("name", "bar")
+                    .instance("bar", ImmutableMap.of("version", "2"))
+                    .instance("baz", ImmutableMap.of("version", "3"))
                     .build())
             .build();
     private static final String BUNDLE_PLAN_YAML = ""
@@ -132,8 +134,11 @@ public class ConfigurationPlanSerializationTest {
             + "    group-id: org.foo\n"
             + "    artifact-id: foo\n"
             + "    version: 1\n"
-            + "    vars:\n"
-            + "      name: bar\n";
+            + "    instances:\n"
+            + "      bar:\n"
+            + "        version: 2\n"
+            + "      baz:\n"
+            + "        version: 3\n";
 
     @Test
     public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {

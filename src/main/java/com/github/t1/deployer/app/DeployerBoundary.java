@@ -141,12 +141,16 @@ public class DeployerBoundary {
         }
 
         private void applyBundle(BundleConfig bundle) {
-            Variables pop = this.variables;
-            try {
-                this.variables = this.variables.withAll(bundle.getVariables());
-                apply(lookup(bundle).getReader(), "can't apply bundle [" + bundle + "]");
-            } finally {
-                this.variables = pop;
+            for (Map.Entry<String, Map<String, String>> instance : bundle.getInstances().entrySet()) {
+                Variables pop = this.variables;
+                try {
+                    if (instance.getKey() != null)
+                        this.variables = this.variables.with("name", instance.getKey());
+                    this.variables = this.variables.withAll(instance.getValue());
+                    apply(lookup(bundle).getReader(), "can't apply bundle [" + bundle + "]");
+                } finally {
+                    this.variables = pop;
+                }
             }
         }
     }

@@ -341,7 +341,7 @@ deployables:
     version: 1.0
 ```
 
-Not too bad, you may say. There's not so much repetition. You can live with that.
+That's not too bad, you may say. There's not so much repetition. You can live with that.
 And you're absolutely right... as long as you only have hand full of applications to manage.
 If you have hundreds of applications, things may start to look different.
 Are you really sure, all of them follow the same scheme?
@@ -349,7 +349,7 @@ What happens, if you have a central change, e.g. add a second log handler to all
 Things like this don't happen too often, but if they do, you wish you had started differently... without even this repetition.
 But... how _can_ you?
 
-Bundles can not only be created for single applications. By passing variables into a bundle, you can reuse them!
+Bundles can not only be created for one single application. By passing variables into a bundle, you can reuse them!
 This type of bundles are called schema bundles, but they work technically like any other bundle does.
 For example, create a bundle `apps`:
 
@@ -374,16 +374,29 @@ Note the `toUpperCase` [function](reference.md#variables) used in the variable e
 and the ` or ` syntax used to chain potential sub expressions... the first non-null will be picked.
 
 You can use this bundle, as normal, but instead of passing the variables `name` and `version` to the POST request
-or define them in the `deployer.config.yaml`, we'll pass them to the bundle:
+or define them in the `deployer.config.yaml`, we'll pass them to the bundle like this:
 
 ```yaml
 bundles:
   apps:
     version: 1.0.0-SNAPSHOT
-    vars:
-      name: myapp1
-      version: 1.0
+    instances:
+      myapp1:
+        version: 1.0
 ```
 
-The variables `log-level` and `group-id` can also be passed in, but they are optional.
+The `instances` field is semantically a list of key value pairs, only that the key `name` is 'taken out' as an outer key,
+while the other variable mappings are nested inside, i.e. we have only one instance in this example, containing:
 
+```yaml
+name: myapp1
+version: 1.0
+```
+
+In this way, we can use the `apps` schema bundles for as many applications as we like;
+the `name` is enforced to be unique, and the syntax is analogous to `bundles` and `deployables`.
+
+We could also pass the variables `log-level` and `group-id`,
+but they have defaults (i.e. they have ` or ` operators) that are good for now.
+
+Note that the bundle version `1.0.0-SNAPSHOT` is _not_ the version that we pass into the apps schema bundle `1.0`.

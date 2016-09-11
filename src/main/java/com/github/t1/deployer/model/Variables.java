@@ -262,6 +262,14 @@ public class Variables {
         return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
+    public Variables with(String key, String value) {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder().putAll(this.variables);
+        if (this.variables.containsKey(key))
+            throw badRequest("Variable named [" + key + "] already set. It's not allowed to overwrite.");
+        builder.put(key, value);
+        return new Variables(builder.build());
+    }
+
     public Variables withAll(Map<String, String> variables) {
         if (variables == null || variables.isEmpty())
             return this;

@@ -844,18 +844,65 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "  jolokia:\n"
                         + "    group-id: org.jolokia\n"
                         + "    artifact-id: jolokia-war\n"
-                        + "    version: ${jolokia.version}\n");
+                        + "    version: ${v}\n");
 
         Audits audits = deploy(""
                 + "bundles:\n"
                 + "  should-deploy-bundle:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"
-                + "    vars:\n"
-                + "      jolokia.version: 1.3.3\n");
+                + "    instances:\n"
+                + "      jolokia:\n"
+                + "        v: 1.3.3\n");
 
         jolokia.verifyDeployed(audits);
     }
+
+    @Test
+    public void shouldFailToDeployBundleWithName() {
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: 1.3.3\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  should-deploy-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToDeployBundleWithoutName() {
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: 1.3.3\n");
+
+        Throwable throwable = catchThrowable(() -> deploy(""
+                + "bundles:\n"
+                + "  should-deploy-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"));
+
+        assertThat(throwable).isInstanceOf(UnresolvedVariableException.class).hasMessageContaining("name");
+    }
+
 
     @Test
     public void shouldUndeployEverythingWhenManagedAndEmptyPlan() {

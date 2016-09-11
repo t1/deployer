@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
+import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -242,35 +243,33 @@ public class ConfigurationPlan {
     @Builder
     @JsonNaming(KebabCaseStrategy.class)
     public static class BundleConfig extends AbstractArtifactConfig {
-        private static final String VARS = "vars";
-
         @NonNull @JsonIgnore private final BundleName name;
-        @NonNull @Singular @JsonProperty(VARS) private final Map<String, String> variables;
+        @NonNull @Singular private final Map<String, Map<String, String>> instances;
 
         public static class BundleConfigBuilder extends AbstractArtifactConfigBuilder<BundleConfigBuilder> {
             @Override public BundleConfig build() {
                 super.type(bundle);
                 AbstractArtifactConfig a = super.build();
-                Map<String, String> variables = buildMap(variables$key, variables$value);
-                return new BundleConfig(name, variables, a.state, a.groupId, a.artifactId, a.version, a.type,
+                Map<String, Map<String, String>> instances = buildInstances(instances$key, instances$value);
+                return new BundleConfig(name, instances, a.state, a.groupId, a.artifactId, a.version, a.type,
                         a.checksum);
             }
 
-            private Map<String, String> buildMap(List<String> keys, List<String> values) {
+            private Map<String, Map<String, String>> buildInstances(List<String> keys, List<Map<String, String>> list) {
                 if (keys == null)
                     return emptyMap();
-                Map<String, String> map = new LinkedHashMap<>();
+                Map<String, Map<String, String>> instances = new LinkedHashMap<>();
                 for (int i = 0; i < keys.size(); i++)
-                    map.put(keys.get(i), values.get(i));
-                return map;
+                    instances.put(keys.get(i), list.get(i));
+                return instances;
             }
         }
 
-        private BundleConfig(BundleName name, Map<String, String> variables, DeploymentState state,
+        private BundleConfig(BundleName name, Map<String, Map<String, String>> instances, DeploymentState state,
                 GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, Checksum checksum) {
             super(state, groupId, artifactId, version, type, checksum);
-            this.variables = variables;
             this.name = name;
+            this.instances = instances;
         }
 
 
@@ -279,8 +278,15 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("no config in bundle '" + name + "'");
             BundleConfigBuilder builder = builder().name(name);
             AbstractArtifactConfig.fromJson(node, builder, name.getValue(), null);
-            if (node.has(VARS) && !node.get(VARS).isNull())
-                builder.variables(toMap(node.get(VARS)));
+            if (node.has("instances") && !node.get("instances").isNull()) {
+                Iterator<Map.Entry<String, JsonNode>> instances = node.get("instances").fields();
+                while (instances.hasNext()) {
+                    Map.Entry<String, JsonNode> next = instances.next();
+                    builder.instance(next.getKey(), toMap(next.getValue()));
+                }
+            } else {
+                builder.instance(null, ImmutableMap.of());
+            }
             return builder.build();
         }
 
@@ -325,7 +331,8 @@ public class ConfigurationPlan {
         }
 
         private static LogLevel logLevel(String value) {
-            return LogLevel.valueOf((value == null) ? variables.resolveExpression("default.log-level or «DEBUG»") : value);
+            return LogLevel.valueOf(
+                    (value == null) ? variables.resolveExpression("default.log-level or «DEBUG»") : value);
         }
 
         public static class LoggerConfigBuilder {
@@ -378,7 +385,7 @@ public class ConfigurationPlan {
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", null, value -> builder.level((value == null) ? ALL : LogLevel.valueOf(value)));
+            apply(node, "level", ALL.name(), value -> builder.level(LogLevel.valueOf(value)));
             apply(node, "type", periodicRotatingFile.getTypeName(), value ->
                     builder.type(LogHandlerType.valueOfTypeName(value)));
             String defaultFormat = node.has("formatter") ? null : DEFAULT_LOG_FORMAT;
