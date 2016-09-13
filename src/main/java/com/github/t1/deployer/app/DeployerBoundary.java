@@ -18,6 +18,7 @@ import java.nio.file.*;
 import java.nio.file.Path;
 import java.util.*;
 
+import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
 
@@ -158,7 +159,6 @@ public class DeployerBoundary {
     }
 
     private Artifact lookup(AbstractArtifactConfig plan) {
-        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(),
-                plan.getVersion(), plan.getType());
+        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), plan.getVersion(), bundle);
     }
 }

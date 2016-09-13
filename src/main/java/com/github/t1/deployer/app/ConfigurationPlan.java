@@ -145,7 +145,6 @@ public class ConfigurationPlan {
         @NonNull private final GroupId groupId;
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
-        @NonNull private final ArtifactType type;
         private final Checksum checksum;
 
         @SuppressWarnings("unchecked")
@@ -170,11 +169,6 @@ public class ConfigurationPlan {
                 return (T) this;
             }
 
-            public T type(ArtifactType type) {
-                this.type = type;
-                return (T) this;
-            }
-
             public T checksum(Checksum checksum) {
                 this.checksum = checksum;
                 return (T) this;
@@ -188,7 +182,6 @@ public class ConfigurationPlan {
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "version", defaultVersion,
                     value -> builder.version((value == null) ? null : new Version(value)));
-            apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
             apply(node, "checksum", null,
                     value -> builder.checksum((value == null) ? null : Checksum.fromString(value)));
         }
@@ -196,7 +189,7 @@ public class ConfigurationPlan {
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
-            return getState() + ":" + groupId + ":" + artifactId + ":" + version + ":" + type;
+            return getState() + ":" + groupId + ":" + artifactId + ":" + version;
         }
     }
 
@@ -206,18 +199,20 @@ public class ConfigurationPlan {
     @JsonNaming(KebabCaseStrategy.class)
     public static class DeployableConfig extends AbstractArtifactConfig {
         @NonNull @JsonIgnore private final DeploymentName name;
+        @NonNull private final ArtifactType type;
 
         public static class DeployableConfigBuilder extends AbstractArtifactConfigBuilder<DeployableConfigBuilder> {
             @Override public DeployableConfig build() {
                 AbstractArtifactConfig a = super.build();
-                return new DeployableConfig(name, a.state, a.groupId, a.artifactId, a.version, a.type, a.checksum);
+                return new DeployableConfig(name, type, a.state, a.groupId, a.artifactId, a.version, a.checksum);
             }
         }
 
-        private DeployableConfig(DeploymentName name, DeploymentState state,
-                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, Checksum checksum) {
-            super(state, groupId, artifactId, version, type, checksum);
+        private DeployableConfig(DeploymentName name, ArtifactType type, DeploymentState state,
+                GroupId groupId, ArtifactId artifactId, Version version, Checksum checksum) {
+            super(state, groupId, artifactId, version, checksum);
             this.name = name;
+            this.type = type;
         }
 
         public static DeployableConfig fromJson(DeploymentName name, JsonNode node) {
@@ -225,6 +220,7 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
             DeployableConfigBuilder builder = builder().name(name);
             AbstractArtifactConfig.fromJson(node, builder, name.getValue(), "CURRENT");
+            apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
             return builder.build().verify();
         }
 
@@ -235,7 +231,7 @@ public class ConfigurationPlan {
             return this;
         }
 
-        @Override public String toString() { return "«deployment:" + name + ":" + super.toString() + "»"; }
+        @Override public String toString() { return "«deployment:" + name + ":" + super.toString() + ":" + type + "»"; }
     }
 
     @Data
@@ -248,11 +244,9 @@ public class ConfigurationPlan {
 
         public static class BundleConfigBuilder extends AbstractArtifactConfigBuilder<BundleConfigBuilder> {
             @Override public BundleConfig build() {
-                super.type(bundle);
                 AbstractArtifactConfig a = super.build();
                 Map<String, Map<String, String>> instances = buildInstances(instances$key, instances$value);
-                return new BundleConfig(name, instances, a.state, a.groupId, a.artifactId, a.version, a.type,
-                        a.checksum);
+                return new BundleConfig(name, instances, a.state, a.groupId, a.artifactId, a.version, a.checksum);
             }
 
             private Map<String, Map<String, String>> buildInstances(List<String> keys, List<Map<String, String>> list) {
@@ -266,8 +260,8 @@ public class ConfigurationPlan {
         }
 
         private BundleConfig(BundleName name, Map<String, Map<String, String>> instances, DeploymentState state,
-                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, Checksum checksum) {
-            super(state, groupId, artifactId, version, type, checksum);
+                GroupId groupId, ArtifactId artifactId, Version version, Checksum checksum) {
+            super(state, groupId, artifactId, version, checksum);
             this.name = name;
             this.instances = instances;
         }
@@ -289,8 +283,6 @@ public class ConfigurationPlan {
             }
             return builder.build();
         }
-
-        @JsonIgnore @Override public ArtifactType getType() { return super.getType(); }
 
         @Override public String toString() {
             return "«bundle:" + name + ":" + super.toString() + ":" + variables + "»";
