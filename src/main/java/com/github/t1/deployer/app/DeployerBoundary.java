@@ -65,6 +65,8 @@ public class DeployerBoundary {
     @Inject Container container;
     @Inject Repository repository;
 
+    @Inject @Config("variables") Map<String, String> configuredVariables;
+
     @Inject Audits audits;
     // TODO @Inject Instance<AbstractDeployer> deployers;
     @Inject DeployableDeployer deployableDeployer;
@@ -88,7 +90,7 @@ public class DeployerBoundary {
     }
 
     private class Run {
-        private Variables variables = new Variables();
+        private Variables variables = new Variables().withAll(configuredVariables);
 
         public ConfigurationPlan read() {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();

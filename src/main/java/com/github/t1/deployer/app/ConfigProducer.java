@@ -91,8 +91,6 @@ public class ConfigProducer {
         } else {
             log.info("no deployer config file at '" + path + "'");
         }
-        if (config.getVariables() != null)
-            config.getVariables().forEach(System::setProperty);
     }
 
 
@@ -121,4 +119,8 @@ public class ConfigProducer {
 
     @Produces @Config("managed.resources")
     public List<String> managedResources() { return config.getManagedResourceNames(); }
+
+
+    @Produces @Config("variables")
+    public Map<String, String> variables() { return config.getVariables(); }
 }

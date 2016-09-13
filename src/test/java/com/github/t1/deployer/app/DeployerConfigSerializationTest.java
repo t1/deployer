@@ -134,11 +134,23 @@ public class DeployerConfigSerializationTest {
     public void shouldLoadConfigFileWithProperty() throws Exception {
         configFile.write(""
                 + "vars:\n"
+                + "  foo: bar\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.variables().get("foo")).isEqualTo("bar");
+    }
+
+
+    @Test
+    public void shouldLoadConfigFileWithDefaultGroupId() throws Exception {
+        configFile.write(""
+                + "vars:\n"
                 + "  default.group-id: foo\n");
 
-        loadConfig();
+        ConfigProducer producer = loadConfig();
 
-        assertThat(System.getProperty("default.group-id")).isEqualTo("foo");
+        assertThat(producer.variables().get("default.group-id")).isEqualTo("foo");
     }
 
 

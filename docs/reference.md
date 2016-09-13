@@ -70,8 +70,7 @@ Variable values are:
 - variables defined in the configuration [`vars`](#vars), and
 - variables passed into bundles (see below).
 
-Config variables are written into system properties.
-The deployer fails, if a variable passed in overwrites an existing variable (esp. system property),
+The deployer fails, if a variable passed-in overwrites an existing variable (esp. system property),
 or if the resulting plan has unresolved variables.
 
 A variable name can contain the name of a function to be applied to the value:

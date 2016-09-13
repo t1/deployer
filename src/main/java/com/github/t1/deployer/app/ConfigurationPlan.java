@@ -183,7 +183,7 @@ public class ConfigurationPlan {
 
         public static void fromJson(JsonNode node, AbstractArtifactConfigBuilder builder,
                 String defaultArtifactId, String defaultVersion) {
-            apply(node, "group-id", defaultValue("group-id"), value -> builder.groupId(new GroupId(value)));
+            apply(node, "group-id", null, value -> builder.groupId(new GroupId(defaultValue(value, "group-id"))));
             apply(node, "artifact-id", defaultArtifactId, value -> builder.artifactId(new ArtifactId(value)));
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "version", defaultVersion,
@@ -314,7 +314,8 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("no config in logger '" + category + "'");
             LoggerConfigBuilder builder = builder().category(category);
             apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", null, value -> builder.level(logLevel(value)));
+            apply(node, "level", null, value
+                    -> builder.level(LogLevel.valueOf(defaultValue(value, "log-level", "«DEBUG»"))));
             apply(node, "handler", null, builder::handler);
             if (node.has("handlers")) {
                 Iterator<JsonNode> handlers = node.get("handlers").elements();
@@ -328,11 +329,6 @@ public class ConfigurationPlan {
                     builder.useParentHandlers(Boolean.valueOf(value));
                 });
             return builder.build().validate();
-        }
-
-        private static LogLevel logLevel(String value) {
-            return LogLevel.valueOf(
-                    (value == null) ? variables.resolveExpression("default.log-level or «DEBUG»") : value);
         }
 
         public static class LoggerConfigBuilder {
@@ -448,8 +444,13 @@ public class ConfigurationPlan {
         }
     }
 
-    private static String defaultValue(String name) {
-        return System.getProperty("default." + name);
+    private static String defaultValue(String value, String name, String... alternativeExpressions) {
+        if (value != null)
+            return value;
+        StringBuilder expression = new StringBuilder("default." + name);
+        for (String alternativeExpression : alternativeExpressions)
+            expression.append(" or ").append(alternativeExpression);
+        return variables.resolveExpression(expression.toString());
     }
 
     private static void apply(JsonNode node, String fieldName, String defaultValue, Consumer<String> setter) {

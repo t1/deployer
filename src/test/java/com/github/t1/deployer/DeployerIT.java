@@ -40,8 +40,8 @@ import static org.junit.Assume.*;
 @RunWith(Arquillian.class)
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
-    public static final Supplier<Path> ROOT_BUNDLE_PATH = () ->
-            Paths.get(System.getProperty("jboss.server.config.dir")).resolve(ROOT_BUNDLE);
+    private static final String CONFIG_DIR = System.getProperty("jboss.server.config.dir");
+    public static final Supplier<Path> ROOT_BUNDLE_PATH = () -> Paths.get(CONFIG_DIR).resolve(ROOT_BUNDLE);
     private static final boolean USE_ARTIFACTORY_MOCK = true;
 
     private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it.war");
@@ -96,7 +96,7 @@ public class DeployerIT {
             }
     }
 
-    private static boolean runningOnClient() { return System.getProperty("jboss.server.config.dir") == null; }
+    private static boolean runningOnClient() { return CONFIG_DIR == null; }
 
 
     @Rule

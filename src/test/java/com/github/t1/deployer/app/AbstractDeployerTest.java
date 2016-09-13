@@ -41,12 +41,16 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class AbstractDeployerTest {
+    private static final Path TEMP_DIR = tempDir();
+
+    @SneakyThrows(IOException.class)
+    private static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
+
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
     @Rule public FileMemento rootBundle = new FileMemento(this::rootBundlePath);
 
-    @SneakyThrows(IOException.class)
     private Path rootBundlePath() {
-        systemProperties.given("jboss.server.config.dir", Files.createTempDirectory("deployer.test"));
+        systemProperties.given("jboss.server.config.dir", TEMP_DIR);
         return DeployerIT.ROOT_BUNDLE_PATH.get();
     }
 
@@ -76,6 +80,7 @@ public class AbstractDeployerTest {
     @Mock DeploymentPlan deploymentPlan;
     @Mock ServerDeploymentPlanResult planResult;
 
+    private final Map<String, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
     private final List<String> allDeployments = new ArrayList<>();
     private final List<String> allLoggers = new ArrayList<>();
@@ -100,6 +105,7 @@ public class AbstractDeployerTest {
                 = loggerDeployer.audits
                 = deployableDeployer.audits
                 = new Audits();
+        deployer.configuredVariables = this.configuredVariables;
 
         //noinspection unchecked
         // doAnswer(i -> {
@@ -170,6 +176,9 @@ public class AbstractDeployerTest {
         verifyNoMoreInteractions(cli);
         // TODO verifyNoMoreInteractions(deploymentManager);
     }
+
+
+    public void givenConfiguredVariable(String key, String value) { this.configuredVariables.put(key, value); }
 
 
     protected void givenManaged(String... resourceName) { this.managedResourceNames.addAll(asList(resourceName)); }
