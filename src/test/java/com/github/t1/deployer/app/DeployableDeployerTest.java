@@ -890,6 +890,36 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldDeployJar() {
+        ArtifactFixture postgresql = givenArtifact(jar, "postgresql").version("9.4.1207");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  postgresql:\n"
+                + "    group-id: org.postgresql\n"
+                + "    version: 9.4.1207\n"
+                + "    type: jar\n");
+
+        postgresql.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployJarWithDefaultType() {
+        givenConfiguredVariable("default.deployable-type", "jar");
+        ArtifactFixture postgresql = givenArtifact(jar, "postgresql").version("9.4.1207");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  postgresql:\n"
+                + "    group-id: org.postgresql\n"
+                + "    version: 9.4.1207\n");
+
+        postgresql.verifyDeployed(audits);
+    }
+
+
+    @Test
     public void shouldDeployBundleWithName() {
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
         givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")

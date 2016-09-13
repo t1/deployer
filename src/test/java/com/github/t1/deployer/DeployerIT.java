@@ -426,7 +426,7 @@ public class DeployerIT {
                 + "deployables:\n"
                 + "  postgresql:\n"
                 + "    group-id: org.postgresql\n"
-                + "    version: \"9.4.1207\"\n"
+                + "    version: 9.4.1207\n"
                 + "    type: jar\n";
 
         List<Audit> audits = post(plan);
@@ -454,7 +454,7 @@ public class DeployerIT {
                 + "deployables:\n"
                 + "  postgresql:\n"
                 + "    group-id: org.postgresql\n"
-                + "    version: \"9.4.1207\"\n"
+                + "    version: 9.4.1207\n"
                 + "    state: undeployed\n"
                 + "    type: jar\n";
 

@@ -188,6 +188,10 @@ public class AbstractDeployerTest {
         return givenArtifact(name, "org." + name, name);
     }
 
+    public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name) {
+        return givenArtifact(type, name, "org." + name, name);
+    }
+
     public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String groupId, String artifactId) {
         return givenArtifact(type, artifactId, groupId, artifactId);
     }

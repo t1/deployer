@@ -177,12 +177,17 @@ public class ConfigurationPlan {
 
         public static void fromJson(JsonNode node, AbstractArtifactConfigBuilder builder,
                 String defaultArtifactId, String defaultVersion) {
-            apply(node, "group-id", null, value -> builder.groupId(new GroupId(defaultValue(value, "group-id"))));
-            apply(node, "artifact-id", defaultArtifactId, value -> builder.artifactId(new ArtifactId(value)));
-            apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "version", defaultVersion,
-                    value -> builder.version((value == null) ? null : new Version(value)));
-            apply(node, "checksum", null,
+            apply(node, "group-id", value -> builder.groupId(new GroupId(defaultValue(value, "group-id"))));
+            apply(node, "artifact-id",
+                    value -> builder.artifactId(new ArtifactId((value == null) ? defaultArtifactId : value)));
+            apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
+            apply(node, "version", value -> builder.version(
+                    (value != null)
+                            ? new Version(value)
+                            : (defaultVersion != null)
+                                    ? new Version(defaultVersion)
+                                    : null));
+            apply(node, "checksum",
                     value -> builder.checksum((value == null) ? null : Checksum.fromString(value)));
         }
 
@@ -220,7 +225,8 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
             DeployableConfigBuilder builder = builder().name(name);
             AbstractArtifactConfig.fromJson(node, builder, name.getValue(), "CURRENT");
-            apply(node, "type", war.name(), value -> builder.type(ArtifactType.valueOf(value)));
+            apply(node, "type",
+                    value -> builder.type(ArtifactType.valueOf(defaultValue(value, "deployable-type", "«war»"))));
             return builder.build().verify();
         }
 
@@ -305,17 +311,17 @@ public class ConfigurationPlan {
             if (node.isNull())
                 throw new ConfigurationPlanLoadingException("no config in logger '" + category + "'");
             LoggerConfigBuilder builder = builder().category(category);
-            apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", null, value
+            apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
+            apply(node, "level", value
                     -> builder.level(LogLevel.valueOf(defaultValue(value, "log-level", "«DEBUG»"))));
-            apply(node, "handler", null, builder::handler);
+            apply(node, "handler", builder::handler);
             if (node.has("handlers")) {
                 Iterator<JsonNode> handlers = node.get("handlers").elements();
                 while (handlers.hasNext())
                     builder.handler(handlers.next().textValue());
             }
             if (!builder.category.isRoot())
-                apply(node, "use-parent-handlers", null, value -> {
+                apply(node, "use-parent-handlers", value -> {
                     if (value == null)
                         value = Boolean.toString(builder.build().handlers.isEmpty());
                     builder.useParentHandlers(Boolean.valueOf(value));
@@ -372,13 +378,13 @@ public class ConfigurationPlan {
 
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
             LogHandlerConfigBuilder builder = builder().name(name);
-            apply(node, "state", null, value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", ALL.name(), value -> builder.level(LogLevel.valueOf(value)));
-            apply(node, "type", periodicRotatingFile.getTypeName(), value ->
-                    builder.type(LogHandlerType.valueOfTypeName(value)));
+            apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
+            apply(node, "level", value -> builder.level((value == null) ? ALL : LogLevel.valueOf(value)));
+            apply(node, "type", value -> builder.type(
+                    (value == null) ? periodicRotatingFile : LogHandlerType.valueOfTypeName(value)));
             String defaultFormat = node.has("formatter") ? null : DEFAULT_LOG_FORMAT;
-            apply(node, "format", defaultFormat, builder::format);
-            apply(node, "formatter", null, builder::formatter);
+            apply(node, "format", value -> builder.format((value == null) ? defaultFormat : value));
+            apply(node, "formatter", builder::formatter);
             applyByType(node, builder);
             return builder.build().validate();
         }
@@ -389,12 +395,14 @@ public class ConfigurationPlan {
                 // nothing more to load here
                 return;
             case periodicRotatingFile:
-                apply(node, "file", builder.name.getValue().toLowerCase() + ".log", builder::file);
-                apply(node, "suffix", null, builder::suffix);
+                apply(node, "file", value -> builder.file((value == null)
+                        ? builder.name.getValue().toLowerCase() + ".log"
+                        : value));
+                apply(node, "suffix", builder::suffix);
                 return;
             case custom:
-                apply(node, "module", null, builder::module);
-                apply(node, "class", null, builder::class_);
+                apply(node, "module", builder::module);
+                apply(node, "class", builder::class_);
                 if (node.has("properties") && !node.get("properties").isNull())
                     node.get("properties").fieldNames().forEachRemaining(fieldName
                             -> builder.property(fieldName, node.get("properties").get(fieldName).asText()));
@@ -445,9 +453,8 @@ public class ConfigurationPlan {
         return variables.resolveExpression(expression.toString());
     }
 
-    private static void apply(JsonNode node, String fieldName, String defaultValue, Consumer<String> setter) {
-        setter.accept((node.has(fieldName) && !node.get(fieldName).isNull())
-                ? node.get(fieldName).asText() : defaultValue);
+    private static void apply(JsonNode node, String fieldName, Consumer<String> setter) {
+        setter.accept((node.has(fieldName) && !node.get(fieldName).isNull()) ? node.get(fieldName).asText() : null);
     }
 
     @Override public String toString() {

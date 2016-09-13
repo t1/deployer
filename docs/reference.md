@@ -127,6 +127,7 @@ Special values:
 | --- | --- |
 | default.group-id | `group-id` to be used, if none is specified. |
 | default.log-level | `level` to be used for `loggers` (not `log-handlers`!), if none is specified. |
+| default.deployable-type | `type` to be used for `deployables`, if none is specified. Defaults to `war`. |
 | root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
 | root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
 
