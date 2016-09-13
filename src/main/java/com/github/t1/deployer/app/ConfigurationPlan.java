@@ -382,9 +382,10 @@ public class ConfigurationPlan {
             apply(node, "level", value -> builder.level((value == null) ? ALL : LogLevel.valueOf(value)));
             apply(node, "type", value -> builder.type(LogHandlerType.valueOfTypeName(
                     defaultValue(value, "log-handler-type", "«" + periodicRotatingFile + "»"))));
-            String defaultFormat = node.has("formatter") ? null : DEFAULT_LOG_FORMAT;
-            apply(node, "format", value -> builder.format((value == null) ? defaultFormat : value));
-            apply(node, "formatter", builder::formatter);
+            if (node.has("format") || (!node.has("formatter") && !variables.contains("default.log-formatter")))
+                apply(node, "format", value -> builder.format(
+                        defaultValue(value, "log-format", "«" + DEFAULT_LOG_FORMAT + "»")));
+            apply(node, "formatter", value -> builder.formatter(defaultValue(value, "log-formatter")));
             applyByType(node, builder);
             return builder.build().validate();
         }

@@ -126,9 +126,11 @@ Special values:
 | name | usage |
 | --- | --- |
 | default.group-id | `group-id` to be used, if none is specified. |
-| default.log-level | `level` to be used for `loggers` (not `log-handlers`!), if none is specified. |
 | default.deployable-type | `type` to be used for `deployables`, if none is specified. Defaults to `war`. |
+| default.log-level | `level` to be used for `loggers` (not `log-handlers`!), if none is specified. |
 | default.log-handler-type | `type` to be used for `log-handlers`, if none is specified. Defaults to `periodicRotatingFile`. |
+| default.log-format | `format` to be used for `log-handlers`, if none is specified. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`. |
+| default.log-formatter | `formatter` to be used for `log-handlers`, if none is specified. Defaults to using the `default.log-format`. |
 | root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
 | root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
 

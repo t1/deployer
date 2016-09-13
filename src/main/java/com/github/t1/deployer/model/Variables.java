@@ -75,6 +75,8 @@ public class Variables {
         return null;
     }
 
+    public boolean contains(String name) { return variables.containsKey(name); }
+
     private abstract static class Resolver {
         @Getter protected boolean match;
         @Getter protected String value;
@@ -214,7 +216,10 @@ public class Variables {
         private String hostName() { return InetAddress.getLocalHost().getHostName().split("\\.")[0]; }
 
         @SneakyThrows(UnknownHostException.class)
-        private String domainName() { return InetAddress.getLocalHost().getHostName().split("\\.", 2)[1]; }
+        private String domainName() {
+            String[] split = InetAddress.getLocalHost().getHostName().split("\\.", 2);
+            return (split.length == 2) ? split[1] : null;
+        }
 
         private String regex(String text, String pattern) {
             Matcher matcher = Pattern.compile(pattern).matcher(text);

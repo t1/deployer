@@ -79,6 +79,44 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldAddLogHandlerWithDefaultFormat() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-suffix");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddLogHandlerWithConfiguredDefaultFormat() {
+        givenConfiguredVariable("default.log-format", "the-format");
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-suffix")
+                .format("the-format");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
     public void shouldAddLogHandlerWithFormatter() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
@@ -93,6 +131,26 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    file: the-file\n"
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddLogHandlerWithConfiguredDefaultFormatter() {
+        givenConfiguredVariable("default.log-formatter", "the-formatter");
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n");
 
         fixture.verifyAdded(audits);
     }
