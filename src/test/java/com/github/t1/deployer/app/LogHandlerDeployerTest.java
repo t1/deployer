@@ -45,6 +45,40 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldAddConsoleHandler() {
+        LogHandlerFixture fixture = givenLogHandler(console, "FOO")
+                .level(ALL)
+                .format("the-format");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    type: console\n"
+                + "    format: the-format\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddLogHandlerWithConfiguredDefaultType() {
+        givenConfiguredVariable("default.log-handler-type", "console");
+        LogHandlerFixture fixture = givenLogHandler(console, "FOO")
+                .level(ALL)
+                .format("the-format");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    format: the-format\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
     public void shouldAddLogHandlerWithFormatter() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
@@ -433,7 +467,6 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
 
     // TODO shouldRemoveHandlerWhenManaged
-    // TODO shouldAddConsoleHandler
 
     @Test
     public void shouldAddCustomHandler() {

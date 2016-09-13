@@ -380,8 +380,8 @@ public class ConfigurationPlan {
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "level", value -> builder.level((value == null) ? ALL : LogLevel.valueOf(value)));
-            apply(node, "type", value -> builder.type(
-                    (value == null) ? periodicRotatingFile : LogHandlerType.valueOfTypeName(value)));
+            apply(node, "type", value -> builder.type(LogHandlerType.valueOfTypeName(
+                    defaultValue(value, "log-handler-type", "«" + periodicRotatingFile + "»"))));
             String defaultFormat = node.has("formatter") ? null : DEFAULT_LOG_FORMAT;
             apply(node, "format", value -> builder.format((value == null) ? defaultFormat : value));
             apply(node, "formatter", builder::formatter);
