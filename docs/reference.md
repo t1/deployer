@@ -14,7 +14,7 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 - `group-id`: Defaults to the variable [`default.group-id`](#vars).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Defaults to `CURRENT`, which is the currently deployed version of this artifact.
-- `type`: `war` or `jar`. Defaults to `war`.
+- `type`: `war` or `jar`. Defaults to [`default.deployable-type`](#vars) or `war`.
 - `checksum`: The SHA-1 checksum of the artifact file. Optional to check for integrity.
 
 
@@ -25,7 +25,8 @@ The key is the `name` of the bundle.
 - `group-id`: Defaults to the variable [`default.group-id`](#vars).
 - `artifact-id`: Defaults to the name of the deployment.
 - `version`: Mandatory.
-- `vars`: The map of variables passed into a `bundle`; forbidden for other types. Defaults to an empty map.
+- `instances`: The map of instance names to a map of variables passed into a `bundle`.
+Defaults to a single empty-named entry with an empty map.
 
 
 ### `log-handlers`
@@ -34,13 +35,16 @@ The key is the `name` of the log handler. This is conventionally an upper case s
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
 - `level`: The [log level](#log-levels). Defaults to `ALL`.
-- `type`: One of `console`, `periodic-rotating-file`, or `custom`. Defaults to `periodic-rotating-file`.
-- `format`: The format used for log lines. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`.
+- `type`: One of `console`, `periodic-rotating-file`, or `custom`.
+Defaults to [`default.log-handler-type`](#vars) or `periodic-rotating-file`.
+- `format`: The format used for log lines.
+Defaults to using a [`default.log-formatter`](#vars) or [`default.log-format`](#vars) or `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`.
 - `formatter`: Alternative to `format`: The name of a named formatter. Wildfly 10.0.0 defines: `PATTERN` and `COLOR-PATTERN`.
 
 Only for `periodic-rotating-file`:
 - `file`: The base name of the file to log to. Defaults to the lower case `name` of the log handler plus `.log`. 
-- `suffix`: The date/time suffix used when rotating, defining the rotation frequency. Defaults to `.yyyy-MM-dd`, i.e. daily rotation.
+- `suffix`: The date/time suffix used when rotating, defining the rotation frequency.
+Defaults to [`default.log-file-suffix`](#vars) or `.yyyy-MM-dd`, i.e. daily rotation.
 
 Only for `custom`:
 - `module`: The JBoss module name. Mandatory.
@@ -53,7 +57,7 @@ Only for `custom`:
 The key is the `category` of the logger, usually the fully qualified name of the class producing the logs. 
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
-- `level`: The [log level](#log-levels). Defaults to `default.log-level or «DEBUG»`.
+- `level`: The [log level](#log-levels). Defaults to [`default.log-level`](#vars) or `«DEBUG»`.
 - `handlers`: A list of log handler names. Defaults to an empty list.
 - `handler`: Alternative syntax for a single log handler name. Defaults to an empty list.
 - `use-parent-handlers`: Should the log handlers of the parent logger be used?
@@ -131,6 +135,7 @@ Special values:
 | default.log-handler-type | `type` to be used for `log-handlers`, if none is specified. Defaults to `periodicRotatingFile`. |
 | default.log-format | `format` to be used for `log-handlers`, if none is specified. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`. |
 | default.log-formatter | `formatter` to be used for `log-handlers`, if none is specified. Defaults to using the `default.log-format`. |
+| default.log-file-suffix | `suffix` to be used for file `log-handlers`, if none is specified. Defaults to using the `yyyy-MM-dd` (i.e. daily rotation). |
 | root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
 | root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
 

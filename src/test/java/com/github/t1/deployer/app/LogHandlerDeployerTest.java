@@ -155,6 +155,26 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
         fixture.verifyAdded(audits);
     }
 
+    @Test
+    public void shouldAddLogHandlerWithConfiguredDefaultFormatAndFormatter() {
+        givenConfiguredVariable("default.log-format", "the-format");
+        givenConfiguredVariable("default.log-formatter", "the-formatter");
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .suffix("the-suffix")
+                .formatter("the-formatter");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    suffix: the-suffix\n");
+
+        fixture.verifyAdded(audits);
+    }
+
 
     @Test
     public void shouldFailToParsePlanWithLogHandlerWithBothFormatAndFormatter() {
@@ -234,6 +254,27 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 .level(ALL)
                 .file("the-file")
                 .format("the-format");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: periodic-rotating-file\n"
+                + "    level: ALL\n"
+                + "    file: the-file\n"
+                + "    format: the-format\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+
+    @Test
+    public void shouldAddPeriodicRotatingFileHandlerWithConfiguredDefaultSuffix() {
+        givenConfiguredVariable("default.log-file-suffix", "the-default-suffix");
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .format("the-format")
+                .suffix("the-default-suffix");
 
         Audits audits = deploy(""
                 + "log-handlers:\n"

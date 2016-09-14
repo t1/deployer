@@ -7,7 +7,7 @@ TAG=wildfly-deployer
 
 echo build WAR
 cd ../../..
-mvn clean package
+mvn clean package -DskipTests
 cd -
 
 cp ${WAR} .

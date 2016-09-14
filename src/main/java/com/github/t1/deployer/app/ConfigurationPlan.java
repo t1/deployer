@@ -225,8 +225,8 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
             DeployableConfigBuilder builder = builder().name(name);
             AbstractArtifactConfig.fromJson(node, builder, name.getValue(), "CURRENT");
-            apply(node, "type",
-                    value -> builder.type(ArtifactType.valueOf(defaultValue(value, "deployable-type", "«war»"))));
+            apply(node, "type", value -> builder.type(
+                    ArtifactType.valueOf(defaultValue(value, "deployable-type", "«war»"))));
             return builder.build().verify();
         }
 
@@ -323,7 +323,7 @@ public class ConfigurationPlan {
             if (!builder.category.isRoot())
                 apply(node, "use-parent-handlers", value -> {
                     if (value == null)
-                        value = Boolean.toString(builder.build().handlers.isEmpty());
+                        value = Boolean.toString(builder.handlers.isEmpty());
                     builder.useParentHandlers(Boolean.valueOf(value));
                 });
             return builder.build().validate();
@@ -399,7 +399,7 @@ public class ConfigurationPlan {
                 apply(node, "file", value -> builder.file((value == null)
                         ? builder.name.getValue().toLowerCase() + ".log"
                         : value));
-                apply(node, "suffix", builder::suffix);
+                apply(node, "suffix", value -> builder.suffix(defaultValue(value, "log-file-suffix")));
                 return;
             case custom:
                 apply(node, "module", builder::module);
