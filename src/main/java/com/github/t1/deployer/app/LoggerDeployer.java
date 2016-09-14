@@ -84,7 +84,7 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
                     .state(deployed)
                     .level(logger.level())
                     .handlers(logger.handlers())
-                    .useParentHandlers(logger.useParentHandlers() ? null : logger.useParentHandlers())
+                    .useParentHandlers(logger.isDefaultUseParentHandlers() ? null : logger.useParentHandlers())
                     .build());
     }
 }

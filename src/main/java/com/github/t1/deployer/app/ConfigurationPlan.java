@@ -11,6 +11,7 @@ import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -304,7 +305,7 @@ public class ConfigurationPlan {
         private final DeploymentState state;
         private final LogLevel level;
         @NonNull private final List<LogHandlerName> handlers;
-        private final Boolean useParentHandlers;
+        @JsonProperty private final Boolean useParentHandlers;
 
 
         private static LoggerConfig fromJson(LoggerCategory category, JsonNode node) {
@@ -321,11 +322,8 @@ public class ConfigurationPlan {
                     builder.handler(handlers.next().textValue());
             }
             if (!builder.category.isRoot())
-                apply(node, "use-parent-handlers", value -> {
-                    if (value == null)
-                        value = Boolean.toString(builder.handlers.isEmpty());
-                    builder.useParentHandlers(Boolean.valueOf(value));
-                });
+                apply(node, "use-parent-handlers", value -> builder.useParentHandlers(
+                        (value == null) ? null : Boolean.valueOf(value)));
             return builder.build().validate();
         }
 
@@ -344,6 +342,10 @@ public class ConfigurationPlan {
                 throw new ConfigurationPlanLoadingException("Can't set use-parent-handlers of [" + category + "] "
                         + "to false when there are no handlers");
             return this;
+        }
+
+        @JsonIgnore public Boolean getUseParentHandlers() {
+            return (useParentHandlers == null) ? handlers.isEmpty() : useParentHandlers;
         }
 
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
@@ -396,10 +398,8 @@ public class ConfigurationPlan {
                 // nothing more to load here
                 return;
             case periodicRotatingFile:
-                apply(node, "file", value -> builder.file((value == null)
-                        ? builder.name.getValue().toLowerCase() + ".log"
-                        : value));
-                apply(node, "suffix", value -> builder.suffix(defaultValue(value, "log-file-suffix")));
+                apply(node, "file", value -> builder.file((value == null) ? defaultFileName(builder) : value));
+                apply(node, "suffix", value -> builder.suffix(defaultValue(value, "log-file-suffix", "«.yyyy-MM-dd»")));
                 return;
             case custom:
                 apply(node, "module", builder::module);
@@ -411,6 +411,10 @@ public class ConfigurationPlan {
             }
             throw new ConfigurationPlanLoadingException("unhandled log-handler type [" + builder.type + "]"
                     + " in [" + builder.name + "]");
+        }
+
+        @NotNull private static String defaultFileName(LogHandlerConfigBuilder builder) {
+            return builder.name.getValue().toLowerCase() + ".log";
         }
 
         /* make builder fields visible */ public static class LogHandlerConfigBuilder {}

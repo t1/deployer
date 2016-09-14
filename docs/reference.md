@@ -131,7 +131,7 @@ Special values:
 | --- | --- |
 | default.group-id | `group-id` to be used, if none is specified. |
 | default.deployable-type | `type` to be used for `deployables`, if none is specified. Defaults to `war`. |
-| default.log-level | `level` to be used for `loggers` (not `log-handlers`!), if none is specified. |
+| default.log-level | `level` to be used for `loggers`, if none is specified. This is _not_ used for `log-handlers`! The level of log handlers defaults to `ALL`. |
 | default.log-handler-type | `type` to be used for `log-handlers`, if none is specified. Defaults to `periodicRotatingFile`. |
 | default.log-format | `format` to be used for `log-handlers`, if none is specified. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`. |
 | default.log-formatter | `formatter` to be used for `log-handlers`, if none is specified. Defaults to using the `default.log-format`. |
@@ -143,7 +143,7 @@ Special values:
 ### `manage`
 
 This is a list of resource type names (currently only `deployables`) to be managed,
-i.e. resources of this kind existing in the container, but are not in the plan, are removed.
+i.e. resources of this kind that are deployed in the container, but are not in the plan, are removed.
 Defaults to an empty list, i.e. things are left alone.
 
 

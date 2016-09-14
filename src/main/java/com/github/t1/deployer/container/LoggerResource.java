@@ -48,6 +48,8 @@ public class LoggerResource extends AbstractResource {
         return loggers;
     }
 
+    public boolean isDefaultUseParentHandlers() { return isRoot() || (useParentHandlers == handlers().isEmpty()); }
+
 
     public static class LoggerResourceBuilder {
         private CLI cli;
