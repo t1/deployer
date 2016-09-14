@@ -920,6 +920,21 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldDeployEar() {
+        ArtifactFixture postgresql = givenArtifact(ear, "foo").version("1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1\n"
+                + "    type: ear\n");
+
+        postgresql.verifyDeployed(audits);
+    }
+
+
+    @Test
     public void shouldDeployBundleWithName() {
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
         givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")

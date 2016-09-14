@@ -1,7 +1,10 @@
 package com.github.t1.deployer.model;
 
 public enum ArtifactType {
-    war, jar, pom, bundle, unknown;
+    /** deployables */
+    war, jar, ear,
+    /** non-deployables: */
+    pom, bundle, unknown;
 
     public String extension() { return name(); }
 
