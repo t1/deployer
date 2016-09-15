@@ -362,6 +362,7 @@ public class ConfigurationPlan {
     @JsonNaming(KebabCaseStrategy.class)
     public static class LogHandlerConfig implements AbstractConfig {
         public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
+        public static final String DEFAULT_SUFFIX = ".yyyy-MM-dd";
 
         @NonNull @JsonIgnore private final LogHandlerName name;
         private final DeploymentState state;
@@ -399,7 +400,8 @@ public class ConfigurationPlan {
                 return;
             case periodicRotatingFile:
                 apply(node, "file", value -> builder.file((value == null) ? defaultFileName(builder) : value));
-                apply(node, "suffix", value -> builder.suffix(defaultValue(value, "log-file-suffix", "«.yyyy-MM-dd»")));
+                apply(node, "suffix", value -> builder.suffix(
+                        defaultValue(value, "log-file-suffix", "«" + DEFAULT_SUFFIX + "»")));
                 return;
             case custom:
                 apply(node, "module", builder::module);

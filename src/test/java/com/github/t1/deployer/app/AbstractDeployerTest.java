@@ -625,6 +625,7 @@ public class AbstractDeployerTest {
             this.type = type;
             this.name = new LogHandlerName(name);
             this.audit = LogHandlerAudit.builder().type(this.type).name(this.name);
+            this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
             when(cli.executeRaw(readResource("logging", type.getHandlerTypeName(), name))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")

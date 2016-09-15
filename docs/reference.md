@@ -102,6 +102,9 @@ bundles:
     version: ${version}
 ```
 
+I.e., the default regular expression removes trailing digits from the host name. 
+
+
 ## Config
 
 The deployer itself can be configured with a file `deployer.config.yaml`.
