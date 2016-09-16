@@ -37,6 +37,7 @@ public class EffectivePlanHtmlWriterTest {
                     .builder()
                     .category(LoggerCategory.of("org.bar"))
                     .handler("FOO")
+                    .handler("BAR")
                     .level(INFO)
                     .build())
             .deployable(DeployableConfig

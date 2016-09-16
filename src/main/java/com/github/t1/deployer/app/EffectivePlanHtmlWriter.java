@@ -15,6 +15,7 @@ import java.util.*;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.github.t1.deployer.model.Variables.*;
+import static java.util.Collections.*;
 import static javax.ws.rs.core.MediaType.*;
 
 @Provider
@@ -48,7 +49,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
         private int depth = 0;
         private String rowHeader = null;
         private String key = null;
-        private Map<String, String> row = new LinkedHashMap<>();
+        private Map<String, Object> row = new LinkedHashMap<>();
 
         private HtmlWriter(PrintWriter out, String title) {
             super(0, MAPPER);
@@ -104,7 +105,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
         }
 
         public void printRow() {
-            for (Map.Entry<String, String> col : row.entrySet()) {
+            for (Map.Entry<String, Object> col : row.entrySet()) {
                 out.print("    <tr>\n");
                 if (rowHeader != null) {
                     out.print("        <td rowspan=\"" + row.size() + "\">" + rowHeader + "</td>\n");
@@ -158,7 +159,17 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
             }
         }
 
-        @Override public void writeString(String text) throws IOException { row.put(key, text); }
+        @Override public void writeString(String text) throws IOException {
+            Object value;
+            if (row.containsKey(key)) {
+                Object tmp = row.get(key);
+                List<Object> list = (tmp instanceof List) ? (List) tmp : new ArrayList<>(singleton(tmp));
+                list.add(text);
+                value = list;
+            } else
+                value = text;
+            row.put(key, value);
+        }
 
 
         @Override public void writeString(char[] text, int offset, int len) throws IOException {}
