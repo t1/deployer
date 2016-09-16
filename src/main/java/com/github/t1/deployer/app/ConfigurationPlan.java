@@ -22,6 +22,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
+import static com.github.t1.deployer.container.LoggerResource.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.tools.Tools.toMap;
@@ -314,7 +315,7 @@ public class ConfigurationPlan {
             LoggerConfigBuilder builder = builder().category(category);
             apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "level", value
-                    -> builder.level(LogLevel.valueOf(defaultValue(value, "log-level", "«DEBUG»"))));
+                    -> builder.level(mapLogLevel(defaultValue(value, "log-level", "«DEBUG»"))));
             apply(node, "handler", builder::handler);
             if (node.has("handlers")) {
                 Iterator<JsonNode> handlers = node.get("handlers").elements();
@@ -382,7 +383,7 @@ public class ConfigurationPlan {
         private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
             LogHandlerConfigBuilder builder = builder().name(name);
             apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", value -> builder.level((value == null) ? ALL : LogLevel.valueOf(value)));
+            apply(node, "level", value -> builder.level((value == null) ? ALL : mapLogLevel(value)));
             apply(node, "type", value -> builder.type(LogHandlerType.valueOfTypeName(
                     defaultValue(value, "log-handler-type", "«" + periodicRotatingFile + "»"))));
             if (node.has("format") || (!node.has("formatter") && !variables.contains("default.log-formatter")))

@@ -267,6 +267,11 @@ public class ContainerTest {
     }
 
     @Test
+    public void shouldReadLoggerWithLevelFatal() throws Exception {
+        shouldReadLoggerWithLevel("FATAL", ERROR);
+    }
+
+    @Test
     public void shouldReadLoggerWithLevelError() throws Exception {
         shouldReadLoggerWithLevel("ERROR", ERROR);
     }

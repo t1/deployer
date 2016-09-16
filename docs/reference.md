@@ -158,12 +158,13 @@ Defaults to an empty list, i.e. things are left alone.
 The deployer uses the log levels of [slf4j](http://www.slf4j.org):
 `ALL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`, and `OFF`.
 
-The JBoss CLI additionally allows log levels from Java Util Logging,
+The JBoss CLI additionally allows log levels from Java Util Logging and more,
 so when reading these levels, The Deployer maps them as follows:
 
 | jul | slf4j |
 | --- | --- |
 | ALL | ALL |
+| FATAL | ERROR |
 | SEVERE | ERROR |
 | WARNING | WARN |
 | INFO | INFO |

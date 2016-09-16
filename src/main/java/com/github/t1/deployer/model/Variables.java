@@ -22,6 +22,9 @@ import static javax.ws.rs.core.Response.Status.*;
 
 @Slf4j
 public class Variables {
+    @SneakyThrows(UnknownHostException.class)
+    public static String hostName() { return InetAddress.getLocalHost().getHostName().split("\\.")[0]; }
+
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
     private static final Pattern VARIABLE_VALUE = Pattern.compile("[- ._a-zA-Z0-9]{1,256}");
 
@@ -211,9 +214,6 @@ public class Variables {
         }
 
         private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
-
-        @SneakyThrows(UnknownHostException.class)
-        private String hostName() { return InetAddress.getLocalHost().getHostName().split("\\.")[0]; }
 
         @SneakyThrows(UnknownHostException.class)
         private String domainName() {

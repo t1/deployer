@@ -20,6 +20,36 @@ import static java.util.stream.Collectors.*;
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
 @Accessors(fluent = true, chain = true)
 public class LoggerResource extends AbstractResource {
+    public static LogLevel mapLogLevel(String level) {
+        switch (level) {
+        case "ALL":
+            return LogLevel.ALL;
+        case "ERROR":
+        case "SEVERE":
+        case "FATAL":
+            return ERROR;
+        case "WARN":
+        case "WARNING":
+            return WARN;
+        case "INFO":
+        case "CONFIG":
+            return INFO;
+        case "DEBUG":
+        case "FINE":
+        case "FINER":
+            return DEBUG;
+        case "TRACE":
+        case "FINEST":
+            return TRACE;
+        case "OFF":
+            return OFF;
+        default:
+            log.error("unmapped log level: '{}'", level);
+            return WARN;
+        }
+    }
+
+
     @NonNull @Getter private final LoggerCategory category;
 
     @Singular
@@ -136,35 +166,6 @@ public class LoggerResource extends AbstractResource {
                           .collect(toList())
                 : emptyList();
     }
-
-    private LogLevel mapLogLevel(String level) {
-        switch (level) {
-        case "ALL":
-            return LogLevel.ALL;
-        case "ERROR":
-        case "SEVERE":
-            return ERROR;
-        case "WARN":
-        case "WARNING":
-            return WARN;
-        case "INFO":
-        case "CONFIG":
-            return INFO;
-        case "DEBUG":
-        case "FINE":
-        case "FINER":
-            return DEBUG;
-        case "TRACE":
-        case "FINEST":
-            return TRACE;
-        case "OFF":
-            return OFF;
-        default:
-            log.error("unmapped log level: '{}'", level);
-            return WARN;
-        }
-    }
-
 
     @Override protected ModelNode createRequestWithAddress() {
         ModelNode request = new ModelNode();

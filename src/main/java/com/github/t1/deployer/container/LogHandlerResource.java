@@ -12,6 +12,7 @@ import java.util.*;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LogHandlerName.*;
+import static com.github.t1.deployer.container.LoggerResource.*;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 
@@ -210,7 +211,7 @@ public class LogHandlerResource extends AbstractResource {
     }
 
     @Override protected void readFrom(ModelNode result) {
-        this.level = (result.get("level").isDefined()) ? LogLevel.valueOf(result.get("level").asString()) : null;
+        this.level = (result.get("level").isDefined()) ? mapLogLevel(result.get("level").asString()) : null;
         this.format = readFormat(result);
         this.formatter = getString(result, "named-formatter");
         this.file = (result.get("file").isDefined()) ? result.get("file").get("path").asString() : null;
