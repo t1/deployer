@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.Variables.*;
 import static com.github.t1.log.LogLevel.*;
 import static javax.ws.rs.core.MediaType.*;
 import static org.assertj.core.api.Assertions.*;
@@ -58,6 +59,6 @@ public class EffectivePlanHtmlWriterTest {
         writer.writeTo(plan, ConfigurationPlan.class, ConfigurationPlan.class, null, TEXT_HTML_TYPE, null, out);
 
         URI expected = Paths.get("src/test/java/com/github/t1/deployer/app/expected-plan.html").toUri();
-        assertThat(out.toString()).isEqualTo(contentOf(expected.toURL()));
+        assertThat(out.toString()).isEqualTo(contentOf(expected.toURL()).replaceAll("###hostname###", hostName()));
     }
 }

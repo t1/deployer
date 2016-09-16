@@ -63,7 +63,8 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
                 + "    <title>" + title + "</title>\n"
                 + "</head>\n"
                 + "<body>\n"
-                + "    <h1>" + title + "</h1>\n");
+                + "<h1>" + title + "</h1>\n"
+                + "\n");
         new PlanWriter(out, plan).write();
         out.print("</body>\n"
                 + "</html>\n");
