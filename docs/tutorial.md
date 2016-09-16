@@ -205,12 +205,6 @@ So we'll build the bundles with the `build-helper-maven-plugin`:
     </properties>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -305,13 +299,12 @@ Create a bundle artifact with the bundle you used as a root bundle,
 and deploy it with `artifact-id` = `myhost` and `group-id` = `mydomain.org`.
 Now you can pass the `version` to the POST and your done!
 This works even if your host names end with digits, which is a common pattern for node names in a cluster,
-i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`, as trailing digits are stripped.
+i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`.
 
-As domain names are often very generic, like `local` or `server.lan`,
-it's generally better to use the `default.group-id`.
+If your domain names are generic, like `local` or `server.lan`, it's generally better to use the `default.group-id`.
 If you already need a different `default.group-id`, you can define a `root-bundle-name` variable.
 
-If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them, too,
+If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them with regular expression,
 by setting a variable `bundle-to-host-name` to `(.*?)(dev|qa)?\d*` for suffixes or `(?:dev|qa)?(.*?)\d*` for prefixes.
 The first capturing group of the expression is used, so remember to mark any leading groups as non-capturing
 by using `(?:X)`, as shown for the prefix.
@@ -400,3 +393,52 @@ We could also pass the variables `log-level` and `group-id`,
 but they have defaults (i.e. they have ` or ` operators) that are good for now.
 
 Note that the bundle version `1.0.0-SNAPSHOT` is _not_ the version that we pass into the apps schema bundle `1.0`.
+
+
+## Controlling Versions
+
+You can now manage the deployment of single applications.
+But often there are dependencies between multiple applications... and sometimes they are very subtle.
+So you'll want to have a defined and reproducible combination.
+The best way for that is to have this versioned, and that's easy to do by using maven.
+Modify the `pom.xml` of your bundle like this:
+
+1. For every application in your bundle, add a maven property, e.g. `myapp.version`.
+1. For every application in your bundle, add a dependency using that version property, e.g.:
+
+ ```xml
+<dependency>
+    <groupId>mygroup</groupId>
+    <artifactId>myapp</artifactId>
+    <version>${myapp.version}</version>
+    <type>war</type>
+</dependency>
+```
+3. Enable resource filtering:
+
+```xml
+<build>
+    <resources>
+        <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+        </resource>
+    </resources>
+    ...
+</build>
+```
+
+In this way, the variable `${myapp.version}` will be resolved during build,
+i.e. while you have the variable in you source bundle,
+in the deployed artifact, it will be the fixed version string from the pom.
+
+Now you can use the `versions` plugin to update the versions in your pom:
+
+`mvn versions:update-properties -DgenerateBackupPom=false`
+
+If you want to also update to snapshot versions, use `-DallowSnapshots`. 
+
+You can also exclude or whitelist certain properties or artifacts:
+see `mvn versions:help -Dgoal=update-properties -Ddetail` for details.
+For details on the `rulesUri` option, see [this blog](http://blog.xebia.com/keeping-dependencies-up-to-date-in-maven/)
+or the [docs](http://www.mojohaus.org/versions-maven-plugin/rule.html).
