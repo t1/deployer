@@ -367,8 +367,8 @@ public class ConfigurationPlan {
 
         @NonNull @JsonIgnore private final LogHandlerName name;
         private final DeploymentState state;
-        private final LogLevel level;
         @NonNull private final LogHandlerType type;
+        private final LogLevel level;
         private final String format;
         private final String formatter;
 

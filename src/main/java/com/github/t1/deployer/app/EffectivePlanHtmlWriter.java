@@ -1,6 +1,8 @@
 package com.github.t1.deployer.app;
 
-import org.jetbrains.annotations.NotNull;
+import com.fasterxml.jackson.core.Base64Variant;
+import com.fasterxml.jackson.core.base.GeneratorBase;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -8,8 +10,10 @@ import javax.ws.rs.ext.*;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.math.*;
 import java.util.*;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.github.t1.deployer.model.Variables.*;
 import static javax.ws.rs.core.MediaType.*;
 
@@ -22,10 +26,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
     }
 
     @Override
-    public long getSize(ConfigurationPlan plan, Class<?> type, Type genericType, Annotation[] annotations,
-            MediaType mediaType) {
-        return -1;
-    }
+    public long getSize(ConfigurationPlan p, Class<?> t, Type g, Annotation[] a, MediaType m) { return -1; }
 
     @Override
     public void writeTo(ConfigurationPlan plan, Class<?> type, Type genericType, Annotation[] annotations,
@@ -33,86 +34,65 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
             throws IOException, WebApplicationException {
         PrintWriter out = new PrintWriter(entityStream);
         String title = hostName() + "-config";
-        out.print("<html>\n"
-                + "<head>\n"
-                + "    <style>\n"
-                + "        body {\n"
-                + "            font-family: \"Fira Code\", \"Courier New\", Courier, monospace;\n"
-                + "            font-size: 14px;\n"
-                + "        }\n"
-                + "\n"
-                + "        table {\n"
-                + "            margin-top: 24pt;\n"
-                + "            border: 1px solid rgb(221, 221, 221);\n"
-                + "            border-collapse: collapse;\n"
-                + "            box-sizing: border-box;\n"
-                + "            color: rgb(51, 51, 51);\n"
-                + "        }\n"
-                + "\n"
-                + "        tr {\n"
-                + "            height: 37px;\n"
-                + "        }\n"
-                + "\n"
-                + "        td {\n"
-                + "            border: 1px solid rgb(221, 221, 221);\n"
-                + "            border-collapse: collapse;\n"
-                + "            padding: 8px 8px 0;\n"
-                + "            vertical-align: top;\n"
-                + "        }\n"
-                + "    </style>\n"
-                + "    <title>" + title + "</title>\n"
-                + "</head>\n"
-                + "<body>\n"
-                + "<h1>" + title + "</h1>\n"
-                + "\n");
-        new PlanWriter(out, plan).write();
-        out.print("</body>\n"
-                + "</html>\n");
-        out.flush();
+        new HtmlWriter(out, title).writeObject(plan);
     }
 
-    private class PlanWriter {
-        private final PrintWriter out;
-        private final String[] lines;
+    private static class HtmlWriter extends GeneratorBase {
+        private static final ObjectMapper MAPPER = new ObjectMapper()
+                .setSerializationInclusion(NON_EMPTY)
+                .findAndRegisterModules();
 
-        private boolean hasTable = false;
+        private final PrintWriter out;
+        private String title;
+
+        private int depth = 0;
         private String rowHeader = null;
+        private String key = null;
         private Map<String, String> row = new LinkedHashMap<>();
 
-        private PlanWriter(PrintWriter out, ConfigurationPlan plan) {
+        private HtmlWriter(PrintWriter out, String title) {
+            super(0, MAPPER);
             this.out = out;
-            this.lines = plan.toYaml().split("\n");
+            this.title = title;
         }
 
-        public void write() {
-            for (String line : lines) {
-                if (line.startsWith("  ")) {
-                    line = line.substring(2);
-                    if (line.startsWith("  ")) {
-                        line = line.substring(2);
-                        String[] split = line.split(": ");
-                        if (split.length == 2)
-                            row.put(split[0], split[1]);
-                    } else {
-                        endRow();
-                        rowHeader = stripTrailingColon(line);
-                    }
-                } else {
-                    endTable();
-                    line = stripTrailingColon(line);
-                    printHeader(out, line);
-                    rowHeader = null;
-                    hasTable = true;
-                }
-            }
-            endTable();
-        }
-
-        public void endTable() {
-            if (hasTable) {
-                endRow();
-                out.println("</table>\n");
-            }
+        @Override public void writeObject(Object value) throws IOException {
+            out.print("<html>\n"
+                    + "<head>\n"
+                    + "    <style>\n"
+                    + "        body {\n"
+                    + "            font-family: \"Fira Code\", \"Courier New\", Courier, monospace;\n"
+                    + "            font-size: 14px;\n"
+                    + "        }\n"
+                    + "\n"
+                    + "        table {\n"
+                    + "            margin-top: 24pt;\n"
+                    + "            border: 1px solid rgb(221, 221, 221);\n"
+                    + "            border-collapse: collapse;\n"
+                    + "            box-sizing: border-box;\n"
+                    + "            color: rgb(51, 51, 51);\n"
+                    + "        }\n"
+                    + "\n"
+                    + "        tr {\n"
+                    + "            height: 37px;\n"
+                    + "        }\n"
+                    + "\n"
+                    + "        td {\n"
+                    + "            border: 1px solid rgb(221, 221, 221);\n"
+                    + "            border-collapse: collapse;\n"
+                    + "            padding: 8px 8px 0;\n"
+                    + "            vertical-align: top;\n"
+                    + "        }\n"
+                    + "    </style>\n"
+                    + "    <title>" + title + "</title>\n"
+                    + "</head>\n"
+                    + "<body>\n"
+                    + "<h1>" + title + "</h1>\n"
+                    + "\n");
+            super.writeObject(value);
+            out.print("</body>\n"
+                    + "</html>\n");
+            flush();
         }
 
         public void endRow() {
@@ -137,12 +117,6 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
             }
         }
 
-        @NotNull public String stripTrailingColon(String line) {
-            assert line.endsWith(":");
-            line = line.substring(0, line.length() - 1);
-            return line;
-        }
-
         public void printHeader(PrintWriter out, String header) {
             out.print(""
                     + "<table>\n"
@@ -150,5 +124,81 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
                     + "        <th colspan=\"3\">" + header + "</th>\n"
                     + "    </tr>\n");
         }
+
+        @Override public void writeStartArray() throws IOException {}
+
+        @Override public void writeEndArray() throws IOException {}
+
+        @Override public void writeStartObject() throws IOException { ++depth; }
+
+        @Override public void writeEndObject() throws IOException {
+            --depth;
+            endRow();
+            if (depth == 1) {
+                out.println("</table>\n");
+            }
+        }
+
+        @Override public void writeFieldName(String name) throws IOException {
+            switch (depth) {
+            case 1:
+                printHeader(out, name);
+                rowHeader = null;
+                break;
+            case 2:
+                endRow();
+                rowHeader = name;
+                break;
+            case 3:
+                key = name;
+                break;
+            default:
+                key = "*" + name;
+                break;
+            }
+        }
+
+        @Override public void writeString(String text) throws IOException { row.put(key, text); }
+
+
+        @Override public void writeString(char[] text, int offset, int len) throws IOException {}
+
+        @Override public void writeRawUTF8String(byte[] text, int offset, int length) throws IOException {}
+
+        @Override public void writeUTF8String(byte[] text, int offset, int length) throws IOException {}
+
+        @Override public void writeRaw(String text) throws IOException {}
+
+        @Override public void writeRaw(String text, int offset, int len) throws IOException {}
+
+        @Override public void writeRaw(char[] text, int offset, int len) throws IOException {}
+
+        @Override public void writeRaw(char c) throws IOException {}
+
+        @Override public void writeBinary(Base64Variant bv, byte[] data, int offset, int len) throws IOException {}
+
+        @Override public void writeNumber(int v) throws IOException {}
+
+        @Override public void writeNumber(long v) throws IOException {}
+
+        @Override public void writeNumber(BigInteger v) throws IOException {}
+
+        @Override public void writeNumber(double v) throws IOException {}
+
+        @Override public void writeNumber(float v) throws IOException {}
+
+        @Override public void writeNumber(BigDecimal v) throws IOException {}
+
+        @Override public void writeNumber(String encodedValue) throws IOException {}
+
+        @Override public void writeBoolean(boolean state) throws IOException { row.put(key, Boolean.toString(state)); }
+
+        @Override public void writeNull() throws IOException {}
+
+        @Override public void flush() throws IOException { out.flush(); }
+
+        @Override protected void _releaseBuffers() {}
+
+        @Override protected void _verifyValueWrite(String typeMsg) throws IOException {}
     }
 }
