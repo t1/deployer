@@ -10,6 +10,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.*;
 
+import static com.github.t1.deployer.model.Variables.*;
 import static javax.ws.rs.core.MediaType.*;
 
 @Provider
@@ -31,6 +32,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
             MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
             throws IOException, WebApplicationException {
         PrintWriter out = new PrintWriter(entityStream);
+        String title = hostName() + "-config";
         out.print("<html>\n"
                 + "<head>\n"
                 + "    <style>\n"
@@ -58,8 +60,10 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
                 + "            vertical-align: top;\n"
                 + "        }\n"
                 + "    </style>\n"
+                + "    <title>" + title + "</title>\n"
                 + "</head>\n"
-                + "<body>\n");
+                + "<body>\n"
+                + "    <h1>" + title + "</h1>\n");
         new PlanWriter(out, plan).write();
         out.print("</body>\n"
                 + "</html>\n");
@@ -145,6 +149,5 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationP
                     + "        <th colspan=\"3\">" + header + "</th>\n"
                     + "    </tr>\n");
         }
-
     }
 }
