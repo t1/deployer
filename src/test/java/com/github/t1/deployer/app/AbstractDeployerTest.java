@@ -610,7 +610,7 @@ public class AbstractDeployerTest {
     public class LogHandlerFixture {
         private final LogHandlerType type;
         private final LogHandlerName name;
-        private final LogHandlerAuditBuilder audit;
+        private final LogHandlerAuditBuilder exprectedAudit;
         private LogLevel level;
         private String format;
         private String formatter;
@@ -624,7 +624,7 @@ public class AbstractDeployerTest {
         public LogHandlerFixture(LogHandlerType type, String name) {
             this.type = type;
             this.name = new LogHandlerName(name);
-            this.audit = LogHandlerAudit.builder().type(this.type).name(this.name);
+            this.exprectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
             this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
             when(cli.executeRaw(readResource("logging", type.getHandlerTypeName(), name))).then(i -> deployed
@@ -734,12 +734,12 @@ public class AbstractDeployerTest {
         }
 
         public <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
-            audit.change(name, oldValue, newValue);
+            exprectedAudit.change(name, oldValue, newValue);
             return this;
         }
 
         public void verifyChanged(Audits audits) {
-            assertThat(audits.getAudits()).containsExactly(this.audit.changed());
+            assertThat(audits.getAudits()).containsExactly(this.exprectedAudit.changed());
         }
 
         public void verifyMapPut(String name, String key, String value) {
@@ -773,24 +773,24 @@ public class AbstractDeployerTest {
                             + "\n    ]\n")
                     + "\n}");
             verify(cli).execute(expectedAdd);
-            audit.change("level", null, (level == null) ? ALL : level);
+            exprectedAudit.change("level", null, (level == null) ? ALL : level);
             if (format == null && formatter == null)
-                audit.change("format", null, DEFAULT_LOG_FORMAT);
+                exprectedAudit.change("format", null, DEFAULT_LOG_FORMAT);
             if (format != null)
-                audit.change("format", null, format);
+                exprectedAudit.change("format", null, format);
             if (formatter != null)
-                audit.change("formatter", null, formatter);
+                exprectedAudit.change("formatter", null, formatter);
             if (type == periodicRotatingFile)
-                audit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
+                exprectedAudit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
             if (suffix != null)
-                audit.change("suffix", null, suffix);
+                exprectedAudit.change("suffix", null, suffix);
             if (module != null)
-                audit.change("module", null, module);
+                exprectedAudit.change("module", null, module);
             if (class_ != null)
-                audit.change("class", null, class_);
+                exprectedAudit.change("class", null, class_);
             if (properties != null)
-                properties.forEach((key, value) -> audit.change("property/" + key, null, value));
-            assertThat(audits.getAudits()).containsExactly(audit.added());
+                properties.forEach((key, value) -> exprectedAudit.change("property/" + key, null, value));
+            assertThat(audits.getAudits()).containsExactly(exprectedAudit.added());
         }
 
         public void verifyRemoved(Audits audits) {
@@ -798,22 +798,22 @@ public class AbstractDeployerTest {
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));
-            audit.change("level", this.level, null);
+            exprectedAudit.change("level", this.level, null);
             if (this.format != null)
-                audit.change("format", this.format, null);
+                exprectedAudit.change("format", this.format, null);
             if (this.formatter != null)
-                audit.change("formatter", this.formatter, null);
+                exprectedAudit.change("formatter", this.formatter, null);
             if (this.file != null)
-                audit.change("file", this.file, null);
+                exprectedAudit.change("file", this.file, null);
             if (this.suffix != null)
-                audit.change("suffix", this.suffix, null);
+                exprectedAudit.change("suffix", this.suffix, null);
             if (this.module != null)
-                audit.change("module", this.module, null);
+                exprectedAudit.change("module", this.module, null);
             if (this.class_ != null)
-                audit.change("class", this.class_, null);
+                exprectedAudit.change("class", this.class_, null);
             if (properties != null)
-                properties.forEach((key, value) -> audit.change("property/" + key, value, null));
-            assertThat(audits.getAudits()).containsExactly(audit.removed());
+                properties.forEach((key, value) -> exprectedAudit.change("property/" + key, value, null));
+            assertThat(audits.getAudits()).containsExactly(exprectedAudit.removed());
         }
 
         public LogHandlerConfig asConfig() {

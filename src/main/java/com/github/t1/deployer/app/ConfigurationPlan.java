@@ -293,7 +293,7 @@ public class ConfigurationPlan {
         }
 
         @Override public String toString() {
-            return "«bundle:" + name + ":" + super.toString() + ":" + variables + "»";
+            return "«bundle:" + name + ":" + super.toString() + ":" + instances + "»";
         }
     }
 

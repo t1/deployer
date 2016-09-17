@@ -168,7 +168,7 @@ public class LogHandlerResource extends AbstractResource {
 
     public void updateFile(String newFile) {
         checkDeployed();
-        writeAttribute("file", newFile);
+        writeAttribute("file.path", newFile);
     }
 
     public void updateSuffix(String newSuffix) {

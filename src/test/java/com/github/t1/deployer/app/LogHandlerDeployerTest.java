@@ -368,7 +368,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.verifyChange("file", "the-old-file", "the-new-file");
+        fixture.verifyWriteAttribute("file.path", "the-new-file");
+        fixture.expectChange("file", "the-old-file", "the-new-file");
         fixture.verifyChanged(audits);
     }
 
@@ -514,7 +515,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-new-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.verifyChange("file", "the-old-file", "the-new-file");
+        fixture.verifyWriteAttribute("file.path", "the-new-file");
+        fixture.expectChange("file", "the-old-file", "the-new-file");
         fixture.verifyChange("suffix", "the-old-suffix", "the-new-suffix");
         fixture.verifyChanged(audits);
     }
