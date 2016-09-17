@@ -192,8 +192,8 @@ public class ConfigurationPlanSerializationTest {
     private static final String ONE_LOGHANDLER_YAML = ""
             + "log-handlers:\n"
             + "  FOO:\n"
-            + "    level: INFO\n"
             + "    type: periodic-rotating-file\n"
+            + "    level: INFO\n"
             + "    format: the-format\n"
             + "    file: the-file\n"
             + "    suffix: the-suffix\n";
@@ -229,8 +229,8 @@ public class ConfigurationPlanSerializationTest {
     private static final String CUSTOM_HANDLER_YAML = ""
             + "log-handlers:\n"
             + "  FOO:\n"
-            + "    level: INFO\n"
             + "    type: custom\n"
+            + "    level: INFO\n"
             + "    format: the-format\n"
             + "    module: org.foo\n"
             + "    class: org.foo.MyHandler\n";
