@@ -244,7 +244,7 @@ Nice and well, but there's no much use to it all, if you still have to copy the 
 And every time you have to update a version, you'd have to repeat that process. Suboptimal.
 We'd like to be able to update an application from the _outside_, e.g. from a Jenkins job.
 
-To do that, simply replace the `version` of `myapp1` by `${myapp1.version}`.
+To do that, simply set the `version` of `myapp1` to `${myapp1.version}`.
 Then, using [httpie](http://httpie.org/), you can do:
 
     http --json POST :8080/deployer myapp1.version=1.0
@@ -264,6 +264,7 @@ Note that this doesn't work for bundles, as they are not actually deployed in th
 
 The dollar-curlies syntax is used for variables and variable expressions.
 You can use variables for many things, but passing in versions is probably the most common use case.
+
 Another interesting one is the log level. Maybe you want `DEBUG` on QA, but `INFO` in production.
 But it would be cumbersome to pass this to every POST request.
 Gladly, you can also define variables in the `deployer.config.yaml`; just add this section:
@@ -282,8 +283,8 @@ Another thing you'll be repeating all over the place, is the `group-id`.
 You can also add this to your `deployer.config.yaml`, and then remove the `group-id` throughout your configuration files.
 But there's no other fallback, i.e. if you don't have this variable set, The Deployer will fail with an undefined variable error.
 
-Not all values can be set in this way; e.g., there's no much use in defining a `default.artifact-id`, is it.
-But for a complete list, see the [reference](reference.md#vars).
+Not all values can be set in this way; e.g., there's no much use in defining a `default.artifact-id`, is it?
+For a complete list, see the [reference](reference.md#vars).
 
 
 ## Default Root Bundle
@@ -302,7 +303,7 @@ This works even if your host names end with digits, which is a common pattern fo
 i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`.
 
 If your domain names are generic, like `local` or `server.lan`, it's generally better to use the `default.group-id`.
-If you already need a different `default.group-id`, you can define a `root-bundle-name` variable.
+If you already need a different `default.group-id`, you can define a `root-bundle-group` variable.
 
 If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them with regular expression,
 by setting a variable `bundle-to-host-name` to `(.*?)(dev|qa)?\d*` for suffixes or `(?:dev|qa)?(.*?)\d*` for prefixes.
@@ -310,7 +311,9 @@ The first capturing group of the expression is used, so remember to mark any lea
 by using `(?:X)`, as shown for the prefix.
 
 If your host names are very technical and/or change very often,
-you may be better off to configure an explicit `root-bundle-name` variable.
+you may be better off to configure an explicit `root-bundle-name` variable; this is just so much simpler.
+Using regular expressions for your host names is most appropriate in situations where you have a PaaS like environment,
+i.e. a generic `deployer.config.yaml` file is rolled out by some platform operations team... together with The Deployer.
 
 
 ## Schema Bundles
@@ -428,9 +431,9 @@ Modify the `pom.xml` of your bundle like this:
 </build>
 ```
 
-In this way, the variable `${myapp.version}` will be resolved during build,
-i.e. while you have the variable in you source bundle,
-in the deployed artifact, it will be the fixed version string from the pom.
+In this way, the variable `${myapp.version}` in your bundle will be resolved when building,
+i.e. while you have the variable name in your source bundle,
+it will be the fixed version string from the pom in the deployed artifact.
 
 Now you can use the `versions` plugin to update the versions in your pom:
 
