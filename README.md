@@ -12,7 +12,7 @@ There's good support for Wildfly in [Ansible](http://docs.ansible.com/ansible/jb
 [Salt](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.jboss7.html), and
 [Puppet](https://forge.puppet.com/biemond/wildfly) (to name just a few).
 They are very powerful and can do much more than just this; e.g., they can install the JBoss itself.
-And that's exactly the problem _I_ had: Great power comes with great responsibility...
+And that's exactly the problem that I had: Great power comes with great responsibility...
 too much responsibility for me as a simple developer and operator of JEE applications,
 working in an environment where the infrastructure and platform is managed by dedicated operations teams,
 using those other IaC tools.
@@ -26,7 +26,7 @@ A central instance that can mess with any aspect of my system is a real honey po
 
 OTOH, The Deployer tries to keep away from container specifics, so the configuration files you'll write should run
 on any JEE container The Deployer supports. I must admit that this is rather academic at the moment,
-given that only JBoss 7+ is currently supported, but it may prove worth trying to keep extensibility in mind.
+given that only JBoss 7+ is currently supported, but it may prove worth trying to keep adaptability in mind.
 
 Configuration quickly grows unwieldy. So it's all about reducing it to the essential, driving repetition out.
 
@@ -73,10 +73,11 @@ They may be configured to use a real MavenCentral and/or locally running Artifac
 
 ## Plans
 
-See the [milestones](https://github.com/t1/deployer/milestones).
+See the [open milestones](https://github.com/t1/deployer/milestones).
 
 ## Contribute
 
-You can [join the chat](https://gitter.im/t1/deployer) or feel free to simply open issues. Pull requests are also welcome.
+You can [join the chat](https://gitter.im/t1/deployer) or feel free to simply open issues.
+Pull requests are also welcome.
 
 License: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
