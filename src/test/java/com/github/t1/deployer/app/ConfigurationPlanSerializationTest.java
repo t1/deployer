@@ -41,7 +41,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializeEmptyPlan() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader("{}"));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader("{}"), "empty");
 
         assertThat(plan).isEqualTo(ConfigurationPlan.builder().build());
     }
@@ -62,7 +62,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneDeployment() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_DEPLOYMENT_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_DEPLOYMENT_YAML), "yaml1");
 
         assertThat(plan).isEqualTo(ONE_DEPLOYMENT_PLAN);
     }
@@ -103,7 +103,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithTwoDeployments() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(TWO_DEPLOYMENTS_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(TWO_DEPLOYMENTS_YAML), "yaml2");
 
         assertThat(plan).isEqualTo(TWO_DEPLOYMENTS_PLAN);
     }
@@ -142,7 +142,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(BUNDLE_PLAN_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(BUNDLE_PLAN_YAML), "yaml-bundle");
 
         assertThat(plan).isEqualTo(BUNDLE_PLAN);
     }
@@ -176,7 +176,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogger() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGGER_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGGER_YAML),"1log");
 
         assertThat(plan).isEqualTo(ONE_LOGGER_PLAN);
     }
@@ -213,7 +213,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGHANDLER_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGHANDLER_YAML),"1log-h");
 
         assertThat(plan).isEqualTo(ONE_LOGHANDLER_PLAN);
     }
@@ -249,7 +249,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithCustomLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(CUSTOM_HANDLER_YAML));
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(CUSTOM_HANDLER_YAML),"custom-h");
 
         assertThat(plan).isEqualTo(CUSTOM_HANDLER_PLAN);
     }
@@ -269,7 +269,8 @@ public class ConfigurationPlanSerializationTest {
                 + "    level: INFO\n"
                 + "    type: custom\n"
                 + "    format: the-format\n"
-                + "    class: org.foo.MyHandler\n")));
+                + "    class: org.foo.MyHandler\n"
+        ), "xm"));
 
         assertThat(thrown).hasStackTraceContaining("log-handler [FOO] is of type [custom], so it requires a 'module'");
     }
@@ -282,7 +283,8 @@ public class ConfigurationPlanSerializationTest {
                 + "    level: INFO\n"
                 + "    type: custom\n"
                 + "    format: the-format\n"
-                + "    module: org.foo\n")));
+                + "    module: org.foo\n"
+        ), "xc"));
 
         assertThat(thrown).hasStackTraceContaining("log-handler [FOO] is of type [custom], so it requires a 'class'");
     }

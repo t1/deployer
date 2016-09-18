@@ -363,6 +363,7 @@ loggers:
 deployables:
   ${name}:
     group-id: ${group-id or default.group-id}
+    artifact-id: ${artifact-id or name}
     version: ${version}
 ```
 
@@ -379,23 +380,30 @@ bundles:
     instances:
       myapp1:
         version: 1.0
+      myapp2:
+        version: 2.0
 ```
 
 The `instances` field is semantically a list of key value pairs, only that the key `name` is 'taken out' as an outer key,
-while the other variable mappings are nested inside, i.e. we have only one instance in this example, containing:
+while the other variable mappings are nested inside, e.g., containing:
 
 ```yaml
 name: myapp1
 version: 1.0
 ```
+and
+```yaml
+name: myapp2
+version: 2.0
+```
 
 In this way, we can use the `apps` schema bundles for as many applications as we like;
 the `name` is enforced to be unique, and the syntax is analogous to `bundles` and `deployables`.
 
-We could also pass the variables `log-level` and `group-id`,
+We could also pass the variables `log-level`, `group-id`, or `artifact-id`,
 but they have defaults (i.e. they have ` or ` operators) that are good for now.
 
-Note that the bundle version `1.0.0-SNAPSHOT` is _not_ the version that we pass into the apps schema bundle `1.0`.
+Note that the bundle version `1.0.0-SNAPSHOT` is completely independent from the version that we pass into the apps schema bundle `1.0`/`2.0`.
 
 
 ## Controlling Versions
@@ -445,3 +453,7 @@ You can also exclude or whitelist certain properties or artifacts:
 see `mvn versions:help -Dgoal=update-properties -Ddetail` for details.
 For details on the `rulesUri` option, see [this blog](http://blog.xebia.com/keeping-dependencies-up-to-date-in-maven/)
 or the [docs](http://www.mojohaus.org/versions-maven-plugin/rule.html).
+
+Note that when using resource filtering you'll have to be **careful** with the variable names in your bundle!
+E.g., the variable `${name}` would get replaced with the name of the `artifact-id` defined in your `pom.xml`.
+If this happens, you can use an expression like `${name or name}`, but this shouldn't happen too often.

@@ -63,16 +63,16 @@ public class ConfigurationPlan {
 
     private static Variables variables = null;
 
-    synchronized public static ConfigurationPlan load(Variables variables, Reader reader) {
+    synchronized public static ConfigurationPlan load(Variables variables, Reader reader, String sourceMessage) {
         ConfigurationPlan.variables = variables;
         try {
             ConfigurationPlan plan = YAML.readValue(variables.resolve(reader), ConfigurationPlan.class);
             if (plan == null)
                 plan = EMPTY_PLAN;
-            log.debug("config plan loaded:\n{}", plan);
+            log.debug("config plan loaded from {}:\n{}", sourceMessage, plan);
             return plan;
         } catch (IOException e) {
-            throw new ConfigurationPlanLoadingException("exception while loading config plan", e);
+            throw new ConfigurationPlanLoadingException("exception while loading config plan from " + sourceMessage, e);
         } finally {
             ConfigurationPlan.variables = null;
         }
@@ -239,7 +239,10 @@ public class ConfigurationPlan {
             return this;
         }
 
-        @Override public String toString() { return "«deployment:" + name + ":" + super.toString() + ":" + type + "»"; }
+        @Override public String toString() {
+            return "«deployment:" + name + ":" + super.toString()
+                    + ":" + type + ((getChecksum() == null) ? "" : ":" + getChecksum()) + "»";
+        }
     }
 
     @Data

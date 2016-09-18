@@ -61,7 +61,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
         if (resource.checksum().equals(artifact.getChecksum())) {
             boolean removed = existing.removeIf(getResourceDeploymentNameOf(plan)::matches);
             assert removed : "expected [" + resource + "] to be in existing " + existing;
-            log.info("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
+            log.debug("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
         } else {
             container.deployment(getResourceDeploymentNameOf(plan)).build().redeploy(artifact.getInputStream());
             audit.change("checksum", resource.checksum(), artifact.getChecksum());

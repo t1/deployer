@@ -39,6 +39,8 @@ public class Variables {
     /**
      * Reads from the reader, removes all comments (starting with a `#`), and replaces all variables
      * (starting with `${` and ending with `}` - may be escaped with a second `$`, i.e. `$${a}` will be replaced by `${a}`).
+     *
+     * @implNote We load the entire text from the source reader instead of streaming it, as these are never really big.
      */
     @SneakyThrows(IOException.class)
     public Reader resolve(Reader reader) {
@@ -74,7 +76,7 @@ public class Variables {
         Resolver resolver = new OrResolver(expression);
         if (resolver.isMatch())
             return resolver.getValue();
-        log.debug("failed to resolve [{}]", expression);
+        log.trace("unresolved expression [{}]", expression);
         return null;
     }
 
@@ -149,7 +151,7 @@ public class Variables {
 
         private String resolve() {
             if (!variables.containsKey(variableName)) {
-                log.debug("undefined variable name [{}]", key);
+                log.trace("undefined variable [{}]", key);
                 this.match = false;
                 return null;
             }

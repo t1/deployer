@@ -6,7 +6,7 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Variables.UnresolvedVariableException;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
-import com.github.t1.problem.WebApplicationApplicationException;
+import com.github.t1.problem.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,6 +21,7 @@ import java.util.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 @javax.ws.rs.Path("/")
 @Stateless
@@ -108,29 +109,37 @@ public class DeployerBoundary {
         }
 
         public void apply(Path plan) {
+            apply(reader(plan), plan.toString());
+        }
+
+        public BufferedReader reader(Path plan) {
             log.info("load config plan from: {}", plan);
-            String message = "can't apply config plan [" + plan + "]";
             try {
-                BufferedReader reader = Files.newBufferedReader(plan);
-                apply(reader, message);
+                return Files.newBufferedReader(plan);
             } catch (IOException e) {
-                throw new RuntimeException(message, e);
+                throw new RuntimeException("can't read config plan [" + plan + "]", e);
             }
         }
 
         public void applyDefaultRoot() {
             log.info("load default root plan");
-            apply(new StringReader(DEFAULT_ROOT_BUNDLE), "can't apply default root bundle");
+            apply(new StringReader(DEFAULT_ROOT_BUNDLE), "default root bundle");
         }
 
-        private void apply(Reader reader, String message) {
+        private void apply(Reader reader, String sourceMessage) {
+            String failureMessage = "can't apply config plan [" + sourceMessage + "]";
             try {
-                this.apply(ConfigurationPlan.load(variables, reader));
+                this.apply(ConfigurationPlan.load(variables, reader, sourceMessage));
             } catch (WebApplicationApplicationException e) {
-                log.info(message);
+                log.info(failureMessage);
                 throw e;
             } catch (RuntimeException e) {
-                throw new RuntimeException(message, e);
+                log.debug(failureMessage, e);
+                throw WebException
+                        .builderFor(BAD_REQUEST)
+                        .causedBy(e)
+                        .detail(failureMessage)
+                        .build();
             }
         }
 
@@ -150,7 +159,8 @@ public class DeployerBoundary {
                     if (instance.getKey() != null)
                         this.variables = this.variables.with("name", instance.getKey());
                     this.variables = this.variables.withAll(instance.getValue());
-                    apply(lookup(bundle).getReader(), "can't apply bundle [" + bundle + "]");
+                    Artifact artifact = lookup(bundle);
+                    apply(artifact.getReader(), artifact.toString());
                 } finally {
                     this.variables = pop;
                 }
