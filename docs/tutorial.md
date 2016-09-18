@@ -16,7 +16,7 @@ You can GET this data as `application/yaml`, `application/json`, or `text/html`,
 i.e. you can view it as simple tables with your browser.
 Note that this is very simplistic and some information may be missing.
 
-(currently `application/xml` doesn't work... but xml seems out-of-fashion anyway ;-)
+(currently `application/xml` does not work... but xml seems out-of-fashion anyway ;-)
 
 ## Undeploy & Manage
 
@@ -260,7 +260,7 @@ Why should it even care about the existence of `myapp2` at all?
 Easy: Just don't. The default `version` (i.e. the effective `version` for an deployable already deployed) is `CURRENT`,
 which resolves to the version currently installed.
 So while you can't use this for the initial deployment, you _can_ use it to update one deployable, while all others remain the same.
-Note that this doesn't work for bundles, as they are not actually deployed in the container, so there's not CURRENT version for them.
+Note that this does not work for bundles, as they are not actually deployed in the container, so there's not CURRENT version for them.
 
 The dollar-curlies syntax is used for variables and variable expressions.
 You can use variables for many things, but passing in versions is probably the most common use case.
@@ -290,7 +290,7 @@ For a complete list, see the [reference](reference.md#vars).
 ## Default Root Bundle
 
 Still, something's missing. We still need to copy the root bundle to all nodes to bootstrap or when we add an artifact.
-Wouldn't it be nice to have a way to deploy the root bundle itself?
+Would not it be nice to have a way to deploy the root bundle itself?
 Of course there is, but we'll need another level of indirection.
 If there is no file `deployer.root.bundle`, a [default root bundle](reference.md#default-root-bundle) applies.
 This is how it works:
@@ -456,4 +456,4 @@ or the [docs](http://www.mojohaus.org/versions-maven-plugin/rule.html).
 
 Note that when using resource filtering you'll have to be **careful** with the variable names in your bundle!
 E.g., the variable `${name}` would get replaced with the name of the `artifact-id` defined in your `pom.xml`.
-If this happens, you can use an expression like `${name or name}`, but this shouldn't happen too often.
+If this happens, you can use an expression like `${name or name}`, but this should not happen too often.
