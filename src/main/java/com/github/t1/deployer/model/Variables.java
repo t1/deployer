@@ -26,7 +26,7 @@ public class Variables {
     public static String hostName() { return InetAddress.getLocalHost().getHostName().split("\\.")[0]; }
 
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
-    private static final Pattern VARIABLE_VALUE = Pattern.compile("[- ._a-zA-Z0-9]{1,256}");
+    private static final Pattern VARIABLE_VALUE = Pattern.compile("[- ._a-zA-Z0-9?*:|\\\\{}()\\[\\]]{1,256}");
 
     private final ImmutableMap<String, String> variables;
 

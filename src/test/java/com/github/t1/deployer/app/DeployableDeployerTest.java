@@ -380,20 +380,24 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
         foo.verifyDeployed(audits);
     }
 
+    @Test
+    public void shouldDeployWebArchiveWithRegexVariable() throws Exception {
+        givenConfiguredVariable("myregex", "(?:qa\\.)(.*?)");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${regex(«qa.org.foo», myregex)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
 
     @Test public void shouldFailToReplaceVariableWithNewline() { shouldFailToReplaceVariableWith("foo\nbar"); }
 
-    @Test public void shouldFailToReplaceVariableWithOpeningCurly() { shouldFailToReplaceVariableWith("foo{bar"); }
-
-    @Test public void shouldFailToReplaceVariableWithClosingCurly() { shouldFailToReplaceVariableWith("foo}bar"); }
-
-    @Test public void shouldFailToReplaceVariableWithOnlyOpeningCurly() { shouldFailToReplaceVariableWith("{"); }
-
-    @Test public void shouldFailToReplaceVariableWithCurlies() { shouldFailToReplaceVariableWith("{}"); }
-
-    @Test public void shouldFailToReplaceVariableWithAsterisk() { shouldFailToReplaceVariableWith("foo*bar"); }
-
-    @Test public void shouldFailToReplaceFunctionWithLeadingStar() { shouldFailToReplaceVariableWith("*foo(bar)"); }
+    @Test public void shouldFailToReplaceFunctionWithTab() { shouldFailToReplaceVariableWith("\tfoo"); }
 
     private void shouldFailToReplaceVariableWith(String value) {
         systemProperties.given("foo", value);
