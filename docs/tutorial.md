@@ -445,9 +445,9 @@ it will be the fixed version string from the pom in the deployed artifact.
 
 Now you can use the `versions` plugin to update the versions in your pom:
 
-`mvn versions:update-properties -DgenerateBackupPom=false`
+`mvn versions:update-properties -DgenerateBackupPoms=false`
 
-If you want to also update to snapshot versions, use `-DallowSnapshots`. 
+If you want to also update to snapshot versions, use `-DallowSnapshots` (and maybe `--update-snapshots`). 
 
 You can also exclude or whitelist certain properties or artifacts:
 see `mvn versions:help -Dgoal=update-properties -Ddetail` for details.
