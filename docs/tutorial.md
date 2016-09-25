@@ -454,6 +454,76 @@ see `mvn versions:help -Dgoal=update-properties -Ddetail` for details.
 For details on the `rulesUri` option, see [this blog](http://blog.xebia.com/keeping-dependencies-up-to-date-in-maven/)
 or the [docs](http://www.mojohaus.org/versions-maven-plugin/rule.html).
 
-Note that when using resource filtering you'll have to be **careful** with the variable names in your bundle!
+Note that when using resource filtering you'll have to be **careful** with the variable names in your bundle.
 E.g., the variable `${name}` would get replaced with the name of the `artifact-id` defined in your `pom.xml`.
 If this happens, you can use an expression like `${name or name}`, but this should not happen too often.
+
+You may want to go the extra mile and stick to [semantic versioning](http://semver.org) even for your bundles,
+i.e. changes to the version number of the bundle should reflect the biggest change contained,
+e.g. when you have one deployable change from 1.3.5 to 1.3.7 and another deployable change from 2.12.1 to 2.13.5,
+you'll want your bundle version 12.7.3 to change to 12.8.0.
+To do so in a Jenkins pipeline build job,
+install the [jenkins-pipeline-updates](https://github.com/t1/jenkins-pipeline-updates)
+as a [Shared Library](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/blob/master/README.md)
+named `updates` in your Jenkins, and use a `Jenkinsfile` similar to this:
+
+```groovy
+#!groovy
+
+@Library('updates') _
+
+def String mvn(args) {
+    return sh(returnStdout: true, script: "${tool 'M3'}/bin/mvn ${args}")
+}
+
+node {
+    stage('Checkout') {
+        checkout scm
+    }
+
+    Updates updates = stage('Update') {
+        scan mvn('versions:update-properties -DgenerateBackupPoms=false')
+    }
+
+    if (updates.isEmpty()) {
+        echo 'no updates found in ' + updates.getCurrentVersion() + '... skip rest of build job'
+        return
+    }
+
+    stage('Commit') {
+        echo updates.toString()
+        def pom = readMavenPom file: 'pom.xml'
+        pom.version = updates.updateVersion
+        writeMavenPom model: pom
+
+        sh "git add pom.xml"
+        sh "git commit -m '${updates.toString()}'"
+    }
+
+    stage('Release') {
+        def pom = readMavenPom file: 'pom.xml'
+        pom.version = updates.updateVersion + '-SNAPSHOT'
+        writeMavenPom model: pom
+
+        mvn 'release:prepare release:perform --batch-mode'
+    }
+
+    stage('Push') {
+        sh 'git push'
+    }
+
+    stage('Deploy') {
+        deploy(updates.updateVersion, 'http://localhost:8080')
+    }
+}
+
+private void deploy(version, String host) {
+    def response = httpRequest(
+            httpMode: 'POST',
+            url: host + '/deployer',
+            acceptType: 'APPLICATION_JSON',
+            contentType: 'APPLICATION_JSON',
+            requestBody: '{"version":"' + version + '"}')
+    echo "Content: ${response.content}"
+}
+```
