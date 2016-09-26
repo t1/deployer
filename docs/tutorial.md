@@ -409,7 +409,7 @@ Note that the bundle version `1.0.0-SNAPSHOT` is completely independent from the
 ## Controlling Versions
 
 You can now manage the deployment of single applications.
-But often there are dependencies between multiple applications... and sometimes they are very subtle.
+But often there are dependencies between multiple applications... and sometimes the effects are very subtle.
 So you'll want to have a defined and reproducible combination.
 The best way for that is to have this versioned, and that's easy to do by using maven.
 Modify the `pom.xml` of your bundle like this:
@@ -462,10 +462,14 @@ You may want to go the extra mile and stick to [semantic versioning](http://semv
 i.e. changes to the version number of the bundle should reflect the biggest change contained,
 e.g. when you have one deployable change from 1.3.5 to 1.3.7 and another deployable change from 2.12.1 to 2.13.5,
 you'll want your bundle version 12.7.3 to change to 12.8.0.
+
 To do so in a Jenkins pipeline build job,
-install the [jenkins-pipeline-updates](https://github.com/t1/jenkins-pipeline-updates)
+1. install the [HTTP Request Plugin](http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin),
+1. install the [jenkins-pipeline-updates](https://github.com/t1/jenkins-pipeline-updates)
 as a [Shared Library](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/blob/master/README.md)
-named `updates` in your Jenkins, and use a `Jenkinsfile` similar to this:
+(`Manage Jenkins` -> `Configure System` -> `Global Pipeline Libraries`)
+named `updates` in your Jenkins, and
+1. use a `Jenkinsfile` similar to this:
 
 ```groovy
 #!groovy
@@ -486,14 +490,14 @@ node {
     }
 
     if (updates.isEmpty()) {
-        echo 'no updates found in ' + updates.getCurrentVersion() + '... skip rest of build job'
+        echo 'no updates found for version ' + updates.getCurrentVersion() + '... skip rest of build job'
         return
     }
 
     stage('Commit') {
         echo updates.toString()
         def pom = readMavenPom file: 'pom.xml'
-        pom.version = updates.updateVersion
+        pom.version = updates.updateVersion + '-SNAPSHOT'
         writeMavenPom model: pom
 
         sh "git add pom.xml"
@@ -501,10 +505,6 @@ node {
     }
 
     stage('Release') {
-        def pom = readMavenPom file: 'pom.xml'
-        pom.version = updates.updateVersion + '-SNAPSHOT'
-        writeMavenPom model: pom
-
         mvn 'release:prepare release:perform --batch-mode'
     }
 
@@ -517,7 +517,7 @@ node {
     }
 }
 
-private void deploy(version, String host) {
+private void deploy(String version, String host) {
     def response = httpRequest(
             httpMode: 'POST',
             url: host + '/deployer',
