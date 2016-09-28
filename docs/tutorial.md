@@ -410,9 +410,12 @@ Note that the bundle version `1.0.0-SNAPSHOT` is completely independent from the
 
 You can now manage the deployment of single applications.
 But often there are dependencies between multiple applications... and sometimes the effects are very subtle.
-So you'll want to have a defined and reproducible combination.
-The best way for that is to have this versioned, and that's easy to do by using maven.
-Modify the `pom.xml` of your bundle like this:
+- So you'll want to have a defined and reproducible combination,
+- you'll want to have all versions resolved, so you can see what the plan is,
+- you'll want to be able to test that set of applications in a QA stage before you move exactly that set into production,
+- you'll want to give this set of fixed versions a total version number.
+
+You can use the standard dependency resolution tools of, e.g., Maven: Modify the `pom.xml` of your bundle like this:
 
 1. For every application in your bundle, add a maven property, e.g. `myapp.version`.
 1. For every application in your bundle, add a dependency using that version property, e.g.:
@@ -440,8 +443,9 @@ Modify the `pom.xml` of your bundle like this:
 ```
 
 In this way, the variable `${myapp.version}` in your bundle will be resolved when building,
-i.e. while you have the variable name in your source bundle,
-it will be the fixed version string from the pom in the deployed artifact.
+i.e. while you have the variable name in your source bundle (as we did before),
+it will be the fixed version string from the pom in the deployed artifact
+(and this is a double use of the variable syntax: The Deployer and Maven Resource Filtering).
 
 Now you can use the `versions` plugin to update the versions in your pom:
 
@@ -456,7 +460,8 @@ or the [docs](http://www.mojohaus.org/versions-maven-plugin/rule.html).
 
 Note that when using resource filtering you'll have to be **careful** with the variable names in your bundle.
 E.g., the variable `${name}` would get replaced with the name of the `artifact-id` defined in your `pom.xml`.
-If this happens, you can use an expression like `${name or name}`, but this should not happen too often.
+If this happens, you can use an expression like `${name or name}`, as this won't be resolved by Maven,
+but this should not happen too often.
 
 You may want to go the extra mile and stick to [semantic versioning](http://semver.org) even for your bundles,
 i.e. changes to the version number of the bundle should reflect the biggest change contained,
@@ -464,11 +469,11 @@ e.g. when you have one deployable change from 1.3.5 to 1.3.7 and another deploya
 you'll want your bundle version 12.7.3 to change to 12.8.0.
 
 To do so in a Jenkins pipeline build job,
-1. install the [HTTP Request Plugin](http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin),
+1. install the [HTTP Request Plugin](http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin) to do the POST to The Deployer,
 1. install the [jenkins-pipeline-updates](https://github.com/t1/jenkins-pipeline-updates)
 as a [Shared Library](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/blob/master/README.md)
-(`Manage Jenkins` -> `Configure System` -> `Global Pipeline Libraries`)
-named `updates` in your Jenkins, and
+(`Manage Jenkins` -> `Configure System` -> `Global Pipeline Libraries`; name it `updates` and set the latest version tag of the lib)
+to be able to parse the output of your `mvn versions:update-properties` (the `scan` method below), and
 1. use a `Jenkinsfile` similar to this:
 
 ```groovy
@@ -486,7 +491,7 @@ node {
     }
 
     Updates updates = stage('Update') {
-        scan mvn('versions:update-properties -DgenerateBackupPoms=false')
+        scan(mvn('versions:update-properties -DgenerateBackupPoms=false'))
     }
 
     if (updates.isEmpty()) {
