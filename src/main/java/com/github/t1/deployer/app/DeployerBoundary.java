@@ -135,6 +135,9 @@ public class DeployerBoundary {
                 throw e;
             } catch (RuntimeException e) {
                 log.debug(failureMessage, e);
+                for (Throwable cause = e; cause.getCause() != null; cause = cause.getCause())
+                    if (cause.getMessage() != null && !cause.getMessage().isEmpty())
+                        failureMessage += ": " + cause.getMessage();
                 throw WebException
                         .builderFor(BAD_REQUEST)
                         .causedBy(e)
@@ -169,6 +172,7 @@ public class DeployerBoundary {
     }
 
     private Artifact lookup(AbstractArtifactConfig plan) {
-        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), plan.getVersion(), bundle);
+        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), plan.getVersion(),
+                plan.getClassifier(), bundle);
     }
 }

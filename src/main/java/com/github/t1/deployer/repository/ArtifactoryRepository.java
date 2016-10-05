@@ -171,6 +171,7 @@ public class ArtifactoryRepository extends Repository {
             @NonNull GroupId groupId,
             @NonNull ArtifactId artifactId,
             @NonNull Version version,
+            Classifier classifier,
             @NonNull ArtifactType type) {
         String fileName = getFileName(groupId, artifactId, version, type);
         FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),

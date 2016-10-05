@@ -217,6 +217,7 @@ public class AbstractDeployerTest {
         private final String name;
         private String groupId;
         private String artifactId;
+        private String classifier;
         private ArtifactFixture deployed;
 
         public ArtifactFixtureBuilder(ArtifactType type, String name) {
@@ -244,6 +245,13 @@ public class AbstractDeployerTest {
 
         public ArtifactId artifactId() { return new ArtifactId(artifactId); }
 
+        public ArtifactFixtureBuilder classifier(String classifier) {
+            this.classifier = classifier;
+            return this;
+        }
+
+        public Classifier classifier() { return (classifier == null) ? null : new Classifier(classifier); }
+
         public DeploymentName deploymentName() { return new DeploymentName((name == null) ? artifactId : name); }
 
         public ArtifactFixture version(String version) { return version(new Version(version)); }
@@ -258,8 +266,9 @@ public class AbstractDeployerTest {
             public ArtifactFixture(Version version) {
                 this.version = version;
 
-                when(repository.lookupArtifact(groupId(), artifactId(), version, type)).then(i -> artifact());
-                when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, type))
+                when(repository.lookupArtifact(groupId(), artifactId(), version, classifier(), type))
+                        .then(i -> artifact());
+                when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, classifier(), type))
                         .then(i -> artifact(Version.ANY));
                 checksum(fakeChecksumFor(deploymentName(), version));
             }
@@ -333,6 +342,8 @@ public class AbstractDeployerTest {
             public GroupId groupId() { return ArtifactFixtureBuilder.this.groupId(); }
 
             public ArtifactId artifactId() { return ArtifactFixtureBuilder.this.artifactId(); }
+
+            public Classifier classifier() { return ArtifactFixtureBuilder.this.classifier(); }
 
             private Artifact artifact(Version version) {
                 return Artifact

@@ -29,6 +29,21 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     }
 
     @Test
+    public void shouldDeployWebArchiveWithClassifier() {
+        ArtifactFixture foo = givenArtifact("foo").classifier("plus").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    classifier: plus\n"
+                + "    version: 1.3.2\n"
+        );
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
     public void shouldDeployWebArchiveWithCorrectChecksum() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -129,6 +144,21 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
         assertThat(thrown).hasStackTraceContaining("no config in deployable 'foo-war'");
     }
 
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithoutGroupId() {
+        givenArtifact("foo").version("1.3.2");
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    state: deployed\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("the `group-id` can only be null when undeploying");
+    }
 
     @Test
     public void shouldFailToDeployWebArchiveWithoutVersion() {

@@ -109,7 +109,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
     }
 
     private Artifact lookupArtifact(DeployableConfig plan, Version version) {
-        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), version, plan.getType());
+        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), version, plan.getClassifier(), plan.getType());
     }
 
     @Override

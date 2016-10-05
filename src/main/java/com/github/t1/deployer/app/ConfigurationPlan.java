@@ -144,9 +144,10 @@ public class ConfigurationPlan {
     @JsonNaming(KebabCaseStrategy.class)
     public static class AbstractArtifactConfig implements AbstractConfig {
         private final DeploymentState state;
-        @NonNull private final GroupId groupId;
+        private final GroupId groupId;
         @NonNull private final ArtifactId artifactId;
         @NonNull private final Version version;
+        private final Classifier classifier;
         private final Checksum checksum;
 
         @SuppressWarnings("unchecked")
@@ -171,6 +172,11 @@ public class ConfigurationPlan {
                 return (T) this;
             }
 
+            public T classifier(Classifier classifier) {
+                this.classifier = classifier;
+                return (T) this;
+            }
+
             public T checksum(Checksum checksum) {
                 this.checksum = checksum;
                 return (T) this;
@@ -179,7 +185,7 @@ public class ConfigurationPlan {
 
         public static void fromJson(JsonNode node, AbstractArtifactConfigBuilder builder,
                 String defaultArtifactId, String defaultVersion) {
-            apply(node, "group-id", value -> builder.groupId(new GroupId(defaultValue(value, "group-id"))));
+            apply(node, "group-id", value -> builder.groupId(GroupId.of(defaultValue(value, "group-id"))));
             apply(node, "artifact-id",
                     value -> builder.artifactId(new ArtifactId((value == null) ? defaultArtifactId : value)));
             apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
@@ -189,8 +195,15 @@ public class ConfigurationPlan {
                             : (defaultVersion != null)
                                     ? new Version(defaultVersion)
                                     : null));
+            apply(node, "classifier", value -> builder.classifier((value == null) ? null : new Classifier(value)));
             apply(node, "checksum",
                     value -> builder.checksum((value == null) ? null : Checksum.fromString(value)));
+            verify(builder);
+        }
+
+        private static void verify(AbstractArtifactConfigBuilder builder) {
+            if (builder.groupId == null && builder.state != undeployed)
+                throw new ConfigurationPlanLoadingException("the `group-id` can only be null when undeploying");
         }
 
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
@@ -211,13 +224,14 @@ public class ConfigurationPlan {
         public static class DeployableConfigBuilder extends AbstractArtifactConfigBuilder<DeployableConfigBuilder> {
             @Override public DeployableConfig build() {
                 AbstractArtifactConfig a = super.build();
-                return new DeployableConfig(name, type, a.state, a.groupId, a.artifactId, a.version, a.checksum);
+                return new DeployableConfig(name, type,
+                        a.state, a.groupId, a.artifactId, a.version, a.classifier, a.checksum);
             }
         }
 
         private DeployableConfig(DeploymentName name, ArtifactType type, DeploymentState state,
-                GroupId groupId, ArtifactId artifactId, Version version, Checksum checksum) {
-            super(state, groupId, artifactId, version, checksum);
+                GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier, Checksum checksum) {
+            super(state, groupId, artifactId, version, classifier, checksum);
             this.name = name;
             this.type = type;
         }
@@ -257,7 +271,8 @@ public class ConfigurationPlan {
             @Override public BundleConfig build() {
                 AbstractArtifactConfig a = super.build();
                 Map<String, Map<String, String>> instances = buildInstances(instances$key, instances$value);
-                return new BundleConfig(name, instances, a.state, a.groupId, a.artifactId, a.version, a.checksum);
+                return new BundleConfig(name, instances,
+                        a.state, a.groupId, a.artifactId, a.version, a.classifier, a.checksum);
             }
 
             private Map<String, Map<String, String>> buildInstances(List<String> keys, List<Map<String, String>> list) {
@@ -271,8 +286,8 @@ public class ConfigurationPlan {
         }
 
         private BundleConfig(BundleName name, Map<String, Map<String, String>> instances, DeploymentState state,
-                GroupId groupId, ArtifactId artifactId, Version version, Checksum checksum) {
-            super(state, groupId, artifactId, version, checksum);
+                GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier, Checksum checksum) {
+            super(state, groupId, artifactId, version, classifier, checksum);
             this.name = name;
             this.instances = instances;
         }

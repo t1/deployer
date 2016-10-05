@@ -44,5 +44,6 @@ public abstract class Repository {
 
     public abstract Artifact searchByChecksum(Checksum checksum);
 
-    public abstract Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type);
+    public abstract Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version,
+            Classifier classifier, ArtifactType type);
 }
