@@ -11,6 +11,7 @@ import java.net.InetAddress;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Variables.*;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class DeployableDeployerTest extends AbstractDeployerTest {
@@ -1115,6 +1116,24 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: 1.3.2\n");
 
         Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithVariableRootBundleVariable() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+        givenConfiguredVariable("root-bundle-version", "1.2");
+
+        Audits audits = deployer.apply(emptyMap());
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());

@@ -143,6 +143,7 @@ Special values:
 | default.log-file-suffix | `suffix` to be used for file `log-handlers`, if none is specified. Defaults to using the `yyyy-MM-dd` (i.e. daily rotation). |
 | root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
 | root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
+| root-bundle-version | The `version` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
 | root-bundle-classifier | The `classifier` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
 
 

@@ -34,7 +34,7 @@ public class DeployerBoundary {
             + "  ${regex(root-bundle-name or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:\n"
             + "    group-id: ${root-bundle-group or default.group-id or domainName()}\n"
             + "    classifier: ${root-bundle-classifier or null}\n"
-            + "    version: ${version}\n";
+            + "    version: ${root-bundle-version or version}\n";
 
     public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
 

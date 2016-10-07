@@ -3,7 +3,8 @@
 .project
 .settings/
 .DS_Store
-target/
+/target/
 .idea/
 *.iml
 /src/test/docker/deployer.war
+/classes/
