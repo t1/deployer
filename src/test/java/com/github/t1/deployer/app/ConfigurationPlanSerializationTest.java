@@ -27,6 +27,7 @@ public class ConfigurationPlanSerializationTest {
 
     static {
         when(variables.resolve(any(Reader.class))).then(invocation -> invocation.getArgument(0));
+        when(variables.resolve(anyString())).then(i -> new Variables.Resolver() {});
     }
 
 
@@ -176,7 +177,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogger() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGGER_YAML),"1log");
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGGER_YAML), "1log");
 
         assertThat(plan).isEqualTo(ONE_LOGGER_PLAN);
     }
@@ -213,7 +214,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGHANDLER_YAML),"1log-h");
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGHANDLER_YAML), "1log-h");
 
         assertThat(plan).isEqualTo(ONE_LOGHANDLER_PLAN);
     }
@@ -249,7 +250,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithCustomLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(CUSTOM_HANDLER_YAML),"custom-h");
+        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(CUSTOM_HANDLER_YAML), "custom-h");
 
         assertThat(plan).isEqualTo(CUSTOM_HANDLER_PLAN);
     }

@@ -476,7 +476,8 @@ public class ConfigurationPlan {
         StringBuilder expression = new StringBuilder("default." + name);
         for (String alternativeExpression : alternativeExpressions)
             expression.append(" or ").append(alternativeExpression);
-        return variables.resolveExpression(expression.toString());
+        Variables.Resolver resolver = variables.resolve(expression.toString());
+        return resolver.isMatch() ? resolver.getValue() : null;
     }
 
     private static void apply(JsonNode node, String fieldName, Consumer<String> setter) {

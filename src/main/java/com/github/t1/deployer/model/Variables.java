@@ -25,6 +25,12 @@ public class Variables {
     @SneakyThrows(UnknownHostException.class)
     public static String hostName() { return InetAddress.getLocalHost().getHostName().split("\\.")[0]; }
 
+    @SneakyThrows(UnknownHostException.class)
+    public static String domainName() {
+        String[] split = InetAddress.getLocalHost().getHostName().split("\\.", 2);
+        return (split.length == 2) ? split[1] : null;
+    }
+
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
     private static final Pattern VARIABLE_VALUE = Pattern.compile("[- ._a-zA-Z0-9?*:|\\\\{}()\\[\\]]{1,256}");
 
@@ -59,10 +65,10 @@ public class Variables {
                     out.append(line.substring(matcher.start() + 1, matcher.end()));
                 } else {
                     String expression = matcher.group(1);
-                    String value = resolveExpression(expression);
-                    if (value == null)
+                    Resolver resolver = resolve(expression);
+                    if (!resolver.isMatch())
                         throw new UnresolvedVariableException(expression);
-                    out.append(value);
+                    out.append(resolver.getValue());
                 }
                 tail = matcher.end();
             }
@@ -72,17 +78,11 @@ public class Variables {
         return new StringReader(out.toString());
     }
 
-    public String resolveExpression(String expression) {
-        Resolver resolver = new OrResolver(expression);
-        if (resolver.isMatch())
-            return resolver.getValue();
-        log.trace("unresolved expression [{}]", expression);
-        return null;
-    }
+    public Resolver resolve(String expression) { return new OrResolver(expression); }
 
     public boolean contains(String name) { return variables.containsKey(name); }
 
-    private abstract static class Resolver {
+    public abstract static class Resolver {
         @Getter protected boolean match;
         @Getter protected String value;
 
@@ -90,7 +90,7 @@ public class Variables {
     }
 
     private static final List<Class<? extends Resolver>> RESOLVERS
-            = asList(LiteralResolver.class, FunctionResolver.class, VariableResolver.class);
+            = asList(NullResolver.class, LiteralResolver.class, FunctionResolver.class, VariableResolver.class);
 
     private class OrResolver extends Resolver {
         public OrResolver(String expression) {
@@ -122,6 +122,15 @@ public class Variables {
         }
     }
 
+
+    private class NullResolver extends Resolver {
+        public NullResolver(String key) {
+            this.match = "null".equals(key);
+            this.value = null;
+        }
+    }
+
+
     private static final Pattern LITERAL = Pattern.compile("«(\\V*)»");
 
     private class LiteralResolver extends Resolver {
@@ -133,6 +142,7 @@ public class Variables {
             this.value = match ? matcher.group(1) : null;
         }
     }
+
 
     private static final Pattern VARIABLE_NAME = Pattern.compile("[-._a-zA-Z0-9]{1,256}");
 
@@ -216,12 +226,6 @@ public class Variables {
         }
 
         private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
-
-        @SneakyThrows(UnknownHostException.class)
-        private String domainName() {
-            String[] split = InetAddress.getLocalHost().getHostName().split("\\.", 2);
-            return (split.length == 2) ? split[1] : null;
-        }
 
         private String regex(String text, String pattern) {
             Matcher matcher = Pattern.compile(pattern).matcher(text);

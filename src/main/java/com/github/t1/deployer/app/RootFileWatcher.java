@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 
 import static com.github.t1.log.LogLevel.*;
+import static java.util.Collections.*;
 
 @Slf4j
 @Singleton
@@ -26,7 +27,7 @@ public class RootFileWatcher {
 
         Path rootBundle = deployer.getRootBundlePath();
         log.info("start file watcher on {}", rootBundle);
-        fileWatcher = new FileWatcher(rootBundle, deployer::apply);
+        fileWatcher = new FileWatcher(rootBundle, () -> deployer.apply(emptyMap()));
         fileWatcher.start();
     }
 

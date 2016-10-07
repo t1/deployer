@@ -2,13 +2,15 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.Checksum;
-import com.github.t1.deployer.model.Variables.UnresolvedVariableException;
+import com.github.t1.deployer.model.Variables.*;
 import com.github.t1.problem.WebApplicationApplicationException;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.net.InetAddress;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.Variables.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class DeployableDeployerTest extends AbstractDeployerTest {
@@ -159,6 +161,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 .isInstanceOf(WebApplicationApplicationException.class)
                 .hasMessageContaining("the `group-id` can only be null when undeploying");
     }
+
 
     @Test
     public void shouldFailToDeployWebArchiveWithoutVersion() {
@@ -1025,5 +1028,95 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
         jolokia.verifyUndeployExecuted();
         mockserver.verifyUndeployExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.removedAudit(), mockserver.removedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundle() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithDefaultGroupId() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenConfiguredVariable("default.group-id", "mygroup");
+        givenArtifact(bundle, "dummy", "mygroup", hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithVariableRootBundleName() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenConfiguredVariable("root-bundle-name", "foo");
+        givenArtifact(bundle, "dummy", domainName(), "foo")
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithVariableRootBundleGroup() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenConfiguredVariable("root-bundle-group", "my.other.group");
+        givenArtifact(bundle, "dummy", "my.other.group", hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithVariableRootBundleClassifier() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenConfiguredVariable("root-bundle-classifier", "my.classifier");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .classifier("my.classifier")
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
     }
 }

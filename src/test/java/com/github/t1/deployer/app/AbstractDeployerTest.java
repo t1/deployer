@@ -1,6 +1,5 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.DeployerIT;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
@@ -25,7 +24,9 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
 
+import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
+import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
@@ -41,23 +42,20 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class AbstractDeployerTest {
-    private static final Path TEMP_DIR = tempDir();
-
     @SneakyThrows(IOException.class)
     private static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
 
-    @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule();
-    @Rule public FileMemento rootBundle = new FileMemento(this::rootBundlePath);
+    private final Path tempDir = tempDir();
 
-    private Path rootBundlePath() {
-        systemProperties.given("jboss.server.config.dir", TEMP_DIR);
-        return DeployerIT.ROOT_BUNDLE_PATH.get();
-    }
+    @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
+            .given("jboss.server.config.dir", tempDir);
+    @Rule public FileMemento deployerConfig = new FileMemento(()-> tempDir.resolve(DEPLOYER_CONFIG_YAML));
+    @Rule public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
 
     @SneakyThrows(IOException.class)
     Audits deploy(String plan) {
         rootBundle.write(plan);
-        return deployer.apply();
+        return deployer.apply(emptyMap());
     }
 
 

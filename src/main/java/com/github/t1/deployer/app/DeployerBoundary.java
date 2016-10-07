@@ -33,6 +33,7 @@ public class DeployerBoundary {
             + "bundles:\n"
             + "  ${regex(root-bundle-name or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:\n"
             + "    group-id: ${root-bundle-group or default.group-id or domainName()}\n"
+            + "    classifier: ${root-bundle-classifier or null}\n"
             + "    version: ${version}\n";
 
     public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
@@ -54,29 +55,14 @@ public class DeployerBoundary {
     public void applyAsync() {
         Thread.sleep(1000);
         try {
-            apply();
+            apply(emptyMap());
         } catch (UnresolvedVariableException e) {
             // not really nice, but seems - over all - better than splitting and repeating the overall control flow
             log.info("skip async run for unresolved variable: {}", e.getExpression());
         }
     }
 
-    public Audits apply() { return apply(emptyMap()); }
-
-
-    @Inject Container container;
-    @Inject Repository repository;
-
-    @Inject @Config("variables") Map<String, String> configuredVariables;
-
-    @Inject Audits audits;
-    // TODO @Inject Instance<AbstractDeployer> deployers;
-    @Inject DeployableDeployer deployableDeployer;
-    @Inject LogHandlerDeployer logHandlerDeployer;
-    @Inject LoggerDeployer loggerDeployer;
-
-
-    private synchronized Audits apply(Map<String, String> variables) {
+    public synchronized Audits apply(Map<String, String> variables) {
         Run run = new Run().withVariables(variables);
 
         Path root = getRootBundlePath();
@@ -90,6 +76,19 @@ public class DeployerBoundary {
             log.debug("\n{}", audits.toYaml());
         return audits;
     }
+
+
+    @Inject Container container;
+    @Inject Repository repository;
+
+    @Inject @Config("variables") Map<String, String> configuredVariables;
+
+    @Inject Audits audits;
+    // TODO @Inject Instance<AbstractDeployer> deployers;
+    @Inject DeployableDeployer deployableDeployer;
+    @Inject LogHandlerDeployer logHandlerDeployer;
+    @Inject LoggerDeployer loggerDeployer;
+
 
     private class Run {
         private Variables variables = new Variables().withAll(configuredVariables);
