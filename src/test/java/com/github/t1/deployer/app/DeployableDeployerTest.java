@@ -181,6 +181,23 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldSkipDeployedWebArchiveWithoutVersion() {
+        givenArtifact("foo").version("1").deployed();
+        ArtifactFixture bar = givenArtifact("bar").version("2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "  bar:\n"
+                + "    group-id: org.bar\n"
+                + "    version: 2\n");
+
+        bar.verifyDeployed(audits);
+    }
+
+
+    @Test
     public void shouldFailToDeployBundleAsDeployable() {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
