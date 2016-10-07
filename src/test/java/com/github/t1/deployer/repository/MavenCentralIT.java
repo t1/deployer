@@ -53,21 +53,21 @@ public class MavenCentralIT {
 
     @Test
     public void shouldLookupArtifact() throws Exception {
-        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, null, war);
+        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
 
         assertJolokia133(artifact, war, JOLOKIA_133_CHECKSUM);
     }
 
     @Test
     public void shouldLookupArtifactChecksum() throws Exception {
-        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, null, war);
+        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
 
         assertThat(artifact.getChecksum()).isEqualTo(JOLOKIA_133_CHECKSUM);
     }
 
     @Test
     public void shouldDownloadLookedUpArtifact() throws Exception {
-        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, null, pom);
+        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, pom, null);
 
         assertJolokiaPomDownload(artifact);
     }

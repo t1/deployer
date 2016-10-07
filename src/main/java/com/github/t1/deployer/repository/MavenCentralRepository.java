@@ -80,13 +80,14 @@ public class MavenCentralRepository extends Repository {
     }
 
     @Override
-    public Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier,
-            ArtifactType type) {
+    public Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type,
+            Classifier classifier) {
         return Artifact.builder()
                        .groupId(groupId)
                        .artifactId(artifactId)
                        .version(version)
                        .type(type)
+                       .classifier(classifier)
                        .checksumSupplier(() -> downloadChecksum(groupId, artifactId, version, type))
                        .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
                        .build();

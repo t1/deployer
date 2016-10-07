@@ -172,6 +172,6 @@ public class DeployerBoundary {
 
     private Artifact lookup(AbstractArtifactConfig plan) {
         return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), plan.getVersion(),
-                plan.getClassifier(), bundle);
+                bundle, plan.getClassifier());
     }
 }

@@ -17,6 +17,7 @@ public class Artifact {
     @NonNull private final Version version;
     @NonNull private final ArtifactType type;
 
+    private final Classifier classifier;
     private Checksum checksum;
     private final Supplier<Checksum> checksumSupplier;
     @NonNull private final Supplier<InputStream> inputStreamSupplier;
@@ -36,6 +37,8 @@ public class Artifact {
     public Reader getReader() { return new InputStreamReader(getInputStream(), UTF_8); }
 
     @Override public String toString() {
-        return groupId + ":" + artifactId + ":" + version + ":" + type + ((checksum == null) ? "" : "=" + checksum);
+        return groupId + ":" + artifactId + ":" + version + ":" + type
+                + ((classifier == null) ? "" : ":" + classifier)
+                + ((checksum == null) ? "" : "=" + checksum);
     }
 }

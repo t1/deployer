@@ -108,7 +108,7 @@ public class ArtifactoryRepositoryIT {
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.3");
 
-        Artifact artifact = repository.lookupArtifact(groupId, artifactId, version, null, war);
+        Artifact artifact = repository.lookupArtifact(groupId, artifactId, version, war, null);
 
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
@@ -122,7 +122,7 @@ public class ArtifactoryRepositoryIT {
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.4-SNAPSHOT");
 
-        Artifact artifact = repository.lookupArtifact(groupId, artifactId, version, null, war);
+        Artifact artifact = repository.lookupArtifact(groupId, artifactId, version, war, null);
 
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);

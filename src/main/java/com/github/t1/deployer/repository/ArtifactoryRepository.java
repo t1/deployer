@@ -171,9 +171,9 @@ public class ArtifactoryRepository extends Repository {
             @NonNull GroupId groupId,
             @NonNull ArtifactId artifactId,
             @NonNull Version version,
-            Classifier classifier,
-            @NonNull ArtifactType type) {
-        String fileName = getFileName(groupId, artifactId, version, type);
+            @NonNull ArtifactType type,
+            Classifier classifier) {
+        String fileName = getFileName(groupId, artifactId, version, type, classifier);
         FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),
                 "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
                 FileInfo.class, groupId, artifactId, version, type);
@@ -188,7 +188,9 @@ public class ArtifactoryRepository extends Repository {
                 .build();
     }
 
-    private String getFileName(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+    private String getFileName(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type,
+            Classifier classifier) {
+        String classifierSuffix = (classifier == null) ? "" : "-" + classifier;
         if (version.isSnapshot()) {
             MavenMetadata metadata = fetch(rest.nonQueryUri("repository"),
                     "{repoKey}/{*orgPath}/{module}/{baseRev}/maven-metadata.xml",
@@ -199,9 +201,9 @@ public class ArtifactoryRepository extends Repository {
                     .map(MavenMetadata.Versioning.SnapshotVersion::getValue)
                     .findAny()
                     .orElseThrow(() -> notFound("no metadata for extension [" + type.extension() + "]"));
-            return artifactId + "-" + snapshot + "." + type.extension();
+            return artifactId + "-" + snapshot + classifierSuffix + "." + type.extension();
         } else {
-            return "{module}-{baseRev}.{ext}";
+            return "{module}-{baseRev}" + classifierSuffix + ".{ext}";
         }
     }
 
