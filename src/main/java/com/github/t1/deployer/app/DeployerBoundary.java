@@ -20,6 +20,8 @@ import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
+import static com.github.t1.problem.WebException.*;
+import static java.nio.file.Files.*;
 import static java.util.Collections.*;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -66,7 +68,7 @@ public class DeployerBoundary {
         Run run = new Run().withVariables(variables);
 
         Path root = getRootBundlePath();
-        if (Files.isRegularFile(root)) {
+        if (isRegularFile(root)) {
             run.apply(root);
         } else {
             run.applyDefaultRoot();
@@ -162,6 +164,8 @@ public class DeployerBoundary {
                         this.variables = this.variables.with("name", instance.getKey());
                     this.variables = this.variables.withAll(instance.getValue());
                     Artifact artifact = lookup(bundle);
+                    if (artifact == null)
+                        throw badRequest("bundle not found: " + bundle);
                     apply(artifact.getReader(), artifact.toString());
                 } finally {
                     this.variables = pop;

@@ -4,6 +4,8 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 import static com.github.t1.deployer.model.ArtifactType.*;
 
 /** Stores artifacts, e.g. Maven Central or Artifactory */
@@ -46,4 +48,17 @@ public abstract class Repository {
 
     public abstract Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version,
             ArtifactType type, Classifier classifier);
+
+    @SuppressWarnings("deprecation")
+    public final List<Version> listStableVersions(GroupId groupId, ArtifactId artifactId) {
+        return listVersions(groupId, artifactId, false);
+    }
+
+    @SuppressWarnings("deprecation")
+    public final List<Version> listUnstableVersions(GroupId groupId, ArtifactId artifactId) {
+        return listVersions(groupId, artifactId, true);
+    }
+
+    /** use {@link #listStableVersions(GroupId, ArtifactId)} or {@link #listUnstableVersions(GroupId, ArtifactId)} */
+    @Deprecated public abstract List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot);
 }

@@ -93,10 +93,10 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
             throw badRequest("artifact not found: " + plan);
         checkChecksums(plan, artifact);
         audit.name(plan.getName())
-             .change("group-id", null, plan.getGroupId())
-             .change("artifact-id", null, plan.getArtifactId())
-             .change("version", null, plan.getVersion())
-             .change("type", null, plan.getType())
+             .change("group-id", null, artifact.getGroupId())
+             .change("artifact-id", null, artifact.getArtifactId())
+             .change("version", null, artifact.getVersion())
+             .change("type", null, artifact.getType())
              .change("checksum", null, artifact.getChecksum());
         return container.deployment(getResourceDeploymentNameOf(plan)).inputStream(artifact.getInputStream()).build();
     }
@@ -105,12 +105,29 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
         Version version = plan.getVersion();
         if (version.matches("CURRENT"))
             version = old.getVersion();
-        return lookupArtifact(plan, version);
+        Artifact artifact = lookupArtifact(plan, version);
+        if (artifact == null)
+            throw badRequest("artifact not found: " + plan + " @ " + version);
+        return artifact;
     }
 
     private Artifact lookupArtifact(DeployableConfig plan, Version version) {
+        if ("LATEST".equals(version.getValue()))
+            version = findVersion(plan, false);
+        else if ("UNSTABLE".equals(version.getValue()))
+            version = findVersion(plan, true);
         return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), version, plan.getType(),
                 plan.getClassifier());
+    }
+
+    private Version findVersion(DeployableConfig plan, boolean snapshots) {
+        List<Version> versions = repository.listStableVersions(plan.getGroupId(), plan.getArtifactId());
+        if (snapshots)
+            versions.addAll(repository.listUnstableVersions(plan.getGroupId(), plan.getArtifactId()));
+        return versions.stream()
+                       .max(Comparator.naturalOrder())
+                       .orElseThrow(() ->
+                               badRequest("no versions found for " + plan.getGroupId() + ":" + plan.getArtifactId()));
     }
 
     @Override

@@ -188,6 +188,11 @@ public class ArtifactoryRepository extends Repository {
                 .build();
     }
 
+    @SuppressWarnings("deprecated")
+    @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
+        return null;
+    }
+
     private String getFileName(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type,
             Classifier classifier) {
         String classifierSuffix = (classifier == null) ? "" : "-" + classifier;

@@ -1155,4 +1155,62 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
     }
+
+    @Test
+    public void shouldDeployLatestWebArchive() {
+        ArtifactFixture latest = givenArtifact("foo")
+                .version("1.3.2").and()
+                .version("1.4.4").and()
+                .version("2.0.0-SNAPSHOT").and()
+                .version("1.5.0-SNAPSHOT").and()
+                .version("1.4.11");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: LATEST\n"
+        );
+
+        latest.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployUnstableWebArchive() {
+        ArtifactFixture unstable = givenArtifact("foo")
+                .version("1.3.2").and()
+                .version("1.4.4").and()
+                .version("1.4.11").and()
+                .version("1.5.0-SNAPSHOT").and()
+                .version("2.0.0-SNAPSHOT");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: UNSTABLE\n"
+        );
+
+        unstable.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployUnstableButReleasedWebArchive() {
+        ArtifactFixture unstable = givenArtifact("foo")
+                .version("1.3.2").and()
+                .version("1.4.4").and()
+                .version("1.4.11").and()
+                .version("1.5.0-SNAPSHOT").and()
+                .version("2.0.0-SNAPSHOT").and()
+                .version("2.0.0");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: UNSTABLE\n"
+        );
+
+        unstable.verifyDeployed(audits);
+    }
 }

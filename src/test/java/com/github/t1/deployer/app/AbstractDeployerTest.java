@@ -49,7 +49,7 @@ public class AbstractDeployerTest {
 
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
             .given("jboss.server.config.dir", tempDir);
-    @Rule public FileMemento deployerConfig = new FileMemento(()-> tempDir.resolve(DEPLOYER_CONFIG_YAML));
+    @Rule public FileMemento deployerConfig = new FileMemento(() -> tempDir.resolve(DEPLOYER_CONFIG_YAML));
     @Rule public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
 
     @SneakyThrows(IOException.class)
@@ -83,6 +83,8 @@ public class AbstractDeployerTest {
     private final List<String> allDeployments = new ArrayList<>();
     private final List<String> allLoggers = new ArrayList<>();
     private final Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
+
+    private final Map<String, List<Version>> versions = new LinkedHashMap<>();
 
     @Before
     public void before() {
@@ -133,7 +135,16 @@ public class AbstractDeployerTest {
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
         when(cli.execute(readResource(null, "deployment", "*"))).then(i -> allDeploymentsResponse());
         when(cli.openServerDeploymentManager()).then(i -> deploymentManager);
+
+        //noinspection deprecation
+        when(repository.listVersions(isA(GroupId.class), isA(ArtifactId.class), isA(Boolean.class)))
+                .then(i -> versions.get(versionsKey(i.getArgument(0), i.getArgument(1)))
+                                   .stream()
+                                   .filter(i.getArgument(2) ? Version::isSnapshot : Version::isStable)
+                                   .collect(toList()));
     }
+
+    private static String versionsKey(GroupId groupId, ArtifactId artifactId) { return groupId + ":" + artifactId; }
 
     private ModelNode rootLoggerResponse() {
         return toModelNode(""
@@ -266,8 +277,7 @@ public class AbstractDeployerTest {
 
                 when(repository.lookupArtifact(groupId(), artifactId(), version, type, classifier()))
                         .then(i -> artifact());
-                when(repository.lookupArtifact(groupId(), artifactId(), Version.ANY, type, classifier()))
-                        .then(i -> artifact(Version.ANY));
+                versions.computeIfAbsent(versionsKey(groupId(), artifactId()), k -> new ArrayList<>()).add(version);
                 checksum(fakeChecksumFor(deploymentName(), version));
             }
 

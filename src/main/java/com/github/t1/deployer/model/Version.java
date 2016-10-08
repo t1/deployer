@@ -16,8 +16,6 @@ import static lombok.AccessLevel.*;
 @XmlAccessorType(XmlAccessType.NONE)
 @JsonSerialize(using = ToStringSerializer.class)
 public class Version implements Comparable<Version> {
-    public static final Version ANY = new Version("*");
-
     @NonNull
     @XmlValue
     private final String value;
@@ -30,6 +28,8 @@ public class Version implements Comparable<Version> {
 
     /** this is called when YAML deserializes a version '1.0' */
     public Version(double value) { this.value = Double.toString(value); }
+
+    public boolean isStable() { return !isSnapshot(); }
 
     public boolean isSnapshot() { return value.endsWith("-SNAPSHOT"); }
 
@@ -48,7 +48,7 @@ public class Version implements Comparable<Version> {
             for (i = 0; i < thisParts.length; i++) {
                 String thisPart = thisParts[i];
                 if (thatParts.length < i + 1)
-                    return isNumeric(thisPart) ? 1 : -1; // .1 is bigger; -SNAPSHOT is smaller
+                    return compareTrailing(thisPart);
                 String thatPart = thatParts[i];
 
                 if (thisPart.equals(thatPart))
@@ -70,11 +70,14 @@ public class Version implements Comparable<Version> {
                 return thisPart.compareToIgnoreCase(thatPart);
             }
             if (thatParts.length > i)
-                return -1;
+                return -compareTrailing(thatParts[i]);
             return 0;
         }
 
         private String[] split(String thisVersion) { return thisVersion.split("[.-]"); }
+
+        /** .1 is bigger; SNAPSHOT is smaller */
+        private int compareTrailing(String part) { return isNumeric(part) ? 1 : -1; }
 
         private boolean isNumeric(String string) { return string.matches("\\d+"); }
     };
