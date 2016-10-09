@@ -14,9 +14,17 @@ so the base uri for a REST service is `https://<hostname>:<port>/<name>`.
 - `group-id`: Defaults to the variable [`default.group-id`](#vars).
 - `artifact-id`: Defaults to the name of the deployment.
 - `classifier`: Defaults to none.
-- `version`: Defaults to `CURRENT`, which is the currently deployed version of this artifact.
+- `version`: Defaults to `CURRENT` (see below).
 - `type`: `war` or `jar`. Defaults to [`default.deployable-type`](#vars) or `war`.
 - `checksum`: The SHA-1 checksum of the artifact file. Optional to check for integrity.
+
+Special `version` values:
+
+| name | usage |
+| --- | --- |
+| `CURRENT` | The currently deployed version. Only for `deployables`; not for `bundles`. |
+| `LATEST` | The numerically largest version in the repository that is not a `-SNAPSHOT`. |
+| `UNSTABLE` | The numerically largest version in the repository, `-SNAPSHOT` or not. |
 
 
 ### `bundles`

@@ -469,6 +469,7 @@ e.g. when you have one deployable change from 1.3.5 to 1.3.7 and another deploya
 you'll want your bundle version 12.7.3 to change to 12.8.0.
 
 To do so in a Jenkins pipeline build job,
+
 1. install the [HTTP Request Plugin](http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin) to do the POST to The Deployer,
 1. install the [jenkins-pipeline-updates](https://github.com/t1/jenkins-pipeline-updates)
 as a [Shared Library](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/blob/master/README.md)
@@ -532,3 +533,26 @@ private void deploy(String version, String host) {
     echo "Content: ${response.content}"
 }
 ```
+
+Now you can link the release jobs of all applications contained in the bundle to this job,
+so that after an application is released, the bundle containing it, too, will be released
+and then deployed to, e.g., your QA stage.
+This works even if you have the same application in several clusters, i.e. in several bundles;
+simply link the release job to multiple bundle release-and-deploy jobs.
+
+By adding the resource filtering to work with fixed versions, you can't use that bundle with dynamic versions any more.
+But you may still want to do that for the DEV stage: Every commit should result in a deployment on DEV.
+You'll need the _raw_ bundle file in addition to the bundle with all versions resolved.
+To do so, add a second artifact to the `build-helper-maven-plugin` in the pom of your bundle:
+
+```xml
+<artifact>
+    <file>src/main/resources/${project.artifactId}</file>
+    <classifier>raw</classifier>
+    <type>bundle</type>
+</artifact>
+```
+
+This produces a second bundle in your repository, distinguished by the classifier `raw`,
+so you can add a `root-bundle-classifier` variable value `raw` to your `deployer.config.yaml` on DEV to pull the raw bundle.
+And by adding a `root-bundle-version` variable value `UNSTABLE`, you'll always have the latest version on DEV.
