@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static com.github.t1.problem.WebException.*;
+import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Slf4j
@@ -94,7 +95,24 @@ public class MavenCentralRepository extends Repository {
     }
 
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
-        return null;
+        UriTemplate.Query query = rest.nonQueryUri("repository")
+                                      .path("solrsearch")
+                                      .path("select")
+                                      .query("q", "g:{group-id}+AND+a:{artifact-id}")
+                                      .query("core", "gav")
+                                      .query("rows", "10000")
+                                      .query("wt", "json");
+        MavenCentralSearchResult result = rest
+                .createResource(query)
+                .with("group-id", groupId)
+                .with("artifact-id", artifactId)
+                .GET(MavenCentralSearchResult.class);
+        return result
+                .response
+                .docs
+                .stream()
+                .map(doc -> new Version(doc.v))
+                .collect(toList());
     }
 
     private Checksum downloadChecksum(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {

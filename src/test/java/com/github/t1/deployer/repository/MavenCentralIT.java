@@ -5,6 +5,7 @@ import com.github.t1.rest.RestContext;
 import org.junit.*;
 
 import java.io.*;
+import java.util.List;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.RepositoryProducer.*;
@@ -94,5 +95,28 @@ public class MavenCentralIT {
             assertThat(reader.readLine()).isEqualTo("  <packaging>war</packaging>");
             assertThat(reader.readLine()).isEqualTo("  <description>agent as web application</description>");
         }
+    }
+
+    @Test
+    public void shouldFetchStableVersions() throws Exception {
+        GroupId groupId = new GroupId("org.jolokia");
+        ArtifactId artifactId = new ArtifactId("jolokia-war");
+
+        List<Version> versions = repository.listStableVersions(groupId, artifactId);
+
+        assertThat(versions).extracting(Version::toString).contains("1.2.3", "1.3.2", "1.3.3", "1.3.4");
+        assertThat(versions).extracting(Version::toString).doesNotContain("1.3.4-SNAPSHOT");
+    }
+
+    @Test
+    public void shouldFetchUnstableVersions() throws Exception {
+        GroupId groupId = new GroupId("org.jolokia");
+        ArtifactId artifactId = new ArtifactId("jolokia-war");
+
+        List<Version> versions = repository.listUnstableVersions(groupId, artifactId);
+
+        // there are no SNAPSHOTs in maven central
+        assertThat(versions).extracting(Version::toString).contains("1.2.3", "1.3.2", "1.3.3", "1.3.4");
+        assertThat(versions).extracting(Version::toString).doesNotContain("1.3.4-SNAPSHOT");
     }
 }
