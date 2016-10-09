@@ -279,7 +279,7 @@ public class ArtifactoryMock {
                 + "   \"modifiedBy\" : \"spock\",\n"
                 + "   \"lastModified\" : \"2014-04-02T16:21:31.385+02:00\",\n"
                 + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n"
-                + info(Paths.get(path))
+                + info(Paths.get(path), repoKey.toLowerCase().contains("snapshot"))
                 + "   \"downloadUri\": \"" + base(repoKey + "/" + path) + "\",\n"
                 + "   \"remoteUrl\": \"http://jcenter.bintray.com/" + path + "\",\n"
                 + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n"
@@ -287,11 +287,11 @@ public class ArtifactoryMock {
         return Response.ok(info, info.contains("\"children\"") ? FOLDER_INFO : FILE_INFO).build();
     }
 
-    private String info(java.nio.file.Path path) throws IOException {
+    private String info(java.nio.file.Path path, boolean snapshot) throws IOException {
         if (FOO.getValue().equals(path.getName(0).toString())) {
             log.info("foo info {}", path);
             if (path.getNameCount() == 1)
-                return folderInfo(path);
+                return folderInfo(path, snapshot);
             if (path.getNameCount() == 2) {
                 StringBuilder out = childrenBuilder();
                 Version version = versionFrom(path.resolve("dummyFile"));
@@ -306,7 +306,7 @@ public class ArtifactoryMock {
         java.nio.file.Path resolved = MAVEN_REPOSITORY.resolve(path);
         log.info("info from {}", resolved);
         if (Files.isDirectory(resolved))
-            return folderInfo(path);
+            return folderInfo(path, snapshot);
         else if (Files.isRegularFile(resolved))
             return fileInfo(resolved);
         if (FAKES) {
@@ -326,7 +326,7 @@ public class ArtifactoryMock {
                 .build());
     }
 
-    private String folderInfo(java.nio.file.Path path) throws IOException {
+    private String folderInfo(java.nio.file.Path path, boolean snapshot) throws IOException {
         final StringBuilder out = childrenBuilder();
         if (isIndexed(path)) {
             log.info("indexed folder info {}", path);
@@ -336,8 +336,11 @@ public class ArtifactoryMock {
                         public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attributes) {
                             String fileName = path.getFileName().toString();
                             if (Files.isDirectory(path)) {
-                                String folder = folderChild(fileName);
-                                out.append(folder);
+                                boolean snapshotFolder = fileName.contains("-SNAPSHOT");
+                                if (snapshot == snapshotFolder) {
+                                    String folder = folderChild(fileName);
+                                    out.append(folder);
+                                }
                             } else {
                                 String file = fileChild(fileName);
                                 out.append(file);

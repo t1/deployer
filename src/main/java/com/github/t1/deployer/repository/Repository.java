@@ -60,5 +60,5 @@ public abstract class Repository {
     }
 
     /** use {@link #listStableVersions(GroupId, ArtifactId)} or {@link #listUnstableVersions(GroupId, ArtifactId)} */
-    @Deprecated public abstract List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot);
+    public abstract List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot);
 }

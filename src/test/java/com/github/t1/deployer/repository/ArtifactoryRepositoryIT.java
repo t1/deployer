@@ -5,14 +5,13 @@ import com.github.t1.rest.*;
 import com.github.t1.testtools.LoggerMemento;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 import org.junit.*;
-import org.junit.rules.ExpectedException;
+import org.junit.rules.*;
 
 import java.net.URI;
+import java.util.List;
 
-import static com.github.t1.deployer.DeployerIT.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static com.github.t1.deployer.repository.ArtifactoryMock.UNKNOWN_CHECKSUM;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.*;
@@ -20,18 +19,21 @@ import static org.junit.Assume.*;
 
 public class ArtifactoryRepositoryIT {
     private static boolean TEST_WITH_REAL_ARTIFACTORY = false;
+    private static final String SNAPSHOTS = TEST_WITH_REAL_ARTIFACTORY ? "snapshots-virtual" : "snapshots";
+    private static final String RELEASES = TEST_WITH_REAL_ARTIFACTORY ? "releases-virtual" : "releases";
     private static ArtifactoryMock ARTIFACTORY_MOCK = TEST_WITH_REAL_ARTIFACTORY ? null : new ArtifactoryMock();
 
     @ClassRule
-    public static DropwizardClientRule ARTIFACTORY = new DropwizardClientRule(
-            TEST_WITH_REAL_ARTIFACTORY ? new Object[0] : new Object[] { ARTIFACTORY_MOCK });
+    public static TestRule ARTIFACTORY = TEST_WITH_REAL_ARTIFACTORY
+            ? new ExternalResource() {}
+            : new DropwizardClientRule(ARTIFACTORY_MOCK);
 
     private URI baseUri = TEST_WITH_REAL_ARTIFACTORY
             ? URI.create("http://localhost:8081/artifactory")
-            : ARTIFACTORY.baseUri();
+            : ((DropwizardClientRule) ARTIFACTORY).baseUri();
 
     private RestContext config = REST.register("repository", baseUri);
-    private final ArtifactoryRepository repository = new ArtifactoryRepository(config, "snapshots", "releases");
+    private final ArtifactoryRepository repository = new ArtifactoryRepository(config, SNAPSHOTS, RELEASES);
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -113,7 +115,7 @@ public class ArtifactoryRepositoryIT {
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
         assertThat(artifact.getVersion()).isEqualTo(version);
-        assertThat(artifact.getChecksum()).isEqualTo(JOLOKIA_1_3_3_CHECKSUM);
+        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259"));
     }
 
     @Test
@@ -127,6 +129,28 @@ public class ArtifactoryRepositoryIT {
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
         assertThat(artifact.getVersion()).isEqualTo(version);
-        assertThat(artifact.getChecksum()).isEqualTo(JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM);
+        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("C8BB60C0CE61C2BEEC370D9127ED340DCA5F566D"));
+    }
+
+    @Test
+    public void shouldFetchStableVersions() throws Exception {
+        GroupId groupId = new GroupId("org.jolokia");
+        ArtifactId artifactId = new ArtifactId("jolokia-war");
+
+        List<Version> versions = repository.listStableVersions(groupId, artifactId);
+
+        assertThat(versions).extracting(Version::toString).contains("1.3.2", "1.3.3", "1.3.4");
+        assertThat(versions).extracting(Version::toString).doesNotContain("1.3.4-SNAPSHOT");
+    }
+
+    @Test
+    public void shouldFetchUnstableVersions() throws Exception {
+        GroupId groupId = new GroupId("org.jolokia");
+        ArtifactId artifactId = new ArtifactId("jolokia-war");
+
+        List<Version> versions = repository.listUnstableVersions(groupId, artifactId);
+
+        assertThat(versions).extracting(Version::toString).contains("1.3.4-SNAPSHOT");
+        assertThat(versions).extracting(Version::toString).doesNotContain("1.3.4");
     }
 }

@@ -13,6 +13,8 @@ import java.nio.file.*;
 import java.util.*;
 
 import static com.github.t1.problem.WebException.*;
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static javax.xml.bind.annotation.XmlAccessType.*;
 
@@ -145,6 +147,18 @@ public class ArtifactoryRepository extends Repository {
         }
     }
 
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @VendorType("org.jfrog.artifactory.storage.FolderInfo")
+    private static class FolderInfo {
+        List<FileInfo> children;
+        URI uri;
+
+        public List<FileInfo> getChildren() {
+            return (children == null) ? emptyList() : children;
+        }
+    }
+
     @Data
     @XmlRootElement(name = "metadata")
     static class MavenMetadata {
@@ -188,9 +202,31 @@ public class ArtifactoryRepository extends Repository {
                 .build();
     }
 
-    @SuppressWarnings("deprecated")
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
-        return null;
+        UriTemplate uri = rest.nonQueryUri("repository").nonQuery().path("api/storage/{repoKey}/{*orgPath}/{module}")
+                              .with("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
+                              .with("orgPath", groupId.asPath())
+                              .with("module", artifactId);
+        log.debug("fetch folder from {}", uri);
+        EntityResponse<FolderInfo> response = rest.createResource(uri).GET_Response(FolderInfo.class);
+        checkStatus(response, "folder for " + groupId + ":" + artifactId);
+        FolderInfo fileInfo = response.getBody();
+        log.debug("found folder: {}", fileInfo);
+        List<Version> versions = fileInfo
+                .getChildren()
+                .stream()
+                .filter(FileInfo::isFolder)
+                .map(this::toVersion)
+                .collect(toList());
+        log.debug("found versions: {}", versions);
+        return versions;
+    }
+
+    public Version toVersion(FileInfo file) {
+        String string = file.getUri().toString();
+        if (string.length() > 0 && string.charAt(0) == '/')
+            string = string.substring(1);
+        return new Version(string);
     }
 
     private String getFileName(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type,

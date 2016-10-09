@@ -93,7 +93,6 @@ public class MavenCentralRepository extends Repository {
                        .build();
     }
 
-    @SuppressWarnings("deprecated")
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
         return null;
     }
