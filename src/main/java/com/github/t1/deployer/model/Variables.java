@@ -33,12 +33,10 @@ public class Variables {
     @JsonSerialize(using = ToStringSerializer.class)
     public static class VariableName {
         private static String checked(String value) {
-            if (!isValid(value))
+            if (!NAME_TOKEN.matcher(value).matches())
                 throw new IllegalArgumentException("invalid variable name [" + value + "]");
             return value;
         }
-
-        private static boolean isValid(String value) {return NAME_TOKEN.matcher(value).matches();}
 
         @NonNull String value;
 
@@ -64,9 +62,42 @@ public class Variables {
 
     public Variables() { this(ImmutableMap.copyOf(systemProperties()), null); }
 
+    private static final List<String> SYSTEM_PROPERTY_WHITELIST = asList(
+            "file.encoding",
+            "java.class.version",
+            "java.home",
+            "java.io.tmpdir",
+            "java.runtime.name",
+            "java.runtime.version",
+            "java.specification.name",
+            "java.specification.vendor",
+            "java.specification.version",
+            "java.vendor",
+            "java.vendor.url",
+            "java.vendor.url.bug",
+            "java.version",
+            "java.vm.info",
+            "java.vm.name",
+            "java.vm.specification.name",
+            "java.vm.specification.vendor",
+            "java.vm.specification.version",
+            "java.vm.vendor",
+            "java.vm.version",
+            "jboss.server.config.dir",
+            "os.arch",
+            "os.name",
+            "os.version",
+            "user.country",
+            "user.country.format",
+            "user.dir",
+            "user.home",
+            "user.language",
+            "user.name",
+            "user.timezone");
+
     private static Map<VariableName, String> systemProperties() {
         return System.getProperties().stringPropertyNames().stream()
-                     .filter(VariableName::isValid)
+                     .filter(SYSTEM_PROPERTY_WHITELIST::contains)
                      .collect(toMap(VariableName::new, System::getProperty));
     }
 

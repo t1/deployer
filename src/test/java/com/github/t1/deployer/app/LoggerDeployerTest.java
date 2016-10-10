@@ -91,7 +91,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldAddLoggerWithDefaultVariableLevel() {
-        systemProperties.given("default.log-level", "WARN");
+        givenConfiguredVariable("default.log-level", "WARN");
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(WARN);
 
         Audits audits = deploy(""

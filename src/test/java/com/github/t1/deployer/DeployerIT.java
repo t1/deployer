@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
@@ -40,9 +41,11 @@ import static org.junit.Assume.*;
 @RunWith(Arquillian.class)
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
+    private static final String WILDFLY_VERSION = "10.0.0.Final";
+    private static final boolean USE_ARTIFACTORY_MOCK = true;
+
     private static final String CONFIG_DIR = System.getProperty("jboss.server.config.dir");
     public static final Supplier<Path> ROOT_BUNDLE_PATH = () -> Paths.get(CONFIG_DIR).resolve(ROOT_BUNDLE);
-    private static final boolean USE_ARTIFACTORY_MOCK = true;
 
     private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it.war");
     private static final Checksum POSTGRESQL_9_4_1207_CHECKSUM = Checksum.fromString(
@@ -87,13 +90,32 @@ public class DeployerIT {
     }
 
     static {
-        if (USE_ARTIFACTORY_MOCK && runningOnClient())
-            try {
-                // TODO can we instead deploy this? or use DropwizardClientRule?
-                new ArtifactoryMockLauncher().noConsole().run("server");
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        if (runningOnClient()) {
+            Path configFile = Paths
+                    .get(System.getProperty("user.dir"))
+                    .resolve("target/server/wildfly-dist_" + WILDFLY_VERSION + "/wildfly-" + WILDFLY_VERSION)
+                    .resolve("standalone/configuration")
+                    .resolve(DEPLOYER_CONFIG_YAML);
+            write(configFile, ""
+                    + "vars:\n"
+                    + "  config-var: 1.3.2"
+            );
+            // system
+
+            if (USE_ARTIFACTORY_MOCK)
+                try {
+                    // TODO can we instead deploy this? or use DropwizardClientRule?
+                    new ArtifactoryMockLauncher().noConsole().run("server");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+        }
+    }
+
+    @SneakyThrows(IOException.class)
+    private static void write(Path path, String contents) {
+        log.info("write to {}:\n{}", path, contents);
+        Files.write(path, contents.getBytes());
     }
 
     private static boolean runningOnClient() { return CONFIG_DIR == null; }
@@ -107,7 +129,6 @@ public class DeployerIT {
             .with("com.github.t1.rest.ResponseConverter", INFO)
             .with("com.github.t1.deployer", DEBUG);
     @Rule public TestLoggerRule logger = new TestLoggerRule();
-    @Rule public SystemPropertiesRule systemProperty = new SystemPropertiesRule();
     private static FileMemento jbossConfig;
     private static boolean first = true;
 
@@ -255,10 +276,8 @@ public class DeployerIT {
 
     @Test
     @InSequence(value = 400)
-    public void shouldUpdateWebArchiveWithSystemVariable() throws Exception {
-        systemProperty.given("jolokia.version", "1.3.2");
-
-        List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR);
+    public void shouldUpdateWebArchiveWithVariable() throws Exception {
+        List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}"));
 
         logger.log("verify deployments");
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_2_CHECKSUM));
@@ -295,13 +314,12 @@ public class DeployerIT {
 
     @Test
     @InSequence(value = 600)
-    public void shouldFailToOverwriteSystemPropertyWithPostParameter() throws Exception {
-        systemProperty.given("jolokia.version", "1.3.2");
+    public void shouldFailToOverwriteVariableWithPostParameter() throws Exception {
+        String plan = PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}");
+        Entity<String> entity = Entity.json("{\"config-var\":\"1.3.3\"}");
+        String detail = post(plan, entity, BAD_REQUEST).readEntity(String.class);
 
-        Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
-        String detail = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, BAD_REQUEST).readEntity(String.class);
-
-        assertThat(detail).contains("Variable named [jolokia.version] already set. It's not allowed to overwrite.");
+        assertThat(detail).contains("Variable named [config-var] already set. It's not allowed to overwrite.");
     }
 
     @Test

@@ -246,9 +246,9 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithVariables() {
-        systemProperties.given("fooGroupId", "org.foo");
-        systemProperties.given("fooArtifactId", "foo");
-        systemProperties.given("fooVersion", "1.3.2");
+        givenConfiguredVariable("fooGroupId", "org.foo");
+        givenConfiguredVariable("fooArtifactId", "foo");
+        givenConfiguredVariable("fooVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -263,7 +263,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithFirstOfTwoOrVariables() {
-        systemProperties.given("fooVersion", "1.3.2");
+        givenConfiguredVariable("fooVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -278,7 +278,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithSecondOfTwoOrVariables() {
-        systemProperties.given("barVersion", "1.3.2");
+        givenConfiguredVariable("barVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -293,7 +293,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithFirstOfThreeOrFunctionVariables() {
-        systemProperties.given("fooName", "FOO");
+        givenConfiguredVariable("fooName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -308,7 +308,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithSecondOfThreeOrFunctionVariables() {
-        systemProperties.given("barName", "FOO");
+        givenConfiguredVariable("barName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -322,7 +322,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithThirdOfThreeOrFunctionVariables() {
-        systemProperties.given("bazName", "FOO");
+        givenConfiguredVariable("bazName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -467,7 +467,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     @Test public void shouldFailToReplaceVariableValueWithTab() { shouldFailToReplaceVariableValueWith("\tfoo"); }
 
     private void shouldFailToReplaceVariableValueWith(String value) {
-        systemProperties.given("foo", value);
+        givenConfiguredVariable("foo", value);
 
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
@@ -483,8 +483,8 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithTwoVariablesInOneLine() {
-        systemProperties.given("orgVar", "org");
-        systemProperties.given("fooVar", "foo");
+        givenConfiguredVariable("orgVar", "org");
+        givenConfiguredVariable("fooVar", "foo");
         ArtifactFixture foo = givenArtifact("foo").version("1");
 
         Audits audits = deploy(""
@@ -499,7 +499,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithCommentAfterVariable() {
-        systemProperties.given("orgVar", "org");
+        givenConfiguredVariable("orgVar", "org");
         ArtifactFixture foo = givenArtifact("foo").version("1");
 
         Audits audits = deploy(""
@@ -571,7 +571,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithToUpperAndToLowerCaseVariables() {
-        systemProperties.given("foo", "Foo");
+        givenConfiguredVariable("foo", "Foo");
         ArtifactFixture foo = givenArtifact("FOO", "org.foo", "Foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -587,7 +587,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToDeployWebArchiveWithUndefinedVariableFunction() {
-        systemProperties.given("foo", "Foo");
+        givenConfiguredVariable("foo", "Foo");
 
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
@@ -885,7 +885,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployBundleWithSystemParam() {
-        systemProperties.given("jolokia.version", "1.3.3");
+        givenConfiguredVariable("jolokia.version", "1.3.3");
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
         givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
                 .version("1")

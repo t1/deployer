@@ -78,7 +78,7 @@ public class ConfigProducer {
                         + "--------- CONTINUE WITH DEFAULT CONFIG! ---------", e);
             }
         } else {
-            log.info("no deployer config file at '" + path + "'");
+            log.info("no deployer config file at '" + path + "'; use default config");
         }
     }
 
