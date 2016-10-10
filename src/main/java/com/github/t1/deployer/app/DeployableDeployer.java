@@ -124,10 +124,11 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
         List<Version> versions = repository.listStableVersions(plan.getGroupId(), plan.getArtifactId());
         if (snapshots)
             versions.addAll(repository.listUnstableVersions(plan.getGroupId(), plan.getArtifactId()));
-        return versions.stream()
-                       .max(Comparator.naturalOrder())
-                       .orElseThrow(() ->
-                               badRequest("no versions found for " + plan.getGroupId() + ":" + plan.getArtifactId()));
+        Optional<Version> max = versions.stream().max(Comparator.naturalOrder());
+        if (!max.isPresent())
+            throw badRequest("no versions found for " + plan.getGroupId() + ":" + plan.getArtifactId());
+        log.debug("resolved version to {}", max.get());
+        return max.get();
     }
 
     @Override
