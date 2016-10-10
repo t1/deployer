@@ -6,6 +6,7 @@ import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Variables.VariableName;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.*;
@@ -24,8 +25,8 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
 
-import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
+import static com.github.t1.deployer.app.ConfigurationPlan.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
@@ -49,7 +50,6 @@ public class AbstractDeployerTest {
 
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
             .given("jboss.server.config.dir", tempDir);
-    @Rule public FileMemento deployerConfig = new FileMemento(() -> tempDir.resolve(DEPLOYER_CONFIG_YAML));
     @Rule public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
 
     @SneakyThrows(IOException.class)
@@ -78,7 +78,7 @@ public class AbstractDeployerTest {
     @Mock DeploymentPlan deploymentPlan;
     @Mock ServerDeploymentPlanResult planResult;
 
-    private final Map<String, String> configuredVariables = new HashMap<>();
+    private final Map<VariableName, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
     private final List<String> allDeployments = new ArrayList<>();
     private final List<String> allLoggers = new ArrayList<>();
@@ -187,7 +187,16 @@ public class AbstractDeployerTest {
     }
 
 
-    public void givenConfiguredVariable(String key, String value) { this.configuredVariables.put(key, value); }
+    @SneakyThrows(IOException.class)
+    public void givenConfiguredRootBundle(String key, String value) {
+        deployer.rootBundle = YAML.readValue(key + ": " + value, RootBundleConfig.class);
+    }
+
+    public void givenConfiguredVariable(String name, String value) {
+        givenConfiguredVariable(new VariableName(name), value);
+    }
+
+    public void givenConfiguredVariable(VariableName name, String value) { this.configuredVariables.put(name, value); }
 
 
     protected void givenManaged(String... resourceName) { this.managedResourceNames.addAll(asList(resourceName)); }
@@ -629,7 +638,7 @@ public class AbstractDeployerTest {
     public class LogHandlerFixture {
         private final LogHandlerType type;
         private final LogHandlerName name;
-        private final LogHandlerAuditBuilder exprectedAudit;
+        private final LogHandlerAuditBuilder expectedAudit;
         private LogLevel level;
         private String format;
         private String formatter;
@@ -643,7 +652,7 @@ public class AbstractDeployerTest {
         public LogHandlerFixture(LogHandlerType type, String name) {
             this.type = type;
             this.name = new LogHandlerName(name);
-            this.exprectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
+            this.expectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
             this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
             when(cli.executeRaw(readResource("logging", type.getHandlerTypeName(), name))).then(i -> deployed
@@ -753,12 +762,12 @@ public class AbstractDeployerTest {
         }
 
         public <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
-            exprectedAudit.change(name, oldValue, newValue);
+            expectedAudit.change(name, oldValue, newValue);
             return this;
         }
 
         public void verifyChanged(Audits audits) {
-            assertThat(audits.getAudits()).containsExactly(this.exprectedAudit.changed());
+            assertThat(audits.getAudits()).containsExactly(this.expectedAudit.changed());
         }
 
         public void verifyMapPut(String name, String key, String value) {
@@ -792,24 +801,24 @@ public class AbstractDeployerTest {
                             + "\n    ]\n")
                     + "\n}");
             verify(cli).execute(expectedAdd);
-            exprectedAudit.change("level", null, (level == null) ? ALL : level);
+            expectedAudit.change("level", null, (level == null) ? ALL : level);
             if (format == null && formatter == null)
-                exprectedAudit.change("format", null, DEFAULT_LOG_FORMAT);
+                expectedAudit.change("format", null, DEFAULT_LOG_FORMAT);
             if (format != null)
-                exprectedAudit.change("format", null, format);
+                expectedAudit.change("format", null, format);
             if (formatter != null)
-                exprectedAudit.change("formatter", null, formatter);
+                expectedAudit.change("formatter", null, formatter);
             if (type == periodicRotatingFile)
-                exprectedAudit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
+                expectedAudit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
             if (suffix != null)
-                exprectedAudit.change("suffix", null, suffix);
+                expectedAudit.change("suffix", null, suffix);
             if (module != null)
-                exprectedAudit.change("module", null, module);
+                expectedAudit.change("module", null, module);
             if (class_ != null)
-                exprectedAudit.change("class", null, class_);
+                expectedAudit.change("class", null, class_);
             if (properties != null)
-                properties.forEach((key, value) -> exprectedAudit.change("property/" + key, null, value));
-            assertThat(audits.getAudits()).containsExactly(exprectedAudit.added());
+                properties.forEach((key, value) -> expectedAudit.change("property/" + key, null, value));
+            assertThat(audits.getAudits()).containsExactly(expectedAudit.added());
         }
 
         public void verifyRemoved(Audits audits) {
@@ -817,22 +826,22 @@ public class AbstractDeployerTest {
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));
-            exprectedAudit.change("level", this.level, null);
+            expectedAudit.change("level", this.level, null);
             if (this.format != null)
-                exprectedAudit.change("format", this.format, null);
+                expectedAudit.change("format", this.format, null);
             if (this.formatter != null)
-                exprectedAudit.change("formatter", this.formatter, null);
+                expectedAudit.change("formatter", this.formatter, null);
             if (this.file != null)
-                exprectedAudit.change("file", this.file, null);
+                expectedAudit.change("file", this.file, null);
             if (this.suffix != null)
-                exprectedAudit.change("suffix", this.suffix, null);
+                expectedAudit.change("suffix", this.suffix, null);
             if (this.module != null)
-                exprectedAudit.change("module", this.module, null);
+                expectedAudit.change("module", this.module, null);
             if (this.class_ != null)
-                exprectedAudit.change("class", this.class_, null);
+                expectedAudit.change("class", this.class_, null);
             if (properties != null)
-                properties.forEach((key, value) -> exprectedAudit.change("property/" + key, value, null));
-            assertThat(audits.getAudits()).containsExactly(exprectedAudit.removed());
+                properties.forEach((key, value) -> expectedAudit.change("property/" + key, value, null));
+            assertThat(audits.getAudits()).containsExactly(expectedAudit.removed());
         }
 
         public LogHandlerConfig asConfig() {

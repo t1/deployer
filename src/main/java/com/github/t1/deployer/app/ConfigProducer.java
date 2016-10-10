@@ -6,7 +6,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.RepositoryType;
+import com.github.t1.deployer.model.Variables.VariableName;
+import com.github.t1.deployer.repository.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,7 +41,7 @@ public class ConfigProducer {
 
     private static final DeployerConfig DEFAULT_CONFIG = DeployerConfig
             .builder()
-            .repository(DeployerConfig.RepositoryConfig.builder().build())
+            .repository(RepositoryConfig.builder().build())
             .build();
 
     @Value
@@ -49,21 +50,9 @@ public class ConfigProducer {
     @AllArgsConstructor(access = PRIVATE)
     private static class DeployerConfig {
         private final RepositoryConfig repository;
-        @Singular @JsonProperty("vars") private final Map<String, String> variables;
+        @JsonProperty("root-bundle") private final RootBundleConfig rootBundle;
+        @Singular @JsonProperty("vars") private final Map<VariableName, String> variables;
         @Singular @JsonProperty("managed") private final List<String> managedResourceNames;
-
-        @Value
-        @Builder
-        @NoArgsConstructor(access = PRIVATE, force = true)
-        @AllArgsConstructor(access = PRIVATE)
-        private static class RepositoryConfig {
-            RepositoryType type;
-            URI uri;
-            String username;
-            Password password;
-            String repositorySnapshots;
-            String repositoryReleases;
-        }
 
         @Override public String toString() { return toYAML(); }
 
@@ -86,7 +75,7 @@ public class ConfigProducer {
                     this.config = newConfig;
             } catch (IOException e) {
                 log.error("can't load config from '" + path + "'.\n"
-                        + "--------- CONTINUE WITH DEFAULT CONFIG! ---------\n", e);
+                        + "--------- CONTINUE WITH DEFAULT CONFIG! ---------", e);
             }
         } else {
             log.info("no deployer config file at '" + path + "'");
@@ -94,9 +83,10 @@ public class ConfigProducer {
     }
 
 
-    private DeployerConfig.RepositoryConfig getRepository() {
-        return nvl(config.getRepository(), DEFAULT_CONFIG.getRepository());
-    }
+    private RepositoryConfig getRepository() { return nvl(config.getRepository(), DEFAULT_CONFIG.getRepository()); }
+
+    @Produces @Config("root-bundle")
+    public RootBundleConfig rootBundle() { return config.getRootBundle(); }
 
     @Produces @Config("repository.type")
     public RepositoryType repositoryType() { return getRepository().getType(); }
@@ -122,5 +112,5 @@ public class ConfigProducer {
 
 
     @Produces @Config("variables")
-    public Map<String, String> variables() { return config.getVariables(); }
+    public Map<VariableName, String> variables() { return config.getVariables(); }
 }

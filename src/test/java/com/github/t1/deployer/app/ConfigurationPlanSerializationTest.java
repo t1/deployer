@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.io.*;
 
+import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
@@ -125,8 +126,8 @@ public class ConfigurationPlanSerializationTest {
                     .groupId(new GroupId("org.foo"))
                     .artifactId(new ArtifactId("foo"))
                     .version(new Version("1"))
-                    .instance("bar", ImmutableMap.of("version", "2"))
-                    .instance("baz", ImmutableMap.of("version", "3"))
+                    .instance("bar", ImmutableMap.of(VERSION, "2"))
+                    .instance("baz", ImmutableMap.of(VERSION, "3"))
                     .build())
             .build();
     private static final String BUNDLE_PLAN_YAML = ""

@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 
+import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Variables.*;
 import static java.util.Collections.*;
@@ -19,6 +20,21 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchive() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+        );
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveEvenWithInvalidSystemProperty() {
+        systemProperties.given("foo:bar", "foobar");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -254,7 +270,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${fooVersion or version}\n");
+                + "    version: ${fooVersion or barVersion}\n");
 
         foo.verifyDeployed(audits);
     }
@@ -262,14 +278,14 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeployWebArchiveWithSecondOfTwoOrVariables() {
-        systemProperties.given("version", "1.3.2");
+        systemProperties.given("barVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${fooVersion or version}\n");
+                + "    version: ${fooVersion or barVersion}\n");
 
         foo.verifyDeployed(audits);
     }
@@ -446,11 +462,11 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     }
 
 
-    @Test public void shouldFailToReplaceVariableWithNewline() { shouldFailToReplaceVariableWith("foo\nbar"); }
+    @Test public void shouldFailToReplaceVariableValueWithNewline() { shouldFailToReplaceVariableValueWith("foo\nbar"); }
 
-    @Test public void shouldFailToReplaceFunctionWithTab() { shouldFailToReplaceVariableWith("\tfoo"); }
+    @Test public void shouldFailToReplaceVariableValueWithTab() { shouldFailToReplaceVariableValueWith("\tfoo"); }
 
-    private void shouldFailToReplaceVariableWith(String value) {
+    private void shouldFailToReplaceVariableValueWith(String value) {
         systemProperties.given("foo", value);
 
         Throwable thrown = catchThrowable(() -> deploy(""
@@ -1059,7 +1075,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
@@ -1077,16 +1093,15 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithVariableRootBundleName() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleArtifactId() throws Exception {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
-        givenConfiguredVariable("root-bundle-name", "foo");
         givenArtifact(bundle, "dummy", domainName(), "foo")
                 .version("1.2")
                 .containing(""
@@ -1094,17 +1109,17 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "  jolokia:\n"
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("artifact-id", "foo");
 
-        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithVariableRootBundleGroup() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleGroupId() throws Exception {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
-        givenConfiguredVariable("root-bundle-group", "my.other.group");
         givenArtifact(bundle, "dummy", "my.other.group", hostName())
                 .version("1.2")
                 .containing(""
@@ -1112,17 +1127,17 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "  jolokia:\n"
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("group-id", "my.other.group");
 
-        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithVariableRootBundleClassifier() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleClassifier() throws Exception {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
-        givenConfiguredVariable("root-bundle-classifier", "my.classifier");
         givenArtifact(bundle, "dummy", domainName(), hostName())
                 .classifier("my.classifier")
                 .version("1.2")
@@ -1131,15 +1146,16 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "  jolokia:\n"
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("classifier", "my.classifier");
 
-        Audits audits = deployer.apply(ImmutableMap.of("version", "1.2"));
+        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithVariableRootBundleVariable() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleVersion() throws Exception {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), hostName())
                 .version("1.2")
@@ -1148,13 +1164,30 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "  jolokia:\n"
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
-        givenConfiguredVariable("root-bundle-version", "1.2");
+        givenConfiguredRootBundle("version", "1.2");
 
         Audits audits = deployer.apply(emptyMap());
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
     }
+
+    @Test
+    public void shouldFailToDeployDefaultRootBundleWithoutConfiguredRootBundle() throws Exception {
+        givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(emptyMap()));
+
+        assertThat(thrown).hasMessageContaining("unresolved variable expression: root-bundle:version or version");
+    }
+
 
     @Test
     public void shouldDeployLatestWebArchive() {

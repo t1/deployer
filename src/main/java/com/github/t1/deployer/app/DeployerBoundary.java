@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.ConfigurationPlan.*;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Variables.UnresolvedVariableException;
+import com.github.t1.deployer.model.Variables.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.*;
@@ -23,6 +23,7 @@ import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.problem.WebException.*;
 import static java.nio.file.Files.*;
 import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 @javax.ws.rs.Path("/")
@@ -33,10 +34,11 @@ public class DeployerBoundary {
     public static final String ROOT_BUNDLE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
             + "bundles:\n"
-            + "  ${regex(root-bundle-name or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:\n"
-            + "    group-id: ${root-bundle-group or default.group-id or domainName()}\n"
-            + "    classifier: ${root-bundle-classifier or null}\n"
-            + "    version: ${root-bundle-version or version}\n";
+            + "  ${regex(root-bundle:artifact-id or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:\n"
+            + "    group-id: ${root-bundle:group-id or default.group-id or domainName()}\n"
+            + "    classifier: ${root-bundle:classifier or null}\n"
+            + "    version: ${root-bundle:version or version}\n";
+    private static final VariableName NAME_VAR = new VariableName("name");
 
     public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
 
@@ -50,7 +52,11 @@ public class DeployerBoundary {
     }
 
     @POST
-    public AuditsResponse post(Map<String, String> form) { return new AuditsResponse(apply(form).getAudits()); }
+    public AuditsResponse post(Map<String, String> form) {
+        Map<VariableName, String> map = form.entrySet().stream().collect(
+                toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
+        return new AuditsResponse(apply(map).getAudits());
+    }
 
     @Asynchronous
     @SneakyThrows(InterruptedException.class)
@@ -64,7 +70,7 @@ public class DeployerBoundary {
         }
     }
 
-    public synchronized Audits apply(Map<String, String> variables) {
+    public synchronized Audits apply(Map<VariableName, String> variables) {
         Run run = new Run().withVariables(variables);
 
         Path root = getRootBundlePath();
@@ -83,7 +89,8 @@ public class DeployerBoundary {
     @Inject Container container;
     @Inject Repository repository;
 
-    @Inject @Config("variables") Map<String, String> configuredVariables;
+    @Inject @Config("variables") Map<VariableName, String> configuredVariables;
+    @Inject @Config("root-bundle") RootBundleConfig rootBundle;
 
     @Inject Audits audits;
     // TODO @Inject Instance<AbstractDeployer> deployers;
@@ -93,7 +100,7 @@ public class DeployerBoundary {
 
 
     private class Run {
-        private Variables variables = new Variables().withAll(configuredVariables);
+        private Variables variables = new Variables().withAll(configuredVariables).withRootBundle(rootBundle);
 
         public ConfigurationPlan read() {
             ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
@@ -104,7 +111,7 @@ public class DeployerBoundary {
             return builder.build();
         }
 
-        public Run withVariables(Map<String, String> variables) {
+        public Run withVariables(Map<VariableName, String> variables) {
             this.variables = this.variables.withAll(variables);
             return this;
         }
@@ -157,11 +164,11 @@ public class DeployerBoundary {
         }
 
         private void applyBundle(BundleConfig bundle) {
-            for (Map.Entry<String, Map<String, String>> instance : bundle.getInstances().entrySet()) {
+            for (Map.Entry<String, Map<VariableName, String>> instance : bundle.getInstances().entrySet()) {
                 Variables pop = this.variables;
                 try {
                     if (instance.getKey() != null)
-                        this.variables = this.variables.with("name", instance.getKey());
+                        this.variables = this.variables.with(NAME_VAR, instance.getKey());
                     this.variables = this.variables.withAll(instance.getValue());
                     Artifact artifact = lookup(bundle);
                     if (artifact == null)

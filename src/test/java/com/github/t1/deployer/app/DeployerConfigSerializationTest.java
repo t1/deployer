@@ -1,7 +1,8 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.Container;
-import com.github.t1.deployer.model.Password;
+import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Variables.VariableName;
 import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.testtools.*;
 import org.junit.*;
@@ -43,7 +44,7 @@ public class DeployerConfigSerializationTest {
 
 
     @Test
-    public void shouldReturnToDefaultWithoutConfigFile() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithoutConfigFile() throws Exception {
         // given no file
 
         ConfigProducer producer = loadConfig();
@@ -52,7 +53,7 @@ public class DeployerConfigSerializationTest {
     }
 
     @Test
-    public void shouldReturnToDefaultWithEmptyConfigFile() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithEmptyConfigFile() throws Exception {
         configFile.write("---\n");
 
         ConfigProducer producer = loadConfig();
@@ -61,7 +62,7 @@ public class DeployerConfigSerializationTest {
     }
 
     @Test
-    public void shouldReturnToDefaultWithConfigFileWithoutRepositoryEntry() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithConfigFileWithoutRepositoryEntry() throws Exception {
         configFile.write(""
                 + "#comment\n"
                 + "other: true\n");
@@ -72,7 +73,7 @@ public class DeployerConfigSerializationTest {
     }
 
     @Test
-    public void shouldReturnToDefaultWithConfigFileWithEmptyRepositoryEntry() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithConfigFileWithEmptyRepositoryEntry() throws Exception {
         configFile.write(""
                 + "repository:\n");
 
@@ -131,14 +132,35 @@ public class DeployerConfigSerializationTest {
 
 
     @Test
-    public void shouldLoadConfigFileWithProperty() throws Exception {
+    public void shouldLoadConfigFileWithVariable() throws Exception {
         configFile.write(""
                 + "vars:\n"
                 + "  foo: bar\n");
 
         ConfigProducer producer = loadConfig();
 
-        assertThat(producer.variables().get("foo")).isEqualTo("bar");
+        assertThat(producer.variables().get(new VariableName("foo"))).isEqualTo("bar");
+    }
+
+    @Test
+    public void shouldFailToLoadConfigFileWithVariableNameContainingColon() throws Exception {
+        shouldFailToLoadConfigFileWithVariableName("foo:bar");
+    }
+
+    @Test
+    public void shouldFailToLoadConfigFileWithVariableNameContainingSpace() throws Exception {
+        shouldFailToLoadConfigFileWithVariableName("foo bar");
+    }
+
+    private void shouldFailToLoadConfigFileWithVariableName(String variableName) throws Exception {
+        configFile.write(""
+                + "vars:\n"
+                + "  foo: bar\n"
+                + "  " + variableName + ": baz\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.variables()).isEmpty();
     }
 
 
@@ -150,7 +172,7 @@ public class DeployerConfigSerializationTest {
 
         ConfigProducer producer = loadConfig();
 
-        assertThat(producer.variables().get("default.group-id")).isEqualTo("foo");
+        assertThat(producer.variables().get(new VariableName("default.group-id"))).isEqualTo("foo");
     }
 
 
@@ -163,5 +185,50 @@ public class DeployerConfigSerializationTest {
         ConfigProducer producer = loadConfig();
 
         assertThat(producer.managedResources()).containsExactly("deployables");
+    }
+
+
+    @Test
+    public void shouldLoadConfigFileWithRootBundleGroupId() throws Exception {
+        configFile.write(""
+                + "root-bundle:\n"
+                + "  group-id: foo\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.rootBundle().getGroupId()).isEqualTo(GroupId.of("foo"));
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithRootBundleArtifactId() throws Exception {
+        configFile.write(""
+                + "root-bundle:\n"
+                + "  artifact-id: foo\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.rootBundle().getArtifactId()).isEqualTo(new ArtifactId("foo"));
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithRootBundleClassifier() throws Exception {
+        configFile.write(""
+                + "root-bundle:\n"
+                + "  classifier: raw\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.rootBundle().getClassifier()).isEqualTo(new Classifier("raw"));
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithRootBundleVersion() throws Exception {
+        configFile.write(""
+                + "root-bundle:\n"
+                + "  version: 1.0\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.rootBundle().getVersion()).isEqualTo(new Version("1.0"));
     }
 }

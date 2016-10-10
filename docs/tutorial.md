@@ -303,7 +303,7 @@ This works even if your host names end with digits, which is a common pattern fo
 i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`.
 
 If your domain names are generic, like `local` or `server.lan`, it's generally better to use the `default.group-id`.
-If you already need a different `default.group-id`, you can define a `root-bundle-group` variable.
+If you already need a different `default.group-id`, you can define a `root-bundle` parameter `group-id`.
 
 If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them with regular expression,
 by setting a variable `bundle-to-host-name` to `(.*?)(dev|qa)?\d*` for suffixes or `(?:dev|qa)?(.*?)\d*` for prefixes.
@@ -311,7 +311,7 @@ The first capturing group of the expression is used, so remember to mark any lea
 by using `(?:X)`, as shown for the prefix.
 
 If your host names are very technical and/or change very often,
-you may be better off to configure an explicit `root-bundle-name` variable; this is just so much simpler.
+you may be better off to configure an explicit `root-bundle` parameter `name`; this is just so much simpler.
 Using regular expressions for your host names is most appropriate in situations where you have a PaaS like environment,
 i.e. a generic `deployer.config.yaml` file is rolled out by some platform operations team... together with The Deployer.
 
@@ -554,5 +554,12 @@ To do so, add a second artifact to the `build-helper-maven-plugin` in the pom of
 ```
 
 This produces a second bundle in your repository, distinguished by the classifier `raw`,
-so you can add a `root-bundle-classifier` variable value `raw` to your `deployer.config.yaml` on DEV to pull the raw bundle.
-And by adding a `root-bundle-version` variable value `UNSTABLE`, you'll always have the latest version on DEV.
+so you can add a `root-bundle` parameter `classifier` value `raw` to your `deployer.config.yaml` on DEV to pull the raw bundle.
+And by adding a `root-bundle` parameter `version` value `UNSTABLE`, you'll always have the latest version on DEV.
+So it's very common for a `deployer.config.yaml` on DEV to contain this:
+
+```yaml
+root-bundle:
+  classifier: raw
+  version: UNSTABLE
+```

@@ -107,12 +107,11 @@ If there is no file `deployer.root.bundle`, the following default applies:
 
 ```yaml
 bundles:
-  ${regex(root-bundle-name or hostName(), bundle-to-host-name or «(.*?)\d*»)}:
-    group-id: ${root-bundle-group or default.group-id or domainName()}
-    version: ${version}
+  ${regex(root-bundle:artifact-id or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:
+    group-id: ${root-bundle:group-id or default.group-id or domainName()}
+    classifier: ${root-bundle:classifier or null}
+    version: ${root-bundle:version or version}
 ```
-
-I.e., the default regular expression removes trailing digits from the host name. 
 
 
 ## Config
@@ -134,6 +133,23 @@ Where and how to access the repository containing deployables (`war`, etc.) and 
 - `repository-releases`: The name of the release repository. Defaults to `releases-virtual`.
 
 
+### `root-bundle`
+
+The values used for `root-bundle:` expressions:
+
+| name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
+| group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
+| classifier | The `classifier` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
+| version | The `version` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
+
+
+### `manage`
+
+This is a list of resource type names (currently only `deployables`) to be managed,
+i.e. resources of this kind that are deployed in the container, but are not in the plan, are removed.
+Defaults to an empty list, i.e. things are left alone.
+
+
 ### `vars`
 
 This is a map of variables to set.
@@ -149,17 +165,7 @@ Special values:
 | default.log-format | `format` to be used for `log-handlers`, if none is specified. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`. |
 | default.log-formatter | `formatter` to be used for `log-handlers`, if none is specified. Defaults to using the `default.log-format`. |
 | default.log-file-suffix | `suffix` to be used for file `log-handlers`, if none is specified. Defaults to using the `yyyy-MM-dd` (i.e. daily rotation). |
-| root-bundle-name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
-| root-bundle-group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
-| root-bundle-version | The `version` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
-| root-bundle-classifier | The `classifier` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
 
-
-### `manage`
-
-This is a list of resource type names (currently only `deployables`) to be managed,
-i.e. resources of this kind that are deployed in the container, but are not in the plan, are removed.
-Defaults to an empty list, i.e. things are left alone.
 
 
 ## Miscellaneous

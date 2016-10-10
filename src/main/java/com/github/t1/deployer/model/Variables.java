@@ -1,5 +1,8 @@
 package com.github.t1.deployer.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.github.t1.problem.*;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
@@ -19,9 +22,31 @@ import static java.util.Arrays.*;
 import static java.util.Locale.*;
 import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
+import static lombok.AccessLevel.*;
 
 @Slf4j
 public class Variables {
+    private static final Pattern NAME_TOKEN = Pattern.compile("[-._a-zA-Z0-9]{1,256}");
+
+    @Value
+    @NoArgsConstructor(access = PRIVATE, force = true)
+    @JsonSerialize(using = ToStringSerializer.class)
+    public static class VariableName {
+        private static String checked(String value) {
+            if (!isValid(value))
+                throw new IllegalArgumentException("invalid variable name [" + value + "]");
+            return value;
+        }
+
+        private static boolean isValid(String value) {return NAME_TOKEN.matcher(value).matches();}
+
+        @NonNull String value;
+
+        @JsonCreator public VariableName(@NonNull String value) { this.value = checked(value); }
+
+        @Override public String toString() { return value; }
+    }
+
     @SneakyThrows(UnknownHostException.class)
     public static String hostName() { return InetAddress.getLocalHost().getHostName().split("\\.")[0]; }
 
@@ -34,12 +59,21 @@ public class Variables {
     private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
     private static final Pattern VARIABLE_VALUE = Pattern.compile("[- ._a-zA-Z0-9?*:|\\\\{}()\\[\\]]{1,256}");
 
-    private final ImmutableMap<String, String> variables;
+    private final ImmutableMap<VariableName, String> variables;
+    private final RootBundleConfig rootBundle;
 
-    @SuppressWarnings("unchecked")
-    public Variables() { this(ImmutableMap.copyOf((Map<String, String>) (Map) System.getProperties())); }
+    public Variables() { this(ImmutableMap.copyOf(systemProperties()), null); }
 
-    public Variables(ImmutableMap<String, String> variables) { this.variables = variables; }
+    private static Map<VariableName, String> systemProperties() {
+        return System.getProperties().stringPropertyNames().stream()
+                     .filter(VariableName::isValid)
+                     .collect(toMap(VariableName::new, System::getProperty));
+    }
+
+    public Variables(ImmutableMap<VariableName, String> variables, RootBundleConfig rootBundle) {
+        this.variables = variables;
+        this.rootBundle = rootBundle;
+    }
 
 
     /**
@@ -80,7 +114,7 @@ public class Variables {
 
     public Resolver resolve(String expression) { return new OrResolver(expression); }
 
-    public boolean contains(String name) { return variables.containsKey(name); }
+    public boolean contains(VariableName name) { return variables.containsKey(name); }
 
     public abstract static class Resolver {
         @Getter protected boolean match;
@@ -89,15 +123,19 @@ public class Variables {
         @Override public String toString() { return getClass().getSimpleName() + ":" + match + ":" + value; }
     }
 
-    private static final List<Class<? extends Resolver>> RESOLVERS
-            = asList(NullResolver.class, LiteralResolver.class, FunctionResolver.class, VariableResolver.class);
+    private static final List<Class<? extends Resolver>> RESOLVERS = asList(
+            NullResolver.class,
+            LiteralResolver.class,
+            FunctionResolver.class,
+            VariableResolver.class,
+            RootBundleResolver.class);
 
     private class OrResolver extends Resolver {
         public OrResolver(String expression) {
-            for (String key : split(expression, " or ")) {
-                log.trace("try to resolve variable expression [{}]", key);
+            for (String subExpression : split(expression, " or ")) {
+                log.trace("try to resolve variable expression [{}]", subExpression);
                 for (Class<? extends Resolver> resolverType : RESOLVERS) {
-                    Resolver resolver = create(resolverType, key);
+                    Resolver resolver = create(resolverType, subExpression);
                     if (resolver.isMatch()) {
                         this.match = true;
                         this.value = resolver.getValue();
@@ -109,23 +147,24 @@ public class Variables {
             this.value = null;
         }
 
-        @NotNull public Resolver create(Class<? extends Resolver> type, String key) {
+        @NotNull public Resolver create(Class<? extends Resolver> type, String subExpression) {
             try {
-                return type.getConstructor(Variables.class, String.class).newInstance(Variables.this, key);
+                return type.getConstructor(Variables.class, String.class).newInstance(Variables.this, subExpression);
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof RuntimeException)
                     throw (RuntimeException) e.getCause();
-                throw new RuntimeException("can't create " + type.getName() + " for key [" + key + "]");
+                // fall through
             } catch (ReflectiveOperationException e) {
-                throw new RuntimeException("can't create " + type.getName() + " for key [" + key + "]");
+                // fall through
             }
+            throw new RuntimeException("can't create " + type.getName() + " for expression [" + subExpression + "]");
         }
     }
 
 
     private class NullResolver extends Resolver {
-        public NullResolver(String key) {
-            this.match = "null".equals(key);
+        public NullResolver(String expression) {
+            this.match = "null".equals(expression);
             this.value = null;
         }
     }
@@ -136,41 +175,59 @@ public class Variables {
     private class LiteralResolver extends Resolver {
         private final Matcher matcher;
 
-        public LiteralResolver(String key) {
-            this.matcher = LITERAL.matcher(key);
+        public LiteralResolver(String expression) {
+            this.matcher = LITERAL.matcher(expression);
             this.match = matcher.matches();
             this.value = match ? matcher.group(1) : null;
         }
     }
 
 
-    private static final Pattern VARIABLE_NAME = Pattern.compile("[-._a-zA-Z0-9]{1,256}");
-
     private class VariableResolver extends Resolver {
-        private final String key;
+        private final String expression;
         private final Matcher matcher;
-        private final String variableName;
+        private final VariableName variableName;
 
-        public VariableResolver(String key) {
-            this.key = key;
-            this.matcher = VARIABLE_NAME.matcher(key);
+        public VariableResolver(String expression) {
+            this.expression = expression;
+            this.matcher = NAME_TOKEN.matcher(expression);
             this.match = matcher.matches();
-            this.variableName = match ? matcher.group() : null;
+            this.variableName = match ? new VariableName(matcher.group()) : null;
             this.value = match ? resolve() : null;
         }
 
         private String resolve() {
             if (!variables.containsKey(variableName)) {
-                log.trace("undefined variable [{}]", key);
+                log.trace("undefined variable [{}]", expression);
                 this.match = false;
                 return null;
             }
             log.trace("did resolve [{}]", variableName);
-            return checkValue(variableName, variables.get(variableName));
+            return checkValue(variables.get(variableName), variableName.getValue());
         }
     }
 
-    private static final Pattern FUNCTION = Pattern.compile("(?<name>" + VARIABLE_NAME + ")" + "(\\((?<body>.*)\\))");
+
+    private static final String ROOT_BUNDLE = "root-bundle:";
+    private static final ImmutableMap<String, Function<RootBundleConfig, String>> BUNDLE = ImmutableMap.of(
+            "group-id", c -> (c.getGroupId() == null) ? null : c.getGroupId().getValue(),
+            "artifact-id", c -> (c.getArtifactId() == null) ? null : c.getArtifactId().getValue(),
+            "classifier", c -> (c.getClassifier() == null) ? null : c.getClassifier().getValue(),
+            "version", c -> (c.getVersion() == null) ? null : c.getVersion().getValue());
+
+    private class RootBundleResolver extends Resolver {
+        public RootBundleResolver(String expression) {
+            this.value = (expression.startsWith(ROOT_BUNDLE)
+                                  && BUNDLE.containsKey(field(expression))
+                                  && rootBundle != null)
+                    ? BUNDLE.get(field(expression)).apply(rootBundle) : null;
+            this.match = this.value != null;
+        }
+
+        @NotNull public String field(String expression) { return expression.substring(ROOT_BUNDLE.length()); }
+    }
+
+    private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");
 
     private class FunctionResolver extends Resolver {
         private final Matcher matcher;
@@ -263,7 +320,7 @@ public class Variables {
         return n;
     }
 
-    private static String checkValue(String expression, String value) {
+    private static String checkValue(String value, String expression) {
         if (value != null && !VARIABLE_VALUE.matcher(value).matches())
             throw badRequest("invalid character in variable value for [" + expression + "]");
         return value;
@@ -273,25 +330,34 @@ public class Variables {
         return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
-    public Variables with(String key, String value) {
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder().putAll(this.variables);
-        if (this.variables.containsKey(key))
-            throw badRequest("Variable named [" + key + "] already set. It's not allowed to overwrite.");
-        builder.put(key, value);
-        return new Variables(builder.build());
+    public Variables withRootBundle(RootBundleConfig rootBundle) {
+        return new Variables(this.variables, rootBundle);
     }
 
-    public Variables withAll(Map<String, String> variables) {
+    public Variables with(VariableName name, String value) {
+        checkNotDefined(name);
+        return new Variables(builder().put(name, value).build(), this.rootBundle);
+    }
+
+    public Variables withAll(Map<VariableName, String> variables) {
         if (variables == null || variables.isEmpty())
             return this;
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder().putAll(this.variables);
-        for (Map.Entry<String, String> entry : variables.entrySet()) {
-            String key = entry.getKey();
-            if (this.variables.containsKey(key))
-                throw badRequest("Variable named [" + key + "] already set. It's not allowed to overwrite.");
-            builder.put(key, entry.getValue());
+        ImmutableMap.Builder<VariableName, String> builder = builder();
+        for (Map.Entry<VariableName, String> entry : variables.entrySet()) {
+            VariableName name = entry.getKey();
+            checkNotDefined(name);
+            builder.put(name, entry.getValue());
         }
-        return new Variables(builder.build());
+        return new Variables(builder.build(), this.rootBundle);
+    }
+
+    public void checkNotDefined(VariableName name) {
+        if (this.variables.containsKey(name))
+            throw badRequest("Variable named [" + name + "] already set. It's not allowed to overwrite.");
+    }
+
+    private ImmutableMap.Builder<VariableName, String> builder() {
+        return ImmutableMap.<VariableName, String>builder().putAll(this.variables);
     }
 
     @ReturnStatus(BAD_REQUEST)

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Variables.VariableName;
 import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
@@ -25,7 +26,6 @@ import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.container.LoggerResource.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.tools.Tools.toMap;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
@@ -52,6 +52,8 @@ public class ConfigurationPlan {
             // preferable to @JsonNaming, but conflicts in container: .setPropertyNamingStrategy(KEBAB_CASE)
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             .findAndRegisterModules();
+
+    private static final VariableName DEFAULT_LOG_FORMATTER = new VariableName("default.log-formatter");
 
     public static class ConfigurationPlanLoadingException extends RuntimeException {
         public ConfigurationPlanLoadingException(String message) { super(message); }
@@ -265,27 +267,28 @@ public class ConfigurationPlan {
     @JsonNaming(KebabCaseStrategy.class)
     public static class BundleConfig extends AbstractArtifactConfig {
         @NonNull @JsonIgnore private final BundleName name;
-        @NonNull @Singular private final Map<String, Map<String, String>> instances;
+        @NonNull @Singular private final Map<String, Map<VariableName, String>> instances;
 
         public static class BundleConfigBuilder extends AbstractArtifactConfigBuilder<BundleConfigBuilder> {
             @Override public BundleConfig build() {
                 AbstractArtifactConfig a = super.build();
-                Map<String, Map<String, String>> instances = buildInstances(instances$key, instances$value);
+                Map<String, Map<VariableName, String>> instances = buildInstances(instances$key, instances$value);
                 return new BundleConfig(name, instances,
                         a.state, a.groupId, a.artifactId, a.version, a.classifier, a.checksum);
             }
 
-            private Map<String, Map<String, String>> buildInstances(List<String> keys, List<Map<String, String>> list) {
+            private Map<String, Map<VariableName, String>> buildInstances(
+                    List<String> keys, List<Map<VariableName, String>> list) {
                 if (keys == null)
                     return emptyMap();
-                Map<String, Map<String, String>> instances = new LinkedHashMap<>();
+                Map<String, Map<VariableName, String>> instances = new LinkedHashMap<>();
                 for (int i = 0; i < keys.size(); i++)
                     instances.put(keys.get(i), list.get(i));
                 return instances;
             }
         }
 
-        private BundleConfig(BundleName name, Map<String, Map<String, String>> instances, DeploymentState state,
+        private BundleConfig(BundleName name, Map<String, Map<VariableName, String>> instances, DeploymentState state,
                 GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier, Checksum checksum) {
             super(state, groupId, artifactId, version, classifier, checksum);
             this.name = name;
@@ -302,11 +305,18 @@ public class ConfigurationPlan {
                 Iterator<Map.Entry<String, JsonNode>> instances = node.get("instances").fields();
                 while (instances.hasNext()) {
                     Map.Entry<String, JsonNode> next = instances.next();
-                    builder.instance(next.getKey(), toMap(next.getValue()));
+                    builder.instance(next.getKey(), toVariableMap(next.getValue()));
                 }
             } else {
                 builder.instance(null, ImmutableMap.of());
             }
+            return builder.build();
+        }
+
+        private static Map<VariableName, String> toVariableMap(JsonNode node) {
+            ImmutableMap.Builder<VariableName, String> builder = ImmutableMap.builder();
+            node.fields().forEachRemaining(field
+                    -> builder.put(new VariableName(field.getKey()), field.getValue().asText()));
             return builder.build();
         }
 
@@ -404,7 +414,7 @@ public class ConfigurationPlan {
             apply(node, "level", value -> builder.level((value == null) ? ALL : mapLogLevel(value)));
             apply(node, "type", value -> builder.type(LogHandlerType.valueOfTypeName(
                     defaultValue(value, "log-handler-type", "«" + periodicRotatingFile + "»"))));
-            if (node.has("format") || (!node.has("formatter") && !variables.contains("default.log-formatter")))
+            if (node.has("format") || (!node.has("formatter") && !variables.contains(DEFAULT_LOG_FORMATTER)))
                 apply(node, "format", value -> builder.format(
                         defaultValue(value, "log-format", "«" + DEFAULT_LOG_FORMAT + "»")));
             apply(node, "formatter", value -> builder.formatter(defaultValue(value, "log-formatter")));
