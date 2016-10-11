@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.security.Principal;
 import java.util.*;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.problem.WebException.*;
 import static java.nio.file.Files.*;
@@ -172,7 +171,8 @@ public class DeployerBoundary {
                     if (instance.getKey() != null)
                         this.variables = this.variables.with(NAME_VAR, instance.getKey());
                     this.variables = this.variables.withAll(instance.getValue());
-                    Artifact artifact = lookup(bundle);
+                    Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
+                            bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
                     if (artifact == null)
                         throw badRequest("bundle not found: " + bundle);
                     apply(artifact.getReader(), artifact.toString());
@@ -183,8 +183,4 @@ public class DeployerBoundary {
         }
     }
 
-    private Artifact lookup(AbstractArtifactConfig plan) {
-        return repository.lookupArtifact(plan.getGroupId(), plan.getArtifactId(), plan.getVersion(),
-                bundle, plan.getClassifier());
-    }
 }

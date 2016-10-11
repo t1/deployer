@@ -110,7 +110,7 @@ public class ArtifactoryRepositoryIT {
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.3");
 
-        Artifact artifact = repository.lookupArtifact(groupId, artifactId, version, war, null);
+        Artifact artifact = repository.resolveArtifact(groupId, artifactId, version, war, null);
 
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
@@ -124,7 +124,7 @@ public class ArtifactoryRepositoryIT {
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.4-SNAPSHOT");
 
-        Artifact artifact = repository.lookupArtifact(groupId, artifactId, version, war, null);
+        Artifact artifact = repository.resolveArtifact(groupId, artifactId, version, war, null);
 
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
@@ -137,7 +137,7 @@ public class ArtifactoryRepositoryIT {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 
-        List<Version> versions = repository.listStableVersions(groupId, artifactId);
+        List<Version> versions = repository.listVersions(groupId, artifactId, false);
 
         assertThat(versions).extracting(Version::toString).contains("1.3.2", "1.3.3", "1.3.4");
         assertThat(versions).extracting(Version::toString).doesNotContain("1.3.4-SNAPSHOT");
@@ -148,7 +148,7 @@ public class ArtifactoryRepositoryIT {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 
-        List<Version> versions = repository.listUnstableVersions(groupId, artifactId);
+        List<Version> versions = repository.listVersions(groupId, artifactId, true);
 
         assertThat(versions).extracting(Version::toString).contains("1.3.4-SNAPSHOT");
         assertThat(versions).extracting(Version::toString).doesNotContain("1.3.4");

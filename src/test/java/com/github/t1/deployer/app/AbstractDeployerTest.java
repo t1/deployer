@@ -284,7 +284,7 @@ public class AbstractDeployerTest {
             public ArtifactFixture(Version version) {
                 this.version = version;
 
-                when(repository.lookupArtifact(groupId(), artifactId(), version, type, classifier()))
+                when(repository.resolveArtifact(groupId(), artifactId(), version, type, classifier()))
                         .then(i -> artifact());
                 versions.computeIfAbsent(versionsKey(groupId(), artifactId()), k -> new ArrayList<>()).add(version);
                 checksum(fakeChecksumFor(deploymentName(), version));

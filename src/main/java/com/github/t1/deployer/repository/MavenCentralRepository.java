@@ -81,8 +81,12 @@ public class MavenCentralRepository extends Repository {
     }
 
     @Override
-    public Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type,
-            Classifier classifier) {
+    protected Artifact lookupArtifact(
+            @NonNull GroupId groupId,
+            @NonNull ArtifactId artifactId,
+            @NonNull Version version,
+            @NonNull ArtifactType type,
+            @NonNull Classifier classifier) {
         return Artifact.builder()
                        .groupId(groupId)
                        .artifactId(artifactId)

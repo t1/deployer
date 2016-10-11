@@ -4,9 +4,10 @@ import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
+import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.problem.WebException.*;
 
 /** Stores artifacts, e.g. Maven Central or Artifactory */
 @Slf4j
@@ -46,19 +47,28 @@ public abstract class Repository {
 
     public abstract Artifact searchByChecksum(Checksum checksum);
 
-    public abstract Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version,
+    public final Artifact resolveArtifact(GroupId groupId, ArtifactId artifactId, Version version,
+            ArtifactType type, Classifier classifier) {
+        if ("LATEST".equals(version.getValue()))
+            version = findVersion(groupId, artifactId, false, version);
+        else if ("UNSTABLE".equals(version.getValue()))
+            version = findVersion(groupId, artifactId, true, version);
+        return lookupArtifact(groupId, artifactId, version, type, classifier);
+    }
+
+    private Version findVersion(GroupId groupId, ArtifactId artifactId, boolean snapshots, Version versionExpression) {
+        List<Version> versions = listVersions(groupId, artifactId, false);
+        if (snapshots)
+            versions.addAll(listVersions(groupId, artifactId, true));
+        Optional<Version> max = versions.stream().max(Comparator.naturalOrder());
+        if (!max.isPresent())
+            throw badRequest("no versions found for " + groupId + ":" + artifactId);
+        log.debug("resolved {} to {}", versionExpression, max.get());
+        return max.get();
+    }
+
+    protected abstract Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version,
             ArtifactType type, Classifier classifier);
 
-    @SuppressWarnings("deprecation")
-    public final List<Version> listStableVersions(GroupId groupId, ArtifactId artifactId) {
-        return listVersions(groupId, artifactId, false);
-    }
-
-    @SuppressWarnings("deprecation")
-    public final List<Version> listUnstableVersions(GroupId groupId, ArtifactId artifactId) {
-        return listVersions(groupId, artifactId, true);
-    }
-
-    /** use {@link #listStableVersions(GroupId, ArtifactId)} or {@link #listUnstableVersions(GroupId, ArtifactId)} */
     public abstract List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot);
 }

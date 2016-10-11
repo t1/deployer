@@ -54,21 +54,21 @@ public class MavenCentralIT {
 
     @Test
     public void shouldLookupArtifact() throws Exception {
-        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
+        Artifact artifact = repository.resolveArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
 
         assertJolokia133(artifact, war, JOLOKIA_133_CHECKSUM);
     }
 
     @Test
     public void shouldLookupArtifactChecksum() throws Exception {
-        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
+        Artifact artifact = repository.resolveArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
 
         assertThat(artifact.getChecksum()).isEqualTo(JOLOKIA_133_CHECKSUM);
     }
 
     @Test
     public void shouldDownloadLookedUpArtifact() throws Exception {
-        Artifact artifact = repository.lookupArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, pom, null);
+        Artifact artifact = repository.resolveArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, pom, null);
 
         assertJolokiaPomDownload(artifact);
     }
@@ -102,7 +102,7 @@ public class MavenCentralIT {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 
-        List<Version> versions = repository.listStableVersions(groupId, artifactId);
+        List<Version> versions = repository.listVersions(groupId, artifactId, false);
 
         assertThat(versions).extracting(Version::toString).contains("1.2.3", "1.3.2", "1.3.3", "1.3.4");
         assertThat(versions).extracting(Version::toString).doesNotContain("1.3.4-SNAPSHOT");
@@ -113,7 +113,7 @@ public class MavenCentralIT {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 
-        List<Version> versions = repository.listUnstableVersions(groupId, artifactId);
+        List<Version> versions = repository.listVersions(groupId, artifactId, true);
 
         // there are no SNAPSHOTs in maven central
         assertThat(versions).extracting(Version::toString).contains("1.2.3", "1.3.2", "1.3.3", "1.3.4");

@@ -1030,6 +1030,60 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldDeployLatestBundle() {
+        ArtifactFixture latest = givenArtifact("jolokia", "org.jolokia", "jolokia-war")
+                .version("1.3.2").and()
+                .version("2.0.0-SNAPSHOT").and()
+                .version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: LATEST\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  should-deploy-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n");
+
+        latest.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployUnstableBundle() {
+        ArtifactFixture unstable = givenArtifact("jolokia", "org.jolokia", "jolokia-war")
+                .version("1.3.2").and()
+                .version("1.3.3").and()
+                .version("2.0.0-SNAPSHOT");
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: UNSTABLE\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  should-deploy-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n");
+
+        unstable.verifyDeployed(audits);
+    }
+
+
+    @Test
     public void shouldFailToDeployBundleWithoutName() {
         givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
         givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")

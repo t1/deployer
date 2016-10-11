@@ -181,12 +181,12 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override
-    public Artifact lookupArtifact(
+    protected Artifact lookupArtifact(
             @NonNull GroupId groupId,
             @NonNull ArtifactId artifactId,
             @NonNull Version version,
             @NonNull ArtifactType type,
-            Classifier classifier) {
+            @NonNull Classifier classifier) {
         String fileName = getFileName(groupId, artifactId, version, type, classifier);
         FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),
                 "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
