@@ -106,8 +106,6 @@ public abstract class Audit {
         }
 
         public static class LoggerAuditBuilder extends AuditBuilder<LoggerAudit> {
-            private LoggerAuditBuilder() {}
-
             @Override protected LoggerAudit build() { return new LoggerAudit(operation, changes, category); }
         }
 
@@ -129,8 +127,6 @@ public abstract class Audit {
         @Override public String toString() { return super.toString() + ":" + type + ":" + name + ":" + super.changes; }
 
         public static class LogHandlerAuditBuilder extends AuditBuilder<LogHandlerAudit> {
-            private LogHandlerAuditBuilder() {}
-
             @Override protected LogHandlerAudit build() { return new LogHandlerAudit(operation, changes, type, name); }
         }
 

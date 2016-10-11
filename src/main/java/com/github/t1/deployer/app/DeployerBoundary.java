@@ -16,6 +16,7 @@ import javax.ws.rs.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.util.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
@@ -80,12 +81,13 @@ public class DeployerBoundary {
             run.applyDefaultRoot();
         }
 
-        if (log.isDebugEnabled())
-            log.debug("\n{}", audits.toYaml());
+        if (log.isInfoEnabled())
+            log.info("changes by {}:\n{}", principal, audits.toYaml());
         return audits;
     }
 
 
+    @Inject Principal principal;
     @Inject Container container;
     @Inject Repository repository;
 

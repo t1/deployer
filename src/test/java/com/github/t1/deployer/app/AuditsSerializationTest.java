@@ -14,7 +14,7 @@ import static com.github.t1.deployer.app.ConfigurationPlan.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class AuditSerializationTest {
+public class AuditsSerializationTest {
     private static final ObjectMapper JSON = new ObjectMapper().setPropertyNamingStrategy(KEBAB_CASE);
 
     public Audit deserialize(String json) throws IOException {
