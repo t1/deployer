@@ -86,7 +86,7 @@ public class MavenCentralRepository extends Repository {
             @NonNull ArtifactId artifactId,
             @NonNull Version version,
             @NonNull ArtifactType type,
-            @NonNull Classifier classifier) {
+            Classifier classifier) {
         return Artifact.builder()
                        .groupId(groupId)
                        .artifactId(artifactId)

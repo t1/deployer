@@ -186,7 +186,7 @@ public class ArtifactoryRepository extends Repository {
             @NonNull ArtifactId artifactId,
             @NonNull Version version,
             @NonNull ArtifactType type,
-            @NonNull Classifier classifier) {
+            Classifier classifier) {
         String fileName = getFileName(groupId, artifactId, version, type, classifier);
         FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),
                 "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
