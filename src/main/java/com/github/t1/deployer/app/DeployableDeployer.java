@@ -138,7 +138,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
             audit.change("version", artifact.getVersion(), null);
             audit.change("type", artifact.getType(), null);
             audit.change("checksum", deployment.checksum(), null);
-            audits.audit(audit.removed());
+            audits.add(audit.removed());
             deployment.remove();
         }
     }

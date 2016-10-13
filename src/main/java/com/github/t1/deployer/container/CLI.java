@@ -95,7 +95,8 @@ public class CLI {
     }
 
     public boolean fail(ModelNode result) {
-        throw new RuntimeException("outcome " + result.get("outcome") + ": " + result.get("failure-description"));
+        throw new RuntimeException("outcome " + result.get("outcome")
+                + (result.hasDefined("failure-description") ? ": " + result.get("failure-description") : ""));
     }
 
     public static boolean isNotFoundMessage(ModelNode result) {

@@ -276,7 +276,7 @@ public class DeployerIT {
 
     @Test
     @InSequence(value = 400)
-    public void shouldUpdateWebArchiveWithVariable() throws Exception {
+    public void shouldUpdateWebArchiveWithConfiguredVariable() throws Exception {
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}"));
 
         logger.log("verify deployments");

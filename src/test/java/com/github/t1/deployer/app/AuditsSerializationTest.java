@@ -32,8 +32,8 @@ public class AuditsSerializationTest {
 
 
     private static final Audits TWO_AUDITS = new Audits()
-            .audit(deployerLog().change("level", INFO, DEBUG).added())
-            .audit(MOCKSERVER.removed());
+            .add(deployerLog().change("level", INFO, DEBUG).added())
+            .add(MOCKSERVER.removed());
 
     private static final String TWO_AUDITS_JSON =
             ("{'audits':"

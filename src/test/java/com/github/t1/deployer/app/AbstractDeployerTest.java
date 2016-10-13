@@ -28,6 +28,7 @@ import java.util.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
 import static com.github.t1.deployer.app.ConfigurationPlan.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
+import static com.github.t1.deployer.app.Trigger.mock;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
@@ -55,7 +56,7 @@ public class AbstractDeployerTest {
     @SneakyThrows(IOException.class)
     Audits deploy(String plan) {
         rootBundle.write(plan);
-        return deployer.apply(emptyMap());
+        return deployer.apply(mock, emptyMap());
     }
 
 

@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.security.Principal;
 import java.util.*;
 
+import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.problem.WebException.*;
 import static java.nio.file.Files.*;
@@ -53,24 +54,24 @@ public class DeployerBoundary {
 
     @POST
     public AuditsResponse post(Map<String, String> form) {
-        Map<VariableName, String> map = form.entrySet().stream().collect(
+        Map<VariableName, String> map = (form == null) ? emptyMap() : form.entrySet().stream().collect(
                 toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
-        return new AuditsResponse(apply(map).getAudits());
+        return new AuditsResponse(apply(post, map).getAudits());
     }
 
     @Asynchronous
     @SneakyThrows(InterruptedException.class)
-    public void applyAsync() {
+    public void applyAsync(Trigger trigger) {
         Thread.sleep(1000);
         try {
-            apply(emptyMap());
+            apply(trigger, emptyMap());
         } catch (UnresolvedVariableException e) {
             // not really nice, but seems - over all - better than splitting and repeating the overall control flow
             log.info("skip async run for unresolved variable: {}", e.getExpression());
         }
     }
 
-    public synchronized Audits apply(Map<VariableName, String> variables) {
+    public synchronized Audits apply(Trigger trigger, Map<VariableName, String> variables) {
         Run run = new Run().withVariables(variables);
 
         Path root = getRootBundlePath();
@@ -80,8 +81,8 @@ public class DeployerBoundary {
             run.applyDefaultRoot();
         }
 
-        if (log.isInfoEnabled())
-            log.info("changes by {}:\n{}", principal, audits.toYaml());
+        audits.applied(trigger, principal, variables, audits);
+
         return audits;
     }
 

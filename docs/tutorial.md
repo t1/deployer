@@ -6,6 +6,7 @@ how to combine them into bundles, and how to integrate it all into a CI or even 
 
 'Resources' are all the things that the deployer can change, e.g. deployables (`war` files, etc.) as well as loggers, etc.
 
+
 ## GET config
 
 Before we start, you can also _read_ the currently effective configuration by simply GETting `http://localhost:8080/deployer`.
@@ -17,6 +18,7 @@ i.e. you can view it as simple tables with your browser.
 Note that this is very simplistic and some information may be missing.
 
 (currently `application/xml` does not work... but xml seems out-of-fashion anyway ;-)
+
 
 ## Undeploy & Manage
 
@@ -71,6 +73,33 @@ loggers:
 ```
 
 See the section [log-handlers](reference.md#log-handlers) in the reference for more details.
+
+
+## Audit
+
+To plainly see who applied which changes in a separate json file, you can configure things like this:
+
+```yaml
+log-handlers:
+  DEPLOYER:
+    file: deployer.log
+    format: "%d{yyyy-MM-dd HH:mm:ss,SSS}|%X{version}|%X{client}|%t|%X{reference}|%c|%p|%s%e%n"
+  DEPLOYER-AUDIT:
+    file: deployer-audit.log
+    format: "{%X{json}}%n"
+
+loggers:
+  com.github.t1.deployer:
+    level: DEBUG
+    handlers:
+    - DEPLOYER
+    - CONSOLE
+  com.github.t1.deployer.app.Audits:
+    level: DEBUG
+    use-parent-handlers: true
+    handlers:
+    - DEPLOYER-AUDIT
+```
 
 
 ## Bundles
@@ -172,8 +201,8 @@ So let's get those bundles into the repository:
 
 ## Packaging Bundles
 
-This procedure is actually completely outside of The Deployer itself, but it's an important step,
-so we'll describe it here. There are actually many ways to do it.
+There are actually many ways to package bundles, and it's is actually completely outside of The Deployer itself,
+but it's such an important step, so we'll describe one way briefly here.
 We _could_ deploy these files with the GUI of the repository, or with a Maven command similar to this:
 
 ```
@@ -182,7 +211,7 @@ mvn deploy:deploy-file -DgroupId=mygroup -DartifactId=myapp1 -Dversion=1.0 -Dtyp
 -Dfile=myapp1.bundle
 ```
 
-But we'd rather deploy artifacts automatically.
+But we'd rather deploy artifacts _automatically_.
 So we'll build the bundles with the `build-helper-maven-plugin`:
 
 - Create your project directory

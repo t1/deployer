@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.net.InetAddress;
 
 import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Variables.*;
 import static java.util.Collections.*;
@@ -1129,7 +1130,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
@@ -1147,7 +1148,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
@@ -1165,7 +1166,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("artifact-id", "foo");
 
-        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
@@ -1183,7 +1184,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("group-id", "my.other.group");
 
-        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
@@ -1202,7 +1203,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("classifier", "my.classifier");
 
-        Audits audits = deployer.apply(ImmutableMap.of(VERSION, "1.2"));
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
@@ -1220,7 +1221,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("version", "1.2");
 
-        Audits audits = deployer.apply(emptyMap());
+        Audits audits = deployer.apply(mock, emptyMap());
 
         jolokia.verifyAddExecuted();
         assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
@@ -1237,7 +1238,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        Throwable thrown = catchThrowable(() -> deployer.apply(emptyMap()));
+        Throwable thrown = catchThrowable(() -> deployer.apply(mock, emptyMap()));
 
         assertThat(thrown).hasMessageContaining("unresolved variable expression: root-bundle:version or version");
     }

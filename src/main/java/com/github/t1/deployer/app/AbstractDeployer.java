@@ -50,20 +50,20 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
 
                 Audit updated = audit.changed();
                 if (updated.changeCount() > 0)
-                    audits.audit(updated);
+                    audits.add(updated);
                 else
                     log.info("resource already up-to-date: {}", plan);
             } else {
                 resource = buildResource(plan, audit);
                 resource.add();
-                audits.audit(audit.added());
+                audits.add(audit.added());
             }
             return;
         case undeployed:
             if (resource.isDeployed()) {
                 resource.remove();
                 auditRemove(resource, plan, audit);
-                audits.audit(audit.removed());
+                audits.add(audit.removed());
             } else {
                 log.info("resource already removed: {}", plan);
             }
