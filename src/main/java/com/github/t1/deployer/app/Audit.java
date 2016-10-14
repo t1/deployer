@@ -153,7 +153,10 @@ public abstract class Audit {
         public <U> AuditBuilder change(String name, U oldValue, U newValue) {
             if (changes == null)
                 changes = new ArrayList<>();
-            changes.add(new Change(name, toStringOrNull(oldValue), toStringOrNull(newValue)));
+            String oldString = toStringOrNull(oldValue);
+            String newString = toStringOrNull(newValue);
+            if (!Objects.equals(oldString, newString))
+                changes.add(new Change(name, oldString, newString));
             return this;
         }
 

@@ -784,5 +784,50 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
         fixture.verifyRemoved(audits);
     }
 
+
+    @Test
+    public void shouldRemoveLogHandlerWhenManaged() {
+        givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("foo.log")
+                .suffix("the-suffix")
+                .format("the-format")
+                .deployed();
+        LogHandlerFixture bar = givenLogHandler(periodicRotatingFile, "BAR").deployed();
+        givenManaged("log-handlers");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: periodic-rotating-file\n"
+                + "    suffix: the-suffix\n"
+                + "    format: the-format\n");
+
+        // #after(): foo not undeployed
+        bar.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldRemoveLogHandlerWhenAllManaged() {
+        givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("foo.log")
+                .suffix("the-suffix")
+                .format("the-format")
+                .deployed();
+        LogHandlerFixture bar = givenLogHandler(periodicRotatingFile, "BAR").deployed();
+        givenManaged("all");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: periodic-rotating-file\n"
+                + "    suffix: the-suffix\n"
+                + "    format: the-format\n");
+
+        // #after(): foo not undeployed
+        bar.verifyRemoved(audits);
+    }
+
     // TODO shouldAddLoggerAndHandler
 }

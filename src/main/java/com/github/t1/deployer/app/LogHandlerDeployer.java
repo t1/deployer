@@ -16,7 +16,9 @@ import static java.util.Collections.*;
 @Slf4j
 public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHandlerResource, LogHandlerAuditBuilder> {
     @Inject Container container;
+    private List<LogHandlerResource> remaining;
 
+    @Override protected void init() { this.remaining = container.allLogHandlers(); }
 
     @Override protected Stream<LogHandlerConfig> of(ConfigurationPlan plan) { return plan.logHandlers(); }
 
@@ -32,6 +34,9 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
 
     @Override
     protected void update(LogHandlerResource resource, LogHandlerConfig plan, LogHandlerAuditBuilder audit) {
+        boolean removed = remaining.removeIf(plan.getName()::matches);
+        assert removed : "expected [" + resource + "] to be in existing " + remaining;
+
         if (!Objects.equals(resource.level(), plan.getLevel())) {
             resource.updateLevel(plan.getLevel());
             audit.change("level", resource.level(), plan.getLevel());
@@ -119,20 +124,23 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
     @Override
     protected void auditRemove(LogHandlerResource resource, LogHandlerConfig plan, LogHandlerAuditBuilder audit) {
         audit.change("level", resource.level(), null);
-        if (resource.format() != null)
-            audit.change("format", resource.format(), null);
-        if (resource.formatter() != null)
-            audit.change("formatter", resource.formatter(), null);
-        if (resource.file() != null)
-            audit.change("file", resource.file(), null);
-        if (resource.suffix() != null)
-            audit.change("suffix", resource.suffix(), null);
-        if (resource.module() != null)
-            audit.change("module", resource.module(), null);
-        if (resource.class_() != null)
-            audit.change("class", resource.class_(), null);
+        audit.change("format", resource.format(), null);
+        audit.change("formatter", resource.formatter(), null);
+        audit.change("file", resource.file(), null);
+        audit.change("suffix", resource.suffix(), null);
+        audit.change("module", resource.module(), null);
+        audit.change("class", resource.class_(), null);
         if (resource.properties() != null)
             resource.properties().forEach((key, value) -> audit.change("property/" + key, value, null));
+    }
+
+    @Override public void cleanup(Audits audits) {
+        for (LogHandlerResource handler : remaining) {
+            LogHandlerAuditBuilder audit = LogHandlerAudit.builder().name(handler.name()).type(handler.type());
+            auditRemove(handler, null, audit); // we can call this here only because it doesn't access the plan!
+            audits.add(audit.removed());
+            handler.remove();
+        }
     }
 
     @Override public void read(ConfigurationPlanBuilder builder) {

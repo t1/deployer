@@ -78,6 +78,13 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
                 .build();
     }
 
+    @Override protected void auditRemove(LoggerResource resource, LoggerConfig plan, LoggerAuditBuilder audit) {
+        audit.change("level", resource.level(), null)
+             .change(USE_PARENT_HANDLERS, resource.useParentHandlers(), null);
+        for (LogHandlerName handler : resource.handlers())
+            audit.change("handler", handler, null);
+    }
+
     @Override public void cleanup(Audits audits) {
         for (LoggerResource logger : remaining) {
             LoggerAuditBuilder audit = LoggerAudit.builder().category(logger.category());
@@ -88,13 +95,6 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
             audits.add(audit.removed());
             logger.remove();
         }
-    }
-
-    @Override protected void auditRemove(LoggerResource resource, LoggerConfig plan, LoggerAuditBuilder audit) {
-        audit.change("level", resource.level(), null)
-             .change(USE_PARENT_HANDLERS, resource.useParentHandlers(), null);
-        for (LogHandlerName handler : resource.handlers())
-            audit.change("handler", handler, null);
     }
 
     @Override public void read(ConfigurationPlanBuilder builder) {

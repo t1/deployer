@@ -145,7 +145,7 @@ The values used for `root-bundle:` expressions:
 
 ### `manage`
 
-This is a list of resource type names (currently only `deployables` and `loggers`) or `all` to be managed,
+This is a list of resource type names or `all` to be managed,
 i.e. resources of this kind that are deployed in the container, but are not in the plan, are removed.
 Defaults to an empty list, i.e. things are left alone.
 

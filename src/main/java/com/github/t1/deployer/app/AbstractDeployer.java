@@ -90,5 +90,5 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
      * This method is called after all planned resources have been visited, so managed resources can clean up,
      * e.g. deployments that are not in the plan get undeployed.
      */
-    public void cleanup(Audits audits) {}
+    public abstract void cleanup(Audits audits);
 }
