@@ -12,11 +12,18 @@ import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.tools.Tools.*;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResource, LoggerAuditBuilder> {
-    @Inject Container container;
+    private static final String USE_PARENT_HANDLERS = "use-parent-handlers";
 
+    @Inject Container container;
+    private List<LoggerResource> remaining;
+
+    @Override protected void init() {
+        this.remaining = container.allLoggers().stream().filter(logger -> !logger.isRoot()).collect(toList());
+    }
 
     @Override protected Stream<LoggerConfig> of(ConfigurationPlan plan) { return plan.loggers(); }
 
@@ -32,6 +39,9 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
 
     @Override
     protected void update(LoggerResource resource, LoggerConfig plan, LoggerAuditBuilder audit) {
+        boolean removed = remaining.removeIf(plan.getCategory()::matches);
+        assert removed : "expected [" + resource + "] to be in existing " + remaining;
+
         if (!Objects.equals(resource.level(), plan.getLevel())) {
             resource.writeLevel(plan.getLevel());
             audit.change("level", resource.level(), plan.getLevel());
@@ -39,7 +49,7 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
         if (!resource.isRoot() && !Objects.equals(resource.useParentHandlers(),
                 nvl(plan.getUseParentHandlers(), true))) {
             resource.writeUseParentHandlers(plan.getUseParentHandlers());
-            audit.change("useParentHandlers", resource.useParentHandlers(), plan.getUseParentHandlers());
+            audit.change(USE_PARENT_HANDLERS, resource.useParentHandlers(), plan.getUseParentHandlers());
         }
         if (!Objects.equals(resource.handlers(), plan.getHandlers())) {
             List<LogHandlerName> existing = new ArrayList<>(resource.handlers());
@@ -57,7 +67,7 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
 
     @Override protected LoggerResource buildResource(LoggerConfig plan, LoggerAuditBuilder audit) {
         audit.change("level", null, plan.getLevel())
-             .change("useParentHandlers", null, plan.getUseParentHandlers());
+             .change(USE_PARENT_HANDLERS, null, plan.getUseParentHandlers());
         for (LogHandlerName handler : plan.getHandlers())
             audit.change("handler", null, handler);
         return container
@@ -68,10 +78,21 @@ public class LoggerDeployer extends AbstractDeployer<LoggerConfig, LoggerResourc
                 .build();
     }
 
-    @Override protected void auditRemove(LoggerResource resource, LoggerConfig plan,
-            LoggerAuditBuilder audit) {
+    @Override public void cleanup(Audits audits) {
+        for (LoggerResource logger : remaining) {
+            LoggerAuditBuilder audit = LoggerAudit.builder().category(logger.category());
+            audit.change("level", logger.level(), null);
+            audit.change(USE_PARENT_HANDLERS, logger.useParentHandlers(), null);
+            for (LogHandlerName handler : logger.handlers())
+                audit.change("handler", handler, null);
+            audits.add(audit.removed());
+            logger.remove();
+        }
+    }
+
+    @Override protected void auditRemove(LoggerResource resource, LoggerConfig plan, LoggerAuditBuilder audit) {
         audit.change("level", resource.level(), null)
-             .change("useParentHandlers", resource.useParentHandlers(), null);
+             .change(USE_PARENT_HANDLERS, resource.useParentHandlers(), null);
         for (LogHandlerName handler : resource.handlers())
             audit.change("handler", handler, null);
     }

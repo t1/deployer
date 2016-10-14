@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 
 @Slf4j
@@ -22,6 +23,8 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
     public abstract void read(ConfigurationPlanBuilder builder);
 
 
+    protected void init() {}
+
     public void apply(ConfigurationPlan plan) {
         if (log.isDebugEnabled())
             log.debug("apply {} -> {}", of(plan).collect(toList()), this.getClass().getSimpleName());
@@ -31,11 +34,12 @@ abstract class AbstractDeployer<PLAN extends AbstractConfig, RESOURCE extends Ab
             this.cleanup(audits);
     }
 
-    protected void init() {}
-
     protected abstract Stream<PLAN> of(ConfigurationPlan plan);
 
-    public boolean isManaged() { return managedResourceNames != null && managedResourceNames.contains(getType()); }
+    public boolean isManaged() {
+        return managedResourceNames != null
+                && (managedResourceNames.equals(singletonList("all")) || managedResourceNames.contains(getType()));
+    }
 
     protected abstract String getType();
 

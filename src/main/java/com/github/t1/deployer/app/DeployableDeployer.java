@@ -20,13 +20,13 @@ import static java.util.Objects.*;
 @Slf4j
 public class DeployableDeployer extends AbstractDeployer<DeployableConfig, DeploymentResource, DeployableAuditBuilder> {
     private static final String WAR_SUFFIX = ".war";
-    private List<DeploymentResource> existing;
+    private List<DeploymentResource> remaining;
 
     @Inject Container container;
     @Inject Repository repository;
 
 
-    @Override protected void init() { this.existing = requireNonNull(container.allDeployments()); }
+    @Override protected void init() { this.remaining = requireNonNull(container.allDeployments()); }
 
     @Override protected Stream<DeployableConfig> of(ConfigurationPlan plan) { return plan.deployables(); }
 
@@ -59,8 +59,8 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
         Artifact artifact = lookupDeployedArtifact(plan, old);
         checkChecksums(plan, artifact);
         if (resource.checksum().equals(artifact.getChecksum())) {
-            boolean removed = existing.removeIf(getResourceDeploymentNameOf(plan)::matches);
-            assert removed : "expected [" + resource + "] to be in existing " + existing;
+            boolean removed = remaining.removeIf(getResourceDeploymentNameOf(plan)::matches);
+            assert removed : "expected [" + resource + "] to be in existing " + remaining;
             log.debug("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
         } else {
             container.deployment(getResourceDeploymentNameOf(plan)).build().redeploy(artifact.getInputStream());
@@ -130,7 +130,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployableConfig, Deplo
     }
 
     @Override public void cleanup(Audits audits) {
-        for (DeploymentResource deployment : existing) {
+        for (DeploymentResource deployment : remaining) {
             Artifact artifact = repository.lookupByChecksum(deployment.checksum());
             DeployableAuditBuilder audit = DeployableAudit.builder().name(toPlanDeploymentName(deployment));
             audit.change("group-id", artifact.getGroupId(), null);

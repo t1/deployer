@@ -374,5 +374,33 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
         assertThat(audits.getAudits()).isEmpty();
     }
 
-    // TODO shouldRemoveLoggerWhenManaged
+    @Test
+    public void shouldRemoveLoggerWhenManaged() {
+        givenLogger("com.github.t1.deployer.app1").level(DEBUG).deployed();
+        LoggerFixture app2 = givenLogger("com.github.t1.deployer.app2").level(DEBUG).deployed();
+        givenManaged("loggers");
+
+        Audits audits = deploy(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app1:\n"
+                + "    level: DEBUG\n");
+
+        // #after(): app1 not undeployed
+        app2.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldRemoveLoggerWhenAllManaged() {
+        givenLogger("com.github.t1.deployer.app1").level(DEBUG).deployed();
+        LoggerFixture app2 = givenLogger("com.github.t1.deployer.app2").level(DEBUG).deployed();
+        givenManaged("all");
+
+        Audits audits = deploy(""
+                + "loggers:\n"
+                + "  com.github.t1.deployer.app1:\n"
+                + "    level: DEBUG\n");
+
+        // #after(): app1 not undeployed
+        app2.verifyRemoved(audits);
+    }
 }

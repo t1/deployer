@@ -522,7 +522,7 @@ public class AbstractDeployerTest {
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", null, level)
-                    .change("useParentHandlers", null, useParentHandlers);
+                    .change("use-parent-handlers", null, useParentHandlers);
             for (LogHandlerName handler : handlerNames())
                 audit.change("handler", null, handler);
             assertThat(audits.getAudits()).containsExactly(audit.added());
@@ -551,7 +551,7 @@ public class AbstractDeployerTest {
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", level, null)
-                    .change("useParentHandlers", useParentHandlers, null);
+                    .change("use-parent-handlers", useParentHandlers, null);
             for (LogHandlerName handler : handlerNames())
                 audit.change("handler", handler, null);
             assertThat(audits.getAudits()).containsExactly(audit.removed());
@@ -560,7 +560,7 @@ public class AbstractDeployerTest {
         public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {
             verify(cli).writeAttribute(buildRequest(), "use-parent-handlers", useParentHandlers);
             assertThat(audits.getAudits()).containsExactly(
-                    LoggerAudit.of(getCategory()).change("useParentHandlers", oldUseParentHandlers, useParentHandlers)
+                    LoggerAudit.of(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
                                .changed());
         }
 

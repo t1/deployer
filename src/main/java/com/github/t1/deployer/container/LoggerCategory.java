@@ -39,4 +39,6 @@ public class LoggerCategory implements Comparable<LoggerCategory> {
     @Override public int compareTo(@NotNull LoggerCategory that) {
         return this.value.compareTo(that.value);
     }
+
+    public boolean matches(@NonNull LoggerResource deployment) { return this.equals(deployment.category()); }
 }

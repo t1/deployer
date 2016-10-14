@@ -855,6 +855,23 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldUndeployUnspecifiedWebArchiveWhenAllManaged() {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
+        givenManaged("all");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    version: 1.3.2\n");
+
+        // #after(): jolokia not undeployed
+        mockserver.verifyRemoved(audits);
+    }
+
+
+    @Test
     public void shouldDeployBundle() {
         givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war").version("3.10.4");
