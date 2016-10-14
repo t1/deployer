@@ -592,3 +592,12 @@ root-bundle:
   classifier: raw
   version: UNSTABLE
 ```
+
+If you have multiple containers running on one machine (often called slots) running different sets of applications,
+you can also use the classifier, e.g.:
+
+```yaml
+root-bundle:
+  classifier: slot-1
+  version: UNSTABLE
+```
