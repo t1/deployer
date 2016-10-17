@@ -164,6 +164,7 @@ Special values:
 | default.log-handler-type | `type` to be used for `log-handlers`, if none is specified. Defaults to `periodicRotatingFile`. |
 | default.log-format | `format` to be used for `log-handlers`, if none is specified. Defaults to `%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`. |
 | default.log-formatter | `formatter` to be used for `log-handlers`, if none is specified. Defaults to using the `default.log-format`. |
+| default.log-encoding | `encoding` to be used for `log-handlers`, if none is specified. Defaults to system default. |
 | default.log-file-suffix | `suffix` to be used for file `log-handlers`, if none is specified. Defaults to using the `yyyy-MM-dd` (i.e. daily rotation). |
 
 

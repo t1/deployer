@@ -49,6 +49,10 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
             resource.updateFormatter(plan.getFormatter());
             audit.change("formatter", resource.formatter(), plan.getFormatter());
         }
+        if (!Objects.equals(resource.encoding(), plan.getEncoding())) {
+            resource.updateEncoding(plan.getEncoding());
+            audit.change("encoding", resource.encoding(), plan.getEncoding());
+        }
         if (!Objects.equals(resource.file(), plan.getFile())) {
             resource.updateFile(plan.getFile());
             audit.change("file", resource.file(), plan.getFile());
@@ -92,27 +96,23 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
     @Override
     protected LogHandlerResource buildResource(LogHandlerConfig plan, LogHandlerAuditBuilder audit) {
         audit.change("level", null, plan.getLevel());
-        if (plan.getFormat() != null)
-            audit.change("format", null, plan.getFormat());
-        if (plan.getFormatter() != null)
-            audit.change("formatter", null, plan.getFormatter());
+        audit.change("format", null, plan.getFormat());
+        audit.change("formatter", null, plan.getFormatter());
+        audit.change("encoding", null, plan.getEncoding());
 
-        if (plan.getFile() != null)
-            audit.change("file", null, plan.getFile());
-        if (plan.getSuffix() != null)
-            audit.change("suffix", null, plan.getSuffix());
+        audit.change("file", null, plan.getFile());
+        audit.change("suffix", null, plan.getSuffix());
 
-        if (plan.getModule() != null)
-            audit.change("module", null, plan.getModule());
-        if (plan.getClass_() != null)
-            audit.change("class", null, plan.getClass_());
-        if (plan.getProperties() != null)
-            plan.getProperties().forEach((key, value) -> audit.change("property/" + key, null, value));
+        audit.change("module", null, plan.getModule());
+        audit.change("class", null, plan.getClass_());
+
+        plan.getProperties().forEach((key, value) -> audit.change("property/" + key, null, value));
 
         return container.logHandler(plan.getType(), plan.getName())
                         .level(plan.getLevel())
                         .format(plan.getFormat())
                         .formatter(plan.getFormatter())
+                        .encoding(plan.getEncoding())
                         .file(plan.getFile())
                         .suffix(plan.getSuffix())
                         .module(plan.getModule())
@@ -126,6 +126,7 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
         audit.change("level", resource.level(), null);
         audit.change("format", resource.format(), null);
         audit.change("formatter", resource.formatter(), null);
+        audit.change("encoding", resource.encoding(), null);
         audit.change("file", resource.file(), null);
         audit.change("suffix", resource.suffix(), null);
         audit.change("module", resource.module(), null);
@@ -153,6 +154,7 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
                     .level(handler.level())
                     .format(handler.format())
                     .formatter(handler.formatter())
+                    .encoding(handler.encoding())
                     .file(handler.file())
                     .suffix(handler.suffix())
                     .module(handler.module())

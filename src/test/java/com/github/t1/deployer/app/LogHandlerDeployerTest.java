@@ -25,6 +25,20 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
     }
 
     @Test
+    public void shouldAddLogHandlerWithEncoding() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .encoding("US-ASCII");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    encoding: US-ASCII\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+    @Test
     public void shouldAddLogHandlerWithDefaultType() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
@@ -393,6 +407,27 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    format: the-format\n");
 
         fixture.verifyChange("suffix", "the-old-suffix", "the-new-suffix");
+        fixture.verifyChanged(audits);
+    }
+
+
+    @Test
+    public void shouldUpdateHandlerEncoding() {
+        LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
+                .level(ALL)
+                .file("the-file")
+                .encoding("the-old-encoding")
+                .format("the-format")
+                .deployed();
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    file: the-file\n"
+                + "    encoding: the-new-encoding\n"
+                + "    format: the-format\n");
+
+        fixture.verifyChange("encoding", "the-old-encoding", "the-new-encoding");
         fixture.verifyChanged(audits);
     }
 

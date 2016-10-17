@@ -28,6 +28,7 @@ public class LogHandlerResource extends AbstractResource {
     private LogLevel level;
     private String format;
     private String formatter;
+    private String encoding;
 
     private String file;
     private String suffix;
@@ -88,6 +89,7 @@ public class LogHandlerResource extends AbstractResource {
             resource.level = level;
             resource.format = format;
             resource.formatter = formatter;
+            resource.encoding = encoding;
 
             resource.file = file;
             resource.suffix = suffix;
@@ -113,6 +115,11 @@ public class LogHandlerResource extends AbstractResource {
     public String formatter() {
         checkDeployed();
         return formatter;
+    }
+
+    public String encoding() {
+        checkDeployed();
+        return encoding;
     }
 
     public String file() {
@@ -144,6 +151,7 @@ public class LogHandlerResource extends AbstractResource {
         return type + ":" + name + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed") + ":" + level
                 + ((format == null) ? "" : ":" + format)
                 + ((formatter == null) ? "" : ":" + formatter)
+                + ((encoding == null) ? "" : ":" + encoding)
                 + ((file == null) ? "" : ":" + file)
                 + ((suffix == null) ? "" : ":" + suffix)
                 + ((module == null) ? "" : ":" + module)
@@ -164,6 +172,11 @@ public class LogHandlerResource extends AbstractResource {
     public void updateFormatter(String newFormatter) {
         checkDeployed();
         writeAttribute("named-formatter", newFormatter);
+    }
+
+    public void updateEncoding(String newEncoding) {
+        checkDeployed();
+        writeAttribute("encoding", newEncoding);
     }
 
     public void updateFile(String newFile) {
@@ -214,6 +227,7 @@ public class LogHandlerResource extends AbstractResource {
         this.level = (result.get("level").isDefined()) ? mapLogLevel(result.get("level").asString()) : null;
         this.format = readFormat(result);
         this.formatter = getString(result, "named-formatter");
+        this.encoding = getString(result, "encoding");
         this.file = (result.get("file").isDefined()) ? result.get("file").get("path").asString() : null;
         this.suffix = getString(result, "suffix");
         this.module = getString(result, "module");
@@ -240,7 +254,7 @@ public class LogHandlerResource extends AbstractResource {
     }
 
     @Override public void add() {
-        log.debug("add log handler {}", name);
+        log.debug("add log-handler {}", name);
         ModelNode request = createRequestWithAddress();
         request.get("operation").set("add");
         if (level != null)
@@ -249,6 +263,8 @@ public class LogHandlerResource extends AbstractResource {
             request.get("formatter").set(format);
         if (formatter != null)
             request.get("named-formatter").set(formatter);
+        if (encoding != null)
+            request.get("encoding").set(encoding);
 
         if (file != null) {
             request.get("file").get("path").set(file);

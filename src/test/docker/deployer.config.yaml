@@ -1,1 +1,2 @@
----
+vars:
+  default.log-encoding: UTF-8

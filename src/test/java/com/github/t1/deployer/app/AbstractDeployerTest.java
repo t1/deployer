@@ -645,6 +645,7 @@ public class AbstractDeployerTest {
         private String formatter;
         private String file;
         private String suffix;
+        private String encoding;
         private String module;
         private String class_;
         private Map<String, String> properties;
@@ -680,6 +681,7 @@ public class AbstractDeployerTest {
                             + "        'path' => '" + file + "'\n"
                             + "    },\n")
                     + ((suffix == null) ? "" : "    'suffix' => '" + suffix + "',\n")
+                    + ((encoding == null) ? "" : "    'encoding' => '" + encoding + "',\n")
                     + ((module == null) ? "" : "    'module' => '" + module + "',\n")
                     + ((class_ == null) ? "" : "    'class' => '" + class_ + "',\n")
                     + ((properties == null) ? "" :
@@ -717,6 +719,11 @@ public class AbstractDeployerTest {
 
         public LogHandlerFixture suffix(String suffix) {
             this.suffix = suffix;
+            return this;
+        }
+
+        public LogHandlerFixture encoding(String encoding) {
+            this.encoding = encoding;
             return this;
         }
 
@@ -792,6 +799,7 @@ public class AbstractDeployerTest {
                     + "        'relative-to' => 'jboss.server.log.dir'\n"
                     + "    }")
                     + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
+                    + ((encoding == null) ? "" : ",\n    'encoding' => '" + encoding + "'")
                     + ((module == null) ? "" : ",\n    'module' => '" + module + "'")
                     + ((class_ == null) ? "" : ",\n    'class' => '" + class_ + "'")
                     + ((properties == null) ? "" :
@@ -813,6 +821,8 @@ public class AbstractDeployerTest {
                 expectedAudit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
             if (suffix != null)
                 expectedAudit.change("suffix", null, suffix);
+            if (encoding != null)
+                expectedAudit.change("encoding", null, encoding);
             if (module != null)
                 expectedAudit.change("module", null, module);
             if (class_ != null)
@@ -836,6 +846,8 @@ public class AbstractDeployerTest {
                 expectedAudit.change("file", this.file, null);
             if (this.suffix != null)
                 expectedAudit.change("suffix", this.suffix, null);
+            if (this.encoding != null)
+                expectedAudit.change("encoding", this.encoding, null);
             if (this.module != null)
                 expectedAudit.change("module", this.module, null);
             if (this.class_ != null)
@@ -855,6 +867,7 @@ public class AbstractDeployerTest {
                     .formatter(formatter)
                     .file(file)
                     .suffix(suffix)
+                    .encoding(encoding)
                     .module(module)
                     .class_(class_)
                     .properties((properties == null) ? emptyMap() : properties)

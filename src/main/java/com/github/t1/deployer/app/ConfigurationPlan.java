@@ -402,6 +402,7 @@ public class ConfigurationPlan {
 
         private final String file;
         private final String suffix;
+        private final String encoding;
 
         private final String module;
         @JsonProperty("class") private final String class_;
@@ -418,6 +419,7 @@ public class ConfigurationPlan {
                 apply(node, "format", value -> builder.format(
                         defaultValue(value, "log-format", "«" + DEFAULT_LOG_FORMAT + "»")));
             apply(node, "formatter", value -> builder.formatter(defaultValue(value, "log-formatter")));
+            apply(node, "encoding", value -> builder.encoding(defaultValue(value, "log-encoding", (String) null)));
             applyByType(node, builder);
             return builder.build().validate();
         }
@@ -473,6 +475,7 @@ public class ConfigurationPlan {
                     + ((formatter == null) ? "" : ":formatter=" + formatter)
                     + ((file == null) ? "" : ":" + file)
                     + ((suffix == null) ? "" : ":" + suffix)
+                    + ((encoding == null) ? "" : ":" + encoding)
                     + ((module == null) ? "" : ":" + module)
                     + ((class_ == null) ? "" : ":" + class_)
                     + ((properties == null) ? "" : ":" + properties)
