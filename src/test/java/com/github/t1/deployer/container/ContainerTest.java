@@ -463,7 +463,7 @@ public class ContainerTest {
     @Test
     public void shouldAddPeriodicRotatingFileLogHandler() throws Exception {
         LogHandlerResource foo = container
-                .logHandler(periodicRotatingFile, new LogHandlerName("FOO"))
+                .builderFor(periodicRotatingFile, new LogHandlerName("FOO"))
                 .file("the-file")
                 .suffix("the-suffix")
                 .formatter("the-formatter")

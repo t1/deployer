@@ -51,7 +51,7 @@ abstract class ResourceDeployer<
     }
 
     @Inject Container container;
-    protected List<RESOURCE> remaining;
+    private List<RESOURCE> remaining;
 
     private final List<Property<?>> properties = new ArrayList<>();
 

@@ -3,23 +3,67 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.app.Plan.*;
-import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.container.LogHandlerResource;
+import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
+import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static java.util.Collections.*;
 
 @Slf4j
-public class LogHandlerDeployer extends AbstractDeployer<LogHandlerPlan, LogHandlerResource, LogHandlerAuditBuilder> {
-    @Inject Container container;
-    private List<LogHandlerResource> remaining;
+public class LogHandlerDeployer extends
+        ResourceDeployer<LogHandlerPlan, LogHandlerResourceBuilder, LogHandlerResource, LogHandlerAuditBuilder> {
+    public LogHandlerDeployer() {
+        this.<LogLevel>property("level")
+                .resource(LogHandlerResource::level)
+                .plan(LogHandlerPlan::getLevel)
+                .addTo(LogHandlerResourceBuilder::level)
+                .write(LogHandlerResource::updateLevel);
+        this.<String>property("format")
+                .resource(LogHandlerResource::format)
+                .plan(LogHandlerPlan::getFormat)
+                .addTo(LogHandlerResourceBuilder::format)
+                .write(LogHandlerResource::updateFormat);
+        this.<String>property("formatter")
+                .resource(LogHandlerResource::formatter)
+                .plan(LogHandlerPlan::getFormatter)
+                .addTo(LogHandlerResourceBuilder::formatter)
+                .write(LogHandlerResource::updateFormatter);
+        this.<String>property("encoding")
+                .resource(LogHandlerResource::encoding)
+                .plan(LogHandlerPlan::getEncoding)
+                .addTo(LogHandlerResourceBuilder::encoding)
+                .write(LogHandlerResource::updateEncoding);
 
-    @Override protected void init() { this.remaining = container.allLogHandlers(); }
+        this.<String>property("file")
+                .resource(LogHandlerResource::file)
+                .plan(LogHandlerPlan::getFile)
+                .addTo(LogHandlerResourceBuilder::file)
+                .write(LogHandlerResource::updateFile);
+        this.<String>property("suffix")
+                .resource(LogHandlerResource::suffix)
+                .plan(LogHandlerPlan::getSuffix)
+                .addTo(LogHandlerResourceBuilder::suffix)
+                .write(LogHandlerResource::updateSuffix);
+
+        this.<String>property("module")
+                .resource(LogHandlerResource::module)
+                .plan(LogHandlerPlan::getModule)
+                .addTo(LogHandlerResourceBuilder::module)
+                .write(LogHandlerResource::updateModule);
+        this.<String>property("class")
+                .resource(LogHandlerResource::class_)
+                .plan(LogHandlerPlan::getClass_)
+                .addTo(LogHandlerResourceBuilder::class_)
+                .write(LogHandlerResource::updateClass);
+    }
+
+    @Override protected Stream<LogHandlerResource> getAll() { return container.allLogHandlers(); }
 
     @Override protected Stream<LogHandlerPlan> of(Plan plan) { return plan.logHandlers(); }
 
@@ -29,47 +73,16 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerPlan, LogHand
         return LogHandlerAudit.builder().type(resource.type()).name(resource.name());
     }
 
-    @Override protected LogHandlerResource getResource(LogHandlerPlan plan) {
-        return container.logHandler(plan.getType(), plan.getName()).build();
+    @Override protected LogHandlerResourceBuilder resourceBuilder(LogHandlerPlan plan) {
+        return container.builderFor(plan.getType(), plan.getName());
     }
+
+    @Override protected Predicate<LogHandlerResource> matches(LogHandlerPlan plan) { return plan.getName()::matches; }
 
     @Override
     protected void update(LogHandlerResource resource, LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
-        boolean removed = remaining.removeIf(plan.getName()::matches);
-        assert removed : "expected [" + resource + "] to be in existing " + remaining;
+        super.update(resource, plan, audit);
 
-        if (!Objects.equals(resource.level(), plan.getLevel())) {
-            resource.updateLevel(plan.getLevel());
-            audit.change("level", resource.level(), plan.getLevel());
-        }
-        if (!Objects.equals(resource.format(), plan.getFormat())) {
-            resource.updateFormat(plan.getFormat());
-            audit.change("format", resource.format(), plan.getFormat());
-        }
-        if (!Objects.equals(resource.formatter(), plan.getFormatter())) {
-            resource.updateFormatter(plan.getFormatter());
-            audit.change("formatter", resource.formatter(), plan.getFormatter());
-        }
-        if (!Objects.equals(resource.encoding(), plan.getEncoding())) {
-            resource.updateEncoding(plan.getEncoding());
-            audit.change("encoding", resource.encoding(), plan.getEncoding());
-        }
-        if (!Objects.equals(resource.file(), plan.getFile())) {
-            resource.updateFile(plan.getFile());
-            audit.change("file", resource.file(), plan.getFile());
-        }
-        if (!Objects.equals(resource.suffix(), plan.getSuffix())) {
-            resource.updateSuffix(plan.getSuffix());
-            audit.change("suffix", resource.suffix(), plan.getSuffix());
-        }
-        if (!Objects.equals(resource.module(), plan.getModule())) {
-            resource.updateModule(plan.getModule());
-            audit.change("module", resource.module(), plan.getModule());
-        }
-        if (!Objects.equals(resource.class_(), plan.getClass_())) {
-            resource.updateClass(plan.getClass_());
-            audit.change("class", resource.class_(), plan.getClass_());
-        }
         if (!Objects.equals(resource.properties(), plan.getProperties())) {
             Set<String> existing = (resource.properties() == null) ? emptySet()
                     : new HashSet<>(resource.properties().keySet());
@@ -94,58 +107,25 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerPlan, LogHand
         }
     }
 
-    @Override
-    protected Supplier<LogHandlerResource> buildResource(LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
-        audit.change("level", null, plan.getLevel());
-        audit.change("format", null, plan.getFormat());
-        audit.change("formatter", null, plan.getFormatter());
-        audit.change("encoding", null, plan.getEncoding());
-
-        audit.change("file", null, plan.getFile());
-        audit.change("suffix", null, plan.getSuffix());
-
-        audit.change("module", null, plan.getModule());
-        audit.change("class", null, plan.getClass_());
+    @Override protected LogHandlerResourceBuilder buildResource(LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
+        LogHandlerResourceBuilder builder = super.buildResource(plan, audit);
 
         plan.getProperties().forEach((key, value) -> audit.change("property/" + key, null, value));
+        builder.properties(plan.getProperties());
 
-        return container.logHandler(plan.getType(), plan.getName())
-                        .level(plan.getLevel())
-                        .format(plan.getFormat())
-                        .formatter(plan.getFormatter())
-                        .encoding(plan.getEncoding())
-                        .file(plan.getFile())
-                        .suffix(plan.getSuffix())
-                        .module(plan.getModule())
-                        .class_(plan.getClass_())
-                        .properties(plan.getProperties());
+        return builder;
     }
 
     @Override
     protected void auditRemove(LogHandlerResource resource, LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
-        audit.change("level", resource.level(), null);
-        audit.change("format", resource.format(), null);
-        audit.change("formatter", resource.formatter(), null);
-        audit.change("encoding", resource.encoding(), null);
-        audit.change("file", resource.file(), null);
-        audit.change("suffix", resource.suffix(), null);
-        audit.change("module", resource.module(), null);
-        audit.change("class", resource.class_(), null);
+        super.auditRemove(resource, plan, audit);
+
         if (resource.properties() != null)
             resource.properties().forEach((key, value) -> audit.change("property/" + key, value, null));
     }
 
-    @Override public void cleanup() {
-        for (LogHandlerResource handler : remaining) {
-            LogHandlerAuditBuilder audit = LogHandlerAudit.builder().name(handler.name()).type(handler.type());
-            auditRemove(handler, null, audit); // we can call this here only because it doesn't access the plan!
-            audits.add(audit.removed());
-            handler.remove();
-        }
-    }
-
     @Override public void read(PlanBuilder plan) {
-        for (LogHandlerResource handler : container.allLogHandlers()) {
+        container.allLogHandlers().forEach(handler -> {
             LogHandlerPlan.LogHandlerPlanBuilder logHandlerPlan = LogHandlerPlan
                     .builder()
                     .type(handler.type())
@@ -162,6 +142,6 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerPlan, LogHand
             if (handler.properties() != null)
                 handler.properties().forEach(logHandlerPlan::property);
             plan.logHandler(logHandlerPlan.build());
-        }
+        });
     }
 }
