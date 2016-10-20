@@ -41,7 +41,7 @@ import static org.junit.Assume.*;
 @RunWith(Arquillian.class)
 @SuppressWarnings("CdiInjectionPointsInspection")
 public class DeployerIT {
-    private static final String WILDFLY_VERSION = "10.0.0.Final";
+    private static final String WILDFLY_VERSION = "10.1.0.Final";
     private static final boolean USE_ARTIFACTORY_MOCK = true;
 
     private static final String CONFIG_DIR = System.getProperty("jboss.server.config.dir");
@@ -150,7 +150,7 @@ public class DeployerIT {
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
             container.logHandler(console, new LogHandlerName("CONSOLE")).build().updateLevel(ALL);
-            container.logger(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).build().add();
+            container.builderFor(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).build().add();
 
             log.info("deployables: {}", container.allDeployments());
             assertThat(theDeployments()).isEmpty();
@@ -494,7 +494,7 @@ public class DeployerIT {
     @Test
     @InSequence(value = Integer.MAX_VALUE)
     public void shouldUndeployEverything() throws Exception {
-        // TODO pin DEPLOYER_IT_WAR & manage configs
+        // TODO pin DEPLOYER_IT_WAR & manage all
         String plan = "---\n";
 
         List<Audit> audits = post(plan);

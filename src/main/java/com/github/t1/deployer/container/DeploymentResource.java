@@ -10,6 +10,7 @@ import org.jboss.dmr.ModelNode;
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.DeploymentName.*;
@@ -51,13 +52,15 @@ public class DeploymentResource extends AbstractResource {
         return DeploymentResource.builder(name, cli).checksum(hash).build();
     }
 
-    public static class DeploymentResourceBuilder {
+    public static class DeploymentResourceBuilder implements Supplier<DeploymentResource> {
         private CLI cli;
 
         public DeploymentResourceBuilder container(CLI cli) {
             this.cli = cli;
             return this;
         }
+
+        @Override public DeploymentResource get() { return build(); }
 
         public DeploymentResource build() {
             DeploymentResource resource = new DeploymentResource(name, cli);

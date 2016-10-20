@@ -10,7 +10,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
-import static com.github.t1.deployer.app.ConfigurationPlan.*;
+import static com.github.t1.deployer.app.Plan.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 

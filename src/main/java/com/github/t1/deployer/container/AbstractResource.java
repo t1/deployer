@@ -8,7 +8,7 @@ import org.jboss.dmr.ModelNode;
 import static com.github.t1.deployer.container.CLI.*;
 
 /**
- * Resources represent the configuration state of the JavaEE container. They are responsible to {@link #add()},
+ * Resources represent the configured state of the JavaEE container. They are responsible to {@link #add()},
  * {@link #remove()}, or update (using overloaded `updateSomething` methods) the current state in the container;
  * and to provide information about an existing resource with {@link #isDeployed()} and various fluent getters.
  */

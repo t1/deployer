@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.ConfigurationPlan.*;
+import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import org.junit.Test;
@@ -17,9 +17,9 @@ import static javax.ws.rs.core.MediaType.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class EffectivePlanHtmlWriterTest {
-    private static final ConfigurationPlan PLAN = ConfigurationPlan
+    private static final Plan PLAN = Plan
             .builder()
-            .logHandler(LogHandlerConfig
+            .logHandler(LogHandlerPlan
                     .builder()
                     .name(new LogHandlerName("FOO"))
                     .level(DEBUG)
@@ -27,20 +27,20 @@ public class EffectivePlanHtmlWriterTest {
                     .type(periodicRotatingFile)
                     .formatter("COLOR-PATTERN")
                     .build())
-            .logger(LoggerConfig
+            .logger(LoggerPlan
                     .builder()
                     .category(LoggerCategory.of("org.foo"))
                     .handler("FOO")
                     .level(ALL)
                     .build())
-            .logger(LoggerConfig
+            .logger(LoggerPlan
                     .builder()
                     .category(LoggerCategory.of("org.bar"))
                     .handler("FOO")
                     .handler("BAR")
                     .level(INFO)
                     .build())
-            .deployable(DeployableConfig
+            .deployable(DeployablePlan
                     .builder()
                     .name(new DeploymentName("foo"))
                     .groupId(new GroupId("org.foo"))
@@ -48,7 +48,7 @@ public class EffectivePlanHtmlWriterTest {
                     .version(new Version("1.0"))
                     .type(war)
                     .build())
-            .deployable(DeployableConfig
+            .deployable(DeployablePlan
                     .builder()
                     .name(new DeploymentName("bar"))
                     .groupId(new GroupId("org.bar"))
@@ -68,7 +68,7 @@ public class EffectivePlanHtmlWriterTest {
         EffectivePlanHtmlWriter writer = new EffectivePlanHtmlWriter();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        writer.writeTo(PLAN, ConfigurationPlan.class, ConfigurationPlan.class, null, TEXT_HTML_TYPE, null, out);
+        writer.writeTo(PLAN, Plan.class, Plan.class, null, TEXT_HTML_TYPE, null, out);
 
         assertThat(out.toString()).isEqualTo(expected());
     }

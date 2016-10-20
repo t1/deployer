@@ -88,7 +88,7 @@ public class TestClient {
 
     @Test
     public void shouldGetEffectivePlan() throws Exception {
-        ConfigurationPlan plan = deployer().GET(ConfigurationPlan.class);
+        Plan plan = deployer().GET(Plan.class);
 
         System.out.println("------------------\n" + plan + "------------------");
     }

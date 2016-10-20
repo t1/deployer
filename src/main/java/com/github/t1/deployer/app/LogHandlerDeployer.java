@@ -2,38 +2,39 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LogHandlerAudit;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
-import com.github.t1.deployer.app.ConfigurationPlan.*;
+import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static java.util.Collections.*;
 
 @Slf4j
-public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHandlerResource, LogHandlerAuditBuilder> {
+public class LogHandlerDeployer extends AbstractDeployer<LogHandlerPlan, LogHandlerResource, LogHandlerAuditBuilder> {
     @Inject Container container;
     private List<LogHandlerResource> remaining;
 
     @Override protected void init() { this.remaining = container.allLogHandlers(); }
 
-    @Override protected Stream<LogHandlerConfig> of(ConfigurationPlan plan) { return plan.logHandlers(); }
+    @Override protected Stream<LogHandlerPlan> of(Plan plan) { return plan.logHandlers(); }
 
     @Override protected String getType() { return "log-handlers"; }
 
-    @Override protected LogHandlerAuditBuilder buildAudit(LogHandlerResource resource) {
+    @Override protected LogHandlerAuditBuilder auditBuilder(LogHandlerResource resource) {
         return LogHandlerAudit.builder().type(resource.type()).name(resource.name());
     }
 
-    @Override protected LogHandlerResource getResource(LogHandlerConfig plan) {
+    @Override protected LogHandlerResource getResource(LogHandlerPlan plan) {
         return container.logHandler(plan.getType(), plan.getName()).build();
     }
 
     @Override
-    protected void update(LogHandlerResource resource, LogHandlerConfig plan, LogHandlerAuditBuilder audit) {
+    protected void update(LogHandlerResource resource, LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
         boolean removed = remaining.removeIf(plan.getName()::matches);
         assert removed : "expected [" + resource + "] to be in existing " + remaining;
 
@@ -94,7 +95,7 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
     }
 
     @Override
-    protected LogHandlerResource buildResource(LogHandlerConfig plan, LogHandlerAuditBuilder audit) {
+    protected Supplier<LogHandlerResource> buildResource(LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
         audit.change("level", null, plan.getLevel());
         audit.change("format", null, plan.getFormat());
         audit.change("formatter", null, plan.getFormatter());
@@ -117,12 +118,11 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
                         .suffix(plan.getSuffix())
                         .module(plan.getModule())
                         .class_(plan.getClass_())
-                        .properties(plan.getProperties())
-                        .build();
+                        .properties(plan.getProperties());
     }
 
     @Override
-    protected void auditRemove(LogHandlerResource resource, LogHandlerConfig plan, LogHandlerAuditBuilder audit) {
+    protected void auditRemove(LogHandlerResource resource, LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
         audit.change("level", resource.level(), null);
         audit.change("format", resource.format(), null);
         audit.change("formatter", resource.formatter(), null);
@@ -135,7 +135,7 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
             resource.properties().forEach((key, value) -> audit.change("property/" + key, value, null));
     }
 
-    @Override public void cleanup(Audits audits) {
+    @Override public void cleanup() {
         for (LogHandlerResource handler : remaining) {
             LogHandlerAuditBuilder audit = LogHandlerAudit.builder().name(handler.name()).type(handler.type());
             auditRemove(handler, null, audit); // we can call this here only because it doesn't access the plan!
@@ -144,9 +144,9 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
         }
     }
 
-    @Override public void read(ConfigurationPlanBuilder builder) {
+    @Override public void read(PlanBuilder plan) {
         for (LogHandlerResource handler : container.allLogHandlers()) {
-            LogHandlerConfig.LogHandlerConfigBuilder configBuilder = LogHandlerConfig
+            LogHandlerPlan.LogHandlerPlanBuilder logHandlerPlan = LogHandlerPlan
                     .builder()
                     .type(handler.type())
                     .name(handler.name())
@@ -160,8 +160,8 @@ public class LogHandlerDeployer extends AbstractDeployer<LogHandlerConfig, LogHa
                     .module(handler.module())
                     .class_(handler.class_());
             if (handler.properties() != null)
-                handler.properties().forEach(configBuilder::property);
-            builder.logHandler(configBuilder.build());
+                handler.properties().forEach(logHandlerPlan::property);
+            plan.logHandler(logHandlerPlan.build());
         }
     }
 }

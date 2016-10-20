@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
-import com.github.t1.deployer.app.ConfigurationPlan.*;
+import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Variables.VariableName;
@@ -25,9 +25,9 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
 
-import static com.github.t1.deployer.app.ConfigurationPlan.LogHandlerConfig.*;
-import static com.github.t1.deployer.app.ConfigurationPlan.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
+import static com.github.t1.deployer.app.Plan.LogHandlerPlan.*;
+import static com.github.t1.deployer.app.Plan.*;
 import static com.github.t1.deployer.app.Trigger.mock;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
@@ -130,7 +130,7 @@ public class AbstractDeployerTest {
 
         when(deploymentManager.execute(any(DeploymentPlan.class))).then(i -> constantFuture(planResult));
 
-        when(cli.executeRaw(readResource("logging", "root-logger", "ROOT"))).then(i -> rootLoggerResponse());
+        when(cli.executeRaw(readResource(rootLogger()))).then(i -> rootLoggerResponse());
         when(cli.execute(readResource("logging", "logger", "*"))).then(
                 i -> toModelNode(allLoggers.stream().collect(joining(",", "[", "]"))));
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
@@ -146,6 +146,8 @@ public class AbstractDeployerTest {
     }
 
     private static String versionsKey(GroupId groupId, ArtifactId artifactId) { return groupId + ":" + artifactId; }
+
+    public static String rootLogger() {return address("logging", "root-logger", "ROOT");}
 
     private ModelNode rootLoggerResponse() {
         return toModelNode(""
@@ -434,8 +436,8 @@ public class AbstractDeployerTest {
                         .removed();
             }
 
-            public DeployableConfig asConfig() {
-                return DeployableConfig
+            public DeployablePlan asPlan() {
+                return DeployablePlan
                         .builder()
                         .name(deploymentName())
                         .groupId(groupId())
@@ -532,15 +534,13 @@ public class AbstractDeployerTest {
             return handlers.stream().map(LogHandlerName::new).collect(toList());
         }
 
-        public ModelNode buildRequest() {
-            return toModelNode("{" + loggerAddress() + "}");
-        }
-
-        public void verifyUpdated(LogLevel oldLevel, Audits audits) {
+        public void verifyUpdatedFrom(LogLevel oldLevel, Audits audits) {
             verify(cli).writeAttribute(buildRequest(), "level", level.toString());
             assertThat(audits.getAudits()).containsExactly(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
         }
+
+        public ModelNode buildRequest() { return toModelNode("{" + loggerAddress() + "}"); }
 
         public void verifyRemoved(Audits audits) {
             verify(cli).execute(toModelNode(""
@@ -588,8 +588,8 @@ public class AbstractDeployerTest {
                     LoggerAudit.of(getCategory()).change("handler", handlerName, null).changed());
         }
 
-        public LoggerConfig asConfig() {
-            return LoggerConfig
+        public LoggerPlan asPlan() {
+            return LoggerPlan
                     .builder()
                     .category(category)
                     .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
@@ -601,9 +601,13 @@ public class AbstractDeployerTest {
     }
 
     public static ModelNode readResource(String subsystem, String type, Object name) {
+        return readResource(address(subsystem, type, name));
+    }
+
+    public static ModelNode readResource(String address) {
         return toModelNode(""
                 + "{\n"
-                + address(subsystem, type, name)
+                + address
                 + "    'operation' => 'read-resource',\n"
                 + "    'recursive' => true\n"
                 + "}");
@@ -817,12 +821,12 @@ public class AbstractDeployerTest {
                 expectedAudit.change("format", null, format);
             if (formatter != null)
                 expectedAudit.change("formatter", null, formatter);
+            if (encoding != null)
+                expectedAudit.change("encoding", null, encoding);
             if (type == periodicRotatingFile)
                 expectedAudit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
             if (suffix != null)
                 expectedAudit.change("suffix", null, suffix);
-            if (encoding != null)
-                expectedAudit.change("encoding", null, encoding);
             if (module != null)
                 expectedAudit.change("module", null, module);
             if (class_ != null)
@@ -857,8 +861,8 @@ public class AbstractDeployerTest {
             assertThat(audits.getAudits()).containsExactly(expectedAudit.removed());
         }
 
-        public LogHandlerConfig asConfig() {
-            return LogHandlerConfig
+        public LogHandlerPlan asPlan() {
+            return LogHandlerPlan
                     .builder()
                     .type(type)
                     .name(name)

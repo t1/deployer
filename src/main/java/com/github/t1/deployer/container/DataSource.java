@@ -1,4 +1,4 @@
-package com.github.t1.deployer.model;
+package com.github.t1.deployer.container;
 
 import lombok.*;
 import lombok.experimental.Accessors;
@@ -15,7 +15,7 @@ import static lombok.AccessLevel.*;
 @Builder
 @AllArgsConstructor(access = PRIVATE)
 @Accessors(chain = true)
-public class DataSourceConfig implements Comparable<DataSourceConfig> {
+public class DataSource implements Comparable<DataSource> {
     public static final String NEW_DATA_SOURCE = "!";
 
     @NonNull
@@ -123,7 +123,7 @@ public class DataSourceConfig implements Comparable<DataSourceConfig> {
     // int loginTimeout() default 0;
 
     @Override
-    public int compareTo(@NotNull DataSourceConfig that) {
+    public int compareTo(@NotNull DataSource that) {
         return this.name.compareToIgnoreCase(that.name);
     }
 

@@ -33,8 +33,8 @@ import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
 
 /**
- * The plan of how the configuration should be. This class is responsible for loading the plan from YAML, statically
- * validating the plan, and applying default values. It also provides {@link #toYaml}.
+ * The plan of how the container should be or is configured. This class is responsible for loading the plan from/to YAML,
+ * statically validating it, and applying default values.
  */
 @Builder
 @Getter
@@ -43,7 +43,7 @@ import static lombok.AccessLevel.*;
 @Slf4j
 @JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-public class ConfigurationPlan {
+public class Plan {
     public static final ObjectMapper YAML = new ObjectMapper(
             new YAMLFactory()
                     .enable(MINIMIZE_QUOTES)
@@ -55,88 +55,88 @@ public class ConfigurationPlan {
 
     private static final VariableName DEFAULT_LOG_FORMATTER = new VariableName("default.log-formatter");
 
-    public static class ConfigurationPlanLoadingException extends RuntimeException {
-        public ConfigurationPlanLoadingException(String message) { super(message); }
+    public static class PlanLoadingException extends RuntimeException {
+        public PlanLoadingException(String message) { super(message); }
 
-        public ConfigurationPlanLoadingException(String message, Throwable cause) { super(message, cause); }
+        public PlanLoadingException(String message, Throwable cause) { super(message, cause); }
     }
 
-    private static final ConfigurationPlan EMPTY_PLAN = ConfigurationPlan.builder().build();
+    private static final Plan EMPTY_PLAN = Plan.builder().build();
 
     private static Variables variables = null;
 
-    synchronized public static ConfigurationPlan load(Variables variables, Reader reader, String sourceMessage) {
-        ConfigurationPlan.variables = variables;
+    synchronized public static Plan load(Variables variables, Reader reader, String sourceMessage) {
+        Plan.variables = variables;
         try {
-            ConfigurationPlan plan = YAML.readValue(variables.resolve(reader), ConfigurationPlan.class);
+            Plan plan = YAML.readValue(variables.resolve(reader), Plan.class);
             if (plan == null)
                 plan = EMPTY_PLAN;
-            log.debug("config plan loaded from {}:\n{}", sourceMessage, plan);
+            log.debug("plan loaded from {}:\n{}", sourceMessage, plan);
             return plan;
         } catch (IOException e) {
-            throw new ConfigurationPlanLoadingException("exception while loading config plan from " + sourceMessage, e);
+            throw new PlanLoadingException("exception while loading plan from " + sourceMessage, e);
         } finally {
-            ConfigurationPlan.variables = null;
+            Plan.variables = null;
         }
     }
 
-    @JsonCreator public static ConfigurationPlan fromJson(JsonNode json) {
-        ConfigurationPlanBuilder builder = builder();
-        readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerConfig::fromJson, builder::logHandler);
-        readAll(json.get("loggers"), LoggerCategory::of, LoggerConfig::fromJson, builder::logger);
-        readAll(json.get("deployables"), DeploymentName::new, DeployableConfig::fromJson, builder::deployable);
-        readAll(json.get("bundles"), BundleName::new, BundleConfig::fromJson, builder::bundle);
+    @JsonCreator public static Plan fromJson(JsonNode json) {
+        PlanBuilder builder = builder();
+        readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerPlan::fromJson, builder::logHandler);
+        readAll(json.get("loggers"), LoggerCategory::of, LoggerPlan::fromJson, builder::logger);
+        readAll(json.get("deployables"), DeploymentName::new, DeployablePlan::fromJson, builder::deployable);
+        readAll(json.get("bundles"), BundleName::new, BundlePlan::fromJson, builder::bundle);
         return builder.build();
     }
 
-    public static <K, V> void readAll(JsonNode jsonNode, Function<String, K> toKey, BiFunction<K, JsonNode, V> toConfig,
+    public static <K, V> void readAll(JsonNode jsonNode, Function<String, K> toKey, BiFunction<K, JsonNode, V> toPlan,
             Consumer<V> consumer) {
         if (jsonNode != null)
             jsonNode.fieldNames().forEachRemaining(name ->
-                    consumer.accept(toConfig.apply(toKey.apply(name), jsonNode.get(name))));
+                    consumer.accept(toPlan.apply(toKey.apply(name), jsonNode.get(name))));
     }
 
-    @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerConfig> logHandlers;
-    @NonNull @JsonProperty private final Map<LoggerCategory, LoggerConfig> loggers;
-    @NonNull @JsonProperty private final Map<DeploymentName, DeployableConfig> deployables;
-    @NonNull @JsonProperty private final Map<BundleName, BundleConfig> bundles;
+    @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerPlan> logHandlers;
+    @NonNull @JsonProperty private final Map<LoggerCategory, LoggerPlan> loggers;
+    @NonNull @JsonProperty private final Map<DeploymentName, DeployablePlan> deployables;
+    @NonNull @JsonProperty private final Map<BundleName, BundlePlan> bundles;
 
-    public Stream<LogHandlerConfig> logHandlers() { return logHandlers.values().stream(); }
+    public Stream<LogHandlerPlan> logHandlers() { return logHandlers.values().stream(); }
 
-    public Stream<LoggerConfig> loggers() { return loggers.values().stream(); }
+    public Stream<LoggerPlan> loggers() { return loggers.values().stream(); }
 
-    public Stream<DeployableConfig> deployables() { return deployables.values().stream(); }
+    public Stream<DeployablePlan> deployables() { return deployables.values().stream(); }
 
-    public Stream<BundleConfig> bundles() { return bundles.values().stream(); }
+    public Stream<BundlePlan> bundles() { return bundles.values().stream(); }
 
-    public static class ConfigurationPlanBuilder {
-        private Map<LogHandlerName, LogHandlerConfig> logHandlers = new LinkedHashMap<>();
-        private Map<LoggerCategory, LoggerConfig> loggers = new LinkedHashMap<>();
-        private Map<DeploymentName, DeployableConfig> deployables = new LinkedHashMap<>();
-        private Map<BundleName, BundleConfig> bundles = new LinkedHashMap<>();
+    public static class PlanBuilder {
+        private Map<LogHandlerName, LogHandlerPlan> logHandlers = new LinkedHashMap<>();
+        private Map<LoggerCategory, LoggerPlan> loggers = new LinkedHashMap<>();
+        private Map<DeploymentName, DeployablePlan> deployables = new LinkedHashMap<>();
+        private Map<BundleName, BundlePlan> bundles = new LinkedHashMap<>();
 
-        public ConfigurationPlanBuilder logHandler(LogHandlerConfig config) {
-            this.logHandlers.put(config.getName(), config);
+        public PlanBuilder logHandler(LogHandlerPlan plan) {
+            this.logHandlers.put(plan.getName(), plan);
             return this;
         }
 
-        public ConfigurationPlanBuilder logger(LoggerConfig config) {
-            this.loggers.put(config.getCategory(), config);
+        public PlanBuilder logger(LoggerPlan plan) {
+            this.loggers.put(plan.getCategory(), plan);
             return this;
         }
 
-        public ConfigurationPlanBuilder deployable(DeployableConfig config) {
-            this.deployables.put(config.getName(), config);
+        public PlanBuilder deployable(DeployablePlan plan) {
+            this.deployables.put(plan.getName(), plan);
             return this;
         }
 
-        public ConfigurationPlanBuilder bundle(BundleConfig config) {
-            this.bundles.put(config.getName(), config);
+        public PlanBuilder bundle(BundlePlan plan) {
+            this.bundles.put(plan.getName(), plan);
             return this;
         }
     }
 
-    public interface AbstractConfig {
+    public interface AbstractPlan {
         DeploymentState getState();
     }
 
@@ -144,7 +144,7 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class AbstractArtifactConfig implements AbstractConfig {
+    public static class AbstractArtifactPlan implements AbstractPlan {
         private final DeploymentState state;
         private final GroupId groupId;
         @NonNull private final ArtifactId artifactId;
@@ -153,7 +153,7 @@ public class ConfigurationPlan {
         private final Checksum checksum;
 
         @SuppressWarnings("unchecked")
-        public static class AbstractArtifactConfigBuilder<T extends AbstractArtifactConfigBuilder> {
+        public static class AbstractArtifactPlanBuilder<T extends AbstractArtifactPlanBuilder> {
             public T state(DeploymentState state) {
                 this.state = state;
                 return (T) this;
@@ -185,7 +185,7 @@ public class ConfigurationPlan {
             }
         }
 
-        public static void fromJson(JsonNode node, AbstractArtifactConfigBuilder builder,
+        public static void fromJson(JsonNode node, AbstractArtifactPlanBuilder builder,
                 String defaultArtifactId, String defaultVersion) {
             apply(node, "group-id", value -> builder.groupId(GroupId.of(defaultValue(value, "group-id"))));
             apply(node, "artifact-id",
@@ -203,9 +203,9 @@ public class ConfigurationPlan {
             verify(builder);
         }
 
-        private static void verify(AbstractArtifactConfigBuilder builder) {
+        private static void verify(AbstractArtifactPlanBuilder builder) {
             if (builder.groupId == null && builder.state != undeployed)
-                throw new ConfigurationPlanLoadingException("the `group-id` can only be null when undeploying");
+                throw new PlanLoadingException("the `group-id` can only be null when undeploying");
         }
 
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
@@ -219,38 +219,38 @@ public class ConfigurationPlan {
     @EqualsAndHashCode(callSuper = true)
     @Builder
     @JsonNaming(KebabCaseStrategy.class)
-    public static class DeployableConfig extends AbstractArtifactConfig {
+    public static class DeployablePlan extends AbstractArtifactPlan {
         @NonNull @JsonIgnore private final DeploymentName name;
         @NonNull private final ArtifactType type;
 
-        public static class DeployableConfigBuilder extends AbstractArtifactConfigBuilder<DeployableConfigBuilder> {
-            @Override public DeployableConfig build() {
-                AbstractArtifactConfig a = super.build();
-                return new DeployableConfig(name, type,
+        public static class DeployablePlanBuilder extends AbstractArtifactPlanBuilder<DeployablePlanBuilder> {
+            @Override public DeployablePlan build() {
+                AbstractArtifactPlan a = super.build();
+                return new DeployablePlan(name, type,
                         a.state, a.groupId, a.artifactId, a.version, a.classifier, a.checksum);
             }
         }
 
-        private DeployableConfig(DeploymentName name, ArtifactType type, DeploymentState state,
+        private DeployablePlan(DeploymentName name, ArtifactType type, DeploymentState state,
                 GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier, Checksum checksum) {
             super(state, groupId, artifactId, version, classifier, checksum);
             this.name = name;
             this.type = type;
         }
 
-        public static DeployableConfig fromJson(DeploymentName name, JsonNode node) {
+        public static DeployablePlan fromJson(DeploymentName name, JsonNode node) {
             if (node.isNull())
-                throw new ConfigurationPlanLoadingException("no config in deployable '" + name + "'");
-            DeployableConfigBuilder builder = builder().name(name);
-            AbstractArtifactConfig.fromJson(node, builder, name.getValue(), "CURRENT");
+                throw new PlanLoadingException("incomplete plan for deployable '" + name + "'");
+            DeployablePlanBuilder builder = builder().name(name);
+            AbstractArtifactPlan.fromJson(node, builder, name.getValue(), "CURRENT");
             apply(node, "type", value -> builder.type(
                     ArtifactType.valueOf(defaultValue(value, "deployable-type", "«war»"))));
             return builder.build().verify();
         }
 
-        private DeployableConfig verify() {
+        private DeployablePlan verify() {
             if (getType() == bundle)
-                throw new ConfigurationPlanLoadingException(
+                throw new PlanLoadingException(
                         "a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
             return this;
         }
@@ -265,15 +265,15 @@ public class ConfigurationPlan {
     @EqualsAndHashCode(callSuper = true)
     @Builder
     @JsonNaming(KebabCaseStrategy.class)
-    public static class BundleConfig extends AbstractArtifactConfig {
+    public static class BundlePlan extends AbstractArtifactPlan {
         @NonNull @JsonIgnore private final BundleName name;
         @NonNull @Singular private final Map<String, Map<VariableName, String>> instances;
 
-        public static class BundleConfigBuilder extends AbstractArtifactConfigBuilder<BundleConfigBuilder> {
-            @Override public BundleConfig build() {
-                AbstractArtifactConfig a = super.build();
+        public static class BundlePlanBuilder extends AbstractArtifactPlanBuilder<BundlePlanBuilder> {
+            @Override public BundlePlan build() {
+                AbstractArtifactPlan a = super.build();
                 Map<String, Map<VariableName, String>> instances = buildInstances(instances$key, instances$value);
-                return new BundleConfig(name, instances,
+                return new BundlePlan(name, instances,
                         a.state, a.groupId, a.artifactId, a.version, a.classifier, a.checksum);
             }
 
@@ -288,7 +288,7 @@ public class ConfigurationPlan {
             }
         }
 
-        private BundleConfig(BundleName name, Map<String, Map<VariableName, String>> instances, DeploymentState state,
+        private BundlePlan(BundleName name, Map<String, Map<VariableName, String>> instances, DeploymentState state,
                 GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier, Checksum checksum) {
             super(state, groupId, artifactId, version, classifier, checksum);
             this.name = name;
@@ -296,11 +296,11 @@ public class ConfigurationPlan {
         }
 
 
-        public static BundleConfig fromJson(BundleName name, JsonNode node) {
+        public static BundlePlan fromJson(BundleName name, JsonNode node) {
             if (node.isNull())
-                throw new ConfigurationPlanLoadingException("no config in bundle '" + name + "'");
-            BundleConfigBuilder builder = builder().name(name);
-            AbstractArtifactConfig.fromJson(node, builder, name.getValue(), null);
+                throw new PlanLoadingException("incomplete plan for bundle '" + name + "'");
+            BundlePlanBuilder builder = builder().name(name);
+            AbstractArtifactPlan.fromJson(node, builder, name.getValue(), null);
             if (node.has("instances") && !node.get("instances").isNull()) {
                 Iterator<Map.Entry<String, JsonNode>> instances = node.get("instances").fields();
                 while (instances.hasNext()) {
@@ -329,7 +329,7 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class LoggerConfig implements AbstractConfig {
+    public static class LoggerPlan implements AbstractPlan {
         @NonNull @JsonIgnore private final LoggerCategory category;
         private final DeploymentState state;
         private final LogLevel level;
@@ -337,10 +337,10 @@ public class ConfigurationPlan {
         @JsonProperty private final Boolean useParentHandlers;
 
 
-        private static LoggerConfig fromJson(LoggerCategory category, JsonNode node) {
+        private static LoggerPlan fromJson(LoggerCategory category, JsonNode node) {
             if (node.isNull())
-                throw new ConfigurationPlanLoadingException("no config in logger '" + category + "'");
-            LoggerConfigBuilder builder = builder().category(category);
+                throw new PlanLoadingException("incomplete plan for logger '" + category + "'");
+            LoggerPlanBuilder builder = builder().category(category);
             apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "level", value
                     -> builder.level(mapLogLevel(defaultValue(value, "log-level", "«DEBUG»"))));
@@ -356,19 +356,19 @@ public class ConfigurationPlan {
             return builder.build().validate();
         }
 
-        public static class LoggerConfigBuilder {
+        public static class LoggerPlanBuilder {
             private List<LogHandlerName> handlers = new ArrayList<>();
 
-            public LoggerConfigBuilder handler(String name) {
+            public LoggerPlanBuilder handler(String name) {
                 if (name != null)
                     this.handlers.add(new LogHandlerName(name));
                 return this;
             }
         }
 
-        private LoggerConfig validate() {
+        private LoggerPlan validate() {
             if (useParentHandlers == FALSE && handlers.isEmpty())
-                throw new ConfigurationPlanLoadingException("Can't set use-parent-handlers of [" + category + "] "
+                throw new PlanLoadingException("Can't set use-parent-handlers of [" + category + "] "
                         + "to false when there are no handlers");
             return this;
         }
@@ -389,7 +389,7 @@ public class ConfigurationPlan {
     @Builder
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
-    public static class LogHandlerConfig implements AbstractConfig {
+    public static class LogHandlerPlan implements AbstractPlan {
         public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
         public static final String DEFAULT_SUFFIX = ".yyyy-MM-dd";
 
@@ -409,8 +409,8 @@ public class ConfigurationPlan {
         @Singular private final Map<String, String> properties;
 
 
-        private static LogHandlerConfig fromJson(LogHandlerName name, JsonNode node) {
-            LogHandlerConfigBuilder builder = builder().name(name);
+        private static LogHandlerPlan fromJson(LogHandlerName name, JsonNode node) {
+            LogHandlerPlanBuilder builder = builder().name(name);
             apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
             apply(node, "level", value -> builder.level((value == null) ? ALL : mapLogLevel(value)));
             apply(node, "type", value -> builder.type(LogHandlerType.valueOfTypeName(
@@ -424,7 +424,7 @@ public class ConfigurationPlan {
             return builder.build().validate();
         }
 
-        private static void applyByType(JsonNode node, LogHandlerConfigBuilder builder) {
+        private static void applyByType(JsonNode node, LogHandlerPlanBuilder builder) {
             switch (builder.type) {
             case console:
                 // nothing more to load here
@@ -442,26 +442,26 @@ public class ConfigurationPlan {
                             -> builder.property(fieldName, node.get("properties").get(fieldName).asText()));
                 return;
             }
-            throw new ConfigurationPlanLoadingException("unhandled log-handler type [" + builder.type + "]"
+            throw new PlanLoadingException("unhandled log-handler type [" + builder.type + "]"
                     + " in [" + builder.name + "]");
         }
 
-        @NotNull private static String defaultFileName(LogHandlerConfigBuilder builder) {
+        @NotNull private static String defaultFileName(LogHandlerPlanBuilder builder) {
             return builder.name.getValue().toLowerCase() + ".log";
         }
 
-        /* make builder fields visible */ public static class LogHandlerConfigBuilder {}
+        /* make builder fields visible */ public static class LogHandlerPlanBuilder {}
 
-        private LogHandlerConfig validate() {
+        private LogHandlerPlan validate() {
             if (format != null && formatter != null)
-                throw new ConfigurationPlanLoadingException(
+                throw new PlanLoadingException(
                         "log-handler [" + name + "] can't have both a format and a formatter");
             if (type == custom) {
                 if (module == null)
-                    throw new ConfigurationPlanLoadingException(
+                    throw new PlanLoadingException(
                             "log-handler [" + name + "] is of type [" + type + "], so it requires a 'module'");
                 if (class_ == null)
-                    throw new ConfigurationPlanLoadingException(
+                    throw new PlanLoadingException(
                             "log-handler [" + name + "] is of type [" + type + "], so it requires a 'class'");
             }
             return this;

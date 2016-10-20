@@ -1,10 +1,13 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.app.Audit.LoggerAudit;
 import org.junit.Test;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
+import static com.github.t1.deployer.container.LoggerCategory.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
@@ -19,7 +22,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "loggers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown).hasStackTraceContaining("no config in logger 'foo'");
+        assertThat(thrown).hasStackTraceContaining("incomplete plan for logger 'foo'");
     }
 
     @Test
@@ -58,9 +61,21 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: INFO\n");
 
-        fixture.level(INFO).verifyUpdated(DEBUG, audits);
+        fixture.level(INFO).verifyUpdatedFrom(DEBUG, audits);
     }
 
+
+    @Test
+    public void shouldNotSetUseParentHandlersOfRootLogger() {
+        Audits audits = deploy(""
+                + "loggers:\n"
+                + "  ROOT:\n"
+                + "    level: DEBUG\n"
+                + "    handlers: [CONSOLE, FILE]\n");
+
+        verify(cli).writeAttribute(toModelNode("{" + rootLogger() + "}"), "level", "DEBUG");
+        assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(ROOT).change("level", "INFO", "DEBUG").changed());
+    }
 
     @Test
     public void shouldAddLoggerWithExplicitState() {

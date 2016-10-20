@@ -10,6 +10,7 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.nio.file.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Slf4j
 @Logged
@@ -25,9 +26,9 @@ public class Container {
 
     public List<LogHandlerResource> allLogHandlers() { return LogHandlerResource.allHandlers(cli); }
 
-    public LoggerResourceBuilder logger(LoggerCategory category) { return LoggerResource.builder(category, cli); }
+    public LoggerResourceBuilder builderFor(LoggerCategory category) { return LoggerResource.builder(category, cli); }
 
-    public List<LoggerResource> allLoggers() { return LoggerResource.allLoggers(cli); }
+    public Stream<LoggerResource> allLoggers() { return LoggerResource.allLoggers(cli).stream(); }
 
     public DeploymentResourceBuilder deployment(DeploymentName name) { return DeploymentResource.builder(name, cli); }
 

@@ -161,7 +161,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "deployables:\n"
                 + "  foo-war:\n"));
 
-        assertThat(thrown).hasStackTraceContaining("no config in deployable 'foo-war'");
+        assertThat(thrown).hasStackTraceContaining("incomplete plan for deployable 'foo-war'");
     }
 
 

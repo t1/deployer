@@ -20,21 +20,21 @@ import static javax.ws.rs.core.MediaType.*;
 
 @Provider
 @Produces(TEXT_HTML)
-public class EffectivePlanHtmlWriter implements MessageBodyWriter<ConfigurationPlan> {
+public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return ConfigurationPlan.class.equals(type);
+        return Plan.class.equals(type);
     }
 
     @Override
-    public long getSize(ConfigurationPlan p, Class<?> t, Type g, Annotation[] a, MediaType m) { return -1; }
+    public long getSize(Plan p, Class<?> t, Type g, Annotation[] a, MediaType m) { return -1; }
 
     @Override
-    public void writeTo(ConfigurationPlan plan, Class<?> type, Type genericType, Annotation[] annotations,
+    public void writeTo(Plan plan, Class<?> type, Type genericType, Annotation[] annotations,
             MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
             throws IOException, WebApplicationException {
         PrintWriter out = new PrintWriter(entityStream);
-        String title = hostName() + "-config";
+        String title = hostName() + "-plan";
         new HtmlWriter(out, title).writeObject(plan);
     }
 

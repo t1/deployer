@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.ConfigurationPlan.*;
+import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.google.common.collect.ImmutableMap;
@@ -15,8 +15,8 @@ import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ConfigurationPlanSerializationTest {
-    private static final DeployableConfig FOO = DeployableConfig
+public class PlanSerializationTest {
+    private static final DeployablePlan FOO = DeployablePlan
             .builder()
             .type(war)
             .name(new DeploymentName("foo"))
@@ -34,7 +34,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldSerializeEmptyPlan() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.builder().build();
+        Plan plan = Plan.builder().build();
 
         String yaml = plan.toYaml();
 
@@ -43,9 +43,9 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializeEmptyPlan() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader("{}"), "empty");
+        Plan plan = Plan.load(variables, new StringReader("{}"), "empty");
 
-        assertThat(plan).isEqualTo(ConfigurationPlan.builder().build());
+        assertThat(plan).isEqualTo(Plan.builder().build());
     }
 
 
@@ -57,14 +57,14 @@ public class ConfigurationPlanSerializationTest {
             + "    version: 1\n"
             + "    type: war\n";
 
-    private static final ConfigurationPlan ONE_DEPLOYMENT_PLAN = ConfigurationPlan
+    private static final Plan ONE_DEPLOYMENT_PLAN = Plan
             .builder()
             .deployable(FOO)
             .build();
 
     @Test
     public void shouldDeserializePlanWithOneDeployment() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_DEPLOYMENT_YAML), "yaml1");
+        Plan plan = Plan.load(variables, new StringReader(ONE_DEPLOYMENT_YAML), "yaml1");
 
         assertThat(plan).isEqualTo(ONE_DEPLOYMENT_PLAN);
     }
@@ -90,10 +90,10 @@ public class ConfigurationPlanSerializationTest {
             + "    version: 1.2.3\n"
             + "    type: war\n";
 
-    private static final ConfigurationPlan TWO_DEPLOYMENTS_PLAN = ConfigurationPlan
+    private static final Plan TWO_DEPLOYMENTS_PLAN = Plan
             .builder()
             .deployable(FOO)
-            .deployable(DeployableConfig
+            .deployable(DeployablePlan
                     .builder()
                     .type(war)
                     .name(new DeploymentName("bar-name"))
@@ -105,7 +105,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithTwoDeployments() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(TWO_DEPLOYMENTS_YAML), "yaml2");
+        Plan plan = Plan.load(variables, new StringReader(TWO_DEPLOYMENTS_YAML), "yaml2");
 
         assertThat(plan).isEqualTo(TWO_DEPLOYMENTS_PLAN);
     }
@@ -118,9 +118,9 @@ public class ConfigurationPlanSerializationTest {
     }
 
 
-    private static final ConfigurationPlan BUNDLE_PLAN = ConfigurationPlan
+    private static final Plan BUNDLE_PLAN = Plan
             .builder()
-            .bundle(BundleConfig
+            .bundle(BundlePlan
                     .builder()
                     .name(new BundleName("foo"))
                     .groupId(new GroupId("org.foo"))
@@ -144,7 +144,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(BUNDLE_PLAN_YAML), "yaml-bundle");
+        Plan plan = Plan.load(variables, new StringReader(BUNDLE_PLAN_YAML), "yaml-bundle");
 
         assertThat(plan).isEqualTo(BUNDLE_PLAN);
     }
@@ -164,21 +164,21 @@ public class ConfigurationPlanSerializationTest {
             + "    handlers:\n"
             + "    - CONSOLE\n"
             + "    use-parent-handlers: true\n";
-    private static final LoggerConfig LOGGER = LoggerConfig
+    private static final LoggerPlan LOGGER = LoggerPlan
             .builder()
             .category(LoggerCategory.of("some.logger.category"))
             .level(TRACE)
             .handler("CONSOLE")
             .useParentHandlers(true)
             .build();
-    private static final ConfigurationPlan ONE_LOGGER_PLAN = ConfigurationPlan
+    private static final Plan ONE_LOGGER_PLAN = Plan
             .builder()
             .logger(LOGGER)
             .build();
 
     @Test
     public void shouldDeserializePlanWithOneLogger() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGGER_YAML), "1log");
+        Plan plan = Plan.load(variables, new StringReader(ONE_LOGGER_YAML), "1log");
 
         assertThat(plan).isEqualTo(ONE_LOGGER_PLAN);
     }
@@ -199,7 +199,7 @@ public class ConfigurationPlanSerializationTest {
             + "    format: the-format\n"
             + "    file: the-file\n"
             + "    suffix: the-suffix\n";
-    private static final LogHandlerConfig LOGHANDLER = LogHandlerConfig
+    private static final LogHandlerPlan LOGHANDLER = LogHandlerPlan
             .builder()
             .name(new LogHandlerName("FOO"))
             .level(INFO)
@@ -208,14 +208,14 @@ public class ConfigurationPlanSerializationTest {
             .suffix("the-suffix")
             .format("the-format")
             .build();
-    private static final ConfigurationPlan ONE_LOGHANDLER_PLAN = ConfigurationPlan
+    private static final Plan ONE_LOGHANDLER_PLAN = Plan
             .builder()
             .logHandler(LOGHANDLER)
             .build();
 
     @Test
     public void shouldDeserializePlanWithOneLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(ONE_LOGHANDLER_YAML), "1log-h");
+        Plan plan = Plan.load(variables, new StringReader(ONE_LOGHANDLER_YAML), "1log-h");
 
         assertThat(plan).isEqualTo(ONE_LOGHANDLER_PLAN);
     }
@@ -236,9 +236,9 @@ public class ConfigurationPlanSerializationTest {
             + "    format: the-format\n"
             + "    module: org.foo\n"
             + "    class: org.foo.MyHandler\n";
-    private static final ConfigurationPlan CUSTOM_HANDLER_PLAN = ConfigurationPlan
+    private static final Plan CUSTOM_HANDLER_PLAN = Plan
             .builder()
-            .logHandler(LogHandlerConfig
+            .logHandler(LogHandlerPlan
                     .builder()
                     .name(new LogHandlerName("FOO"))
                     .level(INFO)
@@ -251,7 +251,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithCustomLogHandler() throws Exception {
-        ConfigurationPlan plan = ConfigurationPlan.load(variables, new StringReader(CUSTOM_HANDLER_YAML), "custom-h");
+        Plan plan = Plan.load(variables, new StringReader(CUSTOM_HANDLER_YAML), "custom-h");
 
         assertThat(plan).isEqualTo(CUSTOM_HANDLER_PLAN);
     }
@@ -265,7 +265,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutModule() throws Exception {
-        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(variables, new StringReader(""
+        Throwable thrown = catchThrowable(() -> Plan.load(variables, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: INFO\n"
@@ -279,7 +279,7 @@ public class ConfigurationPlanSerializationTest {
 
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutClass() throws Exception {
-        Throwable thrown = catchThrowable(() -> ConfigurationPlan.load(variables, new StringReader(""
+        Throwable thrown = catchThrowable(() -> Plan.load(variables, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: INFO\n"

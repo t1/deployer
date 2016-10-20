@@ -9,6 +9,7 @@ import org.jboss.dmr.ModelNode;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LogHandlerName.*;
@@ -76,13 +77,15 @@ public class LogHandlerResource extends AbstractResource {
         return logger;
     }
 
-    public static class LogHandlerResourceBuilder {
+    public static class LogHandlerResourceBuilder implements Supplier<LogHandlerResource> {
         private CLI cli;
 
         public LogHandlerResourceBuilder cli(CLI cli) {
             this.cli = cli;
             return this;
         }
+
+        @Override public LogHandlerResource get() { return build(); }
 
         public LogHandlerResource build() {
             LogHandlerResource resource = new LogHandlerResource(type, name, cli);

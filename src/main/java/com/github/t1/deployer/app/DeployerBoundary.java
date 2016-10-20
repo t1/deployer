@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.ConfigurationPlan.*;
+import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Variables.*;
@@ -44,7 +44,7 @@ public class DeployerBoundary {
     public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
 
     @GET
-    public ConfigurationPlan getEffectivePlan() { return new Run().read(); }
+    public Plan getEffectivePlan() { return new Run().read(); }
 
     /** see {@link Audits} */
     @Value
@@ -104,8 +104,8 @@ public class DeployerBoundary {
     private class Run {
         private Variables variables = new Variables().withAll(configuredVariables).withRootBundle(rootBundle);
 
-        public ConfigurationPlan read() {
-            ConfigurationPlanBuilder builder = ConfigurationPlan.builder();
+        public Plan read() {
+            PlanBuilder builder = Plan.builder();
             // TODO deployers.forEach(deployer -> deployer.read(builder));
             logHandlerDeployer.read(builder);
             loggerDeployer.read(builder);
@@ -123,11 +123,11 @@ public class DeployerBoundary {
         }
 
         public BufferedReader reader(Path plan) {
-            log.info("load config plan from: {}", plan);
+            log.info("load plan from: {}", plan);
             try {
                 return Files.newBufferedReader(plan);
             } catch (IOException e) {
-                throw new RuntimeException("can't read config plan [" + plan + "]", e);
+                throw new RuntimeException("can't read plan [" + plan + "]", e);
             }
         }
 
@@ -137,9 +137,9 @@ public class DeployerBoundary {
         }
 
         private void apply(Reader reader, String sourceMessage) {
-            String failureMessage = "can't apply config plan [" + sourceMessage + "]";
+            String failureMessage = "can't apply plan [" + sourceMessage + "]";
             try {
-                this.apply(ConfigurationPlan.load(variables, reader, sourceMessage));
+                this.apply(Plan.load(variables, reader, sourceMessage));
             } catch (WebApplicationApplicationException e) {
                 log.info(failureMessage);
                 throw e;
@@ -156,7 +156,7 @@ public class DeployerBoundary {
             }
         }
 
-        private void apply(ConfigurationPlan plan) {
+        private void apply(Plan plan) {
             // TODO deployers.forEach(deployer -> deployer.apply(plan));
             logHandlerDeployer.apply(plan);
             loggerDeployer.apply(plan);
@@ -165,7 +165,7 @@ public class DeployerBoundary {
             plan.bundles().forEach(this::applyBundle);
         }
 
-        private void applyBundle(BundleConfig bundle) {
+        private void applyBundle(BundlePlan bundle) {
             for (Map.Entry<String, Map<VariableName, String>> instance : bundle.getInstances().entrySet()) {
                 Variables pop = this.variables;
                 try {

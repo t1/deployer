@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LoggerCategory.*;
@@ -81,13 +82,15 @@ public class LoggerResource extends AbstractResource {
     public boolean isDefaultUseParentHandlers() { return isRoot() || (useParentHandlers == handlers().isEmpty()); }
 
 
-    public static class LoggerResourceBuilder {
+    public static class LoggerResourceBuilder implements Supplier<LoggerResource> {
         private CLI cli;
 
         public LoggerResourceBuilder container(CLI cli) {
             this.cli = cli;
             return this;
         }
+
+        @Override public LoggerResource get() { return build(); }
 
         public LoggerResource build() {
             LoggerResource resource = new LoggerResource(category, cli);
@@ -103,6 +106,8 @@ public class LoggerResource extends AbstractResource {
         return "Logger:" + category + ":deployed=" + deployed + ":" + level
                 + ":" + handlers + ((useParentHandlers == TRUE) ? "+" : "");
     }
+
+    public boolean isNotRoot() { return !isRoot(); }
 
     public boolean isRoot() { return category.isRoot(); }
 

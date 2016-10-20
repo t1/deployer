@@ -29,8 +29,8 @@ public class ArtifactoryRepositoryTestClient {
     public static void main(String[] args) {
         Dropwizard dropwizard = new Dropwizard().start();
         String artifactory = dropwizard.baseUri() + "/artifactory";
-        RestContext config = REST.register("artifactory", artifactory);
-        ArtifactoryRepository repo = new ArtifactoryRepository(config, "snapshots", "releases");
+        RestContext rest = REST.register("artifactory", artifactory);
+        ArtifactoryRepository repo = new ArtifactoryRepository(rest, "snapshots", "releases");
 
         try {
             Artifact artifact = repo.searchByChecksum(CHECKSUM);

@@ -32,8 +32,8 @@ public class ArtifactoryRepositoryIT {
             ? URI.create("http://localhost:8081/artifactory")
             : ((DropwizardClientRule) ARTIFACTORY).baseUri();
 
-    private RestContext config = REST.register("repository", baseUri);
-    private final ArtifactoryRepository repository = new ArtifactoryRepository(config, SNAPSHOTS, RELEASES);
+    private RestContext rest = REST.register("repository", baseUri);
+    private final ArtifactoryRepository repository = new ArtifactoryRepository(rest, SNAPSHOTS, RELEASES);
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -88,10 +88,10 @@ public class ArtifactoryRepositoryIT {
     public void shouldSearchByChecksumWithAuthorization() {
         assumeNotNull(ARTIFACTORY_MOCK);
         try {
-            config = config.register(baseUri, new Credentials("foo", "bar"));
+            rest = rest.register(baseUri, new Credentials("foo", "bar"));
             ARTIFACTORY_MOCK.setRequireAuthorization(true);
 
-            Artifact artifact = new ArtifactoryRepository(config, "snapshots", "releases")
+            Artifact artifact = new ArtifactoryRepository(rest, "snapshots", "releases")
                     .searchByChecksum(fakeChecksumFor(FOO));
 
             assertThat(artifact.getGroupId().getValue()).isEqualTo("org.foo");
