@@ -116,7 +116,7 @@ public class LoggerResource extends AbstractResource {
         return handlers;
     }
 
-    public boolean useParentHandlers() {
+    public Boolean useParentHandlers() {
         checkDeployed();
         return (useParentHandlers == null) ? true : useParentHandlers;
     }
@@ -143,12 +143,12 @@ public class LoggerResource extends AbstractResource {
         execute(request);
     }
 
-    public void writeUseParentHandlers(boolean newUseParentHandlers) {
+    public void updateUseParentHandlers(Boolean newUseParentHandlers) {
         checkDeployed();
         writeAttribute("use-parent-handlers", newUseParentHandlers);
     }
 
-    public void writeLevel(LogLevel newLevel) {
+    public void updateLevel(LogLevel newLevel) {
         checkDeployed();
         if (newLevel == null)
             newLevel = LogLevel.ALL;

@@ -373,7 +373,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(FOO).build().writeLevel(ERROR);
+        container.builderFor(FOO).build().updateLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "level", ERROR));
         verifyLoggerRead("foo");
@@ -384,7 +384,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(ROOT).build().writeLevel(ERROR);
+        container.builderFor(ROOT).build().updateLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("root-logger", "ROOT", "level", ERROR));
     }
@@ -394,7 +394,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, false);
         givenNoLogger("bar");
 
-        container.builderFor(FOO).build().writeUseParentHandlers(true);
+        container.builderFor(FOO).build().updateUseParentHandlers(true);
 
         verifyExecute(readLoggersCli("foo"));
         verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", true));
@@ -405,7 +405,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(FOO).build().writeUseParentHandlers(false);
+        container.builderFor(FOO).build().updateUseParentHandlers(false);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", false));
         verifyLoggerRead("foo");

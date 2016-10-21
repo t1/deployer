@@ -19,43 +19,15 @@ import static java.util.Collections.*;
 public class LogHandlerDeployer extends
         ResourceDeployer<LogHandlerPlan, LogHandlerResourceBuilder, LogHandlerResource, LogHandlerAuditBuilder> {
     public LogHandlerDeployer() {
-        this.<LogLevel>property("level")
-                .resource(LogHandlerResource::level)
-                .plan(LogHandlerPlan::getLevel)
-                .addTo(LogHandlerResourceBuilder::level)
-                .write(LogHandlerResource::updateLevel);
-        this.<String>property("format")
-                .resource(LogHandlerResource::format)
-                .plan(LogHandlerPlan::getFormat)
-                .addTo(LogHandlerResourceBuilder::format)
-                .write(LogHandlerResource::updateFormat);
-        this.<String>property("formatter")
-                .resource(LogHandlerResource::formatter)
-                .plan(LogHandlerPlan::getFormatter)
-                .addTo(LogHandlerResourceBuilder::formatter)
-                .write(LogHandlerResource::updateFormatter);
-        this.<String>property("encoding")
-                .resource(LogHandlerResource::encoding)
-                .plan(LogHandlerPlan::getEncoding)
-                .addTo(LogHandlerResourceBuilder::encoding)
-                .write(LogHandlerResource::updateEncoding);
+        property("level", LogLevel.class, LogHandlerResource.class, LogHandlerPlan.class);
+        property("format", String.class, LogHandlerResource.class, LogHandlerPlan.class);
+        property("formatter", String.class, LogHandlerResource.class, LogHandlerPlan.class);
+        property("encoding", String.class, LogHandlerResource.class, LogHandlerPlan.class);
 
-        this.<String>property("file")
-                .resource(LogHandlerResource::file)
-                .plan(LogHandlerPlan::getFile)
-                .addTo(LogHandlerResourceBuilder::file)
-                .write(LogHandlerResource::updateFile);
-        this.<String>property("suffix")
-                .resource(LogHandlerResource::suffix)
-                .plan(LogHandlerPlan::getSuffix)
-                .addTo(LogHandlerResourceBuilder::suffix)
-                .write(LogHandlerResource::updateSuffix);
+        property("file", String.class, LogHandlerResource.class, LogHandlerPlan.class);
+        property("suffix", String.class, LogHandlerResource.class, LogHandlerPlan.class);
 
-        this.<String>property("module")
-                .resource(LogHandlerResource::module)
-                .plan(LogHandlerPlan::getModule)
-                .addTo(LogHandlerResourceBuilder::module)
-                .write(LogHandlerResource::updateModule);
+        property("module", String.class, LogHandlerResource.class, LogHandlerPlan.class);
         this.<String>property("class")
                 .resource(LogHandlerResource::class_)
                 .plan(LogHandlerPlan::getClass_)

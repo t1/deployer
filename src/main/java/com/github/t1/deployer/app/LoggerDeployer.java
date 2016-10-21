@@ -18,16 +18,8 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 public class LoggerDeployer
         extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder, LoggerResource, LoggerAuditBuilder> {
     public LoggerDeployer() {
-        this.<LogLevel>property("level")
-                .resource(LoggerResource::level)
-                .plan(LoggerPlan::getLevel)
-                .addTo(LoggerResourceBuilder::level)
-                .write(LoggerResource::writeLevel);
-        this.<Boolean>property("use-parent-handlers")
-                .resource(LoggerResource::useParentHandlers)
-                .plan(LoggerPlan::getUseParentHandlers)
-                .addTo(LoggerResourceBuilder::useParentHandlers)
-                .write(LoggerResource::writeUseParentHandlers)
+        property("level", LogLevel.class, LoggerResource.class, LoggerPlan.class);
+        property("use-parent-handlers", Boolean.class, LoggerResource.class, LoggerPlan.class)
                 .writeFilter(LoggerResource::isNotRoot);
     }
 
