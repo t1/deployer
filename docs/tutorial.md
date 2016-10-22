@@ -288,7 +288,8 @@ Why should it even care about the existence of `myapp2` at all?
 
 Easy: Just don't. The default `version` (i.e. the effective `version` for an deployable already deployed) is `CURRENT`,
 which resolves to the version currently installed.
-So while you can't use this for the initial deployment, you _can_ use it to update one deployable, while all others remain the same.
+In this way you can use it to update one deployable, while all others remain the same.
+This works even if you reference a variable that is not defined.
 Note that this does not work for bundles, as they are not actually deployed in the container, so there's not CURRENT version for them.
 
 The dollar-curlies syntax is used for variables and variable expressions.
