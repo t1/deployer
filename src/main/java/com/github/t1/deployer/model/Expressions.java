@@ -25,7 +25,7 @@ import static javax.ws.rs.core.Response.Status.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
-public class Variables {
+public class Expressions {
     private static final Pattern NAME_TOKEN = Pattern.compile("[-._a-zA-Z0-9]{1,256}");
 
     @Value
@@ -60,7 +60,7 @@ public class Variables {
     private final ImmutableMap<VariableName, String> variables;
     private final RootBundleConfig rootBundle;
 
-    public Variables() { this(ImmutableMap.copyOf(systemProperties()), null); }
+    public Expressions() { this(ImmutableMap.copyOf(systemProperties()), null); }
 
     private static final List<String> SYSTEM_PROPERTY_WHITELIST = asList(
             "file.encoding",
@@ -101,7 +101,7 @@ public class Variables {
                      .collect(toMap(VariableName::new, System::getProperty));
     }
 
-    public Variables(ImmutableMap<VariableName, String> variables, RootBundleConfig rootBundle) {
+    public Expressions(ImmutableMap<VariableName, String> variables, RootBundleConfig rootBundle) {
         this.variables = variables;
         this.rootBundle = rootBundle;
     }
@@ -180,7 +180,7 @@ public class Variables {
 
         @NotNull public Resolver create(Class<? extends Resolver> type, String subExpression) {
             try {
-                return type.getConstructor(Variables.class, String.class).newInstance(Variables.this, subExpression);
+                return type.getConstructor(Expressions.class, String.class).newInstance(Expressions.this, subExpression);
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof RuntimeException)
                     throw (RuntimeException) e.getCause();
@@ -361,16 +361,16 @@ public class Variables {
         return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
-    public Variables withRootBundle(RootBundleConfig rootBundle) {
-        return new Variables(this.variables, rootBundle);
+    public Expressions withRootBundle(RootBundleConfig rootBundle) {
+        return new Expressions(this.variables, rootBundle);
     }
 
-    public Variables with(VariableName name, String value) {
+    public Expressions with(VariableName name, String value) {
         checkNotDefined(name);
-        return new Variables(builder().put(name, value).build(), this.rootBundle);
+        return new Expressions(builder().put(name, value).build(), this.rootBundle);
     }
 
-    public Variables withAll(Map<VariableName, String> variables) {
+    public Expressions withAll(Map<VariableName, String> variables) {
         if (variables == null || variables.isEmpty())
             return this;
         ImmutableMap.Builder<VariableName, String> builder = builder();
@@ -379,7 +379,7 @@ public class Variables {
             checkNotDefined(name);
             builder.put(name, entry.getValue());
         }
-        return new Variables(builder.build(), this.rootBundle);
+        return new Expressions(builder.build(), this.rootBundle);
     }
 
     public void checkNotDefined(VariableName name) {

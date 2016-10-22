@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Variables.VariableName;
+import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.repository.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;

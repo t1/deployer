@@ -14,7 +14,7 @@ import java.math.*;
 import java.util.*;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
-import static com.github.t1.deployer.model.Variables.*;
+import static com.github.t1.deployer.model.Expressions.*;
 import static java.util.Collections.*;
 import static javax.ws.rs.core.MediaType.*;
 

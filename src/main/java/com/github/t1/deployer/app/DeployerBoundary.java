@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Variables.*;
+import com.github.t1.deployer.model.Expressions.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.*;
@@ -106,7 +106,7 @@ public class DeployerBoundary {
 
 
     private class Run {
-        private Variables variables = new Variables().withAll(configuredVariables).withRootBundle(rootBundle);
+        private Expressions expressions = new Expressions().withAll(configuredVariables).withRootBundle(rootBundle);
 
         public Plan read() {
             PlanBuilder builder = Plan.builder();
@@ -118,7 +118,7 @@ public class DeployerBoundary {
         }
 
         public Run withVariables(Map<VariableName, String> variables) {
-            this.variables = this.variables.withAll(variables);
+            this.expressions = this.expressions.withAll(variables);
             return this;
         }
 
@@ -143,7 +143,7 @@ public class DeployerBoundary {
         private void apply(Reader reader, String sourceMessage) {
             String failureMessage = "can't apply plan [" + sourceMessage + "]";
             try {
-                this.apply(Plan.load(variables, reader, sourceMessage));
+                this.apply(Plan.load(expressions, reader, sourceMessage));
             } catch (WebApplicationApplicationException e) {
                 log.info(failureMessage);
                 throw e;
@@ -171,18 +171,18 @@ public class DeployerBoundary {
 
         private void applyBundle(BundlePlan bundle) {
             for (Map.Entry<String, Map<VariableName, String>> instance : bundle.getInstances().entrySet()) {
-                Variables pop = this.variables;
+                Expressions pop = this.expressions;
                 try {
                     if (instance.getKey() != null)
-                        this.variables = this.variables.with(NAME_VAR, instance.getKey());
-                    this.variables = this.variables.withAll(instance.getValue());
+                        this.expressions = this.expressions.with(NAME_VAR, instance.getKey());
+                    this.expressions = this.expressions.withAll(instance.getValue());
                     Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
                             bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
                     if (artifact == null)
                         throw badRequest("bundle not found: " + bundle);
                     apply(artifact.getReader(), artifact.toString());
                 } finally {
-                    this.variables = pop;
+                    this.expressions = pop;
                 }
             }
         }

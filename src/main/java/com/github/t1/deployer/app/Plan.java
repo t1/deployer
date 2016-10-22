@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Variables.VariableName;
+import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
@@ -59,10 +59,10 @@ public class Plan {
 
     private static final Plan EMPTY_PLAN = Plan.builder().build();
 
-    private static Variables variables = null;
+    private static Expressions expressions = null;
 
-    synchronized public static Plan load(Variables variables, Reader reader, String sourceMessage) {
-        Plan.variables = variables;
+    synchronized public static Plan load(Expressions expressions, Reader reader, String sourceMessage) {
+        Plan.expressions = expressions;
         try {
             Plan plan = YAML.readValue(reader, Plan.class);
             if (plan == null)
@@ -72,7 +72,7 @@ public class Plan {
         } catch (IOException e) {
             throw new PlanLoadingException("exception while loading plan from " + sourceMessage, e);
         } finally {
-            Plan.variables = null;
+            Plan.expressions = null;
         }
     }
 
@@ -90,7 +90,7 @@ public class Plan {
         if (jsonNode != null)
             jsonNode.fieldNames().forEachRemaining(
                     name -> consumer.accept(
-                            toPlan.apply(toKey.apply(variables.resolve(name, null)), jsonNode.get(name))));
+                            toPlan.apply(toKey.apply(expressions.resolve(name, null)), jsonNode.get(name))));
     }
 
     @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerPlan> logHandlers;
@@ -408,7 +408,7 @@ public class Plan {
             apply(node, "level", builder::level, LoggerResource::mapLogLevel, "«ALL»");
             apply(node, "type", builder::type, LogHandlerType::valueOfTypeName,
                     "default.log-handler-type or «" + periodicRotatingFile + "»");
-            if (node.has("format") || (!node.has("formatter") && !variables.contains(DEFAULT_LOG_FORMATTER)))
+            if (node.has("format") || (!node.has("formatter") && !expressions.contains(DEFAULT_LOG_FORMATTER)))
                 apply(node, "format", builder::format, identity(),
                         "default.log-format or «" + DEFAULT_LOG_FORMAT + "»");
             apply(node, "formatter", builder::formatter, identity(), "default.log-formatter");
@@ -484,10 +484,10 @@ public class Plan {
     private static <T> void apply(JsonNode node, String fieldName, Consumer<T> setter, Function<String, T> convert,
             CharSequence alternativeExpression, String expressionAlternative) {
         String value = (node.has(fieldName) && !node.get(fieldName).isNull())
-                ? variables.resolve(node.get(fieldName).asText(), expressionAlternative)
+                ? expressions.resolve(node.get(fieldName).asText(), expressionAlternative)
                 : null;
         if (value == null && alternativeExpression != null)
-            value = variables.resolver(alternativeExpression).getValueOr(null);
+            value = expressions.resolver(alternativeExpression).getValueOr(null);
         setter.accept((value == null) ? null : convert.apply(value));
     }
 

@@ -2,7 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Variables.VariableName;
+import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.testtools.*;
 import org.junit.*;

@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.model.Variables.VariableName;
+import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.log.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;

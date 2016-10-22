@@ -6,7 +6,7 @@ import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Variables.VariableName;
+import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.*;

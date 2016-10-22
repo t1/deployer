@@ -24,11 +24,11 @@ public class PlanSerializationTest {
             .artifactId(new ArtifactId("foo-war"))
             .version(new Version("1"))
             .build();
-    private static Variables variables = mock(Variables.class);
+    private static Expressions expressions = mock(Expressions.class);
 
     static {
-        when(variables.resolve(anyString(), any())).then(invocation -> invocation.getArgument(0));
-        when(variables.resolver(any(CharSequence.class))).then(i -> new Variables.Resolver() {});
+        when(expressions.resolve(anyString(), any())).then(invocation -> invocation.getArgument(0));
+        when(expressions.resolver(any(CharSequence.class))).then(i -> new Expressions.Resolver() {});
     }
 
 
@@ -43,7 +43,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldDeserializeEmptyPlan() throws Exception {
-        Plan plan = Plan.load(variables, new StringReader("{}"), "empty");
+        Plan plan = Plan.load(expressions, new StringReader("{}"), "empty");
 
         assertThat(plan).isEqualTo(Plan.builder().build());
     }
@@ -64,7 +64,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneDeployment() throws Exception {
-        Plan plan = Plan.load(variables, new StringReader(ONE_DEPLOYMENT_YAML), "yaml1");
+        Plan plan = Plan.load(expressions, new StringReader(ONE_DEPLOYMENT_YAML), "yaml1");
 
         assertThat(plan).isEqualTo(ONE_DEPLOYMENT_PLAN);
     }
@@ -105,7 +105,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithTwoDeployments() throws Exception {
-        Plan plan = Plan.load(variables, new StringReader(TWO_DEPLOYMENTS_YAML), "yaml2");
+        Plan plan = Plan.load(expressions, new StringReader(TWO_DEPLOYMENTS_YAML), "yaml2");
 
         assertThat(plan).isEqualTo(TWO_DEPLOYMENTS_PLAN);
     }
@@ -144,7 +144,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {
-        Plan plan = Plan.load(variables, new StringReader(BUNDLE_PLAN_YAML), "yaml-bundle");
+        Plan plan = Plan.load(expressions, new StringReader(BUNDLE_PLAN_YAML), "yaml-bundle");
 
         assertThat(plan).isEqualTo(BUNDLE_PLAN);
     }
@@ -178,7 +178,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogger() throws Exception {
-        Plan plan = Plan.load(variables, new StringReader(ONE_LOGGER_YAML), "1log");
+        Plan plan = Plan.load(expressions, new StringReader(ONE_LOGGER_YAML), "1log");
 
         assertThat(plan).isEqualTo(ONE_LOGGER_PLAN);
     }
@@ -215,7 +215,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithOneLogHandler() throws Exception {
-        Plan plan = Plan.load(variables, new StringReader(ONE_LOGHANDLER_YAML), "1log-h");
+        Plan plan = Plan.load(expressions, new StringReader(ONE_LOGHANDLER_YAML), "1log-h");
 
         assertThat(plan).isEqualTo(ONE_LOGHANDLER_PLAN);
     }
@@ -251,7 +251,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldDeserializePlanWithCustomLogHandler() throws Exception {
-        Plan plan = Plan.load(variables, new StringReader(CUSTOM_HANDLER_YAML), "custom-h");
+        Plan plan = Plan.load(expressions, new StringReader(CUSTOM_HANDLER_YAML), "custom-h");
 
         assertThat(plan).isEqualTo(CUSTOM_HANDLER_PLAN);
     }
@@ -265,7 +265,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutModule() throws Exception {
-        Throwable thrown = catchThrowable(() -> Plan.load(variables, new StringReader(""
+        Throwable thrown = catchThrowable(() -> Plan.load(expressions, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: INFO\n"
@@ -279,7 +279,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutClass() throws Exception {
-        Throwable thrown = catchThrowable(() -> Plan.load(variables, new StringReader(""
+        Throwable thrown = catchThrowable(() -> Plan.load(expressions, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    level: INFO\n"
