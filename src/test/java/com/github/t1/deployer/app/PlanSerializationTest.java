@@ -6,7 +6,7 @@ import com.github.t1.deployer.model.*;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.StringReader;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
@@ -27,8 +27,8 @@ public class PlanSerializationTest {
     private static Variables variables = mock(Variables.class);
 
     static {
-        when(variables.resolve(any(Reader.class))).then(invocation -> invocation.getArgument(0));
-        when(variables.resolve(anyString())).then(i -> new Variables.Resolver() {});
+        when(variables.resolve(anyString(), any())).then(invocation -> invocation.getArgument(0));
+        when(variables.resolver(any(CharSequence.class))).then(i -> new Variables.Resolver() {});
     }
 
 

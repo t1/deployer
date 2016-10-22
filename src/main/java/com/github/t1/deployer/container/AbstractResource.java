@@ -28,6 +28,8 @@ public abstract class AbstractResource {
         if (deployed == null) {
             ModelNode readResource = readResource(createRequestWithAddress());
             ModelNode response = cli.executeRaw(readResource);
+            if (response == null)
+                throw new RuntimeException("improper mock for " + this);
             String outcome = response.get("outcome").asString();
             if ("success".equals(outcome)) {
                 this.deployed = true;

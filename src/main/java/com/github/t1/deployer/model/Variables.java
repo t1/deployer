@@ -108,42 +108,40 @@ public class Variables {
 
 
     /**
-     * Reads from the reader, removes all comments (starting with a `#`), and replaces all variables
-     * (starting with `${` and ending with `}` - may be escaped with a second `$`, i.e. `$${a}` will be replaced by `${a}`).
-     *
-     * @implNote We load the entire text from the source reader instead of streaming it, as these are never really big.
+     * Replaces all variables (starting with `${` and ending with `}` - may be escaped with a second `$`,
+     * i.e. `$${a}` will be replaced by `${a}`.
      */
-    @SneakyThrows(IOException.class)
-    public Reader resolve(Reader reader) {
+    public String resolve(String line, String alternative) {
         StringBuilder out = new StringBuilder();
-        String line;
-        BufferedReader buffered = buffered(reader);
-        while ((line = buffered.readLine()) != null) {
-            if (line.contains("#"))
-                line = line.substring(0, line.indexOf('#'));
-            Matcher matcher = VAR.matcher(line);
-            int tail = 0;
-            while (matcher.find()) {
-                out.append(line.substring(tail, matcher.start()));
-                if (matcher.start() > 0 && line.charAt(matcher.start() - 1) == '$') {
-                    // +1 to skip the var-$ as we already copied the escape-$
-                    out.append(line.substring(matcher.start() + 1, matcher.end()));
-                } else {
-                    String expression = matcher.group(1);
-                    Resolver resolver = resolve(expression);
-                    if (!resolver.isMatch())
-                        throw new UnresolvedVariableException(expression);
+        if (line.contains("#"))
+            line = line.substring(0, line.indexOf('#'));
+        Matcher matcher = VAR.matcher(line);
+        int tail = 0;
+        boolean hasNullValue = false;
+        while (matcher.find()) {
+            out.append(line.substring(tail, matcher.start()));
+            if (matcher.start() > 0 && line.charAt(matcher.start() - 1) == '$') {
+                // +1 to skip the var-$ as we already copied the escape-$
+                out.append(line.substring(matcher.start() + 1, matcher.end()));
+            } else {
+                String expression = matcher.group(1);
+                if (alternative != null)
+                    expression += " or " + alternative;
+                Resolver resolver = resolver(expression);
+                if (!resolver.isMatch())
+                    throw new UnresolvedVariableException(expression);
+                if (resolver.getValue() == null)
+                    hasNullValue = true;
+                else
                     out.append(resolver.getValue());
-                }
-                tail = matcher.end();
             }
-            out.append(line.substring(tail));
-            out.append('\n');
+            tail = matcher.end();
         }
-        return new StringReader(out.toString());
+        out.append(line.substring(tail));
+        return (hasNullValue && out.length() == 0) ? null : out.toString();
     }
 
-    public Resolver resolve(String expression) { return new OrResolver(expression); }
+    public Resolver resolver(CharSequence expression) { return new OrResolver(expression); }
 
     public boolean contains(VariableName name) { return variables.containsKey(name); }
 
@@ -152,6 +150,8 @@ public class Variables {
         @Getter protected String value;
 
         @Override public String toString() { return getClass().getSimpleName() + ":" + match + ":" + value; }
+
+        public String getValueOr(String fallback) { return match ? value : fallback; }
     }
 
     private static final List<Class<? extends Resolver>> RESOLVERS = asList(
@@ -162,7 +162,7 @@ public class Variables {
             RootBundleResolver.class);
 
     private class OrResolver extends Resolver {
-        public OrResolver(String expression) {
+        public OrResolver(CharSequence expression) {
             for (String subExpression : split(expression, " or ")) {
                 log.trace("try to resolve variable expression [{}]", subExpression);
                 for (Class<? extends Resolver> resolverType : RESOLVERS) {
@@ -326,11 +326,11 @@ public class Variables {
         }
     }
 
-    private static List<String> split(String expression, String pattern) {
+    private static List<String> split(CharSequence expression, String pattern) {
         List<String> list = new ArrayList<>();
         String current = "";
-        if (!expression.isEmpty())
-            for (String split : expression.split(pattern)) {
+        if (expression.length() > 0)
+            for (String split : expression.toString().split(pattern)) {
                 current += split;
                 if (count('(', current) == count(')', current)) {
                     list.add(current);

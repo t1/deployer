@@ -12,7 +12,6 @@ import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -23,12 +22,11 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
-import static com.github.t1.deployer.container.LoggerResource.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
+import static java.util.function.Function.*;
 import static java.util.stream.Collectors.*;
 import static lombok.AccessLevel.*;
 
@@ -53,8 +51,6 @@ public class Plan {
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             .findAndRegisterModules();
 
-    private static final VariableName DEFAULT_LOG_FORMATTER = new VariableName("default.log-formatter");
-
     public static class PlanLoadingException extends RuntimeException {
         public PlanLoadingException(String message) { super(message); }
 
@@ -68,7 +64,7 @@ public class Plan {
     synchronized public static Plan load(Variables variables, Reader reader, String sourceMessage) {
         Plan.variables = variables;
         try {
-            Plan plan = YAML.readValue(variables.resolve(reader), Plan.class);
+            Plan plan = YAML.readValue(reader, Plan.class);
             if (plan == null)
                 plan = EMPTY_PLAN;
             log.debug("plan loaded from {}:\n{}", sourceMessage, plan);
@@ -92,8 +88,9 @@ public class Plan {
     public static <K, V> void readAll(JsonNode jsonNode, Function<String, K> toKey, BiFunction<K, JsonNode, V> toPlan,
             Consumer<V> consumer) {
         if (jsonNode != null)
-            jsonNode.fieldNames().forEachRemaining(name ->
-                    consumer.accept(toPlan.apply(toKey.apply(name), jsonNode.get(name))));
+            jsonNode.fieldNames().forEachRemaining(
+                    name -> consumer.accept(
+                            toPlan.apply(toKey.apply(variables.resolve(name, null)), jsonNode.get(name))));
     }
 
     @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerPlan> logHandlers;
@@ -187,19 +184,12 @@ public class Plan {
 
         public static void fromJson(JsonNode node, AbstractArtifactPlanBuilder builder,
                 String defaultArtifactId, String defaultVersion) {
-            apply(node, "group-id", value -> builder.groupId(GroupId.of(defaultValue(value, "group-id"))));
-            apply(node, "artifact-id",
-                    value -> builder.artifactId(new ArtifactId((value == null) ? defaultArtifactId : value)));
-            apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "version", value -> builder.version(
-                    (value != null)
-                            ? new Version(value)
-                            : (defaultVersion != null)
-                                    ? new Version(defaultVersion)
-                                    : null));
-            apply(node, "classifier", value -> builder.classifier((value == null) ? null : new Classifier(value)));
-            apply(node, "checksum",
-                    value -> builder.checksum((value == null) ? null : Checksum.fromString(value)));
+            apply(node, "state", builder::state, DeploymentState::valueOf);
+            apply(node, "group-id", builder::groupId, GroupId::of, "default.group-id");
+            apply(node, "artifact-id", builder::artifactId, ArtifactId::new, "«" + defaultArtifactId + "»");
+            apply(node, "version", builder::version, Version::new, defaultVersion, defaultVersion);
+            apply(node, "classifier", builder::classifier, Classifier::new);
+            apply(node, "checksum", builder::checksum, Checksum::fromString);
             verify(builder);
         }
 
@@ -211,7 +201,8 @@ public class Plan {
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
-            return getState() + ":" + groupId + ":" + artifactId + ":" + version;
+            return getState() + ":" + groupId + ":" + artifactId + ":" + version
+                    + ((classifier == null) ? "" : ":" + classifier);
         }
     }
 
@@ -242,9 +233,8 @@ public class Plan {
             if (node.isNull())
                 throw new PlanLoadingException("incomplete plan for deployable '" + name + "'");
             DeployablePlanBuilder builder = builder().name(name);
-            AbstractArtifactPlan.fromJson(node, builder, name.getValue(), "CURRENT");
-            apply(node, "type", value -> builder.type(
-                    ArtifactType.valueOf(defaultValue(value, "deployable-type", "«war»"))));
+            AbstractArtifactPlan.fromJson(node, builder, name.getValue(), "«CURRENT»");
+            apply(node, "type", builder::type, ArtifactType::valueOf, "default.deployable-type or «war»");
             return builder.build().verify();
         }
 
@@ -256,8 +246,8 @@ public class Plan {
         }
 
         @Override public String toString() {
-            return "«deployment:" + name + ":" + super.toString()
-                    + ":" + type + ((getChecksum() == null) ? "" : ":" + getChecksum()) + "»";
+            return "deployment:" + name + ":" + super.toString()
+                    + ":" + type + ((getChecksum() == null) ? "" : ":" + getChecksum());
         }
     }
 
@@ -321,7 +311,11 @@ public class Plan {
         }
 
         @Override public String toString() {
-            return "«bundle:" + name + ":" + super.toString() + ":" + instances + "»";
+            return "bundle:" + name + ":" + super.toString() + (noInstances() ? "" : ":" + instances);
+        }
+
+        private boolean noInstances() {
+            return instances.size() == 1 && instances.containsKey(null) && instances.get(null).isEmpty();
         }
     }
 
@@ -341,18 +335,16 @@ public class Plan {
             if (node.isNull())
                 throw new PlanLoadingException("incomplete plan for logger '" + category + "'");
             LoggerPlanBuilder builder = builder().category(category);
-            apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", value
-                    -> builder.level(mapLogLevel(defaultValue(value, "log-level", "«DEBUG»"))));
-            apply(node, "handler", builder::handler);
+            apply(node, "state", builder::state, DeploymentState::valueOf);
+            apply(node, "level", builder::level, LoggerResource::mapLogLevel, "default.log-level or «DEBUG»");
+            apply(node, "handler", builder::handler, identity());
             if (node.has("handlers")) {
                 Iterator<JsonNode> handlers = node.get("handlers").elements();
                 while (handlers.hasNext())
                     builder.handler(handlers.next().textValue());
             }
             if (!builder.category.isRoot())
-                apply(node, "use-parent-handlers", value -> builder.useParentHandlers(
-                        (value == null) ? null : Boolean.valueOf(value)));
+                apply(node, "use-parent-handlers", builder::useParentHandlers, Boolean::valueOf);
             return builder.build().validate();
         }
 
@@ -373,15 +365,15 @@ public class Plan {
             return this;
         }
 
-        @JsonIgnore public Boolean getUseParentHandlers() {
+        @SuppressWarnings("unused") @JsonIgnore public Boolean getUseParentHandlers() {
             return (useParentHandlers == null) ? handlers.isEmpty() : useParentHandlers;
         }
 
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
-            return "«logger:" + getState() + ":" + category + ":" + getLevel() + ":"
-                    + handlers + (useParentHandlers == TRUE ? "+" : "") + "»";
+            return "logger:" + getState() + ":" + category + ":" + getLevel() + ":"
+                    + handlers + (useParentHandlers == TRUE ? "+" : "");
         }
     }
 
@@ -390,6 +382,7 @@ public class Plan {
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
     public static class LogHandlerPlan implements AbstractPlan {
+        private static final VariableName DEFAULT_LOG_FORMATTER = new VariableName("default.log-formatter");
         public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
         public static final String DEFAULT_SUFFIX = ".yyyy-MM-dd";
 
@@ -411,15 +404,15 @@ public class Plan {
 
         private static LogHandlerPlan fromJson(LogHandlerName name, JsonNode node) {
             LogHandlerPlanBuilder builder = builder().name(name);
-            apply(node, "state", value -> builder.state((value == null) ? null : DeploymentState.valueOf(value)));
-            apply(node, "level", value -> builder.level((value == null) ? ALL : mapLogLevel(value)));
-            apply(node, "type", value -> builder.type(LogHandlerType.valueOfTypeName(
-                    defaultValue(value, "log-handler-type", "«" + periodicRotatingFile + "»"))));
+            apply(node, "state", builder::state, DeploymentState::valueOf);
+            apply(node, "level", builder::level, LoggerResource::mapLogLevel, "«ALL»");
+            apply(node, "type", builder::type, LogHandlerType::valueOfTypeName,
+                    "default.log-handler-type or «" + periodicRotatingFile + "»");
             if (node.has("format") || (!node.has("formatter") && !variables.contains(DEFAULT_LOG_FORMATTER)))
-                apply(node, "format", value -> builder.format(
-                        defaultValue(value, "log-format", "«" + DEFAULT_LOG_FORMAT + "»")));
-            apply(node, "formatter", value -> builder.formatter(defaultValue(value, "log-formatter")));
-            apply(node, "encoding", value -> builder.encoding(defaultValue(value, "log-encoding", (String) null)));
+                apply(node, "format", builder::format, identity(),
+                        "default.log-format or «" + DEFAULT_LOG_FORMAT + "»");
+            apply(node, "formatter", builder::formatter, identity(), "default.log-formatter");
+            apply(node, "encoding", builder::encoding, identity(), "default.log-encoding");
             applyByType(node, builder);
             return builder.build().validate();
         }
@@ -430,13 +423,14 @@ public class Plan {
                 // nothing more to load here
                 return;
             case periodicRotatingFile:
-                apply(node, "file", value -> builder.file((value == null) ? defaultFileName(builder) : value));
-                apply(node, "suffix", value -> builder.suffix(
-                        defaultValue(value, "log-file-suffix", "«" + DEFAULT_SUFFIX + "»")));
+                apply(node, "file", builder::file, identity(),
+                        "«" + (builder.name.getValue().toLowerCase() + ".log") + "»");
+                apply(node, "suffix", builder::suffix, identity(),
+                        "default.log-file-suffix or «" + DEFAULT_SUFFIX + "»");
                 return;
             case custom:
-                apply(node, "module", builder::module);
-                apply(node, "class", builder::class_);
+                apply(node, "module", builder::module, identity());
+                apply(node, "class", builder::class_, identity());
                 if (node.has("properties") && !node.get("properties").isNull())
                     node.get("properties").fieldNames().forEachRemaining(fieldName
                             -> builder.property(fieldName, node.get("properties").get(fieldName).asText()));
@@ -444,10 +438,6 @@ public class Plan {
             }
             throw new PlanLoadingException("unhandled log-handler type [" + builder.type + "]"
                     + " in [" + builder.name + "]");
-        }
-
-        @NotNull private static String defaultFileName(LogHandlerPlanBuilder builder) {
-            return builder.name.getValue().toLowerCase() + ".log";
         }
 
         /* make builder fields visible */ public static class LogHandlerPlanBuilder {}
@@ -470,7 +460,7 @@ public class Plan {
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
-            return "«log-handler:" + getState() + ":" + type + ":" + name + ":" + getLevel()
+            return "log-handler:" + getState() + ":" + type + ":" + name + ":" + getLevel()
                     + ((format == null) ? "" : ":format=" + format)
                     + ((formatter == null) ? "" : ":formatter=" + formatter)
                     + ((file == null) ? "" : ":" + file)
@@ -478,23 +468,27 @@ public class Plan {
                     + ((encoding == null) ? "" : ":" + encoding)
                     + ((module == null) ? "" : ":" + module)
                     + ((class_ == null) ? "" : ":" + class_)
-                    + ((properties == null) ? "" : ":" + properties)
-                    + "»";
+                    + ((properties == null) ? "" : ":" + properties);
         }
     }
 
-    private static String defaultValue(String value, String name, String... alternativeExpressions) {
-        if (value != null)
-            return value;
-        StringBuilder expression = new StringBuilder("default." + name);
-        for (String alternativeExpression : alternativeExpressions)
-            expression.append(" or ").append(alternativeExpression);
-        Variables.Resolver resolver = variables.resolve(expression.toString());
-        return resolver.isMatch() ? resolver.getValue() : null;
+    private static <T> void apply(JsonNode node, String fieldName, Consumer<T> setter, Function<String, T> convert) {
+        apply(node, fieldName, setter, convert, null);
     }
 
-    private static void apply(JsonNode node, String fieldName, Consumer<String> setter) {
-        setter.accept((node.has(fieldName) && !node.get(fieldName).isNull()) ? node.get(fieldName).asText() : null);
+    private static <T> void apply(JsonNode node, String fieldName, Consumer<T> setter, Function<String, T> convert,
+            CharSequence alternativeExpression) {
+        apply(node, fieldName, setter, convert, alternativeExpression, null);
+    }
+
+    private static <T> void apply(JsonNode node, String fieldName, Consumer<T> setter, Function<String, T> convert,
+            CharSequence alternativeExpression, String expressionAlternative) {
+        String value = (node.has(fieldName) && !node.get(fieldName).isNull())
+                ? variables.resolve(node.get(fieldName).asText(), expressionAlternative)
+                : null;
+        if (value == null && alternativeExpression != null)
+            value = variables.resolver(alternativeExpression).getValueOr(null);
+        setter.accept((value == null) ? null : convert.apply(value));
     }
 
     @Override public String toString() {

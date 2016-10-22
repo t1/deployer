@@ -65,9 +65,13 @@ public class DeployerBoundary {
         Thread.sleep(1000);
         try {
             apply(trigger, emptyMap());
-        } catch (UnresolvedVariableException e) {
+        } catch (RuntimeException e) {
             // not really nice, but seems - over all - better than splitting and repeating the overall control flow
-            log.info("skip async run for unresolved variable: {}", e.getExpression());
+            for (Throwable cause = e; cause != null; cause = cause.getCause())
+                if (cause instanceof UnresolvedVariableException)
+                    log.info("skip async run for unresolved variable: {}",
+                            ((UnresolvedVariableException) e).getExpression());
+            throw e;
         }
     }
 

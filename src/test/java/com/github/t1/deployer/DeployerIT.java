@@ -1,6 +1,7 @@
 package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.*;
+import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
@@ -11,7 +12,6 @@ import org.assertj.core.api.Condition;
 import org.jboss.arquillian.junit.*;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.runner.RunWith;
 
@@ -182,6 +182,10 @@ public class DeployerIT {
         return container.allDeployments().stream().filter(deployment -> !DEPLOYER_IT.matches(deployment));
     }
 
+    protected Condition<DeploymentResource> deployment(String name, Checksum checksum) {
+        return allOf(deployment(name), checksum(checksum));
+    }
+
     @Test
     @InSequence(value = 100)
     public void shouldFailToDeployWebArchiveWithUnknownVersion() throws Exception {
@@ -232,13 +236,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_1_CHECKSUM));
         assertThat(audits).containsExactly(
-                Audit.DeployableAudit.builder().name("jolokia")
-                                     .change("group-id", null, "org.jolokia")
-                                     .change("artifact-id", null, "jolokia-war")
-                                     .change("version", null, "1.3.1")
-                                     .change("type", null, "war")
-                                     .change("checksum", null, JOLOKIA_1_3_1_CHECKSUM)
-                                     .added());
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", null, "org.jolokia")
+                               .change("artifact-id", null, "jolokia-war")
+                               .change("version", null, "1.3.1")
+                               .change("type", null, "war")
+                               .change("checksum", null, JOLOKIA_1_3_1_CHECKSUM)
+                               .added());
     }
 
     @Test
@@ -283,10 +287,10 @@ public class DeployerIT {
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_2_CHECKSUM));
         logger.log("verify audits: " + audits);
         assertThat(audits).containsExactly(
-                Audit.DeployableAudit.builder().name("jolokia")
-                                     .change("checksum", JOLOKIA_1_3_1_CHECKSUM, JOLOKIA_1_3_2_CHECKSUM)
-                                     .change("version", "1.3.1", "1.3.2")
-                                     .changed());
+                DeployableAudit.builder().name("jolokia")
+                               .change("checksum", JOLOKIA_1_3_1_CHECKSUM, JOLOKIA_1_3_2_CHECKSUM)
+                               .change("version", "1.3.1", "1.3.2")
+                               .changed());
     }
 
     @Test
@@ -306,10 +310,10 @@ public class DeployerIT {
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
         logger.log("verify audits: " + audits.getAudits());
         assertThat(audits.getAudits()).containsExactly(
-                Audit.DeployableAudit.builder().name("jolokia")
-                                     .change("checksum", JOLOKIA_1_3_2_CHECKSUM, JOLOKIA_1_3_3_CHECKSUM)
-                                     .change("version", "1.3.2", "1.3.3")
-                                     .changed());
+                DeployableAudit.builder().name("jolokia")
+                               .change("checksum", JOLOKIA_1_3_2_CHECKSUM, JOLOKIA_1_3_3_CHECKSUM)
+                               .change("version", "1.3.2", "1.3.3")
+                               .changed());
     }
 
     @Test
@@ -377,13 +381,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).isEmpty();
         assertThat(audits).containsExactly(
-                Audit.DeployableAudit.builder().name("jolokia")
-                                     .change("group-id", "org.jolokia", null)
-                                     .change("artifact-id", "jolokia-war", null)
-                                     .change("version", "1.3.3", null)
-                                     .change("type", "war", null)
-                                     .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
-                                     .removed());
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", "org.jolokia", null)
+                               .change("artifact-id", "jolokia-war", null)
+                               .change("version", "1.3.3", null)
+                               .change("type", "war", null)
+                               .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
+                               .removed());
     }
 
     @Test
@@ -402,13 +406,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM));
         assertThat(audits).containsExactly(
-                Audit.DeployableAudit.builder().name("jolokia")
-                                     .change("group-id", null, "org.jolokia")
-                                     .change("artifact-id", null, "jolokia-war")
-                                     .change("version", null, "1.3.4-SNAPSHOT")
-                                     .change("type", null, "war")
-                                     .change("checksum", null, JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM)
-                                     .added());
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", null, "org.jolokia")
+                               .change("artifact-id", null, "jolokia-war")
+                               .change("version", null, "1.3.4-SNAPSHOT")
+                               .change("type", null, "war")
+                               .change("checksum", null, JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM)
+                               .added());
     }
 
     @Test
@@ -428,13 +432,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).isEmpty();
         assertThat(audits).containsExactly(
-                Audit.DeployableAudit.builder().name("jolokia")
-                                     .change("group-id", "org.jolokia", null)
-                                     .change("artifact-id", "jolokia-war", null)
-                                     .change("version", "1.3.4-SNAPSHOT", null)
-                                     .change("type", "war", null)
-                                     .change("checksum", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM, null)
-                                     .removed());
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", "org.jolokia", null)
+                               .change("artifact-id", "jolokia-war", null)
+                               .change("version", "1.3.4-SNAPSHOT", null)
+                               .change("type", "war", null)
+                               .change("checksum", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM, null)
+                               .removed());
     }
 
     @Test
@@ -451,18 +455,64 @@ public class DeployerIT {
 
         assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
         assertThat(audits).containsExactly(
-                Audit.DeployableAudit.builder().name("postgresql")
-                                     .change("group-id", null, "org.postgresql")
-                                     .change("artifact-id", null, "postgresql")
-                                     .change("version", null, "9.4.1207")
-                                     .change("type", null, "jar")
-                                     .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
-                                     .added());
+                DeployableAudit.builder().name("postgresql")
+                               .change("group-id", null, "org.postgresql")
+                               .change("artifact-id", null, "postgresql")
+                               .change("version", null, "9.4.1207")
+                               .change("type", null, "jar")
+                               .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
+                               .added());
     }
 
-    @NotNull
-    protected Condition<DeploymentResource> deployment(String name, Checksum checksum) {
-        return allOf(deployment(name), checksum(checksum));
+    @Test
+    @InSequence(value = 1050)
+    public void shouldDeploySecondDeployableWithOnlyOnePostParameter() throws Exception {
+        String plan = ""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: ${jolokia.version}\n"
+                + "  postgresql:\n"
+                + "    group-id: org.postgresql\n"
+                + "    version: ${postgresql.version}\n"
+                + "    type: jar\n";
+
+        Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
+        Audits audits = post(plan, entity, OK).readEntity(Audits.class);
+
+        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
+        assertThat(audits.getAudits()).containsExactly(
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", null, "org.jolokia")
+                               .change("artifact-id", null, "jolokia-war")
+                               .change("version", null, "1.3.3")
+                               .change("type", null, "war")
+                               .change("checksum", null, JOLOKIA_1_3_3_CHECKSUM)
+                               .added());
+    }
+
+    @Test
+    @InSequence(value = 1080)
+    public void shouldUndeploySnapshotWebArchiveAgain() throws Exception {
+        String plan = ""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    state: undeployed\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(audits).containsExactly(
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", "org.jolokia", null)
+                               .change("artifact-id", "jolokia-war", null)
+                               .change("version", "1.3.3", null)
+                               .change("type", "war", null)
+                               .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
+                               .removed());
     }
 
     @Test
@@ -480,13 +530,13 @@ public class DeployerIT {
 
         assertThat(theDeployments()).isEmpty();
         assertThat(audits).containsExactly(
-                Audit.DeployableAudit.builder().name("postgresql")
-                                     .change("group-id", "org.postgresql", null)
-                                     .change("artifact-id", "postgresql", null)
-                                     .change("version", "9.4.1207", null)
-                                     .change("type", "jar", null)
-                                     .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
-                                     .removed());
+                DeployableAudit.builder().name("postgresql")
+                               .change("group-id", "org.postgresql", null)
+                               .change("artifact-id", "postgresql", null)
+                               .change("version", "9.4.1207", null)
+                               .change("type", "jar", null)
+                               .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
+                               .removed());
     }
 
     // TODO shouldUpdateDeployer (WOW!)
@@ -503,12 +553,12 @@ public class DeployerIT {
         if (plan.isEmpty()) { // TODO make this run
             assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
             assertThat(audits).containsExactly(
-                    Audit.DeployableAudit.builder().name("postgresql")
-                                         .change("group-id", "org.postgresql", null)
-                                         .change("artifact-id", "postgresql", null)
-                                         .change("version", "9.4.1207", null)
-                                         .change("type", "jar", null)
-                                         .added());
+                    DeployableAudit.builder().name("postgresql")
+                                   .change("group-id", "org.postgresql", null)
+                                   .change("artifact-id", "postgresql", null)
+                                   .change("version", "9.4.1207", null)
+                                   .change("type", "jar", null)
+                                   .added());
         }
     }
 }

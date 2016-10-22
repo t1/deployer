@@ -193,7 +193,51 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("artifact not found: «deployment:foo:deployed:org.foo:foo:CURRENT:war»");
+                .hasMessageContaining("artifact not found: deployment:foo:deployed:org.foo:foo:CURRENT:war");
+    }
+
+
+    @Test
+    public void shouldNotDeployWebArchiveWithoutVersion() {
+        givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n");
+
+        assertThat(audits.getAudits()).isEmpty();
+    }
+
+    @Test
+    public void shouldNotDeployWebArchiveWithCurrentVersionVariable() {
+        givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: CURRENT\n");
+
+        assertThat(audits.getAudits()).isEmpty();
+    }
+
+    @Test
+    public void shouldDeploySecondWebArchiveWithOnlyOneVersionVariable() throws Exception {
+        givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture bar = givenArtifact("bar").version("4.0.5");
+
+        rootBundle.write(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${foo.version}\n"
+                + "  bar:\n"
+                + "    group-id: org.bar\n"
+                + "    version: ${bar.version}\n");
+        Audits audits = deployer.apply(mock, ImmutableMap.of(new VariableName("bar.version"), "4.0.5"));
+
+        bar.verifyDeployed(audits);
     }
 
 
@@ -463,7 +507,9 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     }
 
 
-    @Test public void shouldFailToReplaceVariableValueWithNewline() { shouldFailToReplaceVariableValueWith("foo\nbar"); }
+    @Test public void shouldFailToReplaceVariableValueWithNewline() {
+        shouldFailToReplaceVariableValueWith("foo\nbar");
+    }
 
     @Test public void shouldFailToReplaceVariableValueWithTab() { shouldFailToReplaceVariableValueWith("\tfoo"); }
 
@@ -544,14 +590,15 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToDeployWebArchiveWithUndefinedVariable() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() ->
+                deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: ${undefined}\n"));
+                + "    group-id: ${undefined}\n"
+                + "    version: 1.2\n"));
 
         assertThat(thrown)
-                .isInstanceOf(UnresolvedVariableException.class)
+                .hasRootCauseExactlyInstanceOf(UnresolvedVariableException.class)
                 .hasMessageContaining("unresolved variable expression: undefined");
     }
 
@@ -622,11 +669,11 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 deploy(""
                         + "deployables:\n"
                         + "  foo:\n"
-                        + "    group-id: org.foo\n"
-                        + "    version: ${toLowerCase(undefined)}\n"));
+                        + "    group-id: ${toLowerCase(undefined)}\n"
+                        + "    version: 1.2\n"));
 
         assertThat(thrown)
-                .isInstanceOf(UnresolvedVariableException.class)
+                .hasRootCauseExactlyInstanceOf(UnresolvedVariableException.class)
                 .hasMessageContaining("unresolved variable expression: toLowerCase(undefined)");
     }
 
@@ -1119,7 +1166,9 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"));
 
-        assertThat(throwable).isInstanceOf(UnresolvedVariableException.class).hasMessageContaining("name");
+        assertThat(throwable)
+                .hasRootCauseExactlyInstanceOf(UnresolvedVariableException.class)
+                .hasMessageContaining("name");
     }
 
 
