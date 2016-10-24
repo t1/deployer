@@ -117,18 +117,18 @@ log-handlers:
   MYAPP2:
     file: myapp2.log
 loggers:
-  mygroup.myapp1:
+  org.mygroup.myapp1:
     level: DEBUG
     handler: MYAPP1
-  mygroup.myapp2:
+  org.mygroup.myapp2:
     level: DEBUG
     handler: MYAPP2
 deployables:
   myapp1:
-    groupId: mygroup
+    group-id: org.mygroup
     version: 1.0
   myapp2:
-    groupId: mygroup
+    group-id: org.mygroup
     version: 2.0
 ```
 
@@ -153,12 +153,12 @@ log-handlers:
   MYAPP1:
     file: myapp1.log
 loggers:
-  mygroup.myapp1:
+  org.mygroup.myapp1:
     level: DEBUG
     handler: MYAPP1
 deployables:
   myapp1:
-    groupId: mygroup
+    group-id: org.mygroup
     version: 1.0
 ```
 
@@ -169,12 +169,12 @@ log-handlers:
   MYAPP2:
     file: myapp2.log
 loggers:
-  mygroup.myapp2:
+  org.mygroup.myapp2:
     level: DEBUG
     handler: MYAPP2
 deployables:
   myapp2:
-    groupId: mygroup
+    group-id: org.mygroup
     version: 2.0
 ```
 
@@ -185,10 +185,10 @@ If these were in the repository, we could include them in the root bundle as see
 ```yaml
 bundles:
   myapp1:
-    groupId: mygroup
+    group-id: org.mygroup
     version: 1.0
   myapp2:
-    groupId: mygroup
+    group-id: org.mygroup
     version: 2.0
 ```
 
@@ -206,8 +206,8 @@ but it's such an important step, so we'll describe one way briefly here.
 We _could_ deploy these files with the GUI of the repository, or with a Maven command similar to this:
 
 ```
-mvn deploy:deploy-file -DgroupId=mygroup -DartifactId=myapp1 -Dversion=1.0 -Dtype=bundle
--Durl=http://localhost:8081/artifactory/libs-release-local/mygroup/myapp1/1.0/myapp1-1.0.bundle
+mvn deploy:deploy-file -DgroupId=org.mygroup -DartifactId=myapp1 -Dversion=1.0 -Dtype=bundle
+-Durl=http://localhost:8081/artifactory/libs-release-local/org/mygroup/myapp1/1.0/myapp1-1.0.bundle
 -Dfile=myapp1.bundle
 ```
 
@@ -224,7 +224,7 @@ So we'll build the bundles with the `build-helper-maven-plugin`:
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>mygroup</groupId>
+    <groupId>org.mygroup</groupId>
     <artifactId>myapp1.bundle</artifactId>
     <version>1.0</version>
 
@@ -319,32 +319,41 @@ For a complete list, see the [reference](reference.md#vars).
 
 ## Default Root Bundle
 
-Still, something's missing. We still need to copy the root bundle to all nodes to bootstrap or when we add an artifact.
-Would not it be nice to have a way to deploy the root bundle itself?
-Of course there is, but we'll need another level of indirection.
-If there is no file `deployer.root.bundle`, a [default root bundle](reference.md#default-root-bundle) applies.
-This is how it works:
+Still, something's missing.
+We still need to copy the root bundle to all nodes to bootstrap or when we change a resource.
+Wouldn't it be nice to have a way to deploy the root bundle itself?
+Of course there is, but we'll need another level of indirection:
+Create a bundle artifact with the bundle file you used as a root bundle,
+and configure it in the `deployer.config.yaml`:
 
-Say you have a host `myhost.mydomain.org`.
-Create a bundle artifact with the bundle you used as a root bundle,
-and deploy it with `artifact-id` = `myhost` and `group-id` = `mydomain.org`.
-Now you can pass the `version` to the POST and your done!
-This works even if your host names end with digits, which is a common pattern for node names in a cluster,
-i.e. `myhost01.mydomain.org` is mapped to a bundle name `myhost`.
+```yaml
+root-bundle:
+  group-id: org.mygroup
+  artifact-id: myroot
+```
 
-If your domain names are generic, like `local` or `server.lan`, it's generally better to use the `default.group-id`.
-If you already need a different `default.group-id`, you can define a `root-bundle` parameter `group-id`.
+After removing the `deployer.root.bundle` file from your node,
+you can pass the `version` to the `POST` and The Deployer will pull the root bundle from your repository.
+The `group-id` defaults to your `default.group-id`, so you often can leave this out.
 
-If your host names contain stage prefixes or suffixes like `dev`, or `qa`, you can strip them with regular expression,
-by setting a variable `bundle-to-host-name` to `(.*?)(dev|qa)?\d*` for suffixes or `(?:dev|qa)?(.*?)\d*` for prefixes.
-The first capturing group of the expression is used, so remember to mark any leading groups as non-capturing
-by using `(?:X)`, as shown for the prefix.
+So you'll only have to get the `deployer.config.yaml` to your machines, which won't change very often.
 
-If your host names are very technical and/or change very often,
-you may be better off to configure an explicit `root-bundle` parameter `name`; this is just so much simpler.
-Using regular expressions for your host names is most appropriate in situations where you have a PaaS like environment,
-i.e. a generic `deployer.config.yaml` file is rolled out by some platform operations team... together with The Deployer.
+If you work in a [PaaS](https://en.wikipedia.org/wiki/Platform_as_a_service) like environment (or at least mindset),
+you may have a platform operations team using puppet, docker, etc. to provide your container
+including The Deployer... and a _generic_ `deployer.config.yaml` file!
+How do you get a specific configuration into your machine, then?
+You can use the _host name_: Say you have a host `myhost.mydomain.org`;
+deploy your root bundle as `artifact-id` = `myhost` and `group-id` = `mydomain.org`.
+The host name is the default `artifact-id` and the domain name is the default `group-id`.
+In this way, you won't have to configure _anything_ for your root bundle.
 
+If your host names end with digits, which is a common pattern for node names in a cluster, they will be stripped,
+i.e. `myhost01.mydomain.org` is mapped to a bundle `artifact-id` of `myhost`.
+If your host names contain stage prefixes or suffixes like `dev`, or `qa`,
+you can strip those with a regular expression:
+Set the `artifact-id` for the `root-bundle` config to, e.g., `${regex(hostname(), «(.*?)(dev|qa)?\d*»)}`.
+The first capturing group of the expression is used as the `artifact-id`.
+To strip a prefix, you'll have to mark those groups as non-capturing with `?:`, i.e. `(?:dev|qa)?(.*?)\d*`.
 
 ## Schema Bundles
 
@@ -452,7 +461,7 @@ You can use the standard dependency resolution tools of, e.g., Maven: Modify the
 
  ```xml
 <dependency>
-    <groupId>mygroup</groupId>
+    <groupId>org.mygroup</groupId>
     <artifactId>myapp</artifactId>
     <version>${myapp.version}</version>
     <type>war</type>

@@ -35,7 +35,7 @@ public class DeployerBoundary {
     public static final String ROOT_BUNDLE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
             + "bundles:\n"
-            + "  ${regex(root-bundle:artifact-id or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:\n"
+            + "  ${regex(root-bundle:artifact-id or hostName(), «(.*?)\\d*»)}:\n"
             + "    group-id: ${root-bundle:group-id or default.group-id or domainName()}\n"
             + "    classifier: ${root-bundle:classifier or null}\n"
             + "    version: ${root-bundle:version or version}\n";

@@ -107,7 +107,7 @@ If there is no file `deployer.root.bundle`, the following default applies:
 
 ```yaml
 bundles:
-  ${regex(root-bundle:artifact-id or hostName(), bundle-to-host-name or «(.*?)\\d*»)}:
+  ${regex(root-bundle:artifact-id or hostName(), «(.*?)\d*»)}:
     group-id: ${root-bundle:group-id or default.group-id or domainName()}
     classifier: ${root-bundle:classifier or null}
     version: ${root-bundle:version or version}
