@@ -1,0 +1,1172 @@
+package com.github.t1.deployer.app;
+
+import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
+import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.Expressions.*;
+import com.github.t1.problem.WebApplicationApplicationException;
+import com.google.common.collect.ImmutableMap;
+import org.junit.Test;
+
+import java.net.InetAddress;
+
+import static com.github.t1.deployer.TestData.*;
+import static com.github.t1.deployer.app.Trigger.*;
+import static com.github.t1.deployer.container.LogHandlerType.*;
+import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.Expressions.*;
+import static com.github.t1.log.LogLevel.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+
+public class BundleDeployerTest extends AbstractDeployerTest {
+    private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
+
+    @Test
+    public void shouldFailToDeployBundleAsDeployable() {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo-war:\n"
+                + "    type: bundle\n"
+                + "    version: 1.0\n"
+                + "    group-id: org.foo\n"));
+
+        assertThat(thrown)
+                .hasStackTraceContaining("a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithOtherName() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture bar = givenArtifact("bar", foo.groupId(), foo.artifactId()).version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  bar:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo\n"
+                + "    version: 1.3.2\n"
+        );
+
+        bar.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithVariables() {
+        givenConfiguredVariable("fooGroupId", "org.foo");
+        givenConfiguredVariable("fooArtifactId", "foo");
+        givenConfiguredVariable("fooVersion", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  ${fooArtifactId}:\n"
+                + "    group-id: ${fooGroupId}\n"
+                + "    version: ${fooVersion}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithFirstOfTwoOrVariables() {
+        givenConfiguredVariable("fooVersion", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${fooVersion or barVersion}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithSecondOfTwoOrVariables() {
+        givenConfiguredVariable("barVersion", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${fooVersion or barVersion}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithFirstOfThreeOrFunctionVariables() {
+        givenConfiguredVariable("fooName", "FOO");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithSecondOfThreeOrFunctionVariables() {
+        givenConfiguredVariable("barName", "FOO");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithThirdOfThreeOrFunctionVariables() {
+        givenConfiguredVariable("bazName", "FOO");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithHostNameFunction() throws Exception {
+        String hostName = InetAddress.getLocalHost().getHostName().split("\\.")[0];
+        ArtifactFixture foo = givenArtifact("foo").groupId(hostName).version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${hostName()}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToResolveHostNameFunctionWithParameter() throws Exception {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${hostName(os.name)}\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("undefined variable function with 1 params: [hostName]");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithDomainNameFunction() throws Exception {
+        String domainName = InetAddress.getLocalHost().getHostName().split("\\.", 2)[1];
+        ArtifactFixture foo = givenArtifact("foo").groupId(domainName).version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${domainName()}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldFailToResolveDomainNameFunctionWithParameter() throws Exception {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${domainName(os.name)}\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("undefined variable function with 1 params: [domainName]");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithStringLiteral() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${undefined or «org.foo»}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithOrParam() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${undefined0 or toLowerCase(undefined1 or «org.FOO»)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithRegexSuffix() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${regex(«org.foo01», «(.*?)\\d*»)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithRegexPrefix() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${regex(«qa.org.foo», «(?:qa\\.)(.*?)»)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithRegexVariable() throws Exception {
+        givenConfiguredVariable("my-regex", "(?:qa\\.)(.*?)");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${regex(«qa.org.foo», my-regex)}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test public void shouldFailToReplaceVariableValueWithNewline() {
+        shouldFailToReplaceVariableValueWith("foo\nbar");
+    }
+
+    @Test public void shouldFailToReplaceVariableValueWithTab() { shouldFailToReplaceVariableValueWith("\tfoo"); }
+
+    private void shouldFailToReplaceVariableValueWith(String value) {
+        givenConfiguredVariable("foo", value);
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  ${foo}:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("invalid character in variable value for [foo]");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithTwoVariablesInOneLine() {
+        givenConfiguredVariable("orgVar", "org");
+        givenConfiguredVariable("fooVar", "foo");
+        ArtifactFixture foo = givenArtifact("foo").version("1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${orgVar}.${fooVar}\n"
+                + "    version: 1\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithCommentAfterVariable() {
+        givenConfiguredVariable("orgVar", "org");
+        ArtifactFixture foo = givenArtifact("foo").version("1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${orgVar}.foo # cool\n"
+                + "    version: 1\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithDollarString() {
+        ArtifactFixture foo = givenArtifact("foo").version("$1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: $1\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithVariableInComment() {
+        ArtifactFixture foo = givenArtifact("foo").version("1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1 # ${not} cool\n"
+                + "# absolutely ${not} cool");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithUndefinedVariable() {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${undefined}\n"
+                + "    version: 1.2\n"));
+
+        assertThat(thrown)
+                .hasRootCauseExactlyInstanceOf(UnresolvedVariableException.class)
+                .hasMessageContaining("unresolved variable expression: undefined");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithEscapedVariable() {
+        ArtifactFixture foo = givenArtifact("${bar}", "org.foo", "foo-war").version("1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  $${bar}:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo-war\n"
+                + "    version: 1\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithToUpperAndToLowerCaseVariables() {
+        givenConfiguredVariable("foo", "Foo");
+        ArtifactFixture foo = givenArtifact("FOO", "org.foo", "Foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  ${toUpperCase(foo)}:\n"
+                + "    group-id: org.${toLowerCase(foo)}\n"
+                + "    artifact-id: ${foo}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithUndefinedVariableFunction() {
+        givenConfiguredVariable("foo", "Foo");
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  ${bar(foo)}:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("undefined variable function with 1 params: [bar]");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithVariableFunctionMissingParam() {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  ${toLowerCase()}:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("undefined variable function with 0 params: [toLowerCase]");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithUndefinedFunctionVariable() {
+        Throwable thrown = catchThrowable(() ->
+                deploy(""
+                        + "deployables:\n"
+                        + "  foo:\n"
+                        + "    group-id: ${toLowerCase(undefined)}\n"
+                        + "    version: 1.2\n"));
+
+        assertThat(thrown)
+                .hasRootCauseExactlyInstanceOf(UnresolvedVariableException.class)
+                .hasMessageContaining("unresolved variable expression: toLowerCase(undefined)");
+    }
+
+
+    @Test
+    public void shouldUpdateExistingWebArchive() {
+        ArtifactFixture foo2 = givenArtifact("foo")
+                .version("1").deployed()
+                .and()
+                .version("2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 2\n");
+
+        foo2.verifyRedeployed(audits);
+    }
+
+
+    @Test
+    public void shouldNotRedeployWebArchiveWithSameNameAndChecksum() {
+        givenArtifact("foo")
+                .version("1").deployed()
+                .and()
+                .version("2");
+
+        Audits audits = deploy(""
+                + "org.foo:\n"
+                + "  foo-war:\n"
+                + "    version: 1\n");
+
+        // #after(): no deploy operations
+        assertThat(audits.getAudits()).isEmpty();
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithSameChecksumButDifferentName() {
+        ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
+        ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1").checksum(foo.getChecksum());
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  bar:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo-war\n"
+                + "    version: 1\n"
+        );
+
+        // #after(): foo not undeployed
+        bar.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldNotDeployWebArchiveWithSameNameButDifferentGroup() {
+        ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
+        ArtifactFixture bar = givenArtifact("bar", foo.groupId(), foo.artifactId()).version("1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  bar:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo\n"
+                + "    version: 1\n"
+        );
+
+        // #after(): foo not undeployed
+        bar.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeploySecondWebArchive() {
+        givenArtifact("jolokia")
+                .version("1.3.2").deployed()
+                .and()
+                .version("1.3.3");
+        ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war")
+                .version("3.10.4");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    version: 1.3.2\n"
+                + "  mockserver:\n"
+                + "    group-id: org.mock-server\n"
+                + "    artifact-id: mockserver-war\n"
+                + "    version: 3.10.4\n");
+
+        // #after(): jolokia not undeployed
+        mockserver.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldUndeployWebArchiveWhenStateIsUndeployed() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    state: undeployed\n"
+        );
+
+        foo.verifyRemoved(audits);
+    }
+
+
+    @Test
+    public void shouldUndeployWebArchiveWithoutVersionAndGroupId() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    state: undeployed\n");
+
+        foo.verifyRemoved(audits);
+    }
+
+
+    @Test
+    public void shouldUndeployWebArchiveWithOtherVersionWhenStateIsUndeployed() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 999\n"
+                + "    state: undeployed\n");
+
+        foo.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldUndeployWebArchiveWithOtherGroupIdWhenStateIsUndeployed() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.bar\n"
+                + "    version: 1.3.2\n"
+                + "    state: undeployed\n");
+
+        foo.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldUndeployWebArchiveWithOtherArtifactIdWhenStateIsUndeployed() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: bar\n"
+                + "    version: 1.3.2\n"
+                + "    state: undeployed\n");
+
+        foo.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldFailToUndeployWebArchiveWithWrongChecksum() {
+        givenArtifact("foo").version("1.3.2").deployed();
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    checksum: " + UNKNOWN_CHECKSUM + "\n"
+                + "    state: undeployed\n"
+        ));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("Planned to undeploy artifact with checksum [" + UNKNOWN_CHECKSUM + "] "
+                        + "but deployed is [face000097269fd347ce0e93059890430c01f17f]");
+    }
+
+
+    @Test
+    public void shouldRenameWebArchiveWithSameChecksumWhenManaged() {
+        ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
+        ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1");
+        givenManaged("deployables");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  bar:\n"
+                + "    group-id: org.foo\n"
+                + "    artifact-id: foo-war\n"
+                + "    version: 1\n"
+        );
+
+        foo.verifyUndeployExecuted();
+        bar.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(bar.addedAudit(), foo.removedAudit());
+    }
+
+
+    @Test
+    public void shouldUndeployUnspecifiedWebArchiveWhenManaged() {
+        givenArtifact("jolokia").version("1.3.2").deployed();
+        ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
+        givenManaged("deployables");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    version: 1.3.2\n");
+
+        // #after(): jolokia not undeployed
+        mockserver.verifyRemoved(audits);
+    }
+
+
+    @Test
+    public void shouldUndeployUnspecifiedWebArchiveWhenAllManaged() {
+        givenArtifact("jolokia").version("1.3.2").deployed();
+        ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
+        givenManaged("all");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    version: 1.3.2\n");
+
+        // #after(): jolokia not undeployed
+        mockserver.verifyRemoved(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithConfiguredVariable() {
+        givenConfiguredVariable("v", "1.3.3");
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: ${v}");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithDefaultGroupId() {
+        givenConfiguredVariable("default.group-id", "org.jolokia");
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: 1.3.3\n");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployJar() {
+        ArtifactFixture postgresql = givenArtifact(jar, "postgresql").version("9.4.1207");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  postgresql:\n"
+                + "    group-id: org.postgresql\n"
+                + "    version: 9.4.1207\n"
+                + "    type: jar\n");
+
+        postgresql.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployJarWithDefaultType() {
+        givenConfiguredVariable("default.deployable-type", "jar");
+        ArtifactFixture postgresql = givenArtifact(jar, "postgresql").version("9.4.1207");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  postgresql:\n"
+                + "    group-id: org.postgresql\n"
+                + "    version: 9.4.1207\n");
+
+        postgresql.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployEar() {
+        ArtifactFixture postgresql = givenArtifact(ear, "foo").version("1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1\n"
+                + "    type: ear\n");
+
+        postgresql.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldUndeployEverythingWhenManagedAndEmptyPlan() {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
+        givenManaged("deployables", "loggers", "log-handlers");
+
+        Audits audits = deploy("---\n");
+
+        jolokia.verifyUndeployExecuted();
+        mockserver.verifyUndeployExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.removedAudit(), mockserver.removedAudit());
+    }
+
+    @Test
+    public void shouldDeployLatestWebArchive() {
+        ArtifactFixture latest = givenArtifact("foo")
+                .version("1.3.2").and()
+                .version("1.4.4").and()
+                .version("2.0.0-SNAPSHOT").and()
+                .version("1.5.0-SNAPSHOT").and()
+                .version("1.4.11");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: LATEST\n"
+        );
+
+        latest.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployUnstableWebArchive() {
+        ArtifactFixture unstable = givenArtifact("foo")
+                .version("1.3.2").and()
+                .version("1.4.4").and()
+                .version("1.4.11").and()
+                .version("1.5.0-SNAPSHOT").and()
+                .version("2.0.0-SNAPSHOT");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: UNSTABLE\n"
+        );
+
+        unstable.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployUnstableButReleasedWebArchive() {
+        ArtifactFixture unstable = givenArtifact("foo")
+                .version("1.3.2").and()
+                .version("1.4.4").and()
+                .version("1.4.11").and()
+                .version("1.5.0-SNAPSHOT").and()
+                .version("2.0.0-SNAPSHOT").and()
+                .version("2.0.0");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: UNSTABLE\n"
+        );
+
+        unstable.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployBundle() {
+        givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
+        ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war").version("3.10.4");
+        givenArtifact(bundle, "artifact-deployer-test", "some-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: 1.3.2\n"
+                        + "  mockserver:\n"
+                        + "    group-id: org.mock-server\n"
+                        + "    artifact-id: mockserver-war\n"
+                        + "    version: 3.10.4\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  some-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n");
+
+        // #after(): jolokia not re-deployed
+        mockserver.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(
+                mockserver.addedAudit());
+    }
+
+
+    @Test
+    public void shouldDeployBundleWithSystemParam() {
+        givenConfiguredVariable("jolokia.version", "1.3.3");
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-with-system-param")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: ${jolokia.version}\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  bundle-with-system-param:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployBundleWithPassedParam() {
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-with-passed-param")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: ${v}\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  bundle-with-passed-param:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n"
+                + "        v: 1.3.3\n");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployBundleWithName() {
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-with-name")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: 1.3.3\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  bundle-with-name:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployLatestBundle() {
+        ArtifactFixture latest = givenArtifact("jolokia", "org.jolokia", "jolokia-war")
+                .version("1.3.2").and()
+                .version("2.0.0-SNAPSHOT").and()
+                .version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "latest-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: LATEST\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  latest-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n");
+
+        latest.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployUnstableBundle() {
+        ArtifactFixture unstable = givenArtifact("jolokia", "org.jolokia", "jolokia-war")
+                .version("1.3.2").and()
+                .version("1.3.3").and()
+                .version("2.0.0-SNAPSHOT");
+        givenArtifact(bundle, "artifact-deployer-test", "unstable-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: UNSTABLE\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  unstable-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n");
+
+        unstable.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldFailToDeployBundleWithoutName() {
+        givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-without-name")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: 1.3.3\n");
+
+        Throwable throwable = catchThrowable(() -> deploy(""
+                + "bundles:\n"
+                + "  bundle-without-name:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"));
+
+        assertThat(throwable)
+                .hasRootCauseExactlyInstanceOf(UnresolvedVariableException.class)
+                .hasMessageContaining("name");
+    }
+
+
+    @Test
+    public void shouldDeployDefaultRootBundle() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithDefaultGroupId() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenConfiguredVariable("default.group-id", "mygroup");
+        givenArtifact(bundle, "dummy", "mygroup", hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleArtifactId() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), "foo")
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("artifact-id", "foo");
+
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleGroupId() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", "my.other.group", hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("group-id", "my.other.group");
+
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleClassifier() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .classifier("my.classifier")
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("classifier", "my.classifier");
+
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleVersion() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("version", "1.2");
+
+        Audits audits = deployer.apply(mock, emptyMap());
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
+    public void shouldFailToDeployDefaultRootBundleWithoutConfiguredRootBundle() throws Exception {
+        givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+
+        Throwable thrown = catchThrowable(() -> deployer.apply(mock, emptyMap()));
+
+        assertThat(thrown).hasMessageContaining("unresolved variable expression: root-bundle:version or version");
+    }
+
+
+    @Test
+    public void shouldDeploySchemaBundleWithPassedParam() {
+        givenConfiguredRootBundle("artifact-id", "${hostName()}");
+        givenConfiguredVariable("default.group-id", "artifact-deployer-test");
+        LogHandlerFixture logHandler = givenLogHandler(periodicRotatingFile, "JOLOKIA");
+        LoggerFixture logger = givenLogger("org.jolokia.jolokia")
+                .level(DEBUG).handler("JOLOKIA").useParentHandlers(false);
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", hostName())
+                .version("1")
+                .containing(""
+                        + "log-handlers:\n"
+                        + "  ${toUpperCase(name)}:\n"
+                        + "    file: ${name}.log\n"
+                        + "loggers:\n"
+                        + "  ${group-id or default.group-id}.${name}:\n"
+                        + "    level: ${log-level or default.log-level or «DEBUG»}\n"
+                        + "    handlers:\n"
+                        + "    - ${toUpperCase(name)}\n"
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: ${group-id or default.group-id}\n"
+                        + "    artifact-id: ${artifact-id or name}\n"
+                        + "    version: ${version}\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  ${hostName()}:\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n"
+                + "        group-id: org.jolokia\n"
+                + "        artifact-id: jolokia-war\n"
+                + "        version: 1.3.3\n");
+
+        logHandler.verifyAdded(audits);
+        logger.verifyAdded(audits);
+        jolokia.verifyDeployed(audits);
+    }
+}
