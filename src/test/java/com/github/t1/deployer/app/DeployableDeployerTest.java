@@ -923,7 +923,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     public void shouldDeployBundle() {
         givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war").version("3.10.4");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", "some-bundle")
                 .version("1")
                 .containing(""
                         + "deployables:\n"
@@ -938,7 +938,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  some-bundle:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n");
 
@@ -953,7 +953,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     public void shouldDeployBundleWithSystemParam() {
         givenConfiguredVariable("jolokia.version", "1.3.3");
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-with-system-param")
                 .version("1")
                 .containing(""
                         + "deployables:\n"
@@ -964,7 +964,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  bundle-with-system-param:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n");
 
@@ -974,7 +974,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldDeployBundleWithPassedParam() {
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-with-passed-param")
                 .version("1")
                 .containing(""
                         + "deployables:\n"
@@ -985,7 +985,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  bundle-with-passed-param:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"
                 + "    instances:\n"
@@ -998,12 +998,13 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeploySchemaBundleWithPassedParam() {
+        givenConfiguredRootBundle("artifact-id", "${hostName()}");
         givenConfiguredVariable("default.group-id", "artifact-deployer-test");
         LogHandlerFixture logHandler = givenLogHandler(periodicRotatingFile, "JOLOKIA");
         LoggerFixture logger = givenLogger("org.jolokia.jolokia")
                 .level(DEBUG).handler("JOLOKIA").useParentHandlers(false);
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", hostName())
                 .version("1")
                 .containing(""
                         + "log-handlers:\n"
@@ -1022,7 +1023,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  ${hostName()}:\n"
                 + "    version: 1\n"
                 + "    instances:\n"
                 + "      jolokia:\n"
@@ -1114,7 +1115,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldDeployBundleWithName() {
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-with-name")
                 .version("1")
                 .containing(""
                         + "deployables:\n"
@@ -1125,7 +1126,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  bundle-with-name:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"
                 + "    instances:\n"
@@ -1141,7 +1142,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 .version("1.3.2").and()
                 .version("2.0.0-SNAPSHOT").and()
                 .version("1.3.3");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", "latest-bundle")
                 .version("1")
                 .containing(""
                         + "deployables:\n"
@@ -1152,7 +1153,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  latest-bundle:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"
                 + "    instances:\n"
@@ -1168,7 +1169,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 .version("1.3.2").and()
                 .version("1.3.3").and()
                 .version("2.0.0-SNAPSHOT");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", "unstable-bundle")
                 .version("1")
                 .containing(""
                         + "deployables:\n"
@@ -1179,7 +1180,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  unstable-bundle:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"
                 + "    instances:\n"
@@ -1192,7 +1193,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldFailToDeployBundleWithoutName() {
         givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
-        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+        givenArtifact(bundle, "artifact-deployer-test", "bundle-without-name")
                 .version("1")
                 .containing(""
                         + "deployables:\n"
@@ -1203,7 +1204,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         Throwable throwable = catchThrowable(() -> deploy(""
                 + "bundles:\n"
-                + "  should-deploy-bundle:\n"
+                + "  bundle-without-name:\n"
                 + "    group-id: artifact-deployer-test\n"
                 + "    version: 1\n"));
 
