@@ -7,9 +7,7 @@ import com.github.t1.problem.*;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.ArrayList;
@@ -178,11 +176,14 @@ public class Expressions {
             this.value = null;
         }
 
-        @NotNull public Resolver create(Class<? extends Resolver> type, String subExpression) {
+        public Resolver create(Class<? extends Resolver> type, String subExpression) {
             try {
                 return type.getConstructor(Expressions.class, String.class)
                            .newInstance(Expressions.this, subExpression);
             } catch (InvocationTargetException e) {
+                //noinspection ChainOfInstanceofChecks
+                if (e.getCause() instanceof Error)
+                    throw (Error) e.getCause();
                 if (e.getCause() instanceof RuntimeException)
                     throw (RuntimeException) e.getCause();
                 // fall through
@@ -216,26 +217,23 @@ public class Expressions {
 
 
     private class VariableResolver extends Resolver {
-        private final String expression;
         private final Matcher matcher;
         private final VariableName variableName;
 
         public VariableResolver(String expression) {
-            this.expression = expression;
             this.matcher = NAME_TOKEN.matcher(expression);
             this.match = matcher.matches();
             this.variableName = match ? new VariableName(matcher.group()) : null;
-            this.value = match ? resolve() : null;
-        }
-
-        private String resolve() {
-            if (!variables.containsKey(variableName)) {
+            if (match && variables.containsKey(variableName)) {
+                log.trace("did resolve [{}]", variableName);
+                this.value = resolve(variables.get(variableName), "null");
+                if (value != null && !VARIABLE_VALUE.matcher(value).matches())
+                    throw badRequest("invalid character in variable value for [" + variableName + "]");
+            } else {
                 log.trace("undefined variable [{}]", expression);
                 this.match = false;
-                return null;
+                this.value = null;
             }
-            log.trace("did resolve [{}]", variableName);
-            return checkValue(variables.get(variableName), variableName.getValue());
         }
     }
 
@@ -355,16 +353,6 @@ public class Expressions {
             offset = string.indexOf(c, offset + 1);
         } while (offset >= 0);
         return n;
-    }
-
-    private static String checkValue(String value, String expression) {
-        if (value != null && !VARIABLE_VALUE.matcher(value).matches())
-            throw badRequest("invalid character in variable value for [" + expression + "]");
-        return value;
-    }
-
-    private BufferedReader buffered(Reader reader) {
-        return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
     public Expressions withRootBundle(RootBundleConfig rootBundle) {

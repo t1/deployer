@@ -70,7 +70,7 @@ public class DeployerBoundary {
             for (Throwable cause = e; cause != null; cause = cause.getCause())
                 if (cause instanceof UnresolvedVariableException)
                     log.info("skip async run for unresolved variable: {}",
-                            ((UnresolvedVariableException) e).getExpression());
+                            ((UnresolvedVariableException) cause).getExpression());
             throw e;
         }
     }

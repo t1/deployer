@@ -982,6 +982,57 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldDeployBundleWithDefaultVersionExpression() {
+        givenConfiguredVariable("jolokia.version", "1.3.2");
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2");
+        givenArtifact(bundle, "artifact-deployer-test", "expression-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: ${version}\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  expression-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n"
+                + "        version: ${jolokia.version}\n");
+
+        jolokia.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldNotDeployBundleWithDefaultCurrentVersionExpression() {
+        givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
+        givenArtifact(bundle, "artifact-deployer-test", "current-expression-bundle")
+                .version("1")
+                .containing(""
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    artifact-id: jolokia-war\n"
+                        + "    version: ${version}\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  current-expression-bundle:\n"
+                + "    group-id: artifact-deployer-test\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n"
+                + "        version: ${jolokia.version}\n");
+
+        assertThat(audits.getAudits()).isEmpty();
+    }
+
+
+    @Test
     public void shouldFailToDeployBundleWithoutName() {
         givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
         givenArtifact(bundle, "artifact-deployer-test", "bundle-without-name")
