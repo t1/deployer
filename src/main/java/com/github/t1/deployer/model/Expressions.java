@@ -180,7 +180,8 @@ public class Expressions {
 
         @NotNull public Resolver create(Class<? extends Resolver> type, String subExpression) {
             try {
-                return type.getConstructor(Expressions.class, String.class).newInstance(Expressions.this, subExpression);
+                return type.getConstructor(Expressions.class, String.class)
+                           .newInstance(Expressions.this, subExpression);
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof RuntimeException)
                     throw (RuntimeException) e.getCause();
@@ -248,14 +249,19 @@ public class Expressions {
 
     private class RootBundleResolver extends Resolver {
         public RootBundleResolver(String expression) {
-            this.value = (expression.startsWith(ROOT_BUNDLE)
-                                  && BUNDLE.containsKey(field(expression))
-                                  && rootBundle != null)
-                    ? BUNDLE.get(field(expression)).apply(rootBundle) : null;
-            this.match = this.value != null;
+            boolean potentialMatch = expression.startsWith(ROOT_BUNDLE)
+                    && BUNDLE.containsKey(fieldName(expression))
+                    && rootBundle != null;
+            this.value = potentialMatch ? resolve(fieldName(expression)) : null;
+            this.match = this.value != null; // could have been resolved to null
         }
 
-        @NotNull public String field(String expression) { return expression.substring(ROOT_BUNDLE.length()); }
+        private String fieldName(String expression) { return expression.substring(ROOT_BUNDLE.length()); }
+
+        private String resolve(String fieldName) {
+            String subExpression = BUNDLE.get(fieldName).apply(rootBundle);
+            return (subExpression == null) ? null : Expressions.this.resolve(subExpression, null);
+        }
     }
 
     private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");

@@ -1059,6 +1059,24 @@ public class BundleDeployerTest extends AbstractDeployerTest {
     }
 
     @Test
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleArtifactIdExpression() throws Exception {
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
+        givenArtifact(bundle, "dummy", domainName(), hostName())
+                .version("1.2")
+                .containing(""
+                        + "deployables:\n"
+                        + "  jolokia:\n"
+                        + "    group-id: org.jolokia\n"
+                        + "    version: 1.3.2\n");
+        givenConfiguredRootBundle("artifact-id", "${hostName()}");
+
+        Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+
+        jolokia.verifyAddExecuted();
+        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+    }
+
+    @Test
     public void shouldDeployDefaultRootBundleWithConfiguredRootBundleGroupId() throws Exception {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", "my.other.group", hostName())
@@ -1132,7 +1150,6 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldDeploySchemaBundleWithPassedParam() {
-        givenConfiguredRootBundle("artifact-id", "${hostName()}");
         givenConfiguredVariable("default.group-id", "artifact-deployer-test");
         LogHandlerFixture logHandler = givenLogHandler(periodicRotatingFile, "JOLOKIA");
         LoggerFixture logger = givenLogger("org.jolokia.jolokia")
