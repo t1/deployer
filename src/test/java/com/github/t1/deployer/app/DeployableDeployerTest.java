@@ -11,8 +11,10 @@ import java.net.InetAddress;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.Trigger.*;
+import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Expressions.*;
+import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -590,8 +592,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldFailToDeployWebArchiveWithUndefinedVariable() {
-        Throwable thrown = catchThrowable(() ->
-                deploy(""
+        Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: ${undefined}\n"
@@ -903,7 +904,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldUndeployUnspecifiedWebArchiveWhenAllManaged() {
-        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
+        givenArtifact("jolokia").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
         givenManaged("all");
 
@@ -991,6 +992,46 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "      jolokia:\n"
                 + "        v: 1.3.3\n");
 
+        jolokia.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeploySchemaBundleWithPassedParam() {
+        givenConfiguredVariable("default.group-id", "artifact-deployer-test");
+        LogHandlerFixture logHandler = givenLogHandler(periodicRotatingFile, "JOLOKIA");
+        LoggerFixture logger = givenLogger("org.jolokia.jolokia")
+                .level(DEBUG).handler("JOLOKIA").useParentHandlers(false);
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
+        givenArtifact(bundle, "artifact-deployer-test", "should-deploy-bundle")
+                .version("1")
+                .containing(""
+                        + "log-handlers:\n"
+                        + "  ${toUpperCase(name)}:\n"
+                        + "    file: ${name}.log\n"
+                        + "loggers:\n"
+                        + "  ${group-id or default.group-id}.${name}:\n"
+                        + "    level: ${log-level or default.log-level or «DEBUG»}\n"
+                        + "    handlers:\n"
+                        + "    - ${toUpperCase(name)}\n"
+                        + "deployables:\n"
+                        + "  ${name}:\n"
+                        + "    group-id: ${group-id or default.group-id}\n"
+                        + "    artifact-id: ${artifact-id or name}\n"
+                        + "    version: ${version}\n");
+
+        Audits audits = deploy(""
+                + "bundles:\n"
+                + "  should-deploy-bundle:\n"
+                + "    version: 1\n"
+                + "    instances:\n"
+                + "      jolokia:\n"
+                + "        group-id: org.jolokia\n"
+                + "        artifact-id: jolokia-war\n"
+                + "        version: 1.3.3\n");
+
+        logHandler.verifyAdded(audits);
+        logger.verifyAdded(audits);
         jolokia.verifyDeployed(audits);
     }
 

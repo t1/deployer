@@ -385,7 +385,7 @@ public class AbstractDeployerTest {
 
             public void verifyDeployed(Audits audits) {
                 verifyAddExecuted();
-                assertThat(audits.getAudits()).containsExactly(addedAudit());
+                assertThat(audits.getAudits()).contains(addedAudit());
             }
 
             public void verifyAddExecuted() {
@@ -410,7 +410,7 @@ public class AbstractDeployerTest {
                 // FIXME verify(artifacts).redeploy(deploymentName(), inputStream());
                 Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
-                assertThat(audits.getAudits()).containsExactly(artifactAudit()
+                assertThat(audits.getAudits()).contains(artifactAudit()
                         .change("checksum", oldChecksum, checksum)
                         .change("version", oldVersion, version)
                         .changed());
@@ -418,7 +418,7 @@ public class AbstractDeployerTest {
 
             public void verifyRemoved(Audits audits) {
                 verifyUndeployExecuted();
-                assertThat(audits.getAudits()).containsExactly(removedAudit());
+                assertThat(audits.getAudits()).contains(removedAudit());
             }
 
             public void verifyUndeployExecuted() {
@@ -514,20 +514,21 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAdded(Audits audits) {
-            verify(cli).execute(toModelNode("{\n"
+            ModelNode request = toModelNode("{\n"
                     + loggerAddress()
                     + "    'operation' => 'add',\n"
                     + ((level == null) ? "" : "    'level' => '" + level + "',\n")
                     + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
                     + "    'use-parent-handlers' => " + useParentHandlers + "\n"
-                    + "}"));
+                    + "}");
+            verify(cli).execute(request);
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", null, level)
                     .change("use-parent-handlers", null, useParentHandlers);
             for (LogHandlerName handler : handlerNames())
                 audit.change("handler", null, handler);
-            assertThat(audits.getAudits()).containsExactly(audit.added());
+            assertThat(audits.getAudits()).contains(audit.added());
         }
 
         public List<LogHandlerName> handlerNames() {
@@ -536,7 +537,7 @@ public class AbstractDeployerTest {
 
         public void verifyUpdatedFrom(LogLevel oldLevel, Audits audits) {
             verify(cli).writeAttribute(buildRequest(), "level", level.toString());
-            assertThat(audits.getAudits()).containsExactly(
+            assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
         }
 
@@ -554,12 +555,12 @@ public class AbstractDeployerTest {
                     .change("use-parent-handlers", useParentHandlers, null);
             for (LogHandlerName handler : handlerNames())
                 audit.change("handler", handler, null);
-            assertThat(audits.getAudits()).containsExactly(audit.removed());
+            assertThat(audits.getAudits()).contains(audit.removed());
         }
 
         public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {
             verify(cli).writeAttribute(buildRequest(), "use-parent-handlers", useParentHandlers);
-            assertThat(audits.getAudits()).containsExactly(
+            assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
                                .changed());
         }
@@ -572,7 +573,7 @@ public class AbstractDeployerTest {
                     + "    'operation' => 'add-handler',\n"
                     + "    'name' => '" + name + "'\n"
                     + "}"));
-            assertThat(audits.getAudits()).containsExactly(
+            assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("handler", null, handlerName).changed());
         }
 
@@ -584,7 +585,7 @@ public class AbstractDeployerTest {
                     + "    'operation' => 'remove-handler',\n"
                     + "    'name' => '" + name + "'\n"
                     + "}"));
-            assertThat(audits.getAudits()).containsExactly(
+            assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("handler", handlerName, null).changed());
         }
 
@@ -779,7 +780,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyChanged(Audits audits) {
-            assertThat(audits.getAudits()).containsExactly(this.expectedAudit.changed());
+            assertThat(audits.getAudits()).contains(this.expectedAudit.changed());
         }
 
         public void verifyMapPut(String name, String key, String value) {
@@ -791,7 +792,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAdded(Audits audits) {
-            ModelNode expectedAdd = toModelNode("{\n"
+            ModelNode request = toModelNode("{\n"
                     + logHandlerAddress()
                     + "    'operation' => 'add'"
                     + ",\n    'level' => '" + ((level == null) ? "ALL" : level) + "'"
@@ -813,7 +814,7 @@ public class AbstractDeployerTest {
                                         .collect(joining(",\n        "))
                             + "\n    ]\n")
                     + "\n}");
-            verify(cli).execute(expectedAdd);
+            verify(cli).execute(request);
             expectedAudit.change("level", null, (level == null) ? ALL : level);
             if (format == null && formatter == null)
                 expectedAudit.change("format", null, DEFAULT_LOG_FORMAT);
@@ -833,7 +834,7 @@ public class AbstractDeployerTest {
                 expectedAudit.change("class", null, class_);
             if (properties != null)
                 properties.forEach((key, value) -> expectedAudit.change("property/" + key, null, value));
-            assertThat(audits.getAudits()).containsExactly(expectedAudit.added());
+            assertThat(audits.getAudits()).contains(expectedAudit.added());
         }
 
         public void verifyRemoved(Audits audits) {
@@ -858,7 +859,7 @@ public class AbstractDeployerTest {
                 expectedAudit.change("class", this.class_, null);
             if (properties != null)
                 properties.forEach((key, value) -> expectedAudit.change("property/" + key, value, null));
-            assertThat(audits.getAudits()).containsExactly(expectedAudit.removed());
+            assertThat(audits.getAudits()).contains(expectedAudit.removed());
         }
 
         public LogHandlerPlan asPlan() {

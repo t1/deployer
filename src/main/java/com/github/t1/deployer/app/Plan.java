@@ -338,14 +338,17 @@ public class Plan {
             apply(node, "state", builder::state, DeploymentState::valueOf);
             apply(node, "level", builder::level, LoggerResource::mapLogLevel, "default.log-level or «DEBUG»");
             apply(node, "handler", builder::handler, identity());
-            if (node.has("handlers")) {
-                Iterator<JsonNode> handlers = node.get("handlers").elements();
-                while (handlers.hasNext())
-                    builder.handler(handlers.next().textValue());
-            }
+            if (node.has("handlers"))
+                applyHandlers(node, builder);
             if (!builder.category.isRoot())
                 apply(node, "use-parent-handlers", builder::useParentHandlers, Boolean::valueOf);
             return builder.build().validate();
+        }
+
+        private static void applyHandlers(JsonNode node, LoggerPlanBuilder builder) {
+            Iterator<JsonNode> handlers = node.get("handlers").elements();
+            while (handlers.hasNext())
+                builder.handler(expressions.resolve(handlers.next().textValue(), null));
         }
 
         public static class LoggerPlanBuilder {
