@@ -39,7 +39,7 @@ public class DeployerBoundary {
             + "    group-id: ${root-bundle:group-id or default.group-id or domainName()}\n"
             + "    classifier: ${root-bundle:classifier or null}\n"
             + "    version: ${root-bundle:version or version}\n";
-    private static final VariableName NAME_VAR = new VariableName("name");
+    private static final VariableName NAME = new VariableName("name");
 
     public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
 
@@ -106,7 +106,7 @@ public class DeployerBoundary {
 
 
     private class Run {
-        private Expressions expressions = new Expressions().withAll(configuredVariables).withRootBundle(rootBundle);
+        private Expressions expressions = new Expressions().withAllNew(configuredVariables).withRootBundle(rootBundle);
 
         public Plan read() {
             PlanBuilder builder = Plan.builder();
@@ -118,7 +118,7 @@ public class DeployerBoundary {
         }
 
         public Run withVariables(Map<VariableName, String> variables) {
-            this.expressions = this.expressions.withAll(variables);
+            this.expressions = this.expressions.withAllNew(variables);
             return this;
         }
 
@@ -174,8 +174,8 @@ public class DeployerBoundary {
                 Expressions pop = this.expressions;
                 try {
                     if (instance.getKey() != null)
-                        this.expressions = this.expressions.with(NAME_VAR, instance.getKey());
-                    this.expressions = this.expressions.withAll(instance.getValue());
+                        this.expressions = this.expressions.with(NAME, instance.getKey());
+                    this.expressions = this.expressions.withAllReplacing(instance.getValue());
                     Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
                             bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
                     if (artifact == null)

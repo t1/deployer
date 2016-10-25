@@ -361,28 +361,35 @@ public class Expressions {
 
     public Expressions with(VariableName name, String value) {
         checkNotDefined(name);
-        return new Expressions(builder().put(name, value).build(), this.rootBundle);
+        return new Expressions(
+                ImmutableMap.<VariableName, String>builder().putAll(this.variables).put(name, value).build(),
+                this.rootBundle);
     }
 
-    public Expressions withAll(Map<VariableName, String> variables) {
+    public Expressions withAllNew(Map<VariableName, String> variables) {
+        return withAll(variables, true);
+    }
+
+    public Expressions withAllReplacing(Map<VariableName, String> variables) {
+        return withAll(variables, false);
+    }
+
+    private Expressions withAll(Map<VariableName, String> variables, boolean checkNotDefined) {
         if (variables == null || variables.isEmpty())
             return this;
-        ImmutableMap.Builder<VariableName, String> builder = builder();
+        Map<VariableName, String> builder = new LinkedHashMap<>(this.variables);
         for (Map.Entry<VariableName, String> entry : variables.entrySet()) {
             VariableName name = entry.getKey();
-            checkNotDefined(name);
+            if (checkNotDefined)
+                checkNotDefined(name);
             builder.put(name, entry.getValue());
         }
-        return new Expressions(builder.build(), this.rootBundle);
+        return new Expressions(ImmutableMap.copyOf(builder), this.rootBundle);
     }
 
-    public void checkNotDefined(VariableName name) {
+    private void checkNotDefined(VariableName name) {
         if (this.variables.containsKey(name))
             throw badRequest("Variable named [" + name + "] already set. It's not allowed to overwrite.");
-    }
-
-    private ImmutableMap.Builder<VariableName, String> builder() {
-        return ImmutableMap.<VariableName, String>builder().putAll(this.variables);
     }
 
     @ReturnStatus(BAD_REQUEST)

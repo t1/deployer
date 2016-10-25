@@ -1200,7 +1200,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldDeploySchemaBundleWithPassedParam() {
+    public void shouldDeploySchemaBundleWithPassedParam() throws Exception{
         givenConfiguredVariable("default.group-id", "artifact-deployer-test");
         LogHandlerFixture logHandler = givenLogHandler(periodicRotatingFile, "JOLOKIA");
         LoggerFixture logger = givenLogger("org.jolokia.jolokia")
@@ -1223,7 +1223,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                         + "    artifact-id: ${artifact-id or name}\n"
                         + "    version: ${version}\n");
 
-        Audits audits = deploy(""
+        rootBundle.write(""
                 + "bundles:\n"
                 + "  ${hostName()}:\n"
                 + "    version: 1\n"
@@ -1232,6 +1232,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "        group-id: org.jolokia\n"
                 + "        artifact-id: jolokia-war\n"
                 + "        version: 1.3.3\n");
+        Audits audits = deployer.apply(mock, ImmutableMap.of(new VariableName("version"), "1"));
 
         logHandler.verifyAdded(audits);
         logger.verifyAdded(audits);
