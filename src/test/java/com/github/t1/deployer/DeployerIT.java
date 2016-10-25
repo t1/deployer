@@ -539,8 +539,6 @@ public class DeployerIT {
                                .removed());
     }
 
-    // TODO shouldUpdateDeployer (WOW!)
-
     @Test
     @InSequence(value = Integer.MAX_VALUE)
     public void shouldUndeployEverything() throws Exception {

@@ -186,7 +186,6 @@ public class AbstractDeployerTest {
                 verify(cli, atLeast(0)).execute(readResource("logging", type.getHandlerTypeName(), "*")));
 
         verifyNoMoreInteractions(cli);
-        // TODO verifyNoMoreInteractions(deploymentManager);
     }
 
 
@@ -384,16 +383,7 @@ public class AbstractDeployerTest {
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
             public void verifyDeployed(Audits audits) {
-                verifyAddExecuted();
                 assertThat(audits.getAudits()).contains(addedAudit());
-            }
-
-            public void verifyAddExecuted() {
-                // TODO verify(cli).execute(toModelNode(""
-                //         + "{\n"
-                //         + "    'address' => [('deployment' => '" + name + "')],"
-                //         + "    'operation' => 'add'\n"
-                //         + "}"));
             }
 
             public Audit addedAudit() {

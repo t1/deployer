@@ -602,8 +602,6 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
     }
 
 
-    // TODO shouldRemoveHandlerWhenManaged
-
     @Test
     public void shouldAddCustomHandler() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
