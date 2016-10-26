@@ -23,11 +23,16 @@ public class LoggerDeployer
                 .writeFilter(LoggerResource::isNotRoot);
     }
 
-    @Override protected Stream<LoggerResource> getAll() { return container.allLoggers(); }
+    @Override protected String getType() { return "loggers"; }
+
+    @Override protected String getStringNameOf(LoggerPlan plan) { return plan.getCategory().getValue(); }
+
+    @Override protected Stream<LoggerResource> getAll() {
+        return container.allLoggers()
+                        .filter(resource -> !isPinned(resource.category().getValue()));
+    }
 
     @Override protected Stream<LoggerPlan> of(Plan plan) { return plan.loggers(); }
-
-    @Override protected String getType() { return "loggers"; }
 
     @Override protected LoggerAuditBuilder auditBuilder(LoggerResource logger) {
         return LoggerAudit.builder().category(logger.category());

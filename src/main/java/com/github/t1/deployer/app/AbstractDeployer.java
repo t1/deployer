@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.github.t1.problem.WebException.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 
@@ -20,7 +21,7 @@ import static java.util.stream.Collectors.*;
 abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends AbstractResource, AUDIT extends AuditBuilder> {
     @Inject Audits audits;
     @Inject @Config("managed.resources") List<String> managedResourceNames;
-    @Inject @Config("pinned") Map<String, List<String>> pinnedResourceNames;
+    @Inject @Config("pinned.resources") Map<String, List<String>> pinnedResourceNames;
 
     public abstract void read(PlanBuilder builder);
 
@@ -42,13 +43,15 @@ abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends Abst
     }
 
     public boolean isManaged() {
-        return managedResourceNames != null
-                && (managedResourceNames.equals(singletonList("all")) || managedResourceNames.contains(getType()));
+        return managedResourceNames.equals(singletonList("all")) || managedResourceNames.contains(getType());
     }
 
     protected abstract String getType();
 
     public void apply(PLAN plan) {
+        if (isPinned(getStringNameOf(plan)))
+            throw badRequest("resource is pinned: " + plan);
+
         RESOURCE resource = getResource(plan);
         log.debug("apply {} to {}", plan, resource);
         AUDIT audit = auditBuilder(resource);
@@ -80,6 +83,8 @@ abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends Abst
         }
         throw new UnsupportedOperationException("unhandled case: " + plan.getState());
     }
+
+    protected abstract String getStringNameOf(PLAN plan);
 
     protected abstract AUDIT auditBuilder(RESOURCE resource);
 

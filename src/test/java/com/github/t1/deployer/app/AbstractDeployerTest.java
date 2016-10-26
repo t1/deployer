@@ -346,6 +346,11 @@ public class AbstractDeployerTest {
 
             public void containing(String contents) { this.contents = contents; }
 
+            public ArtifactFixture pinned() {
+                givenPinned("deployables", name);
+                return this;
+            }
+
             public ArtifactFixture deployed() {
                 if (deployed != null)
                     throw new RuntimeException("already have deployed " + name + ":" + version);
@@ -380,19 +385,12 @@ public class AbstractDeployerTest {
 
             public Classifier classifier() { return ArtifactFixtureBuilder.this.classifier(); }
 
-            public ArtifactFixture pinned() {
-                givenPinned("deployables", name);
-                return this;
-            }
-
             public DeployableAuditBuilder artifactAudit() { return DeployableAudit.builder().name(deploymentName()); }
 
 
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
-            public void verifyDeployed(Audits audits) {
-                assertThat(audits.getAudits()).contains(addedAudit());
-            }
+            public void verifyDeployed(Audits audits) { assertThat(audits.getAudits()).contains(addedAudit()); }
 
             public Audit addedAudit() {
                 return artifactAudit()
@@ -493,6 +491,11 @@ public class AbstractDeployerTest {
 
         public LoggerFixture useParentHandlers(Boolean useParentHandlers) {
             this.useParentHandlers = useParentHandlers;
+            return this;
+        }
+
+        public LoggerFixture pinned() {
+            givenPinned("loggers", category.getValue());
             return this;
         }
 
@@ -747,6 +750,11 @@ public class AbstractDeployerTest {
             return this;
         }
 
+        public LogHandlerFixture pinned() {
+            givenPinned("log-handlers", name.getValue());
+            return this;
+        }
+
         public LogHandlerFixture deployed() {
             this.deployed = true;
             allLogHandlers.computeIfAbsent(type, t -> new ArrayList<>())
@@ -755,9 +763,7 @@ public class AbstractDeployerTest {
         }
 
 
-        private ModelNode buildRequest() {
-            return toModelNode("{" + logHandlerAddress() + "}");
-        }
+        private ModelNode buildRequest() { return toModelNode("{" + logHandlerAddress() + "}"); }
 
         private String logHandlerAddress() { return address("logging", type.getHandlerTypeName(), name); }
 

@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
@@ -863,4 +864,34 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
     }
 
     // TODO shouldAddLoggerAndHandler
+
+    @Test
+    public void shouldIgnorePinnedLogHandlerWhenManaged() {
+        givenManaged("all");
+        givenLogHandler(periodicRotatingFile, "FOO").level(ALL).formatter("foo").file("foo.log").deployed();
+        givenLogHandler(periodicRotatingFile, "BAR").deployed().pinned();
+        LogHandlerFixture baz = givenLogHandler(periodicRotatingFile, "BAZ").deployed();
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    formatter: foo");
+
+        baz.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldFailToDeployPinnedLogHandler() {
+        givenLogHandler(periodicRotatingFile, "FOO").deployed().pinned();
+
+        Throwable thrown = catchThrowable(() ->
+        deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    formatter: foo"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("resource is pinned: log-handler:deployed:periodic-rotating-file:FOO:");
+    }
 }

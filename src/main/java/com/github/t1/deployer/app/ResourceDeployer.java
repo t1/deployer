@@ -133,9 +133,7 @@ abstract class ResourceDeployer<
         return property;
     }
 
-    @Override protected void init() {
-        this.remaining = getAll().collect(toList());
-    }
+    @Override protected void init() { this.remaining = getAll().collect(toList()); }
 
     protected abstract Stream<RESOURCE> getAll();
 

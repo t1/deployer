@@ -141,12 +141,13 @@ Defaults to an empty list, i.e. things are left alone.
 
 ### `pin`
 
-The list of resources to be skipped, i.e. they won't get removed when managed
-and your plan will fail if it contains this resource.
+The list of resources to be skipped, i.e. they won't get removed when managed,
+your plan will fail if it contains this resource, and they won't show up when reading the effective plan.
+
 I.e., to pin a deployable `myapp`, use this:
 
 ```yaml
-pinned:
+pin:
   deployables: [myapp]
 ```
 

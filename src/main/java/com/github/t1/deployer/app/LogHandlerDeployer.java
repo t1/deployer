@@ -35,11 +35,16 @@ public class LogHandlerDeployer extends
                 .write(LogHandlerResource::updateClass);
     }
 
-    @Override protected Stream<LogHandlerResource> getAll() { return container.allLogHandlers(); }
+    @Override protected String getType() { return "log-handlers"; }
+
+    @Override protected String getStringNameOf(LogHandlerPlan plan) { return plan.getName().getValue(); }
+
+    @Override protected Stream<LogHandlerResource> getAll() {
+        return container.allLogHandlers()
+                        .filter(logHandler -> !isPinned(logHandler.name().getValue()));
+    }
 
     @Override protected Stream<LogHandlerPlan> of(Plan plan) { return plan.logHandlers(); }
-
-    @Override protected String getType() { return "log-handlers"; }
 
     @Override protected LogHandlerAuditBuilder auditBuilder(LogHandlerResource resource) {
         return LogHandlerAudit.builder().type(resource.type()).name(resource.name());

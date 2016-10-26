@@ -54,6 +54,8 @@ pinned:
 ```
 
 They won't get removed when the resource type is managed, and you can't change them in any of your bundle files.
+They also won't show up when reading the effective plan.
+
 
 See the section [config](reference.md#config) in the reference for details.
 

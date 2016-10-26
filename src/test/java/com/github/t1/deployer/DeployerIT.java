@@ -98,7 +98,12 @@ public class DeployerIT {
                     .resolve(DEPLOYER_CONFIG_YAML);
             write(configFile, ""
                     + "vars:\n"
-                    + "  config-var: 1.3.2"
+                    + "  config-var: 1.3.2\n"
+                    + "pin:\n"
+                    + "  deployables:\n"
+                    + "  - deployer-it\n"
+                    // + "manage:\n"
+                    // + "  all\n"
             );
             // system
 

@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LoggerAudit;
+import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
 import static com.github.t1.deployer.container.LogHandlerType.*;
@@ -417,5 +418,35 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
         // #after(): app1 not undeployed
         app2.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldIgnorePinnedLoggerWhenManaged() {
+        givenManaged("all");
+        givenLogger("FOO").level(DEBUG).deployed();
+        givenLogger("BAR").deployed().pinned();
+        LoggerFixture baz = givenLogger("BAZ").deployed();
+
+        Audits audits = deploy(""
+                + "loggers:\n"
+                + "  FOO:\n"
+                + "    level: DEBUG\n");
+
+        baz.verifyRemoved(audits);
+    }
+
+    @Test
+    public void shouldFailToDeployPinnedLogger() {
+        givenLogger("FOO").deployed().pinned();
+
+        Throwable thrown = catchThrowable(() ->
+                deploy(""
+                        + "loggers:\n"
+                        + "  FOO:\n"
+                        + "    level: DEBUG\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("resource is pinned: logger:deployed:FOO:");
     }
 }

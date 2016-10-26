@@ -179,7 +179,7 @@ public class ConfigSerializationTest {
     @Test
     public void shouldLoadConfigFileWithManagedDeployables() throws Exception {
         configFile.write(""
-                + "managed:\n"
+                + "manage:\n"
                 + "- deployables\n");
 
         ConfigProducer producer = loadConfig();
@@ -235,7 +235,7 @@ public class ConfigSerializationTest {
     @Test
     public void shouldLoadConfigFileWithOnePinnedDeployable() throws Exception {
         configFile.write(""
-                + "pinned:\n"
+                + "pin:\n"
                 + "  deployables: [foo]\n");
 
         ConfigProducer producer = loadConfig();
@@ -246,7 +246,7 @@ public class ConfigSerializationTest {
     @Test
     public void shouldLoadConfigFileWithTwoPinnedDeployable() throws Exception {
         configFile.write(""
-                + "pinned:\n"
+                + "pin:\n"
                 + "  deployables: [foo, bar]\n");
 
         ConfigProducer producer = loadConfig();

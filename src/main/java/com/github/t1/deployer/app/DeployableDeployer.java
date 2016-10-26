@@ -37,13 +37,9 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
 
     @Override protected Stream<DeployablePlan> of(Plan plan) { return plan.deployables(); }
 
-    @Override public void apply(DeployablePlan plan) {
-        if (isPinned(plan.getName().getValue()))
-            throw badRequest("resource is pinned: " + plan);
-        super.apply(plan);
-    }
-
     @Override protected String getType() { return "deployables"; }
+
+    @Override protected String getStringNameOf(DeployablePlan plan) { return plan.getName().getValue(); }
 
     @Override protected DeployableAuditBuilder auditBuilder(DeploymentResource resource) {
         return DeployableAudit.builder().name(toPlanDeploymentName(resource));
@@ -54,7 +50,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
     }
 
     private DeploymentName getResourceDeploymentNameOf(DeployablePlan plan) {
-        if (plan.getType() == war && !plan.getName().getValue().endsWith(".war"))
+        if (plan.getType() == war && !getStringNameOf(plan).endsWith(".war"))
             return new DeploymentName(plan.getName() + ".war");
         return plan.getName();
     }

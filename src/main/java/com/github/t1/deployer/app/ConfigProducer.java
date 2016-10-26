@@ -23,6 +23,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
 import static com.github.t1.deployer.tools.Tools.*;
+import static java.util.Collections.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
@@ -52,8 +53,8 @@ public class ConfigProducer {
         private final RepositoryConfig repository;
         @JsonProperty("root-bundle") private final RootBundleConfig rootBundle;
         @Singular @JsonProperty("vars") private final Map<VariableName, String> variables;
-        @Singular @JsonProperty("managed") private final List<String> managedResourceNames;
-        @Singular("pinned") @JsonProperty("pinned") private final Map<String, List<String>> pinned;
+        @Singular @JsonProperty("manage") private final List<String> managedResourceNames;
+        @Singular("pin") @JsonProperty("pin") private final Map<String, List<String>> pinned;
 
         @Override public String toString() { return toYAML(); }
 
@@ -109,13 +110,12 @@ public class ConfigProducer {
 
 
     @Produces @Config("managed.resources")
-    public List<String> managedResources() { return config.getManagedResourceNames(); }
+    public List<String> managedResources() { return nvl(config.getManagedResourceNames(), emptyList()); }
+
+    @Produces @Config("pinned.resources")
+    public Map<String, List<String>> pinned() { return nvl(config.getPinned(), emptyMap()); }
 
 
     @Produces @Config("variables")
     public Map<VariableName, String> variables() { return config.getVariables(); }
-
-
-    @Produces @Config("pinned")
-    public Map<String, List<String>> pinned() { return config.getPinned(); }
 }

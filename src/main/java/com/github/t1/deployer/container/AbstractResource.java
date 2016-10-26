@@ -29,7 +29,7 @@ public abstract class AbstractResource {
             ModelNode readResource = readResource(createRequestWithAddress());
             ModelNode response = cli.executeRaw(readResource);
             if (response == null)
-                throw new RuntimeException("reading resource to properly mocked: " + this);
+                throw new RuntimeException("read-resource not properly mocked: " + this);
             String outcome = response.get("outcome").asString();
             if ("success".equals(outcome)) {
                 this.deployed = true;
