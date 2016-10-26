@@ -179,7 +179,7 @@ public class DeployerIT {
 
 
     private Stream<DeploymentResource> theDeployments() {
-        return container.allDeployments().stream().filter(deployment -> !DEPLOYER_IT.matches(deployment));
+        return container.allDeployments().filter(deployment -> !DEPLOYER_IT.matches(deployment));
     }
 
     protected Condition<DeploymentResource> deployment(String name, Checksum checksum) {

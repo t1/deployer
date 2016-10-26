@@ -247,4 +247,62 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
 
         bar.verifyDeployed(audits);
     }
+
+    @Test
+    public void shouldUndeployWebArchive() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"
+                + "    state: undeployed\n");
+
+        foo.verifyUndeployExecuted();
+        assertThat(audits.getAudits()).containsExactly(foo.removedAudit());
+    }
+
+    @Test
+    public void shouldUndeployWebArchiveWhenManaged() {
+        givenManaged("all");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n");
+
+        foo.verifyUndeployExecuted();
+        assertThat(audits.getAudits()).containsExactly(foo.removedAudit());
+    }
+
+    @Test
+    public void shouldIgnorePinnedWebArchiveWhenManaged() {
+        givenManaged("all");
+        givenArtifact("foo").version("1.3.2").deployed();
+        givenArtifact("bar").version("2").deployed().pinned();
+        ArtifactFixture baz = givenArtifact("baz").version("3").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n");
+
+        assertThat(audits.getAudits()).containsExactly(baz.removedAudit());
+    }
+
+    @Test
+    public void shouldFailToDeployPinnedWebArchive() {
+        givenArtifact("foo").version("1.3.2").deployed().pinned();
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: 1.3.2\n"));
+
+        assertThat(thrown)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("resource is pinned: deployment:foo:deployed:org.foo:foo:1.3.2:war");
+    }
 }

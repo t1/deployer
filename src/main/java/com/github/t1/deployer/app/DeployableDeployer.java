@@ -17,6 +17,7 @@ import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.problem.WebException.*;
 import static java.util.Objects.*;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 public class DeployableDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {
@@ -27,9 +28,20 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
     @Inject Repository repository;
 
 
-    @Override protected void init() { this.remaining = requireNonNull(container.allDeployments()); }
+    @Override protected void init() {
+        this.remaining = requireNonNull(container
+                .allDeployments()
+                .filter(resource -> !isPinned(toPlanDeploymentName(resource).getValue())))
+                .collect(toList());
+    }
 
     @Override protected Stream<DeployablePlan> of(Plan plan) { return plan.deployables(); }
+
+    @Override public void apply(DeployablePlan plan) {
+        if (isPinned(plan.getName().getValue()))
+            throw badRequest("resource is pinned: " + plan);
+        super.apply(plan);
+    }
 
     @Override protected String getType() { return "deployables"; }
 
@@ -146,7 +158,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
 
 
     @Override public void read(PlanBuilder builder) {
-        for (DeploymentResource deployment : container.allDeployments()) {
+        container.allDeployments().forEach(deployment -> {
             Artifact artifact = repository.lookupByChecksum(deployment.checksum());
             builder.deployable(DeployablePlan
                     .builder()
@@ -158,6 +170,6 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
                     .state(deployed)
                     .checksum(artifact.getChecksum())
                     .build());
-        }
+        });
     }
 }

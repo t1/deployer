@@ -16,7 +16,7 @@ import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.repository.RepositoryType.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class DeployerConfigSerializationTest {
+public class ConfigSerializationTest {
     private static final URI DUMMY_URI = URI.create("https://my-artifactory.example.org:9000/artifactory");
     private static final Password SECRET = new Password(UUID.randomUUID().toString());
 
@@ -230,5 +230,27 @@ public class DeployerConfigSerializationTest {
         ConfigProducer producer = loadConfig();
 
         assertThat(producer.rootBundle().getVersion()).isEqualTo(new Version("1.0"));
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithOnePinnedDeployable() throws Exception {
+        configFile.write(""
+                + "pinned:\n"
+                + "  deployables: [foo]\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.pinned().get("deployables")).containsExactly("foo");
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithTwoPinnedDeployable() throws Exception {
+        configFile.write(""
+                + "pinned:\n"
+                + "  deployables: [foo, bar]\n");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.pinned().get("deployables")).containsExactly("foo", "bar");
     }
 }

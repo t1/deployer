@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.nio.file.*;
-import java.util.List;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -32,5 +31,5 @@ public class Container {
 
     public DeploymentResourceBuilder deployment(DeploymentName name) { return DeploymentResource.builder(name, cli); }
 
-    public List<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(cli); }
+    public Stream<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(cli); }
 }

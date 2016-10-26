@@ -1,3 +1,5 @@
+[TOC]
+
 # Tutorial
 
 After you've read the 1-Minute-Tutorial in the README, you can already nicely install and update deployables.
@@ -20,15 +22,16 @@ Note that this is very simplistic and some information may be missing.
 (currently `application/xml` does not work... but xml seems out-of-fashion anyway ;-)
 
 
-## Undeploy & Manage
+## Undeploy & Manage & Pin
 
 Every resource has an implicit parameter `state` set to `deployed`.
 You can set it explicitly to `undeployed` to have that resource removed.
 This is how to get rid again of, e.g., an application.
 
+
 But how long are you going to keep those undeployed resources in your plans?
 When is it safe to remove that cruft?
-How do you make sure that a freshly set up node looks exactly as a node that's been running for years?
+How do you make sure that a node freshly set up looks exactly as a node that's been running for years?
 Manually keeping track of this all is not very infrastructure-as-code-ish.
 
 So you can tell the deployer to [manage](reference.md#manage) a specific type of resource.
@@ -40,6 +43,17 @@ To do so, add the following snippet to a file `deployer.config.yaml`:
 managed:
 - deployables
 ```
+
+
+Sometimes you'll have resources that are managed in a different way (The Deployer itself could be).
+To always leave them as they are, you can [pin](reference.md#pin) them in your config, i.e.:
+
+```yaml
+pinned:
+  deployables: [myapp]
+```
+
+They won't get removed when the resource type is managed, and you can't change them in any of your bundle files.
 
 See the section [config](reference.md#config) in the reference for details.
 
@@ -317,7 +331,7 @@ Not all values can be set in this way; e.g., there's no much use in defining a `
 For a complete list, see the [reference](reference.md#vars).
 
 
-## Default Root Bundle
+## Configure Root Bundle
 
 Still, something's missing.
 We still need to copy the root bundle to all nodes to bootstrap or when we change a resource.

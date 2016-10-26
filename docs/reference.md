@@ -101,19 +101,6 @@ E.g. `toLowerCase(foo) or bar` will resolve to `baz`, if the variable `foo` is s
 or fall back to `bar` if `foo` is not set.
 
 
-### Default Root Bundle
-
-If there is no file `deployer.root.bundle`, the following default applies:
-
-```yaml
-bundles:
-  ${regex(root-bundle:artifact-id or hostName(), «(.*?)\d*»)}:
-    group-id: ${root-bundle:group-id or default.group-id or domainName()}
-    classifier: ${root-bundle:classifier or null}
-    version: ${root-bundle:version or version}
-```
-
-
 ## Config
 
 The deployer itself can be configured with a file `deployer.config.yaml`.
@@ -135,12 +122,14 @@ Where and how to access the repository containing deployables (`war`, etc.) and 
 
 ### `root-bundle`
 
-The values used for `root-bundle:` expressions:
+What root bundle should be used when there is no `deployer.root.bundle`:
 
-| name | The name of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to the DNS host name (without the domain). |
-| group | The `group-id` of the bundle loaded, if no `deployer.root.bundle` file exists and `default.group-id` is not set. Defaults to the DNS domain name. |
-| classifier | The `classifier` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
-| version | The `version` of the bundle loaded, if no `deployer.root.bundle` file exists. Defaults to null. |
+| name | The name of the root bundle loaded. Defaults to the DNS host name (without the domain or trailing digits). |
+| group-id | The `group-id` of the bundle loaded. Defaults to the `default.group-id` or the DNS domain name. |
+| classifier | The `classifier` of the bundle loaded. Defaults to null. |
+| version | The `version` of the bundle loaded. Defaults to the `version` variable (or fails). |
+
+These values can be used in expressions as `root-bundle:name`, etc.
 
 
 ### `manage`
@@ -148,6 +137,18 @@ The values used for `root-bundle:` expressions:
 This is a list of resource type names or `all` to be managed,
 i.e. resources of this kind that are deployed in the container, but are not in the plan, are removed.
 Defaults to an empty list, i.e. things are left alone.
+
+
+### `pin`
+
+The list of resources to be skipped, i.e. they won't get removed when managed
+and your plan will fail if it contains this resource.
+I.e., to pin a deployable `myapp`, use this:
+
+```yaml
+pinned:
+  deployables: [myapp]
+```
 
 
 ### `vars`

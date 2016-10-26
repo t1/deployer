@@ -53,6 +53,7 @@ public class ConfigProducer {
         @JsonProperty("root-bundle") private final RootBundleConfig rootBundle;
         @Singular @JsonProperty("vars") private final Map<VariableName, String> variables;
         @Singular @JsonProperty("managed") private final List<String> managedResourceNames;
+        @Singular("pinned") @JsonProperty("pinned") private final Map<String, List<String>> pinned;
 
         @Override public String toString() { return toYAML(); }
 
@@ -113,4 +114,8 @@ public class ConfigProducer {
 
     @Produces @Config("variables")
     public Map<VariableName, String> variables() { return config.getVariables(); }
+
+
+    @Produces @Config("pinned")
+    public Map<String, List<String>> pinned() { return config.getPinned(); }
 }

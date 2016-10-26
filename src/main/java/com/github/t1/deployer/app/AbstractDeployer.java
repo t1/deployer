@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.*;
 abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends AbstractResource, AUDIT extends AuditBuilder> {
     @Inject Audits audits;
     @Inject @Config("managed.resources") List<String> managedResourceNames;
+    @Inject @Config("pinned") Map<String, List<String>> pinnedResourceNames;
 
     public abstract void read(PlanBuilder builder);
 
@@ -35,6 +36,10 @@ abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends Abst
     }
 
     protected abstract Stream<PLAN> of(Plan plan);
+
+    protected boolean isPinned(String name) {
+        return pinnedResourceNames.getOrDefault(getType(), emptyList()).contains(name);
+    }
 
     public boolean isManaged() {
         return managedResourceNames != null

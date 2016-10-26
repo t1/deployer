@@ -8,15 +8,14 @@ import org.jboss.as.controller.client.helpers.standalone.*;
 import org.jboss.dmr.ModelNode;
 
 import java.io.*;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.DeploymentName.*;
 import static java.util.Comparator.*;
 import static java.util.concurrent.TimeUnit.*;
-import static java.util.stream.Collectors.*;
 
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
@@ -37,12 +36,11 @@ public class DeploymentResource extends AbstractResource {
         return doNotCallThisBuilderExternally().name(name).container(cli);
     }
 
-    public static List<DeploymentResource> allDeployments(CLI cli) {
+    public static Stream<DeploymentResource> allDeployments(CLI cli) {
         return cli.execute(readResource(new DeploymentResource(ALL, cli).createRequestWithAddress()))
                   .asList().stream()
                   .map(match -> toDeployment(match.get("result"), cli))
-                  .sorted(comparing(DeploymentResource::name))
-                  .collect(toList());
+                  .sorted(comparing(DeploymentResource::name));
     }
 
     private static DeploymentResource toDeployment(ModelNode node, CLI cli) {

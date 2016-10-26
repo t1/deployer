@@ -81,6 +81,7 @@ public class AbstractDeployerTest {
 
     private final Map<VariableName, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
+    private final Map<String, List<String>> pinnedResourceNames = new LinkedHashMap<>();
     private final List<String> allDeployments = new ArrayList<>();
     private final List<String> allLoggers = new ArrayList<>();
     private final Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
@@ -95,6 +96,10 @@ public class AbstractDeployerTest {
                 = loggerDeployer.managedResourceNames
                 = deployableDeployer.managedResourceNames
                 = managedResourceNames;
+        logHandlerDeployer.pinnedResourceNames
+                = loggerDeployer.pinnedResourceNames
+                = deployableDeployer.pinnedResourceNames
+                = pinnedResourceNames;
         deployableDeployer.repository
                 = repository;
         logHandlerDeployer.container
@@ -204,9 +209,12 @@ public class AbstractDeployerTest {
     protected void givenManaged(String... resourceName) { this.managedResourceNames.addAll(asList(resourceName)); }
 
 
-    public ArtifactFixtureBuilder givenArtifact(String name) {
-        return givenArtifact(name, "org." + name, name);
+    private void givenPinned(String type, String name) {
+        pinnedResourceNames.computeIfAbsent(type, k -> new ArrayList<>()).add(name);
     }
+
+
+    public ArtifactFixtureBuilder givenArtifact(String name) { return givenArtifact(name, "org." + name, name); }
 
     public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name) {
         return givenArtifact(type, name, "org." + name, name);
@@ -355,7 +363,15 @@ public class AbstractDeployerTest {
             }
 
             public Artifact artifact() {
-                return artifact(this.version);
+                return Artifact
+                        .builder()
+                        .groupId(groupId())
+                        .artifactId(artifactId())
+                        .version(this.version)
+                        .type(type)
+                        .checksum(checksum)
+                        .inputStreamSupplier(this::inputStream)
+                        .build();
             }
 
             public GroupId groupId() { return ArtifactFixtureBuilder.this.groupId(); }
@@ -364,18 +380,10 @@ public class AbstractDeployerTest {
 
             public Classifier classifier() { return ArtifactFixtureBuilder.this.classifier(); }
 
-            private Artifact artifact(Version version) {
-                return Artifact
-                        .builder()
-                        .groupId(groupId())
-                        .artifactId(artifactId())
-                        .version(version)
-                        .type(type)
-                        .checksum(checksum)
-                        .inputStreamSupplier(this::inputStream)
-                        .build();
+            public ArtifactFixture pinned() {
+                givenPinned("deployables", name);
+                return this;
             }
-
 
             public DeployableAuditBuilder artifactAudit() { return DeployableAudit.builder().name(deploymentName()); }
 
