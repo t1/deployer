@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
 @Accessors(fluent = true, chain = true)
-public class LogHandlerResource extends AbstractResource {
+public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     private static final String DEFAULT_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
 
     @NonNull @Getter private final LogHandlerType type;
@@ -287,4 +287,6 @@ public class LogHandlerResource extends AbstractResource {
 
         this.deployed = true;
     }
+
+    @Override public String getId() { return name.getValue(); }
 }

@@ -100,10 +100,10 @@ public class DeployerIT {
                     + "vars:\n"
                     + "  config-var: 1.3.2\n"
                     + "pin:\n"
-                    + "  deployables:\n"
-                    + "  - deployer-it\n"
-                    // + "manage:\n"
-                    // + "  all\n"
+                    + "  deployables: [deployer-it]\n"
+                    + "  log-handlers: [CONSOLE, FILE]\n"
+                    + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, ROOT]\n"
+                    + "manage: [all]\n"
             );
             // system
 
@@ -130,8 +130,8 @@ public class DeployerIT {
     public LoggerMemento loggerMemento = new LoggerMemento()
             .with("org.apache.http.headers", DEBUG)
             // .with("org.apache.http.wire", DEBUG)
-            .with("com.github.t1.rest", DEBUG)
-            .with("com.github.t1.rest.ResponseConverter", INFO)
+            // .with("com.github.t1.rest", DEBUG)
+            // .with("com.github.t1.rest.ResponseConverter", INFO)
             .with("com.github.t1.deployer", DEBUG);
     @Rule public TestLoggerRule logger = new TestLoggerRule();
     private static FileMemento jbossConfig;
@@ -182,6 +182,10 @@ public class DeployerIT {
         }
     }
 
+
+    public void assertDeployed(Checksum checksum) {
+        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", checksum));
+    }
 
     private Stream<DeploymentResource> theDeployments() {
         return container.allDeployments().filter(deployment -> !DEPLOYER_IT.matches(deployment));
@@ -239,7 +243,7 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_1_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_1_CHECKSUM);
         assertThat(audits).containsExactly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
@@ -262,7 +266,7 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_1_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_1_CHECKSUM);
         assertThat(audits).isEmpty();
     }
 
@@ -279,6 +283,7 @@ public class DeployerIT {
 
         String detail = post(plan, null, BAD_REQUEST).readEntity(String.class);
 
+        assertDeployed(JOLOKIA_1_3_1_CHECKSUM);
         assertThat(detail).contains("Repository checksum [9e29add9df1fa9540654c452dcbf0a2e47cc5330] "
                 + "does not match planned checksum [" + UNKNOWN_CHECKSUM + "]");
     }
@@ -289,7 +294,7 @@ public class DeployerIT {
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}"));
 
         logger.log("verify deployments");
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_2_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_2_CHECKSUM);
         logger.log("verify audits: " + audits);
         assertThat(audits).containsExactly(
                 DeployableAudit.builder().name("jolokia")
@@ -312,7 +317,7 @@ public class DeployerIT {
         Audits audits = post(plan, entity, OK).readEntity(Audits.class);
 
         logger.log("verify deployments");
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_3_CHECKSUM);
         logger.log("verify audits: " + audits.getAudits());
         assertThat(audits.getAudits()).containsExactly(
                 DeployableAudit.builder().name("jolokia")
@@ -328,6 +333,7 @@ public class DeployerIT {
         Entity<String> entity = Entity.json("{\"config-var\":\"1.3.3\"}");
         String detail = post(plan, entity, BAD_REQUEST).readEntity(String.class);
 
+        assertDeployed(JOLOKIA_1_3_3_CHECKSUM);
         assertThat(detail).contains("Variable named [config-var] already set. It's not allowed to overwrite.");
     }
 
@@ -338,6 +344,7 @@ public class DeployerIT {
         Entity<String> entity = Entity.entity("non-empty", WILDCARD_TYPE);
         String detail = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, BAD_REQUEST).readEntity(String.class);
 
+        assertDeployed(JOLOKIA_1_3_3_CHECKSUM);
         assertThat(detail).contains("Please specify a `Content-Type` header when sending a body.");
     }
 
@@ -347,7 +354,7 @@ public class DeployerIT {
         Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_3_CHECKSUM);
         assertThat(audits).isEmpty();
     }
 
@@ -357,7 +364,7 @@ public class DeployerIT {
         Entity<String> entity = Entity.entity("jolokia.version: 1.3.3\n", APPLICATION_YAML_TYPE);
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_3_CHECKSUM);
         assertThat(audits).isEmpty();
     }
 
@@ -367,7 +374,7 @@ public class DeployerIT {
         Entity<Form> entity = Entity.form(new Form("jolokia.version", "1.3.3"));
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_3_CHECKSUM);
         assertThat(audits).isEmpty();
     }
 
@@ -409,7 +416,7 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM);
         assertThat(audits).containsExactly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
@@ -486,7 +493,7 @@ public class DeployerIT {
         Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
         Audits audits = post(plan, entity, OK).readEntity(Audits.class);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_1_3_3_CHECKSUM));
+        assertDeployed(JOLOKIA_1_3_3_CHECKSUM);
         assertThat(audits.getAudits()).containsExactly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
@@ -505,7 +512,11 @@ public class DeployerIT {
                 + "  jolokia:\n"
                 + "    group-id: org.jolokia\n"
                 + "    artifact-id: jolokia-war\n"
-                + "    state: undeployed\n";
+                + "    state: undeployed\n"
+                + "  postgresql:\n"
+                + "    group-id: org.postgresql\n"
+                + "    version: 9.4.1207\n"
+                + "    type: jar\n";
 
         List<Audit> audits = post(plan);
 

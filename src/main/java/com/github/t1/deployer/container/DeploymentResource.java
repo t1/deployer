@@ -20,7 +20,8 @@ import static java.util.concurrent.TimeUnit.*;
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
 @Accessors(fluent = true, chain = true)
-public class DeploymentResource extends AbstractResource {
+public class DeploymentResource extends AbstractResource<DeploymentResource> {
+    public static final String WAR_SUFFIX = ".war";
     private static final int TIMEOUT = 30;
 
     @NonNull @Getter private final DeploymentName name;
@@ -209,11 +210,14 @@ public class DeploymentResource extends AbstractResource {
         this.deployed = true;
     }
 
-    public void redeploy(InputStream inputStream) {
-        new ReplacePlan(name, inputStream).execute();
-    }
+    public void redeploy(InputStream inputStream) { new ReplacePlan(name, inputStream).execute(); }
 
-    @Override public void remove() {
-        new UndeployPlan(name).execute();
+    @Override public void remove() { new UndeployPlan(name).execute(); }
+
+    @Override public String getId() {
+        String nameString = name().getValue();
+        if (nameString.endsWith(WAR_SUFFIX))
+            nameString = nameString.substring(0, nameString.length() - WAR_SUFFIX.length());
+        return nameString;
     }
 }

@@ -135,6 +135,8 @@ public class Plan {
 
     public interface AbstractPlan {
         DeploymentState getState();
+
+        @JsonIgnore String getId();
     }
 
     @Data
@@ -148,6 +150,9 @@ public class Plan {
         @NonNull private final Version version;
         private final Classifier classifier;
         private final Checksum checksum;
+
+        /** can't be abstract, as the class can't be abstract, as the lombok builder would complain */
+        @Override public String getId() { throw new UnsupportedOperationException("need to overload"); }
 
         @SuppressWarnings("unchecked")
         public static class AbstractArtifactPlanBuilder<T extends AbstractArtifactPlanBuilder> {
@@ -214,6 +219,8 @@ public class Plan {
         @NonNull @JsonIgnore private final DeploymentName name;
         @NonNull private final ArtifactType type;
 
+        @Override public String getId() { return name.getValue(); }
+
         public static class DeployablePlanBuilder extends AbstractArtifactPlanBuilder<DeployablePlanBuilder> {
             @Override public DeployablePlan build() {
                 AbstractArtifactPlan a = super.build();
@@ -258,6 +265,8 @@ public class Plan {
     public static class BundlePlan extends AbstractArtifactPlan {
         @NonNull @JsonIgnore private final BundleName name;
         @NonNull @Singular private final Map<String, Map<VariableName, String>> instances;
+
+        @Override public String getId() { return name.getValue(); }
 
         public static class BundlePlanBuilder extends AbstractArtifactPlanBuilder<BundlePlanBuilder> {
             @Override public BundlePlan build() {
@@ -330,6 +339,7 @@ public class Plan {
         @NonNull private final List<LogHandlerName> handlers;
         @JsonProperty private final Boolean useParentHandlers;
 
+        @Override public String getId() { return category.getValue(); }
 
         private static LoggerPlan fromJson(LoggerCategory category, JsonNode node) {
             if (node.isNull())
@@ -404,6 +414,8 @@ public class Plan {
         @JsonProperty("class") private final String class_;
         @Singular private final Map<String, String> properties;
 
+
+        @Override public String getId() { return name.getValue(); }
 
         private static LogHandlerPlan fromJson(LogHandlerName name, JsonNode node) {
             LogHandlerPlanBuilder builder = builder().name(name);

@@ -30,15 +30,9 @@ public class LoggerCategory implements Comparable<LoggerCategory> {
     String value;
 
     @Override
-    public String toString() {
-        return value;
-    }
+    public String toString() { return value; }
 
     public boolean isRoot() { return ROOT.getValue().equals(value); }
 
-    @Override public int compareTo(@NotNull LoggerCategory that) {
-        return this.value.compareTo(that.value);
-    }
-
-    public boolean matches(@NonNull LoggerResource deployment) { return this.equals(deployment.category()); }
+    @Override public int compareTo(@NotNull LoggerCategory that) { return this.value.compareTo(that.value); }
 }

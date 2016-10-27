@@ -9,7 +9,6 @@ import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
@@ -25,14 +24,9 @@ public class LoggerDeployer
 
     @Override protected String getType() { return "loggers"; }
 
-    @Override protected String getStringNameOf(LoggerPlan plan) { return plan.getCategory().getValue(); }
+    @Override protected Stream<LoggerResource> existingResources() { return container.allLoggers(); }
 
-    @Override protected Stream<LoggerResource> getAll() {
-        return container.allLoggers()
-                        .filter(resource -> !isPinned(resource.category().getValue()));
-    }
-
-    @Override protected Stream<LoggerPlan> of(Plan plan) { return plan.loggers(); }
+    @Override protected Stream<LoggerPlan> resourcesIn(Plan plan) { return plan.loggers(); }
 
     @Override protected LoggerAuditBuilder auditBuilder(LoggerResource logger) {
         return LoggerAudit.builder().category(logger.category());
@@ -41,8 +35,6 @@ public class LoggerDeployer
     @Override protected LoggerResourceBuilder resourceBuilder(LoggerPlan plan) {
         return container.builderFor(plan.getCategory());
     }
-
-    @Override protected Predicate<LoggerResource> matches(LoggerPlan plan) { return plan.getCategory()::matches; }
 
     @Override protected void update(LoggerResource resource, LoggerPlan plan, LoggerAuditBuilder audit) {
         super.update(resource, plan, audit);
@@ -70,26 +62,26 @@ public class LoggerDeployer
         return builder.handlers(plan.getHandlers());
     }
 
-    @Override protected void remove(LoggerResource resource) {
-        if (resource.isNotRoot())
-            super.remove(resource);
-    }
+    @Override protected void auditRegularRemove(LoggerResource resource, LoggerPlan plan, LoggerAuditBuilder audit) {
+        super.auditRegularRemove(resource, plan, audit);
 
-    @Override protected void auditRemove(LoggerResource resource, LoggerPlan plan, LoggerAuditBuilder audit) {
-        super.auditRemove(resource, plan, audit);
         for (LogHandlerName handler : resource.handlers())
             audit.change("handler", handler, null);
     }
 
-    @Override public void read(PlanBuilder builder) {
-        getAll().forEach(logger ->
-                builder.logger(LoggerPlan
-                        .builder()
-                        .category(logger.category())
-                        .state(deployed)
-                        .level(logger.level())
-                        .handlers(logger.handlers())
-                        .useParentHandlers(logger.isDefaultUseParentHandlers() ? null : logger.useParentHandlers())
-                        .build()));
+    @Override protected void cleanupRemove(LoggerResource resource) {
+        if (resource.isNotRoot())
+            super.cleanupRemove(resource);
+    }
+
+    @Override public void read(PlanBuilder builder, LoggerResource logger) {
+        builder.logger(LoggerPlan
+                .builder()
+                .category(logger.category())
+                .state(deployed)
+                .level(logger.level())
+                .handlers(logger.handlers())
+                .useParentHandlers(logger.isDefaultUseParentHandlers() ? null : logger.useParentHandlers())
+                .build());
     }
 }

@@ -9,7 +9,6 @@ import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
@@ -37,14 +36,9 @@ public class LogHandlerDeployer extends
 
     @Override protected String getType() { return "log-handlers"; }
 
-    @Override protected String getStringNameOf(LogHandlerPlan plan) { return plan.getName().getValue(); }
+    @Override protected Stream<LogHandlerResource> existingResources() { return container.allLogHandlers(); }
 
-    @Override protected Stream<LogHandlerResource> getAll() {
-        return container.allLogHandlers()
-                        .filter(logHandler -> !isPinned(logHandler.name().getValue()));
-    }
-
-    @Override protected Stream<LogHandlerPlan> of(Plan plan) { return plan.logHandlers(); }
+    @Override protected Stream<LogHandlerPlan> resourcesIn(Plan plan) { return plan.logHandlers(); }
 
     @Override protected LogHandlerAuditBuilder auditBuilder(LogHandlerResource resource) {
         return LogHandlerAudit.builder().type(resource.type()).name(resource.name());
@@ -53,8 +47,6 @@ public class LogHandlerDeployer extends
     @Override protected LogHandlerResourceBuilder resourceBuilder(LogHandlerPlan plan) {
         return container.builderFor(plan.getType(), plan.getName());
     }
-
-    @Override protected Predicate<LogHandlerResource> matches(LogHandlerPlan plan) { return plan.getName()::matches; }
 
     @Override
     protected void update(LogHandlerResource resource, LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
@@ -94,31 +86,29 @@ public class LogHandlerDeployer extends
     }
 
     @Override
-    protected void auditRemove(LogHandlerResource resource, LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
-        super.auditRemove(resource, plan, audit);
+    protected void auditRegularRemove(LogHandlerResource resource, LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
+        super.auditRegularRemove(resource, plan, audit);
 
         if (resource.properties() != null)
             resource.properties().forEach((key, value) -> audit.change("property/" + key, value, null));
     }
 
-    @Override public void read(PlanBuilder plan) {
-        container.allLogHandlers().forEach(handler -> {
-            LogHandlerPlan.LogHandlerPlanBuilder logHandlerPlan = LogHandlerPlan
-                    .builder()
-                    .type(handler.type())
-                    .name(handler.name())
-                    .state(deployed)
-                    .level(handler.level())
-                    .format(handler.format())
-                    .formatter(handler.formatter())
-                    .encoding(handler.encoding())
-                    .file(handler.file())
-                    .suffix(handler.suffix())
-                    .module(handler.module())
-                    .class_(handler.class_());
-            if (handler.properties() != null)
-                handler.properties().forEach(logHandlerPlan::property);
-            plan.logHandler(logHandlerPlan.build());
-        });
+    @Override public void read(PlanBuilder builder, LogHandlerResource handler) {
+        LogHandlerPlan.LogHandlerPlanBuilder logHandlerPlan = LogHandlerPlan
+                .builder()
+                .type(handler.type())
+                .name(handler.name())
+                .state(deployed)
+                .level(handler.level())
+                .format(handler.format())
+                .formatter(handler.formatter())
+                .encoding(handler.encoding())
+                .file(handler.file())
+                .suffix(handler.suffix())
+                .module(handler.module())
+                .class_(handler.class_());
+        if (handler.properties() != null)
+            handler.properties().forEach(logHandlerPlan::property);
+        builder.logHandler(logHandlerPlan.build());
     }
 }

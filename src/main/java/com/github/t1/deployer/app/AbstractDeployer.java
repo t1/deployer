@@ -18,38 +18,54 @@ import static java.util.stream.Collectors.*;
 
 @Slf4j
 @RequiredArgsConstructor
-abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends AbstractResource, AUDIT extends AuditBuilder> {
+abstract class AbstractDeployer<
+        PLAN extends AbstractPlan,
+        RESOURCE extends AbstractResource<RESOURCE>,
+        AUDIT extends AuditBuilder> {
     @Inject Audits audits;
     @Inject @Config("managed.resources") List<String> managedResourceNames;
     @Inject @Config("pinned.resources") Map<String, List<String>> pinnedResourceNames;
 
-    public abstract void read(PlanBuilder builder);
+    private List<RESOURCE> remaining;
 
-    protected void init() {}
-
-    public void apply(Plan plan) {
-        if (log.isDebugEnabled())
-            log.debug("apply {} -> {}", of(plan).collect(toList()), this.getClass().getSimpleName());
-        init();
-        of(plan).forEach(this::apply);
-        if (isManaged())
-            cleanup();
+    /* ------------------------------------------------------------------------------------------------------------ */
+    public void read(PlanBuilder builder) {
+        unpinnedResources().forEach(resource -> read(builder, resource));
     }
 
-    protected abstract Stream<PLAN> of(Plan plan);
+    private Stream<RESOURCE> unpinnedResources() {
+        return existingResources().filter(resource -> !isPinned(resource.getId()));
+    }
+
+    protected abstract Stream<RESOURCE> existingResources();
 
     protected boolean isPinned(String name) {
         return pinnedResourceNames.getOrDefault(getType(), emptyList()).contains(name);
     }
 
-    public boolean isManaged() {
-        return managedResourceNames.equals(singletonList("all")) || managedResourceNames.contains(getType());
-    }
-
     protected abstract String getType();
 
+    protected abstract void read(PlanBuilder builder, RESOURCE resource);
+
+
+    /* ------------------------------------------------------------------------------------------------------------ */
+    public void apply(Plan plan) {
+        if (log.isDebugEnabled())
+            log.debug("apply {} -> {}", resourcesIn(plan).collect(toList()), this.getClass().getSimpleName());
+        this.remaining = unpinnedResources().collect(toList());
+
+        resourcesIn(plan).forEach(this::apply);
+
+        if (isManaged())
+            remaining.stream()
+                     .peek(resource -> log.info("cleanup remaining {}", resource))
+                     .forEach(this::cleanupRemove);
+    }
+
+    protected abstract Stream<PLAN> resourcesIn(Plan plan);
+
     public void apply(PLAN plan) {
-        if (isPinned(getStringNameOf(plan)))
+        if (isPinned(plan.getId()))
             throw badRequest("resource is pinned: " + plan);
 
         RESOURCE resource = getResource(plan);
@@ -58,13 +74,9 @@ abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends Abst
         switch (plan.getState()) {
         case deployed:
             if (resource.isDeployed()) {
+                removeFromRemaining(resource);
                 update(resource, plan, audit);
-
-                Audit updated = audit.changed();
-                if (updated.changeCount() > 0)
-                    audits.add(updated);
-                else
-                    log.info("resource already up-to-date: {}", plan);
+                auditChange(plan, audit);
             } else {
                 resource = buildResource(plan, audit).get();
                 resource.add();
@@ -73,8 +85,9 @@ abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends Abst
             return;
         case undeployed:
             if (resource.isDeployed()) {
+                removeFromRemaining(resource);
+                auditRegularRemove(resource, plan, audit);
                 resource.remove();
-                auditRemove(resource, plan, audit);
                 audits.add(audit.removed());
             } else {
                 log.info("resource already removed: {}", plan);
@@ -84,21 +97,32 @@ abstract class AbstractDeployer<PLAN extends AbstractPlan, RESOURCE extends Abst
         throw new UnsupportedOperationException("unhandled case: " + plan.getState());
     }
 
-    protected abstract String getStringNameOf(PLAN plan);
+    protected abstract RESOURCE getResource(PLAN plan);
 
     protected abstract AUDIT auditBuilder(RESOURCE resource);
 
-    protected abstract RESOURCE getResource(PLAN plan);
+    private void removeFromRemaining(RESOURCE resource) {
+        boolean removed = remaining.removeIf(resource::matchesId);
+        assert removed : "expected [" + resource + "] to be in " + remaining;
+    }
 
     protected abstract void update(RESOURCE resource, PLAN plan, AUDIT audit);
 
+    private void auditChange(PLAN plan, AUDIT audit) {
+        Audit changed = audit.changed();
+        if (changed.changeCount() > 0)
+            audits.add(changed);
+        else
+            log.info("resource already up-to-date: {}", plan);
+    }
+
     protected abstract Supplier<RESOURCE> buildResource(PLAN plan, AUDIT audit);
 
-    protected abstract void auditRemove(RESOURCE resource, PLAN plan, AUDIT audit);
+    protected abstract void auditRegularRemove(RESOURCE resource, PLAN plan, AUDIT audit);
 
-    /**
-     * This method is called after all planned resources have been visited, so managed resources can clean up,
-     * e.g. deployments that are not in the plan get undeployed.
-     */
-    public abstract void cleanup();
+    protected abstract void cleanupRemove(RESOURCE resource);
+
+    public boolean isManaged() {
+        return managedResourceNames.equals(singletonList("all")) || managedResourceNames.contains(getType());
+    }
 }

@@ -5,19 +5,18 @@ import com.github.t1.deployer.app.Plan.AbstractPlan;
 import com.github.t1.deployer.container.*;
 import lombok.*;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.*;
-
+@Slf4j
 abstract class ResourceDeployer<
         PLAN extends AbstractPlan,
         BUILDER extends Supplier<RESOURCE>,
-        RESOURCE extends AbstractResource,
+        RESOURCE extends AbstractResource<RESOURCE>,
         AUDIT extends AuditBuilder>
         extends AbstractDeployer<PLAN, RESOURCE, AUDIT> {
 
@@ -52,7 +51,6 @@ abstract class ResourceDeployer<
     }
 
     @Inject Container container;
-    private List<RESOURCE> remaining;
 
     private final List<Property<?>> properties = new ArrayList<>();
 
@@ -133,22 +131,13 @@ abstract class ResourceDeployer<
         return property;
     }
 
-    @Override protected void init() { this.remaining = getAll().collect(toList()); }
-
-    protected abstract Stream<RESOURCE> getAll();
-
     @Override protected RESOURCE getResource(PLAN plan) { return resourceBuilder(plan).get(); }
 
     protected abstract BUILDER resourceBuilder(PLAN plan);
 
     @Override protected void update(RESOURCE resource, PLAN plan, AUDIT audit) {
-        boolean removed = remaining.removeIf(matches(plan));
-        assert removed : "expected [" + resource + "] to be in existing " + remaining;
-
         properties.forEach(property -> property.update(resource, plan, audit));
     }
-
-    protected abstract Predicate<RESOURCE> matches(PLAN plan);
 
     @Override protected BUILDER buildResource(PLAN plan, AUDIT audit) {
         BUILDER builder = resourceBuilder(plan);
@@ -156,13 +145,11 @@ abstract class ResourceDeployer<
         return builder;
     }
 
-    @Override protected void auditRemove(RESOURCE resource, PLAN plan, AUDIT audit) {
+    @Override protected void auditRegularRemove(RESOURCE resource, PLAN plan, AUDIT audit) {
         properties.forEach(property -> audit.change(property.name(), property.from(resource), null));
     }
 
-    @Override public void cleanup() { remaining.forEach(this::remove); }
-
-    protected void remove(RESOURCE resource) {
+    @Override protected void cleanupRemove(RESOURCE resource) {
         AUDIT audit = auditBuilder(resource);
         properties.forEach(property -> audit.change(property.name(), property.from(resource), null));
         audits.add(audit.removed());

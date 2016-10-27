@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
 @Accessors(fluent = true, chain = true)
-public class LoggerResource extends AbstractResource {
+public class LoggerResource extends AbstractResource<LoggerResource> {
     public static LogLevel mapLogLevel(String level) {
         switch (level) {
         case "ALL":
@@ -223,4 +223,6 @@ public class LoggerResource extends AbstractResource {
         assert root.isRoot();
         return root;
     }
+
+    @Override public String getId() { return category.getValue(); }
 }

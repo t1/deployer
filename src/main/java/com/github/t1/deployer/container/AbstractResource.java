@@ -14,7 +14,7 @@ import static com.github.t1.deployer.container.CLI.*;
  */
 @Slf4j
 @RequiredArgsConstructor
-public abstract class AbstractResource {
+public abstract class AbstractResource<T extends AbstractResource<T>> {
     @NonNull private final CLI cli;
 
     protected Boolean deployed = null;
@@ -76,4 +76,8 @@ public abstract class AbstractResource {
 
         execute(request);
     }
+
+    public abstract String getId();
+
+    public boolean matchesId(T that) { return this.getId().equals(that.getId()); }
 }
