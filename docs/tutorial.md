@@ -219,7 +219,7 @@ There are actually many ways to package bundles, and it's is actually completely
 but it's such an important step, so we'll describe one way briefly here.
 We _could_ deploy these files with the GUI of the repository, or with a Maven command similar to this:
 
-```
+```bash
 mvn deploy:deploy-file -DgroupId=org.mygroup -DartifactId=myapp1 -Dversion=1.0 -Dtype=bundle
 -Durl=http://localhost:8081/artifactory/libs-release-local/org/mygroup/myapp1/1.0/myapp1-1.0.bundle
 -Dfile=myapp1.bundle
@@ -290,11 +290,15 @@ We'd like to be able to update an application from the _outside_, e.g. from a Je
 To do that, simply set the `version` of `myapp1` to `${myapp1.version}`.
 Then, using [httpie](http://httpie.org/), you can do:
 
+```bash
     http --json POST :8080/deployer myapp1.version=1.0
+```
 
 ... or (more wordy) using CURL:
 
+```bash
     curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data '{"myapp1.version":"1.0"}' http://localhost:8080/deployer
+```
 
 But we have _two_ artifacts. If we replace the second version `2.0` with `${myapp2.version}`,
 how should the build job of `myapp1` know about the version of `myapp2`?
