@@ -1,5 +1,3 @@
-[TOC]
-
 # Tutorial
 
 After you've read the 1-Minute-Tutorial in the README, you can already nicely install and update deployables.
