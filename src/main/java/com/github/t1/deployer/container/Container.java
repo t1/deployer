@@ -29,7 +29,7 @@ public class Container {
 
     public Stream<LoggerResource> allLoggers() { return LoggerResource.allLoggers(cli).stream(); }
 
-    public DeploymentResourceBuilder deployment(DeploymentName name) { return DeploymentResource.builder(name, cli); }
+    public DeploymentResourceBuilder builderFor(DeploymentName name) { return DeploymentResource.builder(name, cli); }
 
     public Stream<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(cli); }
 }

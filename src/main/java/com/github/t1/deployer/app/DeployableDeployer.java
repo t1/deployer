@@ -39,7 +39,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
     }
 
     @Override protected DeploymentResource getResource(DeployablePlan plan) {
-        return container.deployment(toDeploymentName(plan)).build();
+        return container.builderFor(toDeploymentName(plan)).build();
     }
 
     private static DeploymentName toDeploymentName(DeployablePlan plan) {
@@ -54,7 +54,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
         if (resource.checksum().equals(artifact.getChecksum())) {
             log.debug("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
         } else {
-            container.deployment(toDeploymentName(plan)).build().redeploy(artifact.getInputStream());
+            container.builderFor(toDeploymentName(plan)).build().redeploy(artifact.getInputStream());
             audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
             if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
@@ -89,7 +89,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
              .change("version", null, artifact.getVersion())
              .change("type", null, artifact.getType())
              .change("checksum", null, artifact.getChecksum());
-        return container.deployment(toDeploymentName(plan)).inputStream(artifact.getInputStream());
+        return container.builderFor(toDeploymentName(plan)).inputStream(artifact.getInputStream());
     }
 
     private Artifact lookupDeployedArtifact(DeployablePlan plan, Artifact old) {
