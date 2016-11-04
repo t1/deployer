@@ -6,6 +6,8 @@ import org.jboss.as.controller.client.helpers.standalone.ServerDeploymentManager
 import org.jboss.dmr.ModelNode;
 
 import static com.github.t1.deployer.container.CLI.*;
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
 
 /**
  * Resources represent the configured state of the JavaEE container. They are responsible to {@link #add()},
@@ -26,25 +28,25 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     public boolean isDeployed() {
         if (deployed == null) {
-            ModelNode readResource = readResource(createRequestWithAddress());
+            ModelNode readResource = createReadResourceOperation(address(), true);
             ModelNode response = cli.executeRaw(readResource);
             if (response == null)
                 throw new RuntimeException("read-resource not properly mocked: " + this);
-            String outcome = response.get("outcome").asString();
-            if ("success".equals(outcome)) {
+            if (isSuccessfulOutcome(response)) {
                 this.deployed = true;
-                readFrom(response.get("result"));
+                readFrom(response.get(RESULT));
             } else if (isNotFoundMessage(response)) {
                 this.deployed = false;
             } else {
                 log.error("failed: {}", response);
-                throw new RuntimeException("outcome " + outcome + ": " + response.get("failure-description"));
+                throw new RuntimeException("outcome " + response.get("outcome").asString()
+                        + ": " + getFailureDescription(response));
             }
         }
         return deployed;
     }
 
-    protected abstract ModelNode createRequestWithAddress();
+    protected abstract ModelNode address();
 
     protected abstract void readFrom(ModelNode result);
 
@@ -52,30 +54,17 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     public ServerDeploymentManager openServerDeploymentManager() { return cli.openServerDeploymentManager(); }
 
-    public void writeAttribute(String name, String value) {
-        cli.writeAttribute(createRequestWithAddress(), name, value);
-    }
+    public void writeAttribute(String name, String value) { cli.writeAttribute(address(), name, value); }
 
-    public void writeAttribute(String name, boolean value) {
-        cli.writeAttribute(createRequestWithAddress(), name, value);
-    }
+    public void writeAttribute(String name, boolean value) { cli.writeAttribute(address(), name, value); }
 
-    public void mapPut(String name, String key, String value) {
-        cli.mapPut(createRequestWithAddress(), name, key, value);
-    }
+    public void mapPut(String name, String key, String value) { cli.mapPut(address(), name, key, value); }
 
-    protected void mapRemove(String name, String key) {
-        cli.mapRemove(createRequestWithAddress(), name, key);
-    }
+    protected void mapRemove(String name, String key) { cli.mapRemove(address(), name, key); }
 
     public abstract void add();
 
-    public void remove() {
-        ModelNode request = createRequestWithAddress();
-        request.get("operation").set("remove");
-
-        execute(request);
-    }
+    public void remove() { execute(createRemoveOperation(address())); }
 
     public abstract String getId();
 

@@ -40,6 +40,7 @@ import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -152,7 +153,9 @@ public class AbstractDeployerTest {
 
     private static String versionsKey(GroupId groupId, ArtifactId artifactId) { return groupId + ":" + artifactId; }
 
-    public static String rootLogger() {return address("logging", "root-logger", "ROOT");}
+    public static String rootLogger() { return address("logging", "root-logger", "ROOT"); }
+
+    public static ModelNode rootLoggerNode() { return createAddress("subsystem", "logging", "root-logger", "ROOT"); }
 
     private ModelNode rootLoggerResponse() {
         return toModelNode(""
@@ -507,6 +510,10 @@ public class AbstractDeployerTest {
 
         public String loggerAddress() { return address("logging", "logger", category); }
 
+        private ModelNode loggerAddressNode() {
+            return createAddress("subsystem", "logging", "logger", category.getValue());
+        }
+
         private String handlersArrayNode() {
             if (handlers.size() == 1)
                 return "['" + handlers.get(0) + "']";
@@ -537,12 +544,10 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedFrom(LogLevel oldLevel, Audits audits) {
-            verify(cli).writeAttribute(buildRequest(), "level", level.toString());
+            verify(cli).writeAttribute(loggerAddressNode(), "level", level.toString());
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
         }
-
-        public ModelNode buildRequest() { return toModelNode("{" + loggerAddress() + "}"); }
 
         public void verifyRemoved(Audits audits) {
             verify(cli).execute(toModelNode(""
@@ -560,7 +565,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {
-            verify(cli).writeAttribute(buildRequest(), "use-parent-handlers", useParentHandlers);
+            verify(cli).writeAttribute(loggerAddressNode(), "use-parent-handlers", useParentHandlers);
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
                                .changed());
@@ -609,8 +614,8 @@ public class AbstractDeployerTest {
     public static ModelNode readResource(String address) {
         return toModelNode(""
                 + "{\n"
-                + address
                 + "    'operation' => 'read-resource',\n"
+                + address
                 + "    'recursive' => true\n"
                 + "}");
     }
@@ -763,9 +768,11 @@ public class AbstractDeployerTest {
         }
 
 
-        private ModelNode buildRequest() { return toModelNode("{" + logHandlerAddress() + "}"); }
-
         private String logHandlerAddress() { return address("logging", type.getHandlerTypeName(), name); }
+
+        private ModelNode logHandlerAddressNode() {
+            return createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
+        }
 
 
         public <T> LogHandlerFixture verifyChange(String name, T oldValue, T newValue) {
@@ -775,7 +782,7 @@ public class AbstractDeployerTest {
         }
 
         public <T> void verifyWriteAttribute(String name, T value) {
-            verify(cli).writeAttribute(buildRequest(), name, toStringOrNull(value));
+            verify(cli).writeAttribute(logHandlerAddressNode(), name, toStringOrNull(value));
         }
 
         public <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
@@ -788,11 +795,11 @@ public class AbstractDeployerTest {
         }
 
         public void verifyMapPut(String name, String key, String value) {
-            verify(cli).mapPut(buildRequest(), name, key, value);
+            verify(cli).mapPut(logHandlerAddressNode(), name, key, value);
         }
 
         public void verifyMapRemove(String name, String key) {
-            verify(cli).mapRemove(buildRequest(), name, key);
+            verify(cli).mapRemove(logHandlerAddressNode(), name, key);
         }
 
         public void verifyAdded(Audits audits) {

@@ -7,7 +7,7 @@ import com.github.t1.deployer.model.Expressions.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.*;
-import lombok.*;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.*;
@@ -60,9 +60,8 @@ public class DeployerBoundary {
     }
 
     @Asynchronous
-    @SneakyThrows(InterruptedException.class)
     public void applyAsync(Trigger trigger) {
-        Thread.sleep(1000);
+        container.waitForBoot();
         try {
             apply(trigger, emptyMap());
         } catch (RuntimeException e) {

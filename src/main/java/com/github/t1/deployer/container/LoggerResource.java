@@ -9,13 +9,13 @@ import org.jboss.dmr.ModelNode;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LoggerCategory.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
 
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
@@ -68,7 +68,7 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
     }
 
     public static List<LoggerResource> allLoggers(CLI cli) {
-        ModelNode request = readResource(new LoggerResource(LoggerCategory.ALL, cli).createRequestWithAddress());
+        ModelNode request = createReadResourceOperation(new LoggerResource(LoggerCategory.ALL, cli).address(), true);
         List<LoggerResource> loggers =
                 cli.execute(request)
                    .asList().stream()
@@ -129,16 +129,14 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
 
     public void addLoggerHandler(LogHandlerName handler) {
         checkDeployed();
-        ModelNode request = createRequestWithAddress();
-        request.get("operation").set("add-handler");
+        ModelNode request = createOperation("add-handler", address());
         request.get("name").set(handler.getValue());
         execute(request);
     }
 
     public void removeLoggerHandler(LogHandlerName handler) {
         checkDeployed();
-        ModelNode request = createRequestWithAddress();
-        request.get("operation").set("remove-handler");
+        ModelNode request = createOperation("remove-handler", address());
         request.get("name").set(handler.getValue());
         execute(request);
     }
@@ -172,14 +170,10 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
                 : emptyList();
     }
 
-    @Override protected ModelNode createRequestWithAddress() {
-        ModelNode request = new ModelNode();
-        ModelNode logging = request.get("address").add("subsystem", "logging");
-        if (category.isRoot())
-            logging.add("root-logger", ROOT.getValue());
-        else
-            logging.add("logger", category.getValue());
-        return request;
+    @Override protected ModelNode address() {
+        return createAddress("subsystem", "logging",
+                category.isRoot() ? "root-logger" : "logger",
+                category.isRoot() ? ROOT.getValue() : category.getValue());
     }
 
     @Override public void remove() {
@@ -192,8 +186,7 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
         if (isRoot())
             throw new RuntimeException("can't add root logger");
 
-        ModelNode request = createRequestWithAddress();
-        request.get("operation").set("add");
+        ModelNode request = createAddOperation(address());
         if (level != null)
             request.get("level").set(level.name());
         for (LogHandlerName handler : handlers)

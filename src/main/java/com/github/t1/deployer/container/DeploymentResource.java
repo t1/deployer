@@ -12,10 +12,10 @@ import java.util.concurrent.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.DeploymentName.*;
 import static java.util.Comparator.*;
 import static java.util.concurrent.TimeUnit.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
 
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
@@ -38,7 +38,7 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
     }
 
     public static Stream<DeploymentResource> allDeployments(CLI cli) {
-        return cli.execute(readResource(new DeploymentResource(ALL, cli).createRequestWithAddress()))
+        return cli.execute(createReadResourceOperation(new DeploymentResource(ALL, cli).address(), true))
                   .asList().stream()
                   .map(match -> toDeployment(match.get("result"), cli))
                   .sorted(comparing(DeploymentResource::name));
@@ -80,11 +80,7 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
         return checksum;
     }
 
-    @Override protected ModelNode createRequestWithAddress() {
-        ModelNode request = new ModelNode();
-        request.get("address").add("deployment", name.getValue());
-        return request;
-    }
+    @Override protected ModelNode address() { return createAddress("deployment", name.getValue()); }
 
     @Override protected void readFrom(ModelNode node) {
         DeploymentName name = readName(node);

@@ -8,10 +8,16 @@ import org.jboss.dmr.ModelNode;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.function.Consumer;
+import java.util.concurrent.TimeoutException;
+
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
+import static org.wildfly.plugin.core.ServerHelper.*;
 
 @Slf4j
 public class CLI {
+    private static final int STARTUP_TIMEOUT = 30;
+
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
         switch (severity) {
         case ERROR:
@@ -28,35 +34,20 @@ public class CLI {
     @Inject ModelControllerClient client;
 
 
-    public static ModelNode readResource(ModelNode request) {
-        request.get("operation").set("read-resource");
-        request.get("recursive").set(true);
-        return request;
+    @SneakyThrows({ InterruptedException.class, TimeoutException.class })
+    public void waitForBoot() { waitForStandalone(client, STARTUP_TIMEOUT); }
+
+    public ModelNode writeAttribute(ModelNode address, String name, String value) {
+        return execute(createWriteAttributeOperation(address, name, value));
     }
 
-    public ModelNode writeAttribute(ModelNode request, String name, String value) {
-        return writeAttribute(request, name, node -> node.set(value));
-    }
-
-    public ModelNode writeAttribute(ModelNode request, String name, boolean value) {
-        return writeAttribute(request, name, node -> node.set(value));
-    }
-
-    private ModelNode writeAttribute(ModelNode request, String name, Consumer<ModelNode> setValue) {
-        try {
-            request.get("operation").set("write-attribute");
-            request.get("name").set(name);
-            setValue.accept(request.get("value"));
-
-            return execute(request);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("can't write [" + request.get("address") + "][" + name + "]", e);
-        }
+    public ModelNode writeAttribute(ModelNode address, String name, boolean value) {
+        return execute(createWriteAttributeOperation(address, name, value));
     }
 
 
-    public ModelNode mapPut(ModelNode request, String name, String key, String value) {
-        request.get("operation").set("map-put");
+    public ModelNode mapPut(ModelNode address, String name, String key, String value) {
+        ModelNode request = createOperation("map-put", address);
         request.get("name").set(name);
         request.get("key").set(key);
         request.get("value").set(value);
@@ -64,9 +55,8 @@ public class CLI {
         return execute(request);
     }
 
-
-    public ModelNode mapRemove(ModelNode request, String name, String key) {
-        request.get("operation").set("map-remove");
+    public ModelNode mapRemove(ModelNode address, String name, String key) {
+        ModelNode request = createOperation("map-remove", address);
         request.get("name").set(name);
         request.get("key").set(key);
 
@@ -89,14 +79,13 @@ public class CLI {
     }
 
     public void checkOutcome(ModelNode result) {
-        String outcome = result.get("outcome").asString();
-        if (!"success".equals(outcome))
+        if (!isSuccessfulOutcome(result))
             fail(result);
     }
 
     public boolean fail(ModelNode result) {
         throw new RuntimeException("outcome " + result.get("outcome")
-                + (result.hasDefined("failure-description") ? ": " + result.get("failure-description") : ""));
+                + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : ""));
     }
 
     public static boolean isNotFoundMessage(ModelNode result) {

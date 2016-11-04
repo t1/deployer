@@ -11,15 +11,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.container.CLI.*;
 import static com.github.t1.deployer.container.LogHandlerName.*;
 import static com.github.t1.deployer.container.LoggerResource.*;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
 
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
 @Accessors(fluent = true, chain = true)
+@SuppressWarnings("unused")
 public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     private static final String DEFAULT_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
 
@@ -51,9 +52,8 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     public static List<LogHandlerResource> allHandlers(CLI cli) {
         return Arrays.stream(LogHandlerType.values())
                      .flatMap(type -> {
-                         ModelNode request = readResource(
-                                 new LogHandlerResource(type, ALL, cli).createRequestWithAddress());
-                         return cli.execute(request)
+                         ModelNode address = new LogHandlerResource(type, ALL, cli).address();
+                         return cli.execute(createReadResourceOperation(address, true))
                                    .asList().stream()
                                    .map(node -> toLoggerResource(type(node), name(node), cli, node.get("result")));
                      })
@@ -218,12 +218,8 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     }
 
 
-    @Override protected ModelNode createRequestWithAddress() {
-        ModelNode request = new ModelNode();
-        request.get("address")
-               .add("subsystem", "logging")
-               .add(type.getHandlerTypeName(), name.getValue());
-        return request;
+    @Override protected ModelNode address() {
+        return createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
     }
 
     @Override protected void readFrom(ModelNode result) {
@@ -258,8 +254,7 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
 
     @Override public void add() {
         log.debug("add log-handler {}", name);
-        ModelNode request = createRequestWithAddress();
-        request.get("operation").set("add");
+        ModelNode request = createAddOperation(address());
         if (level != null)
             request.get("level").set(level.name());
         if (format != null)

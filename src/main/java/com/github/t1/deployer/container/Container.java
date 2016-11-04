@@ -17,6 +17,8 @@ import java.util.stream.Stream;
 public class Container {
     @Inject public CLI cli;
 
+    public void waitForBoot() { cli.waitForBoot(); }
+
     public Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
 
     public LogHandlerResourceBuilder builderFor(LogHandlerType type, LogHandlerName name) {

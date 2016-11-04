@@ -74,7 +74,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    handlers: [CONSOLE, FILE]\n");
 
-        verify(cli).writeAttribute(toModelNode("{" + rootLogger() + "}"), "level", "DEBUG");
+        verify(cli).writeAttribute(rootLoggerNode(), "level", "DEBUG");
         assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(ROOT).change("level", "INFO", "DEBUG").changed());
     }
 
