@@ -4,18 +4,19 @@ import com.github.t1.deployer.model.Checksum;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.as.controller.client.helpers.standalone.*;
+import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.plugin.core.*;
 
-import java.io.*;
-import java.util.concurrent.*;
+import java.io.InputStream;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.container.DeploymentName.*;
 import static java.util.Comparator.*;
-import static java.util.concurrent.TimeUnit.*;
+import static org.jboss.as.controller.client.helpers.Operations.createAddress;
 import static org.jboss.as.controller.client.helpers.Operations.*;
+import static org.wildfly.plugin.core.DeploymentOperations.*;
 
 @Slf4j
 @Builder(builderMethodName = "doNotCallThisBuilderExternally")
@@ -103,112 +104,27 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
         }
     }
 
-    private abstract class AbstractPlan {
-        public void execute() {
-            try (ServerDeploymentManager deploymentManager = openServerDeploymentManager()) {
-                DeploymentPlan plan = buildPlan(deploymentManager.newDeploymentPlan()).build();
-
-                log.debug("start executing {}", getClass().getSimpleName());
-                logDeployPlan(plan);
-                Future<ServerDeploymentPlanResult> future = deploymentManager.execute(plan);
-                log.debug("wait for {}", getClass().getSimpleName());
-                ServerDeploymentPlanResult result = future.get(TIMEOUT, SECONDS);
-                log.debug("done executing {}", getClass().getSimpleName());
-
-                checkOutcome(plan, result);
-            } catch (IOException | ExecutionException | TimeoutException | InterruptedException e) {
-                throw new RuntimeException("deployment failed", e);
-            }
-        }
-
-        protected abstract DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan);
-
-        private void logDeployPlan(DeploymentPlan plan) {
-            if (!log.isTraceEnabled())
-                return;
-            for (DeploymentAction action : plan.getDeploymentActions()) {
-                log.trace("- planned action: {} {} -> {}", action.getType(), action.getDeploymentUnitUniqueName(),
-                        action.getReplacedDeploymentUnitUniqueName());
-            }
-        }
-
-        private void checkOutcome(DeploymentPlan plan, ServerDeploymentPlanResult result) {
-            boolean failed = false;
-            Throwable firstThrowable = null;
-            for (DeploymentAction action : plan.getDeploymentActions()) {
-                ServerDeploymentActionResult actionResult = result.getDeploymentActionResult(action.getId());
-                @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-                Throwable deploymentException = actionResult.getDeploymentException();
-                if (deploymentException != null)
-                    firstThrowable = deploymentException;
-                switch (actionResult.getResult()) {
-                case CONFIGURATION_MODIFIED_REQUIRES_RESTART:
-                    log.warn("requires restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case EXECUTED:
-                    log.debug("executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case FAILED:
-                    failed = true;
-                    log.error("failed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case NOT_EXECUTED:
-                    log.debug("not executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case ROLLED_BACK:
-                    log.debug("rolled back: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                }
-            }
-            if (firstThrowable != null || failed) {
-                throw new RuntimeException("failed to execute " + getClass().getSimpleName(), firstThrowable);
-            }
-        }
-    }
-
-    @AllArgsConstructor
-    private class DeployPlan extends AbstractPlan {
-        private final DeploymentName deploymentName;
-        private final InputStream inputStream;
-
-        @Override
-        protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            String name = deploymentName.getValue();
-            return plan.add(name, inputStream).deploy(name);
-        }
-    }
-
-    @AllArgsConstructor
-    private class ReplacePlan extends AbstractPlan {
-        private final DeploymentName deploymentName;
-        private final InputStream inputStream;
-
-        @Override
-        protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            return plan.replace(deploymentName.getValue(), inputStream);
-        }
-    }
-
-    @AllArgsConstructor
-    private class UndeployPlan extends AbstractPlan {
-        private final DeploymentName deploymentName;
-
-        @Override
-        protected DeploymentPlanBuilder buildPlan(InitialDeploymentPlanBuilder plan) {
-            String name = deploymentName.getValue();
-            return plan.undeploy(name).remove(name);
-        }
-    }
-
     @Override public void add() {
         assert inputStream != null : "need an input stream to deploy";
-        new DeployPlan(name, inputStream).execute();
+        Deployment deployment = deployment(inputStream);
+        execute(createAddDeploymentOperation(deployment));
         this.deployed = true;
     }
 
-    public void redeploy(InputStream inputStream) { new ReplacePlan(name, inputStream).execute(); }
+    public void redeploy(InputStream inputStream) {
+        assert inputStream != null : "need an input stream to redeploy";
+        Deployment deployment = deployment(inputStream);
+        Operation operation = createReplaceOperation(deployment);
+        execute(operation);
+    }
 
-    @Override public void remove() { new UndeployPlan(name).execute(); }
+    private Deployment deployment(InputStream inputStream) { return Deployment.of(inputStream, name.getValue()); }
+
+    @Override public void remove() {
+        UndeployDescription deployment = UndeployDescription.of(name.getValue()).setFailOnMissing(true);
+        execute(createUndeployOperation(deployment));
+        this.deployed = false;
+    }
 
     @Override public String getId() {
         String nameString = name().getValue();

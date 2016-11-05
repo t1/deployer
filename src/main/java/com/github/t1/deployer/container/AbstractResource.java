@@ -2,7 +2,7 @@ package com.github.t1.deployer.container;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.as.controller.client.helpers.standalone.ServerDeploymentManager;
+import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
 
 import static com.github.t1.deployer.container.CLI.*;
@@ -28,6 +28,7 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     public boolean isDeployed() {
         if (deployed == null) {
+            log.debug("isDeployed: {}", address());
             ModelNode readResource = createReadResourceOperation(address(), true);
             ModelNode response = cli.executeRaw(readResource);
             if (response == null)
@@ -50,9 +51,9 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected abstract void readFrom(ModelNode result);
 
-    protected void execute(ModelNode request) { cli.execute(request); }
+    protected ModelNode execute(ModelNode request) { return cli.execute(request); }
 
-    public ServerDeploymentManager openServerDeploymentManager() { return cli.openServerDeploymentManager(); }
+    protected ModelNode execute(Operation operation) { return cli.execute(operation); }
 
     public void writeAttribute(String name, String value) { cli.writeAttribute(address(), name, value); }
 

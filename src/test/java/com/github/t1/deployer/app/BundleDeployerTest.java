@@ -640,6 +640,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "    version: 1\n"
         );
 
+        bar.verifyDeployed(audits);
         foo.verifyUndeployExecuted();
         assertThat(audits.getAudits()).containsExactly(bar.addedAudit(), foo.removedAudit());
     }
@@ -849,8 +850,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "    version: 1\n");
 
         // #after(): jolokia not re-deployed
-        assertThat(audits.getAudits()).containsExactly(
-                mockserver.addedAudit());
+        mockserver.verifyDeployed(audits);
     }
 
 
@@ -1067,7 +1067,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
-        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+        jolokia.verifyDeployed(audits);
     }
 
     @Test
@@ -1084,7 +1084,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
-        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+        jolokia.verifyDeployed(audits);
     }
 
     @Test
@@ -1101,7 +1101,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
-        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+        jolokia.verifyDeployed(audits);
     }
 
     @Test
@@ -1118,7 +1118,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
-        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+        jolokia.verifyDeployed(audits);
     }
 
     @Test
@@ -1135,7 +1135,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
-        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+        jolokia.verifyDeployed(audits);
     }
 
     @Test
@@ -1153,7 +1153,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.apply(mock, ImmutableMap.of(VERSION, "1.2"));
 
-        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+        jolokia.verifyDeployed(audits);
     }
 
     @Test
@@ -1170,7 +1170,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         Audits audits = deployer.apply(mock, emptyMap());
 
-        assertThat(audits.getAudits()).containsExactly(jolokia.addedAudit());
+        jolokia.verifyDeployed(audits);
     }
 
     @Test

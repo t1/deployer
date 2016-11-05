@@ -3,7 +3,6 @@
 
         org.jboss.as.controller.client.ModelControllerClient.class,
         org.jboss.as.controller.client.helpers.Operations.class,
-        org.jboss.as.controller.client.helpers.standalone.DeploymentPlan.class,
         org.jboss.dmr.ModelNode.class,
         org.wildfly.plugin.core.ServerHelper.class,
         com.google.common.collect.ImmutableMap.class,

@@ -288,7 +288,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "    group-id: org.foo\n"
                 + "    version: 1.3.2\n");
 
-        assertThat(audits.getAudits()).containsExactly(baz.removedAudit());
+        baz.verifyRemoved(audits);
     }
 
     @Test

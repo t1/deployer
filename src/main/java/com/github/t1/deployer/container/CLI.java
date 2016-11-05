@@ -3,7 +3,6 @@ package com.github.t1.deployer.container;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
-import org.jboss.as.controller.client.helpers.standalone.ServerDeploymentManager;
 import org.jboss.dmr.ModelNode;
 
 import javax.inject.Inject;
@@ -78,6 +77,23 @@ public class CLI {
         return result;
     }
 
+    public ModelNode execute(Operation operation) {
+        ModelNode result = executeRaw(operation);
+        checkOutcome(result);
+        return result.get("result");
+    }
+
+    private ModelNode executeRaw(Operation operation) {
+        log.debug("execute operation {}", operation);
+        try {
+            ModelNode result = client.execute(operation);
+            log.debug("response {}", result);
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException("operation fails", e);
+        }
+    }
+
     public void checkOutcome(ModelNode result) {
         if (!isSuccessfulOutcome(result))
             fail(result);
@@ -97,9 +113,5 @@ public class CLI {
         log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]", //
                 jboss7start, jboss8start, notFoundEnd, isNotFound, message);
         return isNotFound;
-    }
-
-    public ServerDeploymentManager openServerDeploymentManager() {
-        return ServerDeploymentManager.Factory.create(client);
     }
 }

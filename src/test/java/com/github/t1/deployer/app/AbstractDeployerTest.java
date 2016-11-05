@@ -11,9 +11,8 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.*;
 import lombok.*;
-import org.jboss.as.controller.client.helpers.standalone.*;
+import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
-import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -38,7 +37,6 @@ import static java.lang.Boolean.*;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
-import static org.apache.commons.lang3.concurrent.ConcurrentUtils.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.mockito.Mockito.*;
@@ -72,13 +70,6 @@ public class AbstractDeployerTest {
 
     @Spy Container container;
     @Mock CLI cli;
-    @Mock ServerDeploymentManager deploymentManager;
-    @Mock InitialDeploymentPlanBuilder planBuilder;
-    @Mock AddDeploymentPlanBuilder addPlanBuilder;
-    @Mock ReplaceDeploymentPlanBuilder replacePlanBuilder;
-    @Mock UndeployDeploymentPlanBuilder undeployPlanBuilder;
-    @Mock DeploymentPlan deploymentPlan;
-    @Mock ServerDeploymentPlanResult planResult;
 
     private final Map<VariableName, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
@@ -121,27 +112,11 @@ public class AbstractDeployerTest {
         //     return null;
         // }).when(deployers).forEach(any(Consumer.class));
 
-        when(deploymentManager.newDeploymentPlan()).then(i -> planBuilder);
-
-        when(planBuilder.add(any(String.class), any(InputStream.class))).then(i -> addPlanBuilder);
-        when(addPlanBuilder.deploy(any(String.class))).then(i -> addPlanBuilder);
-        when(addPlanBuilder.build()).then(i -> deploymentPlan);
-
-        when(planBuilder.replace(any(String.class), any(InputStream.class))).then(i -> replacePlanBuilder);
-        when(replacePlanBuilder.build()).then(i -> deploymentPlan);
-
-        when(planBuilder.undeploy(any(String.class))).then(i -> undeployPlanBuilder);
-        when(undeployPlanBuilder.remove(any(String.class))).then(i -> undeployPlanBuilder);
-        when(undeployPlanBuilder.build()).then(i -> deploymentPlan);
-
-        when(deploymentManager.execute(any(DeploymentPlan.class))).then(i -> constantFuture(planResult));
-
         when(cli.executeRaw(readResource(rootLogger()))).then(i -> rootLoggerResponse());
         when(cli.execute(readResource("logging", "logger", "*"))).then(
                 i -> toModelNode(allLoggers.stream().collect(joining(",", "[", "]"))));
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
         when(cli.execute(readResource(null, "deployment", "*"))).then(i -> allDeploymentsResponse());
-        when(cli.openServerDeploymentManager()).then(i -> deploymentManager);
 
         //noinspection deprecation
         when(repository.listVersions(isA(GroupId.class), isA(ArtifactId.class), isA(Boolean.class)))
@@ -187,7 +162,6 @@ public class AbstractDeployerTest {
     @After
     public void after() {
         verify(cli, atLeast(0)).executeRaw(any(ModelNode.class));
-        verify(cli, atLeast(0)).openServerDeploymentManager();
         verify(cli, atLeast(0)).execute(readResource(null, "deployment", "*"));
         verify(cli, atLeast(0)).execute(readResource("logging", "logger", "*"));
         Arrays.stream(LogHandlerType.values()).forEach(type ->
@@ -255,12 +229,12 @@ public class AbstractDeployerTest {
             this.type = type;
             this.name = name;
 
-            when(cli.executeRaw(readResource(null, "deployment", name + typeSuffix()))).then(i -> (deployed == null)
+            when(cli.executeRaw(readResource(null, "deployment", fullName()))).then(i -> (deployed == null)
                     ? notDeployedNode(null, "deployment", name)
                     : toModelNode("{" + deployed.deployedNode() + "}"));
         }
 
-        @NotNull protected String typeSuffix() { return (this.type == war) ? ".war" : ""; }
+        private String fullName() { return deploymentName() + ((this.type == war) ? ".war" : ""); }
 
         public ArtifactFixtureBuilder groupId(String groupId) {
             this.groupId = groupId;
@@ -309,7 +283,7 @@ public class AbstractDeployerTest {
                         + "'result' => {\n"
                         + "    'content' => [{'hash' => bytes {" + checksum.hexByteArray() + "}}],\n"
                         + "    'enabled' => true,\n"
-                        + "    'name' => '" + deploymentName() + typeSuffix() + "',\n"
+                        + "    'name' => '" + fullName() + "',\n"
                         + "    'persistent' => true,\n"
                         + "    'runtime-name' => '" + deploymentName() + "',\n"
                         + "    'subdeployment' => undefined,\n"
@@ -393,7 +367,20 @@ public class AbstractDeployerTest {
 
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
-            public void verifyDeployed(Audits audits) { assertThat(audits.getAudits()).contains(addedAudit()); }
+            public void verifyDeployed(Audits audits) {
+                assertThat(captureOperations().remove(0).getOperation()).hasToString("{\n"
+                        + "    \"operation\" => \"composite\",\n"
+                        + "    \"address\" => [],\n"
+                        + "    \"rollback-on-runtime-failure\" => true,\n"
+                        + "    \"steps\" => [{\n"
+                        + "        \"operation\" => \"add\",\n"
+                        + "        \"address\" => [(\"deployment\" => \"" + fullName() + "\")],\n"
+                        + "        \"enabled\" => true,\n"
+                        + "        \"content\" => [{\"input-stream-index\" => 0}]\n"
+                        + "    }]\n"
+                        + "}");
+                assertThat(audits.getAudits()).contains(addedAudit());
+            }
 
             public Audit addedAudit() {
                 return artifactAudit()
@@ -406,7 +393,7 @@ public class AbstractDeployerTest {
             }
 
             public void verifyRedeployed(Audits audits) {
-                // FIXME verify(artifacts).redeploy(deploymentName(), inputStream());
+                verifyRedeployExecuted();
                 Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
                 assertThat(audits.getAudits()).contains(artifactAudit()
@@ -415,14 +402,42 @@ public class AbstractDeployerTest {
                         .changed());
             }
 
+            private void verifyRedeployExecuted() {
+                assertThat(captureOperations().remove(0).getOperation()).hasToString("{\n"
+                        + "    \"operation\" => \"composite\",\n"
+                        + "    \"address\" => [],\n"
+                        + "    \"rollback-on-runtime-failure\" => true,\n"
+                        + "    \"steps\" => [{\n"
+                        + "        \"operation\" => \"full-replace-deployment\",\n"
+                        + "        \"address\" => [],\n"
+                        + "        \"name\" => \"" + fullName() + "\",\n"
+                        + "        \"content\" => [{\"input-stream-index\" => 0}],\n"
+                        + "        \"enabled\" => true\n"
+                        + "    }]\n"
+                        + "}");
+            }
+
             public void verifyRemoved(Audits audits) {
                 verifyUndeployExecuted();
                 assertThat(audits.getAudits()).contains(removedAudit());
             }
 
             public void verifyUndeployExecuted() {
-                verify(planBuilder).undeploy(name + ".war");
-                verify(undeployPlanBuilder).remove(name + ".war");
+                assertThat(captureOperations().remove(0).getOperation()).hasToString("{\n"
+                        + "    \"operation\" => \"composite\",\n"
+                        + "    \"address\" => [],\n"
+                        + "    \"rollback-on-runtime-failure\" => true,\n"
+                        + "    \"steps\" => [\n"
+                        + "        {\n"
+                        + "            \"operation\" => \"undeploy\",\n"
+                        + "            \"address\" => [(\"deployment\" => \"" + fullName() + "\")]\n"
+                        + "        },\n"
+                        + "        {\n"
+                        + "            \"operation\" => \"remove\",\n"
+                        + "            \"address\" => [(\"deployment\" => \"" + fullName() + "\")]\n"
+                        + "        }\n"
+                        + "    ]\n"
+                        + "}");
             }
 
             public Audit removedAudit() {
@@ -448,6 +463,17 @@ public class AbstractDeployerTest {
                         .build();
             }
         }
+    }
+
+    private List<Operation> operations;
+
+    private List<Operation> captureOperations() {
+        if (operations == null) {
+            ArgumentCaptor<Operation> captor = ArgumentCaptor.forClass(Operation.class);
+            verify(cli, atLeastOnce()).execute(captor.capture());
+            operations = captor.getAllValues();
+        }
+        return operations;
     }
 
 

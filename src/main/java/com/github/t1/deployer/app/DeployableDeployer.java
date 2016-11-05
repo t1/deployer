@@ -51,21 +51,23 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
         Artifact old = repository.lookupByChecksum(resource.checksum());
         Artifact artifact = lookupDeployedArtifact(plan, old);
         checkChecksums(plan, artifact);
+
         if (resource.checksum().equals(artifact.getChecksum())) {
             log.debug("{} already deployed with same checksum {}", plan.getName(), resource.checksum());
-        } else {
-            container.builderFor(toDeploymentName(plan)).build().redeploy(artifact.getInputStream());
-            audit.change("checksum", resource.checksum(), artifact.getChecksum());
-
-            if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
-                audit.change("group-id", old.getGroupId(), artifact.getGroupId());
-            if (!Objects.equals(old.getArtifactId(), artifact.getArtifactId()))
-                audit.change("artifact-id", old.getArtifactId(), artifact.getArtifactId());
-            if (!Objects.equals(old.getVersion(), artifact.getVersion()))
-                audit.change("version", old.getVersion(), artifact.getVersion());
-            if (!Objects.equals(old.getType(), artifact.getType()))
-                audit.change("type", old.getType(), artifact.getType());
+            return;
         }
+
+        container.builderFor(toDeploymentName(plan)).build().redeploy(artifact.getInputStream());
+        audit.change("checksum", resource.checksum(), artifact.getChecksum());
+
+        if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
+            audit.change("group-id", old.getGroupId(), artifact.getGroupId());
+        if (!Objects.equals(old.getArtifactId(), artifact.getArtifactId()))
+            audit.change("artifact-id", old.getArtifactId(), artifact.getArtifactId());
+        if (!Objects.equals(old.getVersion(), artifact.getVersion()))
+            audit.change("version", old.getVersion(), artifact.getVersion());
+        if (!Objects.equals(old.getType(), artifact.getType()))
+            audit.change("type", old.getType(), artifact.getType());
     }
 
     private void checkChecksums(DeployablePlan plan, Artifact artifact) {
