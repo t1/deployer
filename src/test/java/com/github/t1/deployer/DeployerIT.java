@@ -52,10 +52,12 @@ public class DeployerIT {
             "f2ea471fbe4446057991e284a6b4b3263731f319");
     private static final Checksum JOLOKIA_1_3_1_CHECKSUM = Checksum.fromString(
             "52709CBC859E208DC8E540EB5C7047C316D9653F");
+    @SuppressWarnings("SpellCheckingInspection")
     private static final Checksum JOLOKIA_1_3_2_CHECKSUM = Checksum.fromString(
             "9E29ADD9DF1FA9540654C452DCBF0A2E47CC5330");
     public static final Checksum JOLOKIA_1_3_3_CHECKSUM = Checksum.fromString(
             "F6E5786754116CC8E1E9261B2A117701747B1259");
+    @SuppressWarnings("SpellCheckingInspection")
     public static final Checksum JOLOKIA_1_3_4_SNAPSHOT_CHECKSUM = Checksum.fromString(
             "C8BB60C0CE61C2BEEC370D9127ED340DCA5F566D");
     private static final String PLAN_JOLOKIA_WITH_VERSION_VAR = ""
@@ -105,7 +107,6 @@ public class DeployerIT {
                     + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, ROOT]\n"
                     + "manage: [all]\n"
             );
-            // system
 
             if (USE_ARTIFACTORY_MOCK)
                 try {
@@ -284,7 +285,7 @@ public class DeployerIT {
         String detail = post(plan, null, BAD_REQUEST).readEntity(String.class);
 
         assertDeployed(JOLOKIA_1_3_1_CHECKSUM);
-        assertThat(detail).contains("Repository checksum [9e29add9df1fa9540654c452dcbf0a2e47cc5330] "
+        assertThat(detail).contains("Repository checksum [" + JOLOKIA_1_3_2_CHECKSUM + "] "
                 + "does not match planned checksum [" + UNKNOWN_CHECKSUM + "]");
     }
 
@@ -505,47 +506,21 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 1080)
-    public void shouldUndeploySnapshotWebArchiveAgain() throws Exception {
-        String plan = ""
-                + "deployables:\n"
-                + "  jolokia:\n"
-                + "    group-id: org.jolokia\n"
-                + "    artifact-id: jolokia-war\n"
-                + "    state: undeployed\n"
-                + "  postgresql:\n"
-                + "    group-id: org.postgresql\n"
-                + "    version: 9.4.1207\n"
-                + "    type: jar\n";
+    @InSequence(value = Integer.MAX_VALUE)
+    public void shouldCleanUp() throws Exception {
+        String plan = "---\n";
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
-        assertThat(audits).containsExactly(
+        assertThat(theDeployments()).isEmpty();
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", "org.jolokia", null)
                                .change("artifact-id", "jolokia-war", null)
                                .change("version", "1.3.3", null)
                                .change("type", "war", null)
                                .change("checksum", JOLOKIA_1_3_3_CHECKSUM, null)
-                               .removed());
-    }
-
-    @Test
-    @InSequence(value = 1090)
-    public void shouldUndeployJdbcDriver() throws Exception {
-        String plan = ""
-                + "deployables:\n"
-                + "  postgresql:\n"
-                + "    group-id: org.postgresql\n"
-                + "    version: 9.4.1207\n"
-                + "    state: undeployed\n"
-                + "    type: jar\n";
-
-        List<Audit> audits = post(plan);
-
-        assertThat(theDeployments()).isEmpty();
-        assertThat(audits).containsExactly(
+                               .removed(),
                 DeployableAudit.builder().name("postgresql")
                                .change("group-id", "org.postgresql", null)
                                .change("artifact-id", "postgresql", null)
@@ -553,26 +528,23 @@ public class DeployerIT {
                                .change("type", "jar", null)
                                .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
                                .removed());
+        assertThat(jbossConfig
+                .read()
+                .replace(consoleHandlerLevel("ALL"), consoleHandlerLevel("INFO"))
+                .replaceAll(""
+                                + "    <deployments>\n"
+                                + "        <deployment name=\"" + DEPLOYER_IT + "\" runtime-name=\"" + DEPLOYER_IT + "\">\n"
+                                + "            <content sha1=\"[0-9a-z]{40}\"/>\n"
+                                + "        </deployment>\n"
+                                + "    </deployments>\n"
+                        , ""
+                                + "    <deployments>\n"
+                                + "    </deployments>\n")
+        ).isEqualTo(jbossConfig.getOrig());
     }
 
-    @Test
-    @InSequence(value = Integer.MAX_VALUE)
-    public void shouldUndeployEverything() throws Exception {
-        // TODO pin DEPLOYER_IT_WAR & manage all
-        String plan = "---\n";
-
-        List<Audit> audits = post(plan);
-
-        assertThat(theDeployments()).isEmpty();
-        if (plan.isEmpty()) { // TODO make this run
-            assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
-            assertThat(audits).containsExactly(
-                    DeployableAudit.builder().name("postgresql")
-                                   .change("group-id", "org.postgresql", null)
-                                   .change("artifact-id", "postgresql", null)
-                                   .change("version", "9.4.1207", null)
-                                   .change("type", "jar", null)
-                                   .added());
-        }
+    private String consoleHandlerLevel(String level) {
+        return "<console-handler name=\"CONSOLE\">\n"
+                + "                <level name=\"" + level + "\"/>";
     }
 }
