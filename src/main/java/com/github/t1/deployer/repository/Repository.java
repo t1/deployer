@@ -31,14 +31,15 @@ public abstract class Repository {
         }
     }
 
-    private Artifact errorArtifact(Checksum checksum, String messageArtifactId) {
+    private Artifact errorArtifact(Checksum checksum, String error) {
         return Artifact
                 .builder()
-                .groupId(new GroupId("*error*"))
-                .artifactId(new ArtifactId(messageArtifactId))
+                .groupId(new GroupId("unknown"))
+                .artifactId(new ArtifactId("unknown"))
                 .version(new Version("unknown"))
                 .type(unknown)
                 .checksum(checksum)
+                .error(error)
                 .inputStreamSupplier(() -> {
                     throw new UnsupportedOperationException();
                 })

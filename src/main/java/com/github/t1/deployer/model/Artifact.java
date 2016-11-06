@@ -16,6 +16,7 @@ public class Artifact {
     @NonNull private final ArtifactId artifactId;
     @NonNull private final Version version;
     @NonNull private final ArtifactType type;
+    private final String error;
 
     private final Classifier classifier;
     private Checksum checksum;
@@ -39,6 +40,7 @@ public class Artifact {
     @Override public String toString() {
         return groupId + ":" + artifactId + ":" + version + ":" + type
                 + ((classifier == null) ? "" : ":" + classifier)
-                + ((checksum == null) ? "" : "=" + checksum);
+                + ((checksum == null) ? "" : "=" + checksum)
+                + ((error == null) ? "" : " ### " + error + " ###");
     }
 }

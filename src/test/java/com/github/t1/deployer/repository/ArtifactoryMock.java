@@ -4,7 +4,6 @@ import com.github.t1.deployer.container.DeploymentName;
 import com.github.t1.deployer.model.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import javax.ws.rs.*;
 import javax.ws.rs.Path;
@@ -228,9 +227,9 @@ public class ArtifactoryMock {
                         .resolve(name + "-" + version + ".war");
     }
 
-    @NotNull private static String fakeGroupId(DeploymentName name) {return "org." + name;}
+    private static String fakeGroupId(DeploymentName name) { return "org." + name; }
 
-    @NotNull private static String fakeArtifactId(DeploymentName name) {return name + "-war";}
+    private static String fakeArtifactId(DeploymentName name) { return name + "-war"; }
 
     private String fileSearchResult(String path) {
         return "{"

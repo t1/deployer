@@ -218,6 +218,7 @@ public class Plan {
     public static class DeployablePlan extends AbstractArtifactPlan {
         @NonNull @JsonIgnore private final DeploymentName name;
         @NonNull private final ArtifactType type;
+        private final String error;
 
         @Override public String getId() { return name.getValue(); }
 
@@ -225,15 +226,17 @@ public class Plan {
             @Override public DeployablePlan build() {
                 AbstractArtifactPlan a = super.build();
                 return new DeployablePlan(name, type,
-                        a.state, a.groupId, a.artifactId, a.version, a.classifier, a.checksum);
+                        a.state, a.groupId, a.artifactId, a.version, a.classifier, a.checksum, error);
             }
         }
 
         private DeployablePlan(DeploymentName name, ArtifactType type, DeploymentState state,
-                GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier, Checksum checksum) {
+                GroupId groupId, ArtifactId artifactId, Version version, Classifier classifier, Checksum checksum,
+                String error) {
             super(state, groupId, artifactId, version, classifier, checksum);
             this.name = name;
             this.type = type;
+            this.error = error;
         }
 
         public static DeployablePlan fromJson(DeploymentName name, JsonNode node) {
@@ -254,7 +257,9 @@ public class Plan {
 
         @Override public String toString() {
             return "deployment:" + name + ":" + super.toString()
-                    + ":" + type + ((getChecksum() == null) ? "" : ":" + getChecksum());
+                    + ":" + type
+                    + ((getChecksum() == null) ? "" : ":" + getChecksum())
+                    + ((error == null) ? "" : ": ### " + error + " ###");
         }
     }
 
