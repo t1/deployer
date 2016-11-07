@@ -21,7 +21,8 @@ import static java.util.stream.Collectors.*;
 abstract class AbstractDeployer<
         PLAN extends AbstractPlan,
         RESOURCE extends AbstractResource<RESOURCE>,
-        AUDIT extends AuditBuilder> {
+        AUDIT extends AuditBuilder>
+        implements Deployer {
     @Inject Audits audits;
     @Inject @Config("managed.resources") List<String> managedResourceNames;
     @Inject @Config("pinned.resources") Map<String, List<String>> pinnedResourceNames;
@@ -29,7 +30,7 @@ abstract class AbstractDeployer<
     private List<RESOURCE> remaining;
 
     /* ------------------------------------------------------------------------------------------------------------ */
-    public void read(PlanBuilder builder) {
+    @Override public void read(PlanBuilder builder) {
         unpinnedResources().forEach(resource -> read(builder, resource));
     }
 
@@ -49,7 +50,7 @@ abstract class AbstractDeployer<
 
 
     /* ------------------------------------------------------------------------------------------------------------ */
-    public void apply(Plan plan) {
+    @Override public void apply(Plan plan) {
         if (log.isDebugEnabled())
             log.debug("apply {} -> {}", resourcesIn(plan).collect(toList()), this.getClass().getSimpleName());
         this.remaining = unpinnedResources().collect(toList());

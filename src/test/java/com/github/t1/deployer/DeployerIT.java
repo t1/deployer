@@ -104,7 +104,7 @@ public class DeployerIT {
                     + "pin:\n"
                     + "  deployables: [deployer-it]\n"
                     + "  log-handlers: [CONSOLE, FILE]\n"
-                    + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, ROOT]\n"
+                    + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, com.github.t1.deployer]\n"
                     + "manage: [all]\n"
             );
 
@@ -531,6 +531,11 @@ public class DeployerIT {
         assertThat(jbossConfig
                 .read()
                 .replace(consoleHandlerLevel("ALL"), consoleHandlerLevel("INFO"))
+                .replace(""
+                                + "            <logger category=\"com.github.t1.deployer\">\n"
+                                + "                <level name=\"DEBUG\"/>\n"
+                                + "            </logger>\n"
+                        , "")
                 .replaceAll(""
                                 + "    <deployments>\n"
                                 + "        <deployment name=\"" + DEPLOYER_IT + "\" runtime-name=\"" + DEPLOYER_IT + "\">\n"

@@ -226,7 +226,7 @@ public class DeployableDeployerTest extends AbstractDeployerTest {
                 + "  bar:\n"
                 + "    group-id: org.bar\n"
                 + "    version: ${bar.version}\n");
-        Audits audits = deployer.apply(mock, ImmutableMap.of(new VariableName("bar.version"), "4.0.5"));
+        Audits audits = boundary.apply(mock, ImmutableMap.of(new VariableName("bar.version"), "4.0.5"));
 
         bar.verifyDeployed(audits);
     }

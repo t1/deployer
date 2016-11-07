@@ -23,6 +23,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.app.Plan.LogHandlerPlan.*;
@@ -55,16 +56,16 @@ public class AbstractDeployerTest {
     @SneakyThrows(IOException.class)
     Audits deploy(String plan) {
         rootBundle.write(plan);
-        return deployer.apply(mock, emptyMap());
+        return boundary.apply(mock, emptyMap());
     }
 
 
-    @InjectMocks DeployerBoundary deployer;
+    @InjectMocks DeployerBoundary boundary;
 
     @Spy private LogHandlerDeployer logHandlerDeployer;
     @Spy private LoggerDeployer loggerDeployer;
     @Spy private DeployableDeployer deployableDeployer;
-    @Mock Instance<AbstractDeployer> deployers;
+    @Mock Instance<Deployer> deployers;
 
     @Mock Repository repository;
 
@@ -98,19 +99,20 @@ public class AbstractDeployerTest {
                 = loggerDeployer.container
                 = deployableDeployer.container
                 = container;
-        deployer.audits
+        boundary.audits
                 = logHandlerDeployer.audits
                 = loggerDeployer.audits
                 = deployableDeployer.audits
                 = new Audits();
-        deployer.configuredVariables = this.configuredVariables;
+        boundary.configuredVariables = this.configuredVariables;
+        boundary.deployers = this.deployers;
 
         //noinspection unchecked
-        // doAnswer(i -> {
-        //     asList(logHandlerDeployer, loggerDeployer, deployableDeployer)
-        //             .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
-        //     return null;
-        // }).when(deployers).forEach(any(Consumer.class));
+        doAnswer(i -> {
+            asList(logHandlerDeployer, loggerDeployer, deployableDeployer)
+                    .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
+            return null;
+        }).when(deployers).forEach(any(Consumer.class));
 
         when(cli.executeRaw(readResource(rootLogger()))).then(i -> rootLoggerResponse());
         when(cli.execute(readResource("logging", "logger", "*"))).then(
@@ -173,7 +175,7 @@ public class AbstractDeployerTest {
 
     @SneakyThrows(IOException.class)
     public void givenConfiguredRootBundle(String key, String value) {
-        deployer.rootBundle = YAML.readValue(key + ": " + value, RootBundleConfig.class);
+        boundary.rootBundle = YAML.readValue(key + ": " + value, RootBundleConfig.class);
     }
 
     public void givenConfiguredVariable(String name, String value) {

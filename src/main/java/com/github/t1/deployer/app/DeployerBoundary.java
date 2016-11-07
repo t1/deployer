@@ -11,6 +11,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.*;
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import java.io.*;
@@ -44,7 +45,11 @@ public class DeployerBoundary {
     public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
 
     @GET
-    public Plan getEffectivePlan() { return new Run().read(); }
+    public Plan getEffectivePlan() {
+        PlanBuilder builder = Plan.builder();
+        deployers.forEach(deployer -> deployer.read(builder));
+        return builder.build();
+    }
 
     /** see {@link Audits} */
     @Value
@@ -98,23 +103,11 @@ public class DeployerBoundary {
     @Inject @Config("root-bundle") RootBundleConfig rootBundle;
 
     @Inject Audits audits;
-    // TODO @Inject Instance<AbstractDeployer> deployers;
-    @Inject DeployableDeployer deployableDeployer;
-    @Inject LogHandlerDeployer logHandlerDeployer;
-    @Inject LoggerDeployer loggerDeployer;
+    @Inject Instance<Deployer> deployers;
 
 
     private class Run {
         private Expressions expressions = new Expressions().withAllNew(configuredVariables).withRootBundle(rootBundle);
-
-        public Plan read() {
-            PlanBuilder builder = Plan.builder();
-            // TODO deployers.forEach(deployer -> deployer.read(builder));
-            logHandlerDeployer.read(builder);
-            loggerDeployer.read(builder);
-            deployableDeployer.read(builder);
-            return builder.build();
-        }
 
         public Run withVariables(Map<VariableName, String> variables) {
             this.expressions = this.expressions.withAllNew(variables);
@@ -160,10 +153,7 @@ public class DeployerBoundary {
         }
 
         private void apply(Plan plan) {
-            // TODO deployers.forEach(deployer -> deployer.apply(plan));
-            logHandlerDeployer.apply(plan);
-            loggerDeployer.apply(plan);
-            deployableDeployer.apply(plan);
+            deployers.forEach(deployer -> deployer.apply(plan));
 
             plan.bundles().forEach(this::applyBundle);
         }
@@ -186,5 +176,4 @@ public class DeployerBoundary {
             }
         }
     }
-
 }

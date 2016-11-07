@@ -37,7 +37,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
     @Test
     public void shouldReadZeroDeployments() throws Exception {
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(deployables(plan)).isEmpty();
     }
@@ -46,7 +46,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
     public void shouldReadOneDeployment() throws Exception {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
 
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(deployables(plan)).containsExactly(foo.asPlan());
     }
@@ -56,7 +56,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("2.0").deployed();
 
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(deployables(plan)).containsExactly(bar.asPlan(), foo.asPlan());
     }
@@ -64,7 +64,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
     @Test
     public void shouldReadZeroLoggers() throws Exception {
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(loggers(plan)).containsExactly(ROOT);
     }
@@ -73,7 +73,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
     public void shouldReadOneLogger() throws Exception {
         LoggerFixture foo = givenLogger("foo").deployed();
 
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(loggers(plan)).containsExactly(ROOT, foo.asPlan());
     }
@@ -83,7 +83,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
         LoggerFixture foo = givenLogger("foo").deployed();
         LoggerFixture bar = givenLogger("bar").deployed();
 
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(loggers(plan)).containsExactly(ROOT, bar.asPlan(), foo.asPlan()); // sorted!
     }
@@ -91,7 +91,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
     @Test
     public void shouldReadZeroLogHandlers() throws Exception {
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(logHandlers(plan)).isEmpty();
     }
@@ -100,7 +100,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
     public void shouldReadOneLogHandler() throws Exception {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "foo").deployed();
 
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(logHandlers(plan)).containsExactly(foo.asPlan());
     }
@@ -114,7 +114,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
                 .property("bar", "baz")
                 .deployed();
 
-        Plan plan = deployer.getEffectivePlan();
+        Plan plan = boundary.getEffectivePlan();
 
         assertThat(logHandlers(plan)).containsExactly(bar.asPlan(), foo.asPlan());
     }
