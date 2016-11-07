@@ -80,13 +80,13 @@ public class DeployerBoundary {
     }
 
     public synchronized Audits apply(Trigger trigger, Map<VariableName, String> variables) {
-        Run run = new Run().withVariables(variables);
+        Applying applying = new Applying().withVariables(variables);
 
         Path root = getRootBundlePath();
         if (isRegularFile(root)) {
-            run.apply(root);
+            applying.apply(root);
         } else {
-            run.applyDefaultRoot();
+            applying.applyDefaultRoot();
         }
 
         audits.applied(trigger, principal, variables, audits);
@@ -106,10 +106,10 @@ public class DeployerBoundary {
     @Inject Instance<Deployer> deployers;
 
 
-    private class Run {
+    private class Applying {
         private Expressions expressions = new Expressions().withAllNew(configuredVariables).withRootBundle(rootBundle);
 
-        public Run withVariables(Map<VariableName, String> variables) {
+        public Applying withVariables(Map<VariableName, String> variables) {
             this.expressions = this.expressions.withAllNew(variables);
             return this;
         }
