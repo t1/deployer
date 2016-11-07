@@ -42,7 +42,7 @@ public class DeployerBoundary {
             + "    version: ${root-bundle:version or version}\n";
     private static final VariableName NAME = new VariableName("name");
 
-    public java.nio.file.Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
+    public Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
 
     @GET
     public Plan getEffectivePlan() {
@@ -109,16 +109,16 @@ public class DeployerBoundary {
     private class Applying {
         private Expressions expressions = new Expressions().withAllNew(configuredVariables).withRootBundle(rootBundle);
 
-        public Applying withVariables(Map<VariableName, String> variables) {
+        private Applying withVariables(Map<VariableName, String> variables) {
             this.expressions = this.expressions.withAllNew(variables);
             return this;
         }
 
-        public void apply(Path plan) {
+        private void apply(Path plan) {
             apply(reader(plan), plan.toString());
         }
 
-        public BufferedReader reader(Path plan) {
+        private BufferedReader reader(Path plan) {
             log.info("load plan from: {}", plan);
             try {
                 return Files.newBufferedReader(plan);
@@ -127,7 +127,7 @@ public class DeployerBoundary {
             }
         }
 
-        public void applyDefaultRoot() {
+        private void applyDefaultRoot() {
             log.info("load default root plan");
             apply(new StringReader(DEFAULT_ROOT_BUNDLE), "default root bundle");
         }
