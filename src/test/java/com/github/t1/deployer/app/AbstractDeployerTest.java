@@ -178,11 +178,13 @@ public class AbstractDeployerTest {
         boundary.rootBundle = YAML.readValue(key + ": " + value, RootBundleConfig.class);
     }
 
-    public void givenConfiguredVariable(String name, String value) {
-        givenConfiguredVariable(new VariableName(name), value);
+    public void givenConfiguredKeyStore(KeyStoreConfig keyStoreConfig) {
+        boundary.keyStore = keyStoreConfig;
     }
 
-    public void givenConfiguredVariable(VariableName name, String value) { this.configuredVariables.put(name, value); }
+    public void givenConfiguredVariable(String name, String value) {
+        this.configuredVariables.put(new VariableName(name), value);
+    }
 
 
     protected void givenManaged(String... resourceName) { this.managedResourceNames.addAll(asList(resourceName)); }

@@ -1,13 +1,19 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
-import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Expressions.*;
 import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import javax.crypto.Cipher;
+import javax.xml.bind.DatatypeConverter;
 import java.net.InetAddress;
+import java.nio.file.*;
+import java.security.*;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.cert.Certificate;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.Trigger.*;
@@ -15,10 +21,18 @@ import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Expressions.*;
 import static com.github.t1.log.LogLevel.*;
+import static java.nio.charset.StandardCharsets.*;
 import static java.util.Collections.*;
+import static javax.crypto.Cipher.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class BundleDeployerTest extends AbstractDeployerTest {
+    public static final Path KEYSTORE_PATH = Paths.get("src/test/resources/server.keystore");
+    public static final char[] KEYSTORE_PASSWORD = "changeit".toCharArray();
+    public static final KeyStore.PasswordProtection KEYSTORE_PROTECTION
+            = new KeyStore.PasswordProtection(KEYSTORE_PASSWORD);
+    public static final String KEY_ALIAS = "server";
+
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
     @Test
@@ -269,6 +283,52 @@ public class BundleDeployerTest extends AbstractDeployerTest {
         foo.verifyDeployed(audits);
     }
 
+
+    @Test
+    public void shouldDeployWebArchiveWithEncryptedVersion() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        givenConfiguredKeyStore(KeyStoreConfig
+                .builder()
+                .path(KEYSTORE_PATH)
+                .alias("server")
+                .password("changeit")
+                .build());
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithEncryptedVariableButWithoutKeystoreConfig() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n"));
+
+        assertThat(thrown).hasMessageContaining("no key-store configured to decrypt expression");
+    }
+
+
+    private String encrypt(String plain) throws Exception {
+        KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
+        store.load(Files.newInputStream(KEYSTORE_PATH), KEYSTORE_PASSWORD);
+        PrivateKeyEntry privateKeyEntry = (PrivateKeyEntry) store.getEntry(KEY_ALIAS, KEYSTORE_PROTECTION);
+        Certificate certificate = privateKeyEntry.getCertificate();
+        PublicKey publicKey = certificate.getPublicKey();
+        certificate.verify(publicKey); // self signed
+
+        Cipher cipher = Cipher.getInstance(publicKey.getAlgorithm());
+        cipher.init(ENCRYPT_MODE, publicKey);
+        return DatatypeConverter.printHexBinary(cipher.doFinal(plain.getBytes(UTF_8)));
+    }
 
     @Test public void shouldFailToReplaceVariableValueWithNewline() {
         shouldFailToReplaceVariableValueWith("foo\nbar");
@@ -1191,7 +1251,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldDeploySchemaBundleWithPassedParam() throws Exception{
+    public void shouldDeploySchemaBundleWithPassedParam() throws Exception {
         givenConfiguredVariable("default.group-id", "artifact-deployer-test");
         LogHandlerFixture logHandler = givenLogHandler(periodicRotatingFile, "JOLOKIA");
         LoggerFixture logger = givenLogger("org.jolokia.jolokia")

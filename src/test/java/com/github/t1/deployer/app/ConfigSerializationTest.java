@@ -253,4 +253,50 @@ public class ConfigSerializationTest {
 
         assertThat(producer.pinned().get("deployables")).containsExactly("foo", "bar");
     }
+
+
+    @Test
+    public void shouldLoadConfigFileWithKeyStore() throws Exception {
+        configFile.write(""
+                + "key-store:\n"
+                + "  path: foo\n"
+                + "  password: bar\n"
+                + "  alias: baz");
+
+        KeyStoreConfig config = loadConfig().keyStore();
+
+        assertThat(config.getPath()).hasToString("foo");
+        assertThat(config.getPassword()).isEqualTo("bar");
+        assertThat(config.getAlias()).isEqualTo("baz");
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithoutKeyStore() throws Exception {
+        configFile.write("");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.keyStore()).isNull();
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithEmptyKeyStore() throws Exception {
+        configFile.write(""
+                + "key-store:");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.keyStore()).isNull();
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithEmptyKeyStorePath() throws Exception {
+        configFile.write(""
+                + "key-store:\n"
+                + "  path:");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.keyStore().getPath()).isNull();
+    }
 }

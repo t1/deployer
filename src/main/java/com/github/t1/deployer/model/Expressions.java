@@ -8,8 +8,13 @@ import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.crypto.Cipher;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
+import java.nio.file.Files;
+import java.security.*;
+import java.security.KeyStore.*;
 import java.util.ArrayList;
 import java.util.*;
 import java.util.function.*;
@@ -19,10 +24,13 @@ import static com.github.t1.problem.WebException.*;
 import static java.util.Arrays.*;
 import static java.util.Locale.*;
 import static java.util.stream.Collectors.*;
+import static javax.crypto.Cipher.*;
 import static javax.ws.rs.core.Response.Status.*;
+import static javax.xml.bind.DatatypeConverter.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
+@RequiredArgsConstructor
 public class Expressions {
     private static final Pattern NAME_TOKEN = Pattern.compile("[-._a-zA-Z0-9]{1,256}");
 
@@ -57,8 +65,9 @@ public class Expressions {
 
     private final ImmutableMap<VariableName, String> variables;
     private final RootBundleConfig rootBundle;
+    private final KeyStoreConfig keyStore;
 
-    public Expressions() { this(ImmutableMap.copyOf(systemProperties()), null); }
+    public Expressions() { this(ImmutableMap.copyOf(systemProperties()), null, null); }
 
     private static final List<String> SYSTEM_PROPERTY_WHITELIST = asList(
             "file.encoding",
@@ -97,11 +106,6 @@ public class Expressions {
         return System.getProperties().stringPropertyNames().stream()
                      .filter(SYSTEM_PROPERTY_WHITELIST::contains)
                      .collect(toMap(VariableName::new, System::getProperty));
-    }
-
-    public Expressions(ImmutableMap<VariableName, String> variables, RootBundleConfig rootBundle) {
-        this.variables = variables;
-        this.rootBundle = rootBundle;
     }
 
 
@@ -186,11 +190,12 @@ public class Expressions {
                     throw (Error) e.getCause();
                 if (e.getCause() instanceof RuntimeException)
                     throw (RuntimeException) e.getCause();
-                // fall through
+                throw new RuntimeException(
+                        "can't create " + type.getName() + " for expression [" + subExpression + "]", e);
             } catch (ReflectiveOperationException e) {
-                // fall through
+                throw new RuntimeException(
+                        "can't create " + type.getName() + " for expression [" + subExpression + "]", e);
             }
-            throw new RuntimeException("can't create " + type.getName() + " for expression [" + subExpression + "]");
         }
     }
 
@@ -299,6 +304,8 @@ public class Expressions {
                 return apply1(s -> s.toUpperCase(US));
             case "toLowerCase#1":
                 return apply1(s -> s.toLowerCase(US));
+            case "decrypt#1":
+                return apply1(this::decrypt);
             case "regex#2":
                 return apply2(this::regex);
             default:
@@ -318,6 +325,41 @@ public class Expressions {
         }
 
         private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
+
+        @SneakyThrows({ GeneralSecurityException.class, IOException.class })
+        private String decrypt(String text) {
+            checkKeyStoreConfig();
+            PrivateKey privateKey = loadPrivateKey();
+
+            long t0 = System.currentTimeMillis();
+            String plaintext = decrypt(text, privateKey);
+            log.debug("{} decrypt took {}ms", privateKey.getAlgorithm(), System.currentTimeMillis() - t0);
+            return plaintext;
+        }
+
+        private void checkKeyStoreConfig() {
+            if (keyStore == null)
+                throw badRequest("no key-store configured to decrypt expression");
+            if (keyStore.getPath() == null)
+                throw badRequest("no key-store path configured to decrypt expression");
+            if (keyStore.getPassword() == null)
+                throw badRequest("no key-store password configured to decrypt expression");
+            if (keyStore.getAlias() == null)
+                throw badRequest("no key-store alias configured to decrypt expression");
+        }
+
+        private String decrypt(String text, PrivateKey privateKey) throws GeneralSecurityException {
+            Cipher cipher = Cipher.getInstance(privateKey.getAlgorithm());
+            cipher.init(DECRYPT_MODE, privateKey);
+            return new String(cipher.doFinal(parseHexBinary(text)));
+        }
+
+        private PrivateKey loadPrivateKey() throws GeneralSecurityException, IOException {
+            KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
+            store.load(Files.newInputStream(keyStore.getPath()), keyStore.getPassword().toCharArray());
+            PasswordProtection protection = new PasswordProtection(keyStore.getPassword().toCharArray());
+            return ((PrivateKeyEntry) store.getEntry(keyStore.getAlias(), protection)).getPrivateKey();
+        }
 
         private String regex(String text, String pattern) {
             Matcher matcher = Pattern.compile(pattern).matcher(text);
@@ -356,14 +398,19 @@ public class Expressions {
     }
 
     public Expressions withRootBundle(RootBundleConfig rootBundle) {
-        return new Expressions(this.variables, rootBundle);
+        return new Expressions(this.variables, rootBundle, this.keyStore);
+    }
+
+    public Expressions withKeyStore(KeyStoreConfig keyStore) {
+        return new Expressions(this.variables, this.rootBundle, keyStore);
     }
 
     public Expressions with(VariableName name, String value) {
         checkNotDefined(name);
         return new Expressions(
                 ImmutableMap.<VariableName, String>builder().putAll(this.variables).put(name, value).build(),
-                this.rootBundle);
+                this.rootBundle,
+                this.keyStore);
     }
 
     public Expressions withAllNew(Map<VariableName, String> variables) {
@@ -384,7 +431,7 @@ public class Expressions {
                 checkNotDefined(name);
             builder.put(name, entry.getValue());
         }
-        return new Expressions(ImmutableMap.copyOf(builder), this.rootBundle);
+        return new Expressions(ImmutableMap.copyOf(builder), this.rootBundle, this.keyStore);
     }
 
     private void checkNotDefined(VariableName name) {

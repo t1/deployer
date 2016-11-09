@@ -52,6 +52,7 @@ public class ConfigProducer {
     private static class DeployerConfig {
         private final RepositoryConfig repository;
         @JsonProperty("root-bundle") private final RootBundleConfig rootBundle;
+        @JsonProperty("key-store") private final KeyStoreConfig keyStore;
         @Singular @JsonProperty("vars") private final Map<VariableName, String> variables;
         @Singular @JsonProperty("manage") private final List<String> managedResourceNames;
         @Singular("pin") @JsonProperty("pin") private final Map<String, List<String>> pinned;
@@ -89,6 +90,9 @@ public class ConfigProducer {
 
     @Produces @Config("root-bundle")
     public RootBundleConfig rootBundle() { return config.getRootBundle(); }
+
+    @Produces @Config("key-store")
+    public KeyStoreConfig keyStore() { return config.getKeyStore(); }
 
     @Produces @Config("repository.type")
     public RepositoryType repositoryType() { return getRepository().getType(); }

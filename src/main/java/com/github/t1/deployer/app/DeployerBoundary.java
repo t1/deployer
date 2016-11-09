@@ -101,13 +101,17 @@ public class DeployerBoundary {
 
     @Inject @Config("variables") Map<VariableName, String> configuredVariables;
     @Inject @Config("root-bundle") RootBundleConfig rootBundle;
+    @Inject @Config("key-store") KeyStoreConfig keyStore;
 
     @Inject Audits audits;
     @Inject Instance<Deployer> deployers;
 
 
     private class Applying {
-        private Expressions expressions = new Expressions().withAllNew(configuredVariables).withRootBundle(rootBundle);
+        private Expressions expressions = new Expressions()
+                .withAllNew(configuredVariables)
+                .withRootBundle(rootBundle)
+                .withKeyStore(keyStore);
 
         private Applying withVariables(Map<VariableName, String> variables) {
             this.expressions = this.expressions.withAllNew(variables);
