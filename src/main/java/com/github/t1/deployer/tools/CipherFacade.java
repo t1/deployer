@@ -70,23 +70,16 @@ public class CipherFacade {
 
     @SneakyThrows({ GeneralSecurityException.class, IOException.class })
     private static Key loadKey(KeyStoreConfig config, Function<PrivateKeyEntry, Key> privateKeyExtractor) {
-        Entry entry = loadEntry(config);
-        return (entry instanceof TrustedCertificateEntry)
-                ? ((TrustedCertificateEntry) entry).getTrustedCertificate().getPublicKey()
-                : (entry instanceof PrivateKeyEntry)
-                        ? privateKeyExtractor.apply((PrivateKeyEntry) entry)
-                        : ((SecretKeyEntry) entry).getSecretKey();
-    }
-
-    private static Entry loadEntry(KeyStoreConfig config) throws GeneralSecurityException, IOException {
         KeyStore store = loadKeyStore(config);
 
         if (store.isCertificateEntry(config.getAlias()))
-            return store.getEntry(config.getAlias(), null);
+            return store.getCertificate(config.getAlias()).getPublicKey();
         Entry entry = store.getEntry(config.getAlias(), new PasswordProtection(getKeyPass(config)));
         if (entry == null)
             throw new IllegalArgumentException("no key [" + config.getAlias() + "] in " + getKeyStorePath(config));
-        return entry;
+        return (entry instanceof PrivateKeyEntry)
+                ? privateKeyExtractor.apply((PrivateKeyEntry) entry)
+                : ((SecretKeyEntry) entry).getSecretKey();
     }
 
     @NotNull private static KeyStore loadKeyStore(KeyStoreConfig config) throws GeneralSecurityException, IOException {
