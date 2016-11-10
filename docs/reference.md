@@ -95,6 +95,7 @@ A variable name can contain the name of a function to be applied to the value:
 - `hostName()`: Returns the DNS name of the local host (without the domain name).
 - `domainName()`: Returns the DNS domain of the local host.
 - `regex(a, b)`: Apply the regular expression `b` to `a`, returning the first matching group.
+- `decrypt(x)`: Use a key from a keystore to decrypt `x`. See [key-store config](#key-store).
 
 You can chain variable expressions, by separating them with ` or `.
 E.g. `toLowerCase(foo) or bar` will resolve to `baz`, if the variable `foo` is set to `BAZ`,
@@ -169,6 +170,16 @@ Special values:
 | default.log-encoding | `encoding` to be used for `log-handlers`, if none is specified. Defaults to system default. |
 | default.log-file-suffix | `suffix` to be used for file `log-handlers`, if none is specified. Defaults to using the `yyyy-MM-dd` (i.e. daily rotation). |
 
+### `key-store`
+
+The key to be used for the `decrypt` expression.
+
+| name | usage |
+| --- | --- |
+| path | The file path to the keystore. |
+| type | The format of the keystore, e.g. `jks` or `jceks`. |
+| password | The password required for the keystore. |
+| alias | The name of the key in the keystore. |
 
 
 ## Miscellaneous

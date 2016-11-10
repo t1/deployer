@@ -329,36 +329,43 @@ public class Expressions {
         @SneakyThrows({ GeneralSecurityException.class, IOException.class })
         private String decrypt(String text) {
             checkKeyStoreConfig();
-            PrivateKey privateKey = loadPrivateKey();
+            Key key = loadKey();
 
             long t0 = System.currentTimeMillis();
-            String plaintext = decrypt(text, privateKey);
-            log.debug("{} decrypt took {}ms", privateKey.getAlgorithm(), System.currentTimeMillis() - t0);
+            String plaintext = decrypt(text, key);
+            log.debug("{} decrypt took {}ms", key.getAlgorithm(), System.currentTimeMillis() - t0);
             return plaintext;
         }
 
         private void checkKeyStoreConfig() {
+            // TODO useful defaults!
             if (keyStore == null)
                 throw badRequest("no key-store configured to decrypt expression");
             if (keyStore.getPath() == null)
                 throw badRequest("no key-store path configured to decrypt expression");
+            if (keyStore.getType() == null)
+                throw badRequest("no key-store type configured to decrypt expression");
             if (keyStore.getPassword() == null)
                 throw badRequest("no key-store password configured to decrypt expression");
             if (keyStore.getAlias() == null)
                 throw badRequest("no key-store alias configured to decrypt expression");
         }
 
-        private String decrypt(String text, PrivateKey privateKey) throws GeneralSecurityException {
-            Cipher cipher = Cipher.getInstance(privateKey.getAlgorithm());
-            cipher.init(DECRYPT_MODE, privateKey);
+        private String decrypt(String text, Key key) throws GeneralSecurityException {
+            Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+            cipher.init(DECRYPT_MODE, key);
             return new String(cipher.doFinal(parseHexBinary(text)));
         }
 
-        private PrivateKey loadPrivateKey() throws GeneralSecurityException, IOException {
-            KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
-            store.load(Files.newInputStream(keyStore.getPath()), keyStore.getPassword().toCharArray());
-            PasswordProtection protection = new PasswordProtection(keyStore.getPassword().toCharArray());
-            return ((PrivateKeyEntry) store.getEntry(keyStore.getAlias(), protection)).getPrivateKey();
+        private Key loadKey() throws GeneralSecurityException, IOException {
+            KeyStore store = KeyStore.getInstance(keyStore.getType());
+            char[] storePass = keyStore.getPassword().toCharArray();
+            store.load(Files.newInputStream(keyStore.getPath()), storePass);
+            PasswordProtection protection = new PasswordProtection(storePass);
+            Entry entry = store.getEntry(keyStore.getAlias(), protection);
+            return (entry instanceof PrivateKeyEntry)
+                    ? ((PrivateKeyEntry) entry).getPrivateKey()
+                    : ((SecretKeyEntry) entry).getSecretKey();
         }
 
         private String regex(String text, String pattern) {

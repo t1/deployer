@@ -22,7 +22,7 @@ public class ConfigSerializationTest {
 
     @Rule public TemporaryFolder folder = new TemporaryFolder();
     @Rule public final SystemPropertiesRule systemProperties = new SystemPropertiesRule();
-    @Rule public final FileMemento configFile = new FileMemento(() -> {
+    @SuppressWarnings("resource") @Rule public final FileMemento configFile = new FileMemento(() -> {
         systemProperties.given("jboss.server.config.dir", folder.getRoot());
         return Paths.get(folder.getRoot().getPath(), DEPLOYER_CONFIG_YAML);
     });
@@ -260,14 +260,16 @@ public class ConfigSerializationTest {
         configFile.write(""
                 + "key-store:\n"
                 + "  path: foo\n"
-                + "  password: bar\n"
-                + "  alias: baz");
+                + "  type: bar\n"
+                + "  password: baz\n"
+                + "  alias: bog");
 
         KeyStoreConfig config = loadConfig().keyStore();
 
         assertThat(config.getPath()).hasToString("foo");
-        assertThat(config.getPassword()).isEqualTo("bar");
-        assertThat(config.getAlias()).isEqualTo("baz");
+        assertThat(config.getType()).hasToString("bar");
+        assertThat(config.getPassword()).isEqualTo("baz");
+        assertThat(config.getAlias()).isEqualTo("bog");
     }
 
     @Test

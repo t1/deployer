@@ -12,7 +12,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.net.InetAddress;
 import java.nio.file.*;
 import java.security.*;
-import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStore.*;
 import java.security.cert.Certificate;
 
 import static com.github.t1.deployer.TestData.*;
@@ -27,11 +27,12 @@ import static javax.crypto.Cipher.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class BundleDeployerTest extends AbstractDeployerTest {
-    public static final Path KEYSTORE_PATH = Paths.get("src/test/resources/server.keystore");
-    public static final char[] KEYSTORE_PASSWORD = "changeit".toCharArray();
-    public static final KeyStore.PasswordProtection KEYSTORE_PROTECTION
-            = new KeyStore.PasswordProtection(KEYSTORE_PASSWORD);
-    public static final String KEY_ALIAS = "server";
+    private static final KeyStoreConfig KEYSTORE = KeyStoreConfig
+            .builder()
+            .path(Paths.get("src/test/resources/test.keystore"))
+            .type("jceks")
+            .password("changeit")
+            .build();
 
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
@@ -285,20 +286,29 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldDeployWebArchiveWithEncryptedVersion() throws Exception {
+    public void shouldDeployWebArchiveWithPublicKeyEncryptedVersion() throws Exception {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
-        givenConfiguredKeyStore(KeyStoreConfig
-                .builder()
-                .path(KEYSTORE_PATH)
-                .alias("server")
-                .password("changeit")
-                .build());
+        givenConfiguredKeyStore(KEYSTORE.withAlias("keypair"));
 
         Audits audits = deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue(), "keypair") + "»)}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithSecretKeyEncryptedVersion() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        givenConfiguredKeyStore(KEYSTORE.withAlias("secretkey"));
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue(), "secretkey") + "»)}\n");
 
         foo.verifyDeployed(audits);
     }
@@ -311,22 +321,28 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n"));
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue(), "keypair") + "»)}\n"));
 
         assertThat(thrown).hasMessageContaining("no key-store configured to decrypt expression");
     }
 
 
-    private String encrypt(String plain) throws Exception {
-        KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
-        store.load(Files.newInputStream(KEYSTORE_PATH), KEYSTORE_PASSWORD);
-        PrivateKeyEntry privateKeyEntry = (PrivateKeyEntry) store.getEntry(KEY_ALIAS, KEYSTORE_PROTECTION);
-        Certificate certificate = privateKeyEntry.getCertificate();
-        PublicKey publicKey = certificate.getPublicKey();
-        certificate.verify(publicKey); // self signed
+    private String encrypt(String plain, String alias) throws Exception {
+        KeyStore store = KeyStore.getInstance("jceks");
+        char[] password = KEYSTORE.getPassword().toCharArray();
+        store.load(Files.newInputStream(KEYSTORE.getPath()), password);
+        Entry entry = store.getEntry(alias, new PasswordProtection(password));
+        Key key;
+        if (entry instanceof PrivateKeyEntry) {
+            PrivateKeyEntry privateKeyEntry = (PrivateKeyEntry) entry;
+            Certificate certificate = privateKeyEntry.getCertificate();
+            key = certificate.getPublicKey();
+        } else {
+            key = ((SecretKeyEntry) entry).getSecretKey();
+        }
 
-        Cipher cipher = Cipher.getInstance(publicKey.getAlgorithm());
-        cipher.init(ENCRYPT_MODE, publicKey);
+        Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+        cipher.init(ENCRYPT_MODE, key);
         return DatatypeConverter.printHexBinary(cipher.doFinal(plain.getBytes(UTF_8)));
     }
 
