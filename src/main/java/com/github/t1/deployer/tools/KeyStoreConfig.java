@@ -1,4 +1,4 @@
-package com.github.t1.deployer.model;
+package com.github.t1.deployer.tools;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -18,6 +18,6 @@ import static lombok.AccessLevel.*;
 public class KeyStoreConfig {
     private final Path path;
     private final String type;
-    private final String password;
+    private final String pass;
     private final String alias;
 }

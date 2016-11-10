@@ -8,6 +8,7 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.repository.Repository;
+import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.*;
 import lombok.*;
@@ -51,7 +52,8 @@ public class AbstractDeployerTest {
 
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
             .given("jboss.server.config.dir", tempDir);
-    @Rule public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
+    @SuppressWarnings("resource") @Rule
+    public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
 
     @SneakyThrows(IOException.class)
     Audits deploy(String plan) {
@@ -267,6 +269,7 @@ public class AbstractDeployerTest {
 
         public ArtifactFixture version(Version version) { return new ArtifactFixture(version); }
 
+        @SuppressWarnings("resource")
         public class ArtifactFixture {
             @NonNull @Getter private final Version version;
             @Getter private Checksum checksum;

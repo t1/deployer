@@ -3,18 +3,14 @@ package com.github.t1.deployer.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.github.t1.deployer.tools.*;
 import com.github.t1.problem.*;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.crypto.Cipher;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
-import java.nio.file.Files;
-import java.security.*;
-import java.security.KeyStore.*;
 import java.util.ArrayList;
 import java.util.*;
 import java.util.function.*;
@@ -24,9 +20,7 @@ import static com.github.t1.problem.WebException.*;
 import static java.util.Arrays.*;
 import static java.util.Locale.*;
 import static java.util.stream.Collectors.*;
-import static javax.crypto.Cipher.*;
 import static javax.ws.rs.core.Response.Status.*;
-import static javax.xml.bind.DatatypeConverter.*;
 import static lombok.AccessLevel.*;
 
 @Slf4j
@@ -326,49 +320,7 @@ public class Expressions {
 
         private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
 
-        @SneakyThrows({ GeneralSecurityException.class, IOException.class })
-        private String decrypt(String text) {
-            checkKeyStoreConfig();
-            Key key = loadKey();
-
-            long t0 = System.currentTimeMillis();
-            String plaintext = decrypt(text, key);
-            log.debug("{} decrypt took {}ms", key.getAlgorithm(), System.currentTimeMillis() - t0);
-            return plaintext;
-        }
-
-        private void checkKeyStoreConfig() {
-            // TODO useful defaults!
-            if (keyStore == null)
-                throw badRequest("no key-store configured to decrypt expression");
-            if (keyStore.getPath() == null)
-                throw badRequest("no key-store path configured to decrypt expression");
-            if (keyStore.getPassword() == null)
-                throw badRequest("no key-store password configured to decrypt expression");
-            if (keyStore.getAlias() == null)
-                throw badRequest("no key-store alias configured to decrypt expression");
-        }
-
-        private String decrypt(String text, Key key) throws GeneralSecurityException {
-            Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-            cipher.init(DECRYPT_MODE, key);
-            return new String(cipher.doFinal(parseHexBinary(text)));
-        }
-
-        private Key loadKey() throws GeneralSecurityException, IOException {
-            KeyStore store = KeyStore.getInstance(getKeystoreType());
-            char[] storePass = keyStore.getPassword().toCharArray();
-            store.load(Files.newInputStream(keyStore.getPath()), storePass);
-            PasswordProtection protection = new PasswordProtection(storePass);
-            Entry entry = store.getEntry(keyStore.getAlias(), protection);
-            return (entry instanceof PrivateKeyEntry)
-                    ? ((PrivateKeyEntry) entry).getPrivateKey()
-                    : ((SecretKeyEntry) entry).getSecretKey();
-        }
-
-        private String getKeystoreType() {
-            return (keyStore == null || keyStore.getType() == null) ? KeyStore.getDefaultType() : keyStore.getType();
-        }
+        private String decrypt(String text) { return CipherFacade.decrypt(text, keyStore); }
 
         private String regex(String text, String pattern) {
             Matcher matcher = Pattern.compile(pattern).matcher(text);

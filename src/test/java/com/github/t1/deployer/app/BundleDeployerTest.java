@@ -1,30 +1,23 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Expressions.*;
+import com.github.t1.deployer.tools.*;
 import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
-import javax.crypto.Cipher;
-import javax.xml.bind.DatatypeConverter;
 import java.net.InetAddress;
-import java.nio.file.*;
-import java.security.*;
-import java.security.KeyStore.*;
-import java.security.cert.Certificate;
+import java.nio.file.Paths;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Expressions.*;
-import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.log.LogLevel.*;
-import static java.nio.charset.StandardCharsets.*;
 import static java.util.Collections.*;
-import static javax.crypto.Cipher.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class BundleDeployerTest extends AbstractDeployerTest {
@@ -32,8 +25,10 @@ public class BundleDeployerTest extends AbstractDeployerTest {
             .builder()
             .path(Paths.get("src/test/resources/test.keystore"))
             .type("jceks")
-            .password("changeit")
+            .pass("changeit")
             .build();
+
+    private String encrypt(String plain) throws Exception { return CipherFacade.encrypt(plain, boundary.keyStore); }
 
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
@@ -320,7 +315,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
         givenConfiguredKeyStore(KeyStoreConfig
                 .builder()
                 .path(Paths.get("src/test/resources/jks.keystore"))
-                .password("changeit")
+                .pass("changeit")
                 .alias("keypair")
                 .build());
 
@@ -346,26 +341,6 @@ public class BundleDeployerTest extends AbstractDeployerTest {
         assertThat(thrown).hasMessageContaining("no key-store configured to decrypt expression");
     }
 
-
-    private String encrypt(String plain) throws Exception {
-        KeyStoreConfig config = boundary.keyStore;
-        KeyStore store = KeyStore.getInstance(nvl(config.getType(), KeyStore.getDefaultType()));
-        char[] password = config.getPassword().toCharArray();
-        store.load(Files.newInputStream(config.getPath()), password);
-        Entry entry = store.getEntry(config.getAlias(), new PasswordProtection(password));
-        Key key;
-        if (entry instanceof PrivateKeyEntry) {
-            PrivateKeyEntry privateKeyEntry = (PrivateKeyEntry) entry;
-            Certificate certificate = privateKeyEntry.getCertificate();
-            key = certificate.getPublicKey();
-        } else {
-            key = ((SecretKeyEntry) entry).getSecretKey();
-        }
-
-        Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-        cipher.init(ENCRYPT_MODE, key);
-        return DatatypeConverter.printHexBinary(cipher.doFinal(plain.getBytes(UTF_8)));
-    }
 
     @Test public void shouldFailToReplaceVariableValueWithNewline() {
         shouldFailToReplaceVariableValueWith("foo\nbar");

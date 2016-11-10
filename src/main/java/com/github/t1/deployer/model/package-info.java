@@ -1,4 +1,6 @@
 @DependsUpon(packagesOf = {
+        com.github.t1.deployer.tools.CipherFacade.class,
+
         com.github.t1.problem.ProblemDetail.class,
 
         com.fasterxml.jackson.databind.ObjectMapper.class,

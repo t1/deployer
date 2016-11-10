@@ -5,6 +5,7 @@ import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Expressions.*;
 import com.github.t1.deployer.repository.Repository;
+import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.*;
 import lombok.Value;

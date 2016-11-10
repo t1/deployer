@@ -4,6 +4,7 @@ import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.repository.RepositoryType;
+import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.testtools.*;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -261,14 +262,14 @@ public class ConfigSerializationTest {
                 + "key-store:\n"
                 + "  path: foo\n"
                 + "  type: bar\n"
-                + "  password: baz\n"
+                + "  pass: baz\n"
                 + "  alias: bog");
 
         KeyStoreConfig config = loadConfig().keyStore();
 
         assertThat(config.getPath()).hasToString("foo");
         assertThat(config.getType()).hasToString("bar");
-        assertThat(config.getPassword()).isEqualTo("baz");
+        assertThat(config.getPass()).isEqualTo("baz");
         assertThat(config.getAlias()).isEqualTo("bog");
     }
 

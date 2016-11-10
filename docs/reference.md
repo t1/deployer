@@ -176,10 +176,14 @@ The key to be used for the `decrypt` expression.
 
 | name | usage |
 | --- | --- |
-| path | The file path to the keystore. |
+| path | The file path to the keystore. Mandatory to use `decrypt`. |
 | type | The format of the keystore, e.g. `jks` or `jceks`. Defaults to `jks`. Note that you can't store secret keys (i.e. symmetric encryption keys) in `jks`. |
-| password | The password required for the keystore. |
-| alias | The name of the key in the keystore. |
+| pass | The password required for the keystore. Defaults to `changeit`, the JDK default. |
+| alias | The name of the key in the keystore. Defaults to `secretkey`. |
+
+To encrypt some key, you can use the `main` method in the `CipherFacade` class, e.g. via Maven:
+
+    mvn exec:java -Dexec.mainClass="com.github.t1.deployer.app.CipherFacade" -Dexec.args="--help"
 
 
 ## Miscellaneous
