@@ -2,6 +2,7 @@ package com.github.t1.deployer.tools;
 
 import com.beust.jcommander.*;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Cipher;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.nio.file.*;
 import java.security.*;
 import java.security.KeyStore.*;
 import java.util.List;
+import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.*;
 import static javax.crypto.Cipher.*;
@@ -57,34 +59,47 @@ public class CipherFacade {
     }
 
     public static String encrypt(String plain, KeyStoreConfig config) {
-        return printHexBinary(cipher(ENCRYPT_MODE, config, plain.getBytes(UTF_8)));
+        Key key = loadKey(config, entry -> entry.getCertificate().getPublicKey());
+        return printHexBinary(cipher(ENCRYPT_MODE, plain.getBytes(UTF_8), key));
     }
 
-    public static String decrypt(String text, KeyStoreConfig keyStore) {
-        return new String(cipher(DECRYPT_MODE, keyStore, parseHexBinary(text)), UTF_8);
+    public static String decrypt(String text, KeyStoreConfig config) {
+        Key key = loadKey(config, PrivateKeyEntry::getPrivateKey);
+        return new String(cipher(DECRYPT_MODE, parseHexBinary(text), key), UTF_8);
     }
 
     @SneakyThrows({ GeneralSecurityException.class, IOException.class })
-    private static byte[] cipher(int mode, KeyStoreConfig keyStore, byte[] bytes) {
-        Key key = loadKey(keyStore);
+    private static Key loadKey(KeyStoreConfig config, Function<PrivateKeyEntry, Key> privateKeyExtractor) {
+        Entry entry = loadEntry(config);
+        return (entry instanceof TrustedCertificateEntry)
+                ? ((TrustedCertificateEntry) entry).getTrustedCertificate().getPublicKey()
+                : (entry instanceof PrivateKeyEntry)
+                        ? privateKeyExtractor.apply((PrivateKeyEntry) entry)
+                        : ((SecretKeyEntry) entry).getSecretKey();
+    }
+
+    private static Entry loadEntry(KeyStoreConfig config) throws GeneralSecurityException, IOException {
+        KeyStore store = loadKeyStore(config);
+
+        if (store.isCertificateEntry(config.getAlias()))
+            return store.getEntry(config.getAlias(), null);
+        Entry entry = store.getEntry(config.getAlias(), new PasswordProtection(getKeyPass(config)));
+        if (entry == null)
+            throw new IllegalArgumentException("no key [" + config.getAlias() + "] in " + getKeyStorePath(config));
+        return entry;
+    }
+
+    @NotNull private static KeyStore loadKeyStore(KeyStoreConfig config) throws GeneralSecurityException, IOException {
+        KeyStore store = KeyStore.getInstance(getKeystoreType(config));
+        store.load(Files.newInputStream(getKeyStorePath(config)), getKeyPass(config));
+        return store;
+    }
+
+    @SneakyThrows(GeneralSecurityException.class)
+    private static byte[] cipher(int mode, byte[] bytes, Key key) {
         Cipher cipher = Cipher.getInstance(key.getAlgorithm());
         cipher.init(mode, key);
         return cipher.doFinal(bytes);
-    }
-
-    private static Key loadKey(KeyStoreConfig config) throws GeneralSecurityException, IOException {
-        KeyStore store = KeyStore.getInstance(getKeystoreType(config));
-        char[] storePass = getKeyPass(config);
-        store.load(Files.newInputStream(getKeyStorePath(config)), storePass);
-        PasswordProtection protection = new PasswordProtection(storePass);
-        if (store.isCertificateEntry(config.getAlias()))
-            return store.getCertificate(config.getAlias()).getPublicKey();
-        Entry entry = store.getEntry(config.getAlias(), protection);
-        if (entry == null)
-            throw new IllegalArgumentException("no key [" + config.getAlias() + "] in " + getKeyStorePath(config));
-        return (entry instanceof PrivateKeyEntry)
-                ? ((PrivateKeyEntry) entry).getPrivateKey()
-                : ((SecretKeyEntry) entry).getSecretKey();
     }
 
     private static Path getKeyStorePath(KeyStoreConfig keyStore) {

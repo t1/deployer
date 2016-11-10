@@ -336,7 +336,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${decrypt(«01234567890»)}\n"));
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n"));
 
         assertThat(thrown).hasMessageContaining("no key-store configured to decrypt expression");
     }
