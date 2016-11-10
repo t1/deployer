@@ -42,6 +42,17 @@ public class CipherFacadeTest {
     }
 
     @Test
+    public void shouldEncryptCert() throws Exception {
+        CipherFacade.main("--keystore", "src/test/resources/cert.keystore",
+                "--storetype", "jceks",
+                "--alias", "cert",
+                PLAIN_TEXT);
+
+        // the cipher text is not reproducible :-(
+        assertThat(out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());
+    }
+
+    @Test
     public void shouldDecryptPublic() throws Exception {
         CipherFacade.main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",

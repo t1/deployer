@@ -72,12 +72,16 @@ public class CipherFacade {
         return cipher.doFinal(bytes);
     }
 
-    private static Key loadKey(KeyStoreConfig keyStore) throws GeneralSecurityException, IOException {
-        KeyStore store = KeyStore.getInstance(getKeystoreType(keyStore));
-        char[] storePass = getKeyPass(keyStore);
-        store.load(Files.newInputStream(getKeyStorePath(keyStore)), storePass);
+    private static Key loadKey(KeyStoreConfig config) throws GeneralSecurityException, IOException {
+        KeyStore store = KeyStore.getInstance(getKeystoreType(config));
+        char[] storePass = getKeyPass(config);
+        store.load(Files.newInputStream(getKeyStorePath(config)), storePass);
         PasswordProtection protection = new PasswordProtection(storePass);
-        Entry entry = store.getEntry(keyStore.getAlias(), protection);
+        if (store.isCertificateEntry(config.getAlias()))
+            return store.getCertificate(config.getAlias()).getPublicKey();
+        Entry entry = store.getEntry(config.getAlias(), protection);
+        if (entry == null)
+            throw new IllegalArgumentException("no key [" + config.getAlias() + "] in " + getKeyStorePath(config));
         return (entry instanceof PrivateKeyEntry)
                 ? ((PrivateKeyEntry) entry).getPrivateKey()
                 : ((SecretKeyEntry) entry).getSecretKey();
