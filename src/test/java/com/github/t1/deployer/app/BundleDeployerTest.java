@@ -20,6 +20,7 @@ import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Expressions.*;
+import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.nio.charset.StandardCharsets.*;
 import static java.util.Collections.*;
@@ -294,7 +295,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue(), "keypair") + "»)}\n");
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
 
         foo.verifyDeployed(audits);
     }
@@ -308,7 +309,26 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue(), "secretkey") + "»)}\n");
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithEncryptedVersionUsingDefaultKeystoreType() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        givenConfiguredKeyStore(KeyStoreConfig
+                .builder()
+                .path(Paths.get("src/test/resources/jks.keystore"))
+                .password("changeit")
+                .alias("keypair")
+                .build());
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
 
         foo.verifyDeployed(audits);
     }
@@ -321,17 +341,18 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue(), "keypair") + "»)}\n"));
+                + "    version: ${decrypt(«01234567890»)}\n"));
 
         assertThat(thrown).hasMessageContaining("no key-store configured to decrypt expression");
     }
 
 
-    private String encrypt(String plain, String alias) throws Exception {
-        KeyStore store = KeyStore.getInstance("jceks");
-        char[] password = KEYSTORE.getPassword().toCharArray();
-        store.load(Files.newInputStream(KEYSTORE.getPath()), password);
-        Entry entry = store.getEntry(alias, new PasswordProtection(password));
+    private String encrypt(String plain) throws Exception {
+        KeyStoreConfig config = boundary.keyStore;
+        KeyStore store = KeyStore.getInstance(nvl(config.getType(), KeyStore.getDefaultType()));
+        char[] password = config.getPassword().toCharArray();
+        store.load(Files.newInputStream(config.getPath()), password);
+        Entry entry = store.getEntry(config.getAlias(), new PasswordProtection(password));
         Key key;
         if (entry instanceof PrivateKeyEntry) {
             PrivateKeyEntry privateKeyEntry = (PrivateKeyEntry) entry;

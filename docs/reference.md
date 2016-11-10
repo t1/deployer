@@ -177,7 +177,7 @@ The key to be used for the `decrypt` expression.
 | name | usage |
 | --- | --- |
 | path | The file path to the keystore. |
-| type | The format of the keystore, e.g. `jks` or `jceks`. |
+| type | The format of the keystore, e.g. `jks` or `jceks`. Defaults to `jks`. Note that you can't store secret keys (i.e. symmetric encryption keys) in `jks`. |
 | password | The password required for the keystore. |
 | alias | The name of the key in the keystore. |
 

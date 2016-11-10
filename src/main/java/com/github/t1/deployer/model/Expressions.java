@@ -343,8 +343,6 @@ public class Expressions {
                 throw badRequest("no key-store configured to decrypt expression");
             if (keyStore.getPath() == null)
                 throw badRequest("no key-store path configured to decrypt expression");
-            if (keyStore.getType() == null)
-                throw badRequest("no key-store type configured to decrypt expression");
             if (keyStore.getPassword() == null)
                 throw badRequest("no key-store password configured to decrypt expression");
             if (keyStore.getAlias() == null)
@@ -358,7 +356,7 @@ public class Expressions {
         }
 
         private Key loadKey() throws GeneralSecurityException, IOException {
-            KeyStore store = KeyStore.getInstance(keyStore.getType());
+            KeyStore store = KeyStore.getInstance(getKeystoreType());
             char[] storePass = keyStore.getPassword().toCharArray();
             store.load(Files.newInputStream(keyStore.getPath()), storePass);
             PasswordProtection protection = new PasswordProtection(storePass);
@@ -366,6 +364,10 @@ public class Expressions {
             return (entry instanceof PrivateKeyEntry)
                     ? ((PrivateKeyEntry) entry).getPrivateKey()
                     : ((SecretKeyEntry) entry).getSecretKey();
+        }
+
+        private String getKeystoreType() {
+            return (keyStore == null || keyStore.getType() == null) ? KeyStore.getDefaultType() : keyStore.getType();
         }
 
         private String regex(String text, String pattern) {
