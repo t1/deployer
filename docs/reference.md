@@ -74,6 +74,17 @@ The key is the `category` of the logger, usually the fully qualified name of the
 Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
 
 
+### `data-sources`
+
+The key is the `pool-name` of the data source. 
+
+- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`.
+- `uri`: The JNDI URI used to connect to the database. Mandatory.
+- `jndi-name`: The name that can be used to look up the data source.
+Defaults to `java:/datasources/<name>DS` where `<name>` is the name of the data source.
+- `driver`: The driver to be used to connect. Defaults to the part after `jdbc` in the `uri`.
+
+
 ### Variables
 
 Bundles can refer to variables in the `${name}` notation. To escape a `$`, duplicate it to `$$`.

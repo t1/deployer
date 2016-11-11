@@ -25,6 +25,7 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
     private final DataSourceName name;
     private URI uri;
     private String jndiName;
+    private String driver;
 
     private DataSourceResource(@NonNull DataSourceName name, @NonNull CLI cli) {
         super(cli);
@@ -64,12 +65,14 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
             DataSourceResource dataSource = new DataSourceResource(name, cli);
             dataSource.uri = uri;
             dataSource.jndiName = jndiName;
+            dataSource.driver = driver;
             return dataSource;
         }
     }
 
     @Override public String toString() {
-        return name + ":" + jndiName + ":" + uri + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
+        return name + ":" + jndiName + ":" + driver + ":" + uri +
+                ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
     }
 
     @Override protected ModelNode address() { return address(name); }
@@ -88,9 +91,15 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
         writeAttribute("jndi-name", newJndiName);
     }
 
+    public void updateDriver(String newDriverName) {
+        checkDeployed();
+        writeAttribute("driver", newDriverName);
+    }
+
     @Override protected void readFrom(ModelNode result) {
         this.uri = URI.create(result.get("connection-url").asString());
         this.jndiName = result.get("jndi-name").asString();
+        this.driver = result.get("driver").asString();
     }
 
     @Override public void add() {
@@ -100,6 +109,7 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
         if (uri != null)
             request.get("connection-url").set(uri.toString());
         request.get("jndi-name").set(jndiName);
+        request.get("driver").set(driver);
 
         execute(request);
 

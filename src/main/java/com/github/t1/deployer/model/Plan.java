@@ -15,6 +15,7 @@ import java.io.*;
 import java.net.URI;
 import java.util.*;
 import java.util.function.*;
+import java.util.regex.*;
 import java.util.stream.Stream;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
@@ -505,10 +506,12 @@ public class Plan {
     @AllArgsConstructor(access = PRIVATE)
     @JsonNaming(KebabCaseStrategy.class)
     public static class DataSourcePlan implements AbstractPlan {
+        private static final Pattern JDBC_URI = Pattern.compile("jdbc:(\\p{Alnum}{1,256}):.*");
         @NonNull @JsonIgnore private final DataSourceName name;
         private final DeploymentState state;
         private URI uri;
         private String jndiName;
+        private String driver;
 
         @Override public String getId() { return name.getValue(); }
 
@@ -519,7 +522,17 @@ public class Plan {
             apply(node, "state", builder::state, DeploymentState::valueOf);
             apply(node, "uri", builder::uri, URI::create);
             apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "DS»");
+            apply(node, "driver", builder::driver, identity(), defaultDriver(builder.uri));
             return builder.build().validate();
+        }
+
+        private static String defaultDriver(URI uri) {
+            if (uri != null) {
+                Matcher matcher = JDBC_URI.matcher(uri.toString());
+                if (matcher.matches())
+                    return "«" + matcher.group(1) + "»";
+            }
+            return "default.data-source-driver";
         }
 
         private DataSourcePlan validate() {
@@ -534,7 +547,7 @@ public class Plan {
         @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
         @Override public String toString() {
-            return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + uri;
+            return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + driver + ":" + uri;
         }
     }
 

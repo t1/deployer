@@ -959,11 +959,13 @@ public class AbstractDeployerTest {
         private boolean deployed;
         private String uri;
         private String jndiName;
+        private String driver;
 
         public DataSourceFixture(@NonNull String name) {
             this.name = new DataSourceName(name);
             this.uri = "jdbc:h2:mem:" + name;
             this.jndiName = "java:/datasources/" + name + "DS";
+            this.driver = "h2";
 
             when(cli.executeRaw(readDatasource(name))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
@@ -976,7 +978,8 @@ public class AbstractDeployerTest {
                     + "'result' => {\n"
                     + "    'name' => " + ((name == null) ? "undefined" : "'" + name + "'") + ",\n"
                     + "    'connection-url' => '" + uri + "',\n"
-                    + "    'jndi-name' => '" + jndiName + "'\n"
+                    + "    'jndi-name' => '" + jndiName + "',\n"
+                    + "    'driver' => '" + driver + "'\n"
                     + "}\n";
         }
 
@@ -987,6 +990,11 @@ public class AbstractDeployerTest {
 
         public DataSourceFixture jndiName(String jndiName) {
             this.jndiName = jndiName;
+            return this;
+        }
+
+        public DataSourceFixture driver(String driver) {
+            this.driver = driver;
             return this;
         }
 
@@ -1009,16 +1017,18 @@ public class AbstractDeployerTest {
 
         public void verifyAdded(Audits audits) {
             ModelNode request = toModelNode("{\n"
-                    + dataSourceAddress()
                     + "    'operation' => 'add',\n"
+                    + dataSourceAddress()
                     + "    'connection-url' => '" + uri + "',\n"
-                    + "    'jndi-name' => '" + jndiName + "'\n"
+                    + "    'jndi-name' => '" + jndiName + "',\n"
+                    + "    'driver' => '" + driver + "'\n"
                     + "}");
             verify(cli).execute(request);
             Audit audit = DataSourceAudit
                     .of(getName())
                     .change("uri", null, uri)
                     .change("jndi-name", null, jndiName)
+                    .change("driver", null, driver)
                     .added();
             assertThat(audits.getAudits()).contains(audit);
         }
@@ -1035,6 +1045,12 @@ public class AbstractDeployerTest {
                     DataSourceAudit.of(name).change("jndi-name", oldJndiName, jndiName).changed());
         }
 
+        public void verifyUpdatedDrierNameFrom(String oldDriverName, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "driver", driver);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("driver", oldDriverName, driver).changed());
+        }
+
         public void verifyRemoved(Audits audits) {
             verify(cli).execute(toModelNode(""
                     + "{\n"
@@ -1045,6 +1061,7 @@ public class AbstractDeployerTest {
                     .of(getName())
                     .change("uri", uri, null)
                     .change("jndi-name", jndiName, null)
+                    .change("driver", driver, null)
                     .removed();
             assertThat(audits.getAudits()).contains(audit);
         }
@@ -1055,6 +1072,7 @@ public class AbstractDeployerTest {
                     .name(name)
                     .uri(URI.create(uri))
                     .jndiName(jndiName)
+                    .driver(driver)
                     .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
                     .build();
         }

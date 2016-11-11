@@ -30,7 +30,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "data-sources:\n"
                 + "  foo:\n"
-                + "    jndi-name: java:datasources/fooDS"));
+                + "    driver: h2\n"));
 
         assertThat(thrown)
                 .hasStackTraceContaining("field 'uri' for data-source 'foo' can only be null when undeploying");
@@ -43,7 +43,20 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         Audits audits = deploy(""
                 + "data-sources:\n"
                 + "  foo:\n"
-                + "    uri: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE\n");
+                + "    uri: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE\n"
+                + "    driver: h2\n");
+
+        foo.verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldAddDataSourcesWithDriverFromJdbcUri() {
+        DataSourceFixture foo = givenDataSource("foo");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n");
 
         foo.verifyAdded(audits);
     }
@@ -57,7 +70,8 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
                 + "data-sources:\n"
                 + "  foo:\n"
                 + "    uri: jdbc:h2:mem:foo\n"
-                + "    jndi-name: java:datasources/barDS\n");
+                + "    jndi-name: java:datasources/barDS\n"
+                + "    driver: h2\n");
 
         foo.jndiName("java:datasources/barDS").verifyAdded(audits);
     }
@@ -70,7 +84,8 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         Audits audits = deploy(""
                 + "data-sources:\n"
                 + "  foo:\n"
-                + "    uri: jdbc:h2:mem:foo\n");
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    driver: h2\n");
 
         // #after(): no add nor update
         assertThat(audits.getAudits()).isEmpty();
@@ -100,6 +115,20 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
                 + "    jndi-name: java:/datasources/barDS\n");
 
         fixture.jndiName("java:/datasources/barDS").verifyUpdatedJndiNameFrom("java:/datasources/fooDS", audits);
+    }
+
+
+    @Test
+    public void shouldUpdateDriver() {
+        DataSourceFixture fixture = givenDataSource("foo").deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    driver: bar\n");
+
+        fixture.driver("bar").verifyUpdatedDrierNameFrom("h2", audits);
     }
 
 

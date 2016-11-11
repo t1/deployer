@@ -17,8 +17,13 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 public class DataSourceDeployer extends
         ResourceDeployer<DataSourcePlan, DataSourceResourceBuilder, DataSourceResource, DataSourceAuditBuilder> {
     public DataSourceDeployer() {
-        property("uri", URI.class, DataSourceResource.class, DataSourcePlan.class);
-        property("jndi-name", String.class, DataSourceResource.class, DataSourcePlan.class);
+        property("uri", URI.class);
+        property("jndi-name", String.class);
+        property("driver", String.class);
+    }
+
+    private void property(String name, Class<?> type) {
+        property(name, type, DataSourceResource.class, DataSourcePlan.class);
     }
 
     @Override protected String getType() { return "data-sources"; }
@@ -42,7 +47,7 @@ public class DataSourceDeployer extends
                 .state(deployed)
                 .uri(resource.uri())
                 .jndiName(resource.jndiName())
-                ;
+                .driver(resource.driver());
         builder.dataSource(dataSourcePlan.build());
     }
 }
