@@ -4,8 +4,8 @@ import com.github.t1.deployer.app.Audit.LogHandlerAudit;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.container.LogHandlerResource;
 import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
-import com.github.t1.deployer.model.Plan;
-import com.github.t1.deployer.model.Plan.*;
+import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 

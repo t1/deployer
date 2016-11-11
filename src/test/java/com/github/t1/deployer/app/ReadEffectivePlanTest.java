@@ -2,7 +2,6 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Plan.*;
 import org.junit.Test;
 
 import java.util.List;
