@@ -82,7 +82,8 @@ The key is the `pool-name` of the data source.
 - `uri`: The JNDI URI used to connect to the database. Mandatory.
 - `jndi-name`: The name that can be used to look up the data source.
 Defaults to `java:/datasources/<name>DS` where `<name>` is the name of the data source.
-- `driver`: The driver to be used to connect. Defaults to the part after `jdbc` in the `uri`.
+- `driver`: The `driver-name` to be used to connect.
+Defaults to the part after `jdbc` in the `uri` or `default.data-source-driver`, if the URN isn't a `jdbc`.
 
 
 ### Variables

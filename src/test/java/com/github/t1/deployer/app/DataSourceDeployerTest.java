@@ -63,6 +63,20 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldFallBackToDefaultDriverWhenNotJdbcUrn() {
+        givenConfiguredVariable("default.data-source-driver", "bar");
+        DataSourceFixture foo = givenDataSource("foo").uri("http://example.org");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: http://example.org\n");
+
+        foo.driver("bar").verifyAdded(audits);
+    }
+
+
+    @Test
     public void shouldAddDataSourceWithJndiName() {
         DataSourceFixture foo = givenDataSource("foo");
 

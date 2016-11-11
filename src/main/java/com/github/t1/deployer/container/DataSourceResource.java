@@ -16,6 +16,7 @@ import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 
+/** @see javax.annotation.sql.DataSourceDefinition */
 @Slf4j
 @Getter
 @Accessors(fluent = true, chain = true)
@@ -23,9 +24,16 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @SuppressWarnings("unused")
 public class DataSourceResource extends AbstractResource<DataSourceResource> {
     private final DataSourceName name;
-    private URI uri;
-    private String jndiName;
     private String driver;
+    private String jndiName;
+    private URI uri;
+    // String user;
+    // String password;
+    // int initialPoolSize() default -1;
+    // int maxPoolSize() default -1;
+    // int minPoolSize() default -1;
+    // int maxIdleTime() default -1;
+    // int maxStatements() default -1;
 
     private DataSourceResource(@NonNull DataSourceName name, @NonNull CLI cli) {
         super(cli);
@@ -93,13 +101,13 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
 
     public void updateDriver(String newDriverName) {
         checkDeployed();
-        writeAttribute("driver", newDriverName);
+        writeAttribute("driver-name", newDriverName);
     }
 
     @Override protected void readFrom(ModelNode result) {
         this.uri = URI.create(result.get("connection-url").asString());
         this.jndiName = result.get("jndi-name").asString();
-        this.driver = result.get("driver").asString();
+        this.driver = result.get("driver-name").asString();
     }
 
     @Override public void add() {
@@ -109,7 +117,7 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
         if (uri != null)
             request.get("connection-url").set(uri.toString());
         request.get("jndi-name").set(jndiName);
-        request.get("driver").set(driver);
+        request.get("driver-name").set(driver);
 
         execute(request);
 

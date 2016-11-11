@@ -459,6 +459,39 @@ public class DeployerIT {
 
     @Test
     @InSequence(value = 1000)
+    public void shouldDeployDataSource() throws Exception {
+        String plan = ""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:test\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                DataSourceAudit.builder().name(new DataSourceName("foo"))
+                               .change("uri", null, "jdbc:h2:mem:test")
+                               .change("jndi-name", null, "java:/datasources/fooDS")
+                               .change("driver", null, "h2")
+                               .added());
+    }
+
+    @Test
+    @InSequence(value = 1100)
+    public void shouldUndeployDataSource() throws Exception {
+        String plan = "---\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                DataSourceAudit.builder().name(new DataSourceName("foo"))
+                               .change("uri", "jdbc:h2:mem:test", null)
+                               .change("jndi-name", "java:/datasources/fooDS", null)
+                               .change("driver", "h2", null)
+                               .removed());
+    }
+
+    @Test
+    @InSequence(value = 8000)
     public void shouldDeployJdbcDriver() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -477,23 +510,6 @@ public class DeployerIT {
                                .change("version", null, "9.4.1207")
                                .change("type", null, "jar")
                                .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
-                               .added());
-    }
-
-    @Test
-    @Ignore
-    @InSequence(value = 1100)
-    public void shouldDeployDataSource() throws Exception {
-        String plan = ""
-                + "data-sources:\n"
-                + "  foo:\n"
-                + "    uri: jdbc:h2:mem:test\n";
-
-        List<Audit> audits = post(plan);
-
-        assertThat(audits).containsExactly(
-                DataSourceAudit.builder().name(new DataSourceName("postgresql"))
-                               .change("uri", null, "jdbc:m2:mem:test")
                                .added());
     }
 
