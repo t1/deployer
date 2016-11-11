@@ -2,9 +2,10 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.DataSourceAudit;
 import com.github.t1.deployer.app.Audit.DataSourceAudit.DataSourceAuditBuilder;
-import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.DataSourceResource;
 import com.github.t1.deployer.container.DataSourceResource.DataSourceResourceBuilder;
+import com.github.t1.deployer.model.Plan;
+import com.github.t1.deployer.model.Plan.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;

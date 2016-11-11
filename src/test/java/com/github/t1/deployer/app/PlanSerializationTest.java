@@ -1,16 +1,15 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Plan.*;
-import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Plan.*;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.io.StringReader;
 
 import static com.github.t1.deployer.TestData.*;
-import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;

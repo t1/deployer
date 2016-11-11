@@ -1,6 +1,5 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.container.DeploymentName;
 import com.github.t1.deployer.model.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;

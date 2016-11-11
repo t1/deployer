@@ -1,8 +1,8 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.AuditBuilder;
-import com.github.t1.deployer.app.Plan.AbstractPlan;
 import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.model.Plan.AbstractPlan;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;

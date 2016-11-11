@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.experimental.Accessors;
@@ -9,7 +10,7 @@ import org.jboss.dmr.ModelNode;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.container.LoggerCategory.*;
+import static com.github.t1.deployer.model.LoggerCategory.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
@@ -21,7 +22,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @Accessors(fluent = true, chain = true)
 public class LoggerResource extends AbstractResource<LoggerResource> {
-    public static LogLevel mapLogLevel(String level) {
+    static LogLevel mapLogLevel(String level) {
         switch (level) {
         case "ALL":
             return LogLevel.ALL;

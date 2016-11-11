@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
@@ -12,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.container.LogHandlerName.*;
 import static com.github.t1.deployer.container.LoggerResource.*;
+import static com.github.t1.deployer.model.LogHandlerName.*;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;

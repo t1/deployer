@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.DataSourceName;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.container.DataSourceName.*;
+import static com.github.t1.deployer.model.DataSourceName.*;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;

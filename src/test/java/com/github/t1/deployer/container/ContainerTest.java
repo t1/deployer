@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 import lombok.SneakyThrows;
 import org.jboss.as.controller.client.*;
@@ -11,8 +12,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 
-import static com.github.t1.deployer.container.LogHandlerType.*;
-import static com.github.t1.deployer.container.LoggerCategory.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.model.LoggerCategory.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;

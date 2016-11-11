@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
 
-import static com.github.t1.deployer.app.Plan.*;
+import static com.github.t1.deployer.model.Plan.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.stream.Collectors.*;
 

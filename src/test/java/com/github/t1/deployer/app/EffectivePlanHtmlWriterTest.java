@@ -1,17 +1,16 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Plan.*;
-import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Plan.*;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.net.*;
 import java.nio.file.Paths;
 
-import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Expressions.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static javax.ws.rs.core.MediaType.*;
 import static org.assertj.core.api.Assertions.*;

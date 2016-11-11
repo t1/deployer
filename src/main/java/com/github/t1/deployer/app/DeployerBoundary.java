@@ -1,9 +1,9 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Plan.*;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Expressions.*;
+import com.github.t1.deployer.model.Plan.*;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.Logged;

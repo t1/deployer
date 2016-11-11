@@ -2,9 +2,10 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
-import com.github.t1.deployer.app.Plan.*;
-import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.container.LoggerResource;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
+import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Plan.*;
 import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.model.*;
 import lombok.*;
 import lombok.experimental.Accessors;
 

@@ -1,4 +1,4 @@
-package com.github.t1.deployer.container;
+package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -23,8 +23,6 @@ public class BundleName implements Comparable<BundleName> {
     @JsonCreator public BundleName(String value) { this.value = value; }
 
     @Override public String toString() { return value; }
-
-    public boolean matches(@NonNull DeploymentResource deployment) { return this.equals(deployment.name()); }
 
     @Override public int compareTo(@NotNull BundleName that) { return this.value.compareTo(that.value); }
 }

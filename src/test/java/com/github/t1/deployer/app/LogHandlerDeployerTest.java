@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
-import static com.github.t1.deployer.container.LogHandlerType.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 

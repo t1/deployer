@@ -1,12 +1,10 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
@@ -22,9 +20,9 @@ import java.util.stream.Stream;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 import static com.fasterxml.jackson.databind.DeserializationFeature.*;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
-import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
 import static java.lang.Boolean.*;
 import static java.util.Collections.*;
 import static java.util.function.Function.*;
@@ -361,7 +359,7 @@ public class Plan {
                 throw new PlanLoadingException("incomplete loggers plan '" + category + "'");
             LoggerPlanBuilder builder = builder().category(category);
             apply(node, "state", builder::state, DeploymentState::valueOf);
-            apply(node, "level", builder::level, LoggerResource::mapLogLevel, "default.log-level or «DEBUG»");
+            apply(node, "level", builder::level, LogLevel::valueOf, "default.log-level or «DEBUG»");
             apply(node, "handler", builder::handler, identity());
             if (node.has("handlers"))
                 applyHandlers(node, builder);
@@ -435,7 +433,7 @@ public class Plan {
         private static LogHandlerPlan fromJson(LogHandlerName name, JsonNode node) {
             LogHandlerPlanBuilder builder = builder().name(name);
             apply(node, "state", builder::state, DeploymentState::valueOf);
-            apply(node, "level", builder::level, LoggerResource::mapLogLevel, "«ALL»");
+            apply(node, "level", builder::level, LogLevel::valueOf, "«ALL»");
             apply(node, "type", builder::type, LogHandlerType::valueOfTypeName,
                     "default.log-handler-type or «" + periodicRotatingFile + "»");
             if (node.has("format") || (!node.has("formatter") && !expressions.contains(DEFAULT_LOG_FORMATTER)))

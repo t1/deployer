@@ -1,4 +1,4 @@
-package com.github.t1.deployer.container;
+package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;

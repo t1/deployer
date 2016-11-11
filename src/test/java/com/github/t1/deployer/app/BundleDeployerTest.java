@@ -13,9 +13,9 @@ import java.nio.file.Paths;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.Trigger.*;
-import static com.github.t1.deployer.container.LogHandlerType.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.Expressions.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;

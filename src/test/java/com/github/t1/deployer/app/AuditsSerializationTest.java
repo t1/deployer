@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
-import com.github.t1.deployer.container.LoggerCategory;
+import com.github.t1.deployer.model.LoggerCategory;
 import org.junit.Test;
 
 import java.io.IOException;
 
 import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
-import static com.github.t1.deployer.app.Plan.*;
+import static com.github.t1.deployer.model.Plan.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 

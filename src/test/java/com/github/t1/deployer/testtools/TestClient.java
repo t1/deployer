@@ -3,6 +3,7 @@ package com.github.t1.deployer.testtools;
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
+import com.github.t1.deployer.model.Plan;
 import com.github.t1.rest.*;
 import com.github.t1.testtools.FileMemento;
 import org.junit.*;
@@ -15,6 +16,7 @@ import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.*;
 
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 @Ignore("this is not a automated test, but only a test client")
 public class TestClient {
     private static final Path JBOSS_CONFIG = Paths.get(System.getProperty("user.home"),
@@ -22,6 +24,7 @@ public class TestClient {
     private static final DeployableAuditBuilder JOLOKIA = DeployableAudit.builder().name("jolokia");
 
     public List<Audit> run(String plan) throws IOException {
+        //noinspection resource
         try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_BUNDLE)).setup()) {
             memento.write(plan);
             return postUpdate().getAudits();

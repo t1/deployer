@@ -3,7 +3,7 @@ package com.github.t1.deployer;
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
 import com.github.t1.testtools.*;
 import lombok.SneakyThrows;
@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 
 import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
-import static com.github.t1.deployer.container.LogHandlerType.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
 import static java.util.concurrent.TimeUnit.*;
@@ -73,7 +73,7 @@ public class DeployerIT {
     }
 
     private static Condition<DeploymentResource> deployment(DeploymentName name) {
-        return new Condition<>(name::matches, "deployment with name '" + name + "'");
+        return new Condition<>(resource -> resource.name().equals(name), "deployment with name '" + name + "'");
     }
 
     private static Condition<DeploymentResource> checksum(Checksum checksum) {
@@ -192,7 +192,7 @@ public class DeployerIT {
     }
 
     private Stream<DeploymentResource> theDeployments() {
-        return container.allDeployments().filter(deployment -> !DEPLOYER_IT.matches(deployment));
+        return container.allDeployments().filter(deployment -> !DEPLOYER_IT.equals(deployment.name()));
     }
 
     protected Condition<DeploymentResource> deployment(String name, Checksum checksum) {

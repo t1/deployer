@@ -3,6 +3,7 @@ package com.github.t1.deployer.app;
 import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.t1.deployer.model.Plan;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;

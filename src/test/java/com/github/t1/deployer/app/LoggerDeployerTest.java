@@ -4,8 +4,8 @@ import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
-import static com.github.t1.deployer.container.LogHandlerType.*;
-import static com.github.t1.deployer.container.LoggerCategory.*;
+import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.model.LoggerCategory.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
