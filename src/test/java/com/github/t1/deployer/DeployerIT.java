@@ -463,15 +463,21 @@ public class DeployerIT {
         String plan = ""
                 + "data-sources:\n"
                 + "  foo:\n"
-                + "    uri: jdbc:h2:mem:test\n";
+                + "    uri: jdbc:h2:mem:test\n"
+                + "    jndi-name: java:/datasources/TestDS\n"
+                + "    driver: h2\n"
+                + "    user-name: joe\n"
+                + "    password: secret\n";
 
         List<Audit> audits = post(plan);
 
         assertThat(audits).containsExactly(
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
                                .change("uri", null, "jdbc:h2:mem:test")
-                               .change("jndi-name", null, "java:/datasources/fooDS")
+                               .change("jndi-name", null, "java:/datasources/TestDS")
                                .change("driver", null, "h2")
+                               .change("user-name", null, "joe")
+                               .change("password", null, "secret")
                                .added());
     }
 
@@ -485,8 +491,10 @@ public class DeployerIT {
         assertThat(audits).containsExactly(
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
                                .change("uri", "jdbc:h2:mem:test", null)
-                               .change("jndi-name", "java:/datasources/fooDS", null)
+                               .change("jndi-name", "java:/datasources/TestDS", null)
                                .change("driver", "h2", null)
+                               .change("user-name", "joe", null)
+                               .change("password", "secret", null)
                                .removed());
     }
 

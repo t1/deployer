@@ -90,6 +90,20 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         foo.jndiName("java:datasources/barDS").verifyAdded(audits);
     }
 
+    @Test
+    public void shouldAddDataSourceWithUserNamePassword() {
+        DataSourceFixture foo = givenDataSource("foo");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    user-name: foo\n"
+                + "    password: bar\n");
+
+        foo.userName("foo").password("bar").verifyAdded(audits);
+    }
+
 
     @Test
     public void shouldNotAddExistingDataSource() {
@@ -98,8 +112,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         Audits audits = deploy(""
                 + "data-sources:\n"
                 + "  foo:\n"
-                + "    uri: jdbc:h2:mem:foo\n"
-                + "    driver: h2\n");
+                + "    uri: jdbc:h2:mem:foo\n");
 
         // #after(): no add nor update
         assertThat(audits.getAudits()).isEmpty();
@@ -131,7 +144,6 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         fixture.jndiName("java:/datasources/barDS").verifyUpdatedJndiNameFrom("java:/datasources/fooDS", audits);
     }
 
-
     @Test
     public void shouldUpdateDriver() {
         DataSourceFixture fixture = givenDataSource("foo").deployed();
@@ -142,7 +154,33 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
                 + "    uri: jdbc:h2:mem:foo\n"
                 + "    driver: bar\n");
 
-        fixture.driver("bar").verifyUpdatedDrierNameFrom("h2", audits);
+        fixture.driver("bar").verifyUpdatedDriverNameFrom("h2", audits);
+    }
+
+    @Test
+    public void shouldUpdateUserName() {
+        DataSourceFixture fixture = givenDataSource("foo").userName("bar").deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    user-name: baz\n");
+
+        fixture.userName("baz").verifyUpdatedUserNameFrom("bar", audits);
+    }
+
+    @Test
+    public void shouldUpdatePassword() {
+        DataSourceFixture fixture = givenDataSource("foo").password("bar").deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    password: baz\n");
+
+        fixture.password("baz").verifyUpdatedPasswordFrom("bar", audits);
     }
 
 
@@ -157,7 +195,6 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
 
         fixture.verifyRemoved(audits);
     }
-
 
     @Test
     public void shouldRemoveNonExistingDataSourceWhenStateIsUndeployed() {
@@ -202,6 +239,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         // #after(): app1 not undeployed
         app2.verifyRemoved(audits);
     }
+
 
     @Test
     public void shouldIgnorePinnedDataSourceWhenManaged() {

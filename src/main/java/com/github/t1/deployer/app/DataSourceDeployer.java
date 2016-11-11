@@ -20,6 +20,8 @@ public class DataSourceDeployer extends
         property("uri", URI.class);
         property("jndi-name", String.class);
         property("driver", String.class);
+        property("user-name", String.class);
+        property("password", String.class);
     }
 
     private void property(String name, Class<?> type) {
@@ -47,7 +49,9 @@ public class DataSourceDeployer extends
                 .state(deployed)
                 .uri(resource.uri())
                 .jndiName(resource.jndiName())
-                .driver(resource.driver());
+                .driver(resource.driver())
+                .userName(resource.userName())
+                .password(resource.password());
         builder.dataSource(dataSourcePlan.build());
     }
 }

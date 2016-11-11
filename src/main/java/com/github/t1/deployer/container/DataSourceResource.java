@@ -27,13 +27,14 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
     private String driver;
     private String jndiName;
     private URI uri;
-    // String user;
-    // String password;
+
+    private String userName;
+    private String password;
+
     // int initialPoolSize() default -1;
     // int maxPoolSize() default -1;
     // int minPoolSize() default -1;
     // int maxIdleTime() default -1;
-    // int maxStatements() default -1;
 
     private DataSourceResource(@NonNull DataSourceName name, @NonNull CLI cli) {
         super(cli);
@@ -74,6 +75,9 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
             dataSource.uri = uri;
             dataSource.jndiName = jndiName;
             dataSource.driver = driver;
+
+            dataSource.userName = userName;
+            dataSource.password = password;
             return dataSource;
         }
     }
@@ -104,10 +108,27 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
         writeAttribute("driver-name", newDriverName);
     }
 
+    public void updateUserName(String newUserName) {
+        checkDeployed();
+        writeAttribute("user-name", newUserName);
+    }
+
+    public void updatePassword(String newPassword) {
+        checkDeployed();
+        writeAttribute("password", newPassword);
+    }
+
     @Override protected void readFrom(ModelNode result) {
         this.uri = URI.create(result.get("connection-url").asString());
         this.jndiName = result.get("jndi-name").asString();
         this.driver = result.get("driver-name").asString();
+
+        this.userName = stringOrNull(result, "user-name");
+        this.password = stringOrNull(result, "password");
+    }
+
+    private String stringOrNull(ModelNode node, String name) {
+        return node.get(name).isDefined() ? node.get(name).asString() : null;
     }
 
     @Override public void add() {
@@ -118,6 +139,11 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
             request.get("connection-url").set(uri.toString());
         request.get("jndi-name").set(jndiName);
         request.get("driver-name").set(driver);
+
+        if (userName != null)
+            request.get("user-name").set(userName);
+        if (password != null)
+            request.get("password").set(password);
 
         execute(request);
 

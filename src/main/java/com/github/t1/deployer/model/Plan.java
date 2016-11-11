@@ -507,11 +507,20 @@ public class Plan {
     @JsonNaming(KebabCaseStrategy.class)
     public static class DataSourcePlan implements AbstractPlan {
         private static final Pattern JDBC_URI = Pattern.compile("jdbc:(\\p{Alnum}{1,256}):.*");
+
         @NonNull @JsonIgnore private final DataSourceName name;
         private final DeploymentState state;
-        private URI uri;
-        private String jndiName;
-        private String driver;
+        private final String driver;
+        private final String jndiName;
+        private final URI uri;
+
+        private final String userName;
+        private final String password;
+
+        // private final int initialPoolSize
+        // private final int maxPoolSize
+        // private final int minPoolSize
+        // private final int maxIdleTime
 
         @Override public String getId() { return name.getValue(); }
 
@@ -523,6 +532,8 @@ public class Plan {
             apply(node, "uri", builder::uri, URI::create);
             apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "DS»");
             apply(node, "driver", builder::driver, identity(), defaultDriver(builder.uri));
+            apply(node, "user-name", builder::userName, identity());
+            apply(node, "password", builder::password, identity());
             return builder.build().validate();
         }
 

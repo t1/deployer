@@ -957,9 +957,12 @@ public class AbstractDeployerTest {
     public class DataSourceFixture {
         private final DataSourceName name;
         private boolean deployed;
-        private String uri;
-        private String jndiName;
         private String driver;
+        private String jndiName;
+        private String uri;
+
+        private String userName;
+        private String password;
 
         public DataSourceFixture(@NonNull String name) {
             this.name = new DataSourceName(name);
@@ -979,7 +982,9 @@ public class AbstractDeployerTest {
                     + "    'name' => " + ((name == null) ? "undefined" : "'" + name + "'") + ",\n"
                     + "    'connection-url' => '" + uri + "',\n"
                     + "    'jndi-name' => '" + jndiName + "',\n"
-                    + "    'driver' => '" + driver + "'\n"
+                    + "    'driver-name' => '" + driver + "',\n"
+                    + "    'user-name' => " + ((userName == null) ? "undefined" : "'" + userName + "'") + ",\n"
+                    + "    'password' => " + ((password == null) ? "undefined" : "'" + password + "'") + ",\n"
                     + "}\n";
         }
 
@@ -995,6 +1000,16 @@ public class AbstractDeployerTest {
 
         public DataSourceFixture driver(String driver) {
             this.driver = driver;
+            return this;
+        }
+
+        public DataSourceFixture userName(String userName) {
+            this.userName = userName;
+            return this;
+        }
+
+        public DataSourceFixture password(String password) {
+            this.password = password;
             return this;
         }
 
@@ -1021,16 +1036,21 @@ public class AbstractDeployerTest {
                     + dataSourceAddress()
                     + "    'connection-url' => '" + uri + "',\n"
                     + "    'jndi-name' => '" + jndiName + "',\n"
-                    + "    'driver' => '" + driver + "'\n"
+                    + "    'driver-name' => '" + driver + "'\n"
+                    + ((userName == null) ? "" : ",    'user-name' => '" + userName + "'\n")
+                    + ((password == null) ? "" : ",    'password' => '" + password + "'\n")
                     + "}");
             verify(cli).execute(request);
-            Audit audit = DataSourceAudit
+            AuditBuilder audit = DataSourceAudit
                     .of(getName())
                     .change("uri", null, uri)
                     .change("jndi-name", null, jndiName)
-                    .change("driver", null, driver)
-                    .added();
-            assertThat(audits.getAudits()).contains(audit);
+                    .change("driver", null, driver);
+            if (userName!=null)
+                audit.change("user-name", null, userName);
+            if (password!=null)
+                audit.change("password", null, password);
+            assertThat(audits.getAudits()).contains(audit.added());
         }
 
         public void verifyUpdatedUriFrom(String oldUri, Audits audits) {
@@ -1045,10 +1065,22 @@ public class AbstractDeployerTest {
                     DataSourceAudit.of(name).change("jndi-name", oldJndiName, jndiName).changed());
         }
 
-        public void verifyUpdatedDrierNameFrom(String oldDriverName, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "driver", driver);
+        public void verifyUpdatedDriverNameFrom(String oldDriverName, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "driver-name", driver);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("driver", oldDriverName, driver).changed());
+        }
+
+        public void verifyUpdatedUserNameFrom(String oldUserName, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "user-name", userName);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("user-name", oldUserName, userName).changed());
+        }
+
+        public void verifyUpdatedPasswordFrom(String oldPassword, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "password", password);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("password", oldPassword, password).changed());
         }
 
         public void verifyRemoved(Audits audits) {
@@ -1057,23 +1089,28 @@ public class AbstractDeployerTest {
                     + dataSourceAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));
-            Audit audit = DataSourceAudit
+            AuditBuilder audit = DataSourceAudit
                     .of(getName())
                     .change("uri", uri, null)
                     .change("jndi-name", jndiName, null)
-                    .change("driver", driver, null)
-                    .removed();
-            assertThat(audits.getAudits()).contains(audit);
+                    .change("driver", driver, null);
+            if(userName!=null)
+                audit.change("user-name", userName, null);
+            if(password!=null)
+                audit.change("password", password, null);
+            assertThat(audits.getAudits()).contains(audit.removed());
         }
 
         public DataSourcePlan asPlan() {
             return DataSourcePlan
                     .builder()
                     .name(name)
+                    .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
                     .uri(URI.create(uri))
                     .jndiName(jndiName)
                     .driver(driver)
-                    .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
+                    .userName(userName)
+                    .password(password)
                     .build();
         }
     }

@@ -72,6 +72,8 @@ The key is the `category` of the logger, usually the fully qualified name of the
 - `handler`: Alternative syntax for a single log handler name. Defaults to an empty list.
 - `use-parent-handlers`: Should the log handlers of the parent logger be used?
 Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
+- `user-name`: The user name to authenticate with. Default is vendor specific.
+- `password`: The password to authenticate with. Default is vendor specific.
 
 
 ### `data-sources`
