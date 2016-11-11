@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import static java.util.stream.Collectors.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 
 @Slf4j
-@Builder(builderMethodName = "doNotCallThisBuilderExternally")
+@Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @Accessors(fluent = true, chain = true)
 @SuppressWarnings("unused")
 public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
@@ -46,17 +47,17 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     }
 
     public static LogHandlerResourceBuilder builder(LogHandlerType type, LogHandlerName name, CLI cli) {
-        return doNotCallThisBuilderExternally().cli(cli).type(type).name(name);
+        LogHandlerResourceBuilder builder = new LogHandlerResourceBuilder().type(type).name(name);
+        builder.cli = cli;
+        return builder;
     }
 
     public static List<LogHandlerResource> allHandlers(CLI cli) {
         return Arrays.stream(LogHandlerType.values())
-                     .flatMap(type -> {
-                         ModelNode address = new LogHandlerResource(type, ALL, cli).address();
-                         return cli.execute(createReadResourceOperation(address, true))
-                                   .asList().stream()
-                                   .map(node -> toLoggerResource(type(node), name(node), cli, node.get("result")));
-                     })
+                     .flatMap(type -> cli.execute(createReadResourceOperation(address(type, ALL), true))
+                                         .asList().stream()
+                                         .map(node -> toLoggerResource(type(node), name(node), cli,
+                                                 node.get("result"))))
                      .sorted(comparing(LogHandlerResource::name))
                      .collect(toList());
     }
@@ -80,14 +81,7 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     public static class LogHandlerResourceBuilder implements Supplier<LogHandlerResource> {
         private CLI cli;
 
-        public LogHandlerResourceBuilder cli(CLI cli) {
-            this.cli = cli;
-            return this;
-        }
-
-        @Override public LogHandlerResource get() { return build(); }
-
-        public LogHandlerResource build() {
+        @Override public LogHandlerResource get() {
             LogHandlerResource resource = new LogHandlerResource(type, name, cli);
             resource.level = level;
             resource.format = format;
@@ -218,8 +212,10 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     }
 
 
-    @Override protected ModelNode address() {
-        return createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
+    @Override protected ModelNode address() { return address(type, name); }
+
+    private static ModelNode address(LogHandlerType type, LogHandlerName name) {
+        return Operations.createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
     }
 
     @Override protected void readFrom(ModelNode result) {

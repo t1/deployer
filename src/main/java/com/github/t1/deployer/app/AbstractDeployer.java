@@ -69,7 +69,7 @@ abstract class AbstractDeployer<
         if (isPinned(plan.getId()))
             throw badRequest("resource is pinned: " + plan);
 
-        RESOURCE resource = getResource(plan);
+        RESOURCE resource = readResource(plan);
         log.debug("apply {} to {}", plan, resource);
         AUDIT audit = auditBuilder(resource);
         switch (plan.getState()) {
@@ -98,7 +98,7 @@ abstract class AbstractDeployer<
         throw new UnsupportedOperationException("unhandled case: " + plan.getState());
     }
 
-    protected abstract RESOURCE getResource(PLAN plan);
+    protected abstract RESOURCE readResource(PLAN plan);
 
     protected abstract AUDIT auditBuilder(RESOURCE resource);
 

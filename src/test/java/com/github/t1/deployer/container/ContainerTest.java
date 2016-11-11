@@ -17,6 +17,7 @@ import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("resource")
 @RunWith(MockitoJUnitRunner.class)
 public class ContainerTest {
     private static final LogLevel ROOT_LEVEL = DEBUG;
@@ -74,6 +75,7 @@ public class ContainerTest {
 
     @SneakyThrows(IOException.class)
     private void givenNoLogger(String category) {
+        //noinspection SpellCheckingInspection
         when(client.execute(eq(readLoggersCli(category)), any(OperationMessageHandler.class)))
                 .thenReturn(ModelNode.fromString("{\n"
                         + "    \"outcome\" => \"failed\",\n"
@@ -197,11 +199,11 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        assertIsRoot(container.builderFor(ROOT).build());
+        assertIsRoot(container.builderFor(ROOT).get());
 
-        assertIsFoo(container.builderFor(LoggerCategory.of("foo")).build());
+        assertIsFoo(container.builderFor(LoggerCategory.of("foo")).get());
 
-        LoggerResource bar = container.builderFor(BAR).build();
+        LoggerResource bar = container.builderFor(BAR).get();
         assertThat(bar.isDeployed()).isFalse();
         assertThat(bar.isRoot()).isFalse();
         assertThat(bar.category()).isEqualTo(BAR);
@@ -284,7 +286,7 @@ public class ContainerTest {
     public void shouldReadLoggerWithLevel(String from, LogLevel to) throws IOException {
         givenLogger("foo", from, true);
 
-        LoggerResource foo = container.builderFor(FOO).build();
+        LoggerResource foo = container.builderFor(FOO).get();
 
         assertThat(foo.level()).isEqualTo(to);
         verifyLoggerRead("foo");
@@ -296,7 +298,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(BAR).level(INFO).build().add();
+        container.builderFor(BAR).level(INFO).get().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, null));
     }
@@ -306,7 +308,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(BAR).level(INFO).useParentHandlers(true).build().add();
+        container.builderFor(BAR).level(INFO).useParentHandlers(true).get().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, true));
     }
@@ -316,7 +318,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(BAR).level(INFO).useParentHandlers(false).build().add();
+        container.builderFor(BAR).level(INFO).useParentHandlers(false).get().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, false));
     }
@@ -325,7 +327,7 @@ public class ContainerTest {
     public void shouldAddLoggerWithOneHandler() throws IOException {
         givenNoLogger("bar");
 
-        container.builderFor(BAR).level(INFO).handler(new LogHandlerName("FOO")).build().add();
+        container.builderFor(BAR).level(INFO).handler(new LogHandlerName("FOO")).get().add();
 
         verifyExecute(addLogger("logger", "bar", INFO, null, "FOO"));
     }
@@ -338,7 +340,7 @@ public class ContainerTest {
                  .level(DEBUG)
                  .handler(new LogHandlerName("FOO"))
                  .handler(new LogHandlerName("BAR"))
-                 .build()
+                 .get()
                  .add();
 
         verifyExecute(addLogger("logger", "bar", DEBUG, null, "FOO", "BAR"));
@@ -350,7 +352,7 @@ public class ContainerTest {
 
         container.builderFor(BAR)
                  .handler(new LogHandlerName("FOO"))
-                 .build()
+                 .get()
                  .add();
 
         verifyExecute(addLogger("logger", "bar", null, null, "FOO"));
@@ -361,7 +363,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        assertThatThrownBy(() -> container.builderFor(ROOT).build().add())
+        assertThatThrownBy(() -> container.builderFor(ROOT).get().add())
                 .hasMessage("can't add root logger");
 
         verify(client, never()).execute(eq(addLogger("root-logger", "ROOT", ERROR, null)),
@@ -373,7 +375,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(FOO).build().updateLevel(ERROR);
+        container.builderFor(FOO).get().updateLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "level", ERROR));
         verifyLoggerRead("foo");
@@ -384,7 +386,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(ROOT).build().updateLevel(ERROR);
+        container.builderFor(ROOT).get().updateLevel(ERROR);
 
         verifyExecute(writeLoggingAttribute("root-logger", "ROOT", "level", ERROR));
     }
@@ -394,7 +396,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, false);
         givenNoLogger("bar");
 
-        container.builderFor(FOO).build().updateUseParentHandlers(true);
+        container.builderFor(FOO).get().updateUseParentHandlers(true);
 
         verifyExecute(readLoggersCli("foo"));
         verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", true));
@@ -405,7 +407,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(FOO).build().updateUseParentHandlers(false);
+        container.builderFor(FOO).get().updateUseParentHandlers(false);
 
         verifyExecute(writeLoggingAttribute("logger", "foo", "use-parent-handlers", false));
         verifyLoggerRead("foo");
@@ -415,7 +417,7 @@ public class ContainerTest {
     public void shouldAddLogHandlerToLogger() throws IOException {
         givenLogger("foo", FOO_LEVEL, false, "CONSOLE");
 
-        container.builderFor(FOO).build().addLoggerHandler(FILE);
+        container.builderFor(FOO).get().addLoggerHandler(FILE);
 
         verifyExecute(ModelNode.fromString("{"
                 + loggerAddress("logger", "foo")
@@ -429,7 +431,7 @@ public class ContainerTest {
     public void shouldRemoveLogHandlerToLogger() throws IOException {
         givenLogger("foo", FOO_LEVEL, false, "CONSOLE", "FILE");
 
-        container.builderFor(FOO).build().removeLoggerHandler(FILE);
+        container.builderFor(FOO).get().removeLoggerHandler(FILE);
 
         verifyExecute(ModelNode.fromString("{"
                 + loggerAddress("logger", "foo")
@@ -444,7 +446,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        container.builderFor(FOO).build().remove();
+        container.builderFor(FOO).get().remove();
 
         verifyExecute(removeLogger("logger", "foo"));
     }
@@ -454,7 +456,7 @@ public class ContainerTest {
         givenLogger("foo", FOO_LEVEL, true);
         givenNoLogger("bar");
 
-        assertThatThrownBy(() -> container.builderFor(ROOT).build().remove())
+        assertThatThrownBy(() -> container.builderFor(ROOT).get().remove())
                 .hasMessage("can't remove root logger");
 
         verify(client, never()).execute(eq(removeLogger("root-logger", "ROOT")), any(OperationMessageHandler.class));
@@ -467,7 +469,7 @@ public class ContainerTest {
                 .file("the-file")
                 .suffix("the-suffix")
                 .formatter("the-formatter")
-                .build();
+                .get();
 
         foo.add();
 

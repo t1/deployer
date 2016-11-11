@@ -131,7 +131,7 @@ abstract class ResourceDeployer<
         return property;
     }
 
-    @Override protected RESOURCE getResource(PLAN plan) { return resourceBuilder(plan).get(); }
+    @Override protected RESOURCE readResource(PLAN plan) { return resourceBuilder(plan).get(); }
 
     protected abstract BUILDER resourceBuilder(PLAN plan);
 

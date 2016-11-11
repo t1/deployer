@@ -18,7 +18,7 @@ import static java.util.stream.Collectors.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 
 @Slf4j
-@Builder(builderMethodName = "doNotCallThisBuilderExternally")
+@Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @Accessors(fluent = true, chain = true)
 public class LoggerResource extends AbstractResource<LoggerResource> {
     public static LogLevel mapLogLevel(String level) {
@@ -64,11 +64,13 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
     }
 
     public static LoggerResourceBuilder builder(LoggerCategory category, CLI cli) {
-        return doNotCallThisBuilderExternally().category(category).container(cli);
+        LoggerResourceBuilder builder = new LoggerResourceBuilder().category(category);
+        builder.cli = cli;
+        return builder;
     }
 
     public static List<LoggerResource> allLoggers(CLI cli) {
-        ModelNode request = createReadResourceOperation(new LoggerResource(LoggerCategory.ALL, cli).address(), true);
+        ModelNode request = createReadResourceOperation(address(LoggerCategory.ALL), true);
         List<LoggerResource> loggers =
                 cli.execute(request)
                    .asList().stream()
@@ -85,14 +87,7 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
     public static class LoggerResourceBuilder implements Supplier<LoggerResource> {
         private CLI cli;
 
-        public LoggerResourceBuilder container(CLI cli) {
-            this.cli = cli;
-            return this;
-        }
-
-        @Override public LoggerResource get() { return build(); }
-
-        public LoggerResource build() {
+        @Override public LoggerResource get() {
             LoggerResource resource = new LoggerResource(category, cli);
             resource.useParentHandlers = this.useParentHandlers;
             resource.level = this.level;
@@ -170,7 +165,9 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
                 : emptyList();
     }
 
-    @Override protected ModelNode address() {
+    @Override protected ModelNode address() { return address(category); }
+
+    private static ModelNode address(LoggerCategory category) {
         return createAddress("subsystem", "logging",
                 category.isRoot() ? "root-logger" : "logger",
                 category.isRoot() ? ROOT.getValue() : category.getValue());

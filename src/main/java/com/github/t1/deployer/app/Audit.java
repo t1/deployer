@@ -26,7 +26,8 @@ import static lombok.AccessLevel.*;
 @JsonSubTypes({
                       @Type(Audit.DeployableAudit.class),
                       @Type(Audit.LoggerAudit.class),
-                      @Type(Audit.LogHandlerAudit.class)
+                      @Type(Audit.LogHandlerAudit.class),
+                      @Type(Audit.DataSourceAudit.class),
               })
 @JsonInclude(NON_EMPTY)
 @JsonNaming(KebabCaseStrategy.class)
@@ -134,6 +135,30 @@ public abstract class Audit {
                 LogHandlerName name) {
             super(operation, changes);
             this.type = type;
+            this.name = name;
+        }
+    }
+
+    @Value
+    @Builder
+    @EqualsAndHashCode(callSuper = true)
+    @JsonTypeName("data-source")
+    @NoArgsConstructor(access = PRIVATE, force = true)
+    public static class DataSourceAudit extends Audit {
+        @NonNull @JsonProperty private final DataSourceName name;
+
+        @Override public String toString() { return super.toString() + ":" + name + ":" + super.changes; }
+
+        public static DataSourceAuditBuilder of(@NonNull DataSourceName name) {
+            return DataSourceAudit.builder().name(name);
+        }
+
+        public static class DataSourceAuditBuilder extends AuditBuilder<DataSourceAudit> {
+            @Override protected DataSourceAudit build() { return new DataSourceAudit(operation, changes, name); }
+        }
+
+        private DataSourceAudit(Operation operation, List<Change> changes, DataSourceName name) {
+            super(operation, changes);
             this.name = name;
         }
     }

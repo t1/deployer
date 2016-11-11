@@ -18,20 +18,24 @@ import static java.util.Collections.*;
 public class LogHandlerDeployer extends
         ResourceDeployer<LogHandlerPlan, LogHandlerResourceBuilder, LogHandlerResource, LogHandlerAuditBuilder> {
     public LogHandlerDeployer() {
-        property("level", LogLevel.class, LogHandlerResource.class, LogHandlerPlan.class);
-        property("format", String.class, LogHandlerResource.class, LogHandlerPlan.class);
-        property("formatter", String.class, LogHandlerResource.class, LogHandlerPlan.class);
-        property("encoding", String.class, LogHandlerResource.class, LogHandlerPlan.class);
+        property(LogLevel.class, "level");
+        property(String.class, "format");
+        property(String.class, "formatter");
+        property(String.class, "encoding");
 
-        property("file", String.class, LogHandlerResource.class, LogHandlerPlan.class);
-        property("suffix", String.class, LogHandlerResource.class, LogHandlerPlan.class);
+        property(String.class, "file");
+        property(String.class, "suffix");
 
-        property("module", String.class, LogHandlerResource.class, LogHandlerPlan.class);
+        property(String.class, "module");
         this.<String>property("class")
                 .resource(LogHandlerResource::class_)
                 .plan(LogHandlerPlan::getClass_)
                 .addTo(LogHandlerResourceBuilder::class_)
                 .write(LogHandlerResource::updateClass);
+    }
+
+    private void property(Class<?> type, String name) {
+        property(name, type, LogHandlerResource.class, LogHandlerPlan.class);
     }
 
     @Override protected String getType() { return "log-handlers"; }

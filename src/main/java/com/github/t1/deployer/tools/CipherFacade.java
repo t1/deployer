@@ -18,10 +18,9 @@ import static javax.xml.bind.DatatypeConverter.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CipherFacade {
+    private static final String DEFAULT_PASS = "changeit";
 
-    public static void main(String... args) {
-        System.out.println(new CipherFacade(args).run());
-    }
+    public static void main(String... args) { System.out.println(new CipherFacade(args).run()); }
 
     public CipherFacade(String[] args) {
         JCommander cli = new JCommander(this, args);
@@ -36,7 +35,7 @@ public class CipherFacade {
     @Parameter private List<String> bodies;
     @Parameter(names = "--keystore") private String keystore;
     @Parameter(names = "--storetype") private String storetype = KeyStore.getDefaultType();
-    @Parameter(names = "--storepass") private String storepass;
+    @Parameter(names = "--storepass") private String storepass = DEFAULT_PASS;
     @Parameter(names = "--alias") private String alias = "secretkey";
     @Parameter(names = "--decrypt") private boolean decrypt = false;
 
@@ -102,7 +101,7 @@ public class CipherFacade {
     }
 
     private static char[] getKeyPass(KeyStoreConfig keyStore) {
-        return ((keyStore == null || keyStore.getPass() == null) ? "changeit" : keyStore.getPass()).toCharArray();
+        return ((keyStore == null || keyStore.getPass() == null) ? DEFAULT_PASS : keyStore.getPass()).toCharArray();
     }
 
     private static String getKeystoreType(KeyStoreConfig keyStore) {

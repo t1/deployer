@@ -19,7 +19,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.DeploymentOperations.*;
 
 @Slf4j
-@Builder(builderMethodName = "doNotCallThisBuilderExternally")
+@Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @Accessors(fluent = true, chain = true)
 public class DeploymentResource extends AbstractResource<DeploymentResource> {
     public static final String WAR_SUFFIX = ".war";
@@ -35,11 +35,13 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
     }
 
     public static DeploymentResourceBuilder builder(DeploymentName name, CLI cli) {
-        return doNotCallThisBuilderExternally().name(name).container(cli);
+        DeploymentResourceBuilder builder = new DeploymentResourceBuilder().name(name);
+        builder.cli = cli;
+        return builder;
     }
 
     public static Stream<DeploymentResource> allDeployments(CLI cli) {
-        return cli.execute(createReadResourceOperation(new DeploymentResource(ALL, cli).address(), true))
+        return cli.execute(createReadResourceOperation(address(ALL), true))
                   .asList().stream()
                   .map(match -> toDeployment(match.get("result"), cli))
                   .sorted(comparing(DeploymentResource::name));
@@ -49,20 +51,13 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
         DeploymentName name = readName(node);
         Checksum hash = readHash(node);
         log.debug("read deployment '{}' [{}]", name, hash);
-        return DeploymentResource.builder(name, cli).checksum(hash).build();
+        return DeploymentResource.builder(name, cli).checksum(hash).get();
     }
 
     public static class DeploymentResourceBuilder implements Supplier<DeploymentResource> {
         private CLI cli;
 
-        public DeploymentResourceBuilder container(CLI cli) {
-            this.cli = cli;
-            return this;
-        }
-
-        @Override public DeploymentResource get() { return build(); }
-
-        public DeploymentResource build() {
+        @Override public DeploymentResource get() {
             DeploymentResource resource = new DeploymentResource(name, cli);
             resource.inputStream = inputStream;
             resource.checksum = checksum;
@@ -81,7 +76,9 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
         return checksum;
     }
 
-    @Override protected ModelNode address() { return createAddress("deployment", name.getValue()); }
+    @Override protected ModelNode address() { return address(name); }
+
+    private static ModelNode address(DeploymentName name) { return createAddress("deployment", name.getValue()); }
 
     @Override protected void readFrom(ModelNode node) {
         DeploymentName name = readName(node);

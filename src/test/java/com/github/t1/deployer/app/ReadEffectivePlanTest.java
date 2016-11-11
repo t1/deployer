@@ -35,6 +35,10 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
         return plan.logHandlers().collect(Collectors.toList());
     }
 
+    private static List<DataSourcePlan> dataSources(Plan plan) {
+        return plan.dataSources().collect(Collectors.toList());
+    }
+
     @Test
     public void shouldReadZeroDeployments() throws Exception {
         Plan plan = boundary.getEffectivePlan();
@@ -117,5 +121,32 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
         Plan plan = boundary.getEffectivePlan();
 
         assertThat(logHandlers(plan)).containsExactly(bar.asPlan(), foo.asPlan());
+    }
+
+
+    @Test
+    public void shouldReadZeroDataSources() throws Exception {
+        Plan plan = boundary.getEffectivePlan();
+
+        assertThat(dataSources(plan)).isEmpty();
+    }
+
+    @Test
+    public void shouldReadOneDataSource() throws Exception {
+        DataSourceFixture foo = givenDataSource("foo").deployed();
+
+        Plan plan = boundary.getEffectivePlan();
+
+        assertThat(dataSources(plan)).containsExactly(foo.asPlan());
+    }
+
+    @Test
+    public void shouldReadTwoDataSources() throws Exception {
+        DataSourceFixture foo = givenDataSource("foo").deployed();
+        DataSourceFixture bar = givenDataSource("bar").deployed();
+
+        Plan plan = boundary.getEffectivePlan();
+
+        assertThat(dataSources(plan)).containsExactly(bar.asPlan(), foo.asPlan()); // sorted!
     }
 }

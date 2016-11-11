@@ -1,7 +1,7 @@
 package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.*;
-import com.github.t1.deployer.app.Audit.DeployableAudit;
+import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
@@ -105,6 +105,7 @@ public class DeployerIT {
                     + "  deployables: [deployer-it]\n"
                     + "  log-handlers: [CONSOLE, FILE]\n"
                     + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, com.github.t1.deployer]\n"
+                    + "  data-sources: [ExampleDS]\n"
                     + "manage: [all]\n"
             );
 
@@ -147,6 +148,7 @@ public class DeployerIT {
         if (first && !runningOnClient()) {
             first = false;
 
+            //noinspection resource
             jbossConfig = new FileMemento(System.getProperty("jboss.server.config.dir") + "/standalone.xml").setup();
             jbossConfig.setOrig(jbossConfig.getOrig().replaceFirst(""
                     + "        <deployment name=\"" + DEPLOYER_IT + "\" runtime-name=\"" + DEPLOYER_IT + "\">\n"
@@ -155,8 +157,8 @@ public class DeployerIT {
             // restore after JBoss is down
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
-            container.builderFor(console, new LogHandlerName("CONSOLE")).build().updateLevel(ALL);
-            container.builderFor(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).build().add();
+            container.builderFor(console, new LogHandlerName("CONSOLE")).get().updateLevel(ALL);
+            container.builderFor(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).get().add();
 
             log.info("deployables: {}", container.allDeployments());
             assertThat(theDeployments()).isEmpty();
@@ -169,6 +171,7 @@ public class DeployerIT {
 
     @SneakyThrows(IOException.class)
     public Response post(String plan, Entity<?> entity, Status expectedStatus) {
+        //noinspection resource
         try (FileMemento memento = new FileMemento(ROOT_BUNDLE_PATH).setup()) {
             memento.write(plan);
 
@@ -478,7 +481,24 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 1050)
+    @Ignore
+    @InSequence(value = 1100)
+    public void shouldDeployDataSource() throws Exception {
+        String plan = ""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:test\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                DataSourceAudit.builder().name(new DataSourceName("postgresql"))
+                               .change("uri", null, "jdbc:m2:mem:test")
+                               .added());
+    }
+
+    @Test
+    @InSequence(value = 10000)
     public void shouldDeploySecondDeployableWithOnlyOnePostParameter() throws Exception {
         String plan = ""
                 + "deployables:\n"

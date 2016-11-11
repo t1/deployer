@@ -21,6 +21,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.enterprise.inject.Instance;
 import java.io.*;
+import java.net.URI;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
@@ -66,6 +67,7 @@ public class AbstractDeployerTest {
 
     @Spy private LogHandlerDeployer logHandlerDeployer;
     @Spy private LoggerDeployer loggerDeployer;
+    @Spy private DataSourceDeployer dataSourceDeployer;
     @Spy private DeployableDeployer deployableDeployer;
     @Mock Instance<Deployer> deployers;
 
@@ -79,6 +81,7 @@ public class AbstractDeployerTest {
     private final Map<String, List<String>> pinnedResourceNames = new LinkedHashMap<>();
     private final List<String> allDeployments = new ArrayList<>();
     private final List<String> allLoggers = new ArrayList<>();
+    private final List<String> allDataSources = new ArrayList<>();
     private final Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
 
     private final Map<String, List<Version>> versions = new LinkedHashMap<>();
@@ -89,21 +92,25 @@ public class AbstractDeployerTest {
 
         logHandlerDeployer.managedResourceNames
                 = loggerDeployer.managedResourceNames
+                = dataSourceDeployer.managedResourceNames
                 = deployableDeployer.managedResourceNames
                 = managedResourceNames;
         logHandlerDeployer.pinnedResourceNames
                 = loggerDeployer.pinnedResourceNames
+                = dataSourceDeployer.pinnedResourceNames
                 = deployableDeployer.pinnedResourceNames
                 = pinnedResourceNames;
         deployableDeployer.repository
                 = repository;
         logHandlerDeployer.container
                 = loggerDeployer.container
+                = dataSourceDeployer.container
                 = deployableDeployer.container
                 = container;
         boundary.audits
                 = logHandlerDeployer.audits
                 = loggerDeployer.audits
+                = dataSourceDeployer.audits
                 = deployableDeployer.audits
                 = new Audits();
         boundary.configuredVariables = this.configuredVariables;
@@ -111,16 +118,16 @@ public class AbstractDeployerTest {
 
         //noinspection unchecked
         doAnswer(i -> {
-            asList(logHandlerDeployer, loggerDeployer, deployableDeployer)
+            asList(logHandlerDeployer, loggerDeployer, dataSourceDeployer, deployableDeployer)
                     .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
             return null;
         }).when(deployers).forEach(any(Consumer.class));
 
         when(cli.executeRaw(readResource(rootLogger()))).then(i -> rootLoggerResponse());
-        when(cli.execute(readResource("logging", "logger", "*"))).then(
-                i -> toModelNode(allLoggers.stream().collect(joining(",", "[", "]"))));
+        when(cli.execute(readLogger("*"))).then(i -> allLoggersResponse());
+        when(cli.execute(readDatasource("*"))).then(i -> allDataSourcesResponse());
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
-        when(cli.execute(readResource(null, "deployment", "*"))).then(i -> allDeploymentsResponse());
+        when(cli.execute(readDeployment("*"))).then(i -> allDeploymentsResponse());
 
         //noinspection deprecation
         when(repository.listVersions(isA(GroupId.class), isA(ArtifactId.class), isA(Boolean.class)))
@@ -153,12 +160,18 @@ public class AbstractDeployerTest {
     }
 
     private void stubAllLogHandlers(LogHandlerType type) {
-        when(cli.execute(readResource("logging", type.getHandlerTypeName(), "*"))).then(i ->
-                toModelNode(allLogHandlers.getOrDefault(type, emptyList()).stream().collect(joining(",", "[", "]"))));
+        when(cli.execute(readLogHandler(type, "*")))
+                .then(i -> joinModelNode(allLogHandlers.getOrDefault(type, emptyList())));
     }
 
-    private ModelNode allDeploymentsResponse() {
-        return toModelNode(allDeployments.stream().collect(joining(",", "[", "]")));
+    private ModelNode allLoggersResponse() { return joinModelNode(allLoggers); }
+
+    private ModelNode allDeploymentsResponse() { return joinModelNode(allDeployments); }
+
+    private ModelNode allDataSourcesResponse() { return joinModelNode(allDataSources); }
+
+    private ModelNode joinModelNode(List<String> list) {
+        return toModelNode(list.stream().collect(joining(",", "[", "]")));
     }
 
     @Test public void dummyTestToStopJUnitFromComplainingAboutMissingTestsInAbstractDeployerTest() {}
@@ -166,13 +179,60 @@ public class AbstractDeployerTest {
     @After
     public void after() {
         verify(cli, atLeast(0)).executeRaw(any(ModelNode.class));
-        verify(cli, atLeast(0)).execute(readResource(null, "deployment", "*"));
-        verify(cli, atLeast(0)).execute(readResource("logging", "logger", "*"));
+        verify(cli, atLeast(0)).execute(readDeployment("*"));
+        verify(cli, atLeast(0)).execute(readLogger("*"));
+        verify(cli, atLeast(0)).execute(readDatasource("*"));
         Arrays.stream(LogHandlerType.values()).forEach(type ->
-                verify(cli, atLeast(0)).execute(readResource("logging", type.getHandlerTypeName(), "*")));
+                verify(cli, atLeast(0)).execute(readLogHandler(type, "*")));
 
         verifyNoMoreInteractions(cli);
     }
+
+    private ModelNode readLogger(String name) { return readResource("logging", "logger", name); }
+
+    private ModelNode readLogHandler(LogHandlerType type, String name) {
+        return readResource("logging", type.getHandlerTypeName(), name);
+    }
+
+    private ModelNode readDatasource(String name) { return readResource("datasources", "data-source", name); }
+
+    private ModelNode readDeployment(String name) { return readResource(null, "deployment", name); }
+
+
+    public static ModelNode readResource(String subsystem, String type, Object name) {
+        return readResource(address(subsystem, type, name));
+    }
+
+    public static ModelNode readResource(String address) {
+        return toModelNode(""
+                + "{\n"
+                + "    'operation' => 'read-resource',\n"
+                + address
+                + "    'recursive' => true\n"
+                + "}");
+    }
+
+    private static String address(String subsystem, String type, Object name) {
+        return ""
+                + "    'address' => [\n"
+                + ((subsystem == null) ? "" : "        ('subsystem' => '" + subsystem + "'),\n")
+                + "        ('" + type + "' => '" + name + "')\n"
+                + "    ],\n";
+    }
+
+    private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
+        //noinspection SpellCheckingInspection
+        return ModelNode.fromString("{\n"
+                + "    \"outcome\" => \"failed\",\n"
+                + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
+                + ((subsystem == null) ? "" : "    (\\\"subsystem\\\" => \\\"" + subsystem + "\\\"),\n")
+                + "    (\\\"" + type + "\\\" => \\\"" + name + "\\\")\n"
+                + "]' not found\",\n"
+                + "    \"rolled-back\" => true\n"
+                + "}");
+    }
+
+    public static ModelNode toModelNode(String string) { return ModelNode.fromString(string.replace('\'', '\"')); }
 
 
     @SneakyThrows(IOException.class)
@@ -235,7 +295,7 @@ public class AbstractDeployerTest {
             this.type = type;
             this.name = name;
 
-            when(cli.executeRaw(readResource(null, "deployment", fullName()))).then(i -> (deployed == null)
+            when(cli.executeRaw(readDeployment(fullName()))).then(i -> (deployed == null)
                     ? notDeployedNode(null, "deployment", name)
                     : toModelNode("{" + deployed.deployedNode() + "}"));
         }
@@ -497,7 +557,7 @@ public class AbstractDeployerTest {
         public LoggerFixture(@NonNull String category) {
             this.category = LoggerCategory.of(category);
 
-            when(cli.executeRaw(readResource("logging", "logger", category))).then(i -> deployed
+            when(cli.executeRaw(readLogger(category))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", "logger", category));
         }
@@ -576,7 +636,7 @@ public class AbstractDeployerTest {
             return handlers.stream().map(LogHandlerName::new).collect(toList());
         }
 
-        public void verifyUpdatedFrom(LogLevel oldLevel, Audits audits) {
+        public void verifyUpdatedLogLevelFrom(LogLevel oldLevel, Audits audits) {
             verify(cli).writeAttribute(loggerAddressNode(), "level", level.toString());
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
@@ -597,7 +657,7 @@ public class AbstractDeployerTest {
             assertThat(audits.getAudits()).contains(audit.removed());
         }
 
-        public void verifyUpdatedUseParentHandlers(Boolean oldUseParentHandlers, Audits audits) {
+        public void verifyUpdatedUseParentHandlersFrom(Boolean oldUseParentHandlers, Audits audits) {
             verify(cli).writeAttribute(loggerAddressNode(), "use-parent-handlers", useParentHandlers);
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
@@ -640,40 +700,6 @@ public class AbstractDeployerTest {
         }
     }
 
-    public static ModelNode readResource(String subsystem, String type, Object name) {
-        return readResource(address(subsystem, type, name));
-    }
-
-    public static ModelNode readResource(String address) {
-        return toModelNode(""
-                + "{\n"
-                + "    'operation' => 'read-resource',\n"
-                + address
-                + "    'recursive' => true\n"
-                + "}");
-    }
-
-    private static String address(String subsystem, String type, Object name) {
-        return ""
-                + "    'address' => [\n"
-                + ((subsystem == null) ? "" : "        ('subsystem' => '" + subsystem + "'),\n")
-                + "        ('" + type + "' => '" + name + "')\n"
-                + "    ],\n";
-    }
-
-    private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
-        return ModelNode.fromString("{\n"
-                + "    \"outcome\" => \"failed\",\n"
-                + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
-                + ((subsystem == null) ? "" : "    (\\\"subsystem\\\" => \\\"" + subsystem + "\\\"),\n")
-                + "    (\\\"" + type + "\\\" => \\\"" + name + "\\\")\n"
-                + "]' not found\",\n"
-                + "    \"rolled-back\" => true\n"
-                + "}");
-    }
-
-    public static ModelNode toModelNode(String string) { return ModelNode.fromString(string.replace('\'', '\"')); }
-
 
     public LogHandlerFixture givenLogHandler(LogHandlerType type, String name) {
         return new LogHandlerFixture(type, name);
@@ -701,7 +727,7 @@ public class AbstractDeployerTest {
             this.expectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
             this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
-            when(cli.executeRaw(readResource("logging", type.getHandlerTypeName(), name))).then(i -> deployed
+            when(cli.executeRaw(readLogHandler(type, name))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", type.getHandlerTypeName(), name));
         }
@@ -920,6 +946,116 @@ public class AbstractDeployerTest {
                     .module(module)
                     .class_(class_)
                     .properties((properties == null) ? emptyMap() : properties)
+                    .build();
+        }
+    }
+
+
+    public DataSourceFixture givenDataSource(String name) { return new DataSourceFixture(name); }
+
+    @Getter
+    public class DataSourceFixture {
+        private final DataSourceName name;
+        private boolean deployed;
+        private String uri;
+        private String jndiName;
+
+        public DataSourceFixture(@NonNull String name) {
+            this.name = new DataSourceName(name);
+            this.uri = "jdbc:h2:mem:" + name;
+            this.jndiName = "java:/datasources/" + name + "DS";
+
+            when(cli.executeRaw(readDatasource(name))).then(i -> deployed
+                    ? toModelNode("{" + deployedNode() + "}")
+                    : notDeployedNode("datasources", "data-source", name));
+        }
+
+        public String deployedNode() {
+            return ""
+                    + "'outcome' => 'success',\n"
+                    + "'result' => {\n"
+                    + "    'name' => " + ((name == null) ? "undefined" : "'" + name + "'") + ",\n"
+                    + "    'connection-url' => '" + uri + "',\n"
+                    + "    'jndi-name' => '" + jndiName + "'\n"
+                    + "}\n";
+        }
+
+        public DataSourceFixture uri(String uri) {
+            this.uri = uri;
+            return this;
+        }
+
+        public DataSourceFixture jndiName(String jndiName) {
+            this.jndiName = jndiName;
+            return this;
+        }
+
+        public DataSourceFixture pinned() {
+            givenPinned("data-sources", name.getValue());
+            return this;
+        }
+
+        public DataSourceFixture deployed() {
+            this.deployed = true;
+            allDataSources.add("{" + dataSourceAddress() + deployedNode() + "}");
+            return this;
+        }
+
+        public String dataSourceAddress() { return address("datasources", "data-source", name); }
+
+        private ModelNode dataSourceAddressNode() {
+            return createAddress("subsystem", "datasources", "data-source", name.getValue());
+        }
+
+        public void verifyAdded(Audits audits) {
+            ModelNode request = toModelNode("{\n"
+                    + dataSourceAddress()
+                    + "    'operation' => 'add',\n"
+                    + "    'connection-url' => '" + uri + "',\n"
+                    + "    'jndi-name' => '" + jndiName + "'\n"
+                    + "}");
+            verify(cli).execute(request);
+            Audit audit = DataSourceAudit
+                    .of(getName())
+                    .change("uri", null, uri)
+                    .change("jndi-name", null, jndiName)
+                    .added();
+            assertThat(audits.getAudits()).contains(audit);
+        }
+
+        public void verifyUpdatedUriFrom(String oldUri, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "uri", uri);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("uri", oldUri, uri).changed());
+        }
+
+        public void verifyUpdatedJndiNameFrom(String oldJndiName, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "jndi-name", jndiName);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("jndi-name", oldJndiName, jndiName).changed());
+        }
+
+        public void verifyRemoved(Audits audits) {
+            verify(cli).execute(toModelNode(""
+                    + "{\n"
+                    + dataSourceAddress()
+                    + "    'operation' => 'remove'\n"
+                    + "}"));
+            Audit audit = DataSourceAudit
+                    .of(getName())
+                    .change("uri", uri, null)
+                    .change("jndi-name", jndiName, null)
+                    .removed();
+            assertThat(audits.getAudits()).contains(audit);
+        }
+
+        public DataSourcePlan asPlan() {
+            return DataSourcePlan
+                    .builder()
+                    .name(name)
+                    .uri(URI.create(uri))
+                    .jndiName(jndiName)
+                    .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
                     .build();
         }
     }

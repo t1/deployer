@@ -14,6 +14,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.net.URI;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.Stream;
@@ -80,6 +81,7 @@ public class Plan {
         PlanBuilder builder = builder();
         readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerPlan::fromJson, builder::logHandler);
         readAll(json.get("loggers"), LoggerCategory::of, LoggerPlan::fromJson, builder::logger);
+        readAll(json.get("data-sources"), DataSourceName::new, DataSourcePlan::fromJson, builder::dataSource);
         readAll(json.get("deployables"), DeploymentName::new, DeployablePlan::fromJson, builder::deployable);
         readAll(json.get("bundles"), BundleName::new, BundlePlan::fromJson, builder::bundle);
         return builder.build();
@@ -95,12 +97,15 @@ public class Plan {
 
     @NonNull @JsonProperty private final Map<LogHandlerName, LogHandlerPlan> logHandlers;
     @NonNull @JsonProperty private final Map<LoggerCategory, LoggerPlan> loggers;
+    @NonNull @JsonProperty private final Map<DataSourceName, DataSourcePlan> dataSources;
     @NonNull @JsonProperty private final Map<DeploymentName, DeployablePlan> deployables;
     @NonNull @JsonProperty private final Map<BundleName, BundlePlan> bundles;
 
     public Stream<LogHandlerPlan> logHandlers() { return logHandlers.values().stream(); }
 
     public Stream<LoggerPlan> loggers() { return loggers.values().stream(); }
+
+    public Stream<DataSourcePlan> dataSources() { return dataSources.values().stream(); }
 
     public Stream<DeployablePlan> deployables() { return deployables.values().stream(); }
 
@@ -109,6 +114,7 @@ public class Plan {
     public static class PlanBuilder {
         private Map<LogHandlerName, LogHandlerPlan> logHandlers = new LinkedHashMap<>();
         private Map<LoggerCategory, LoggerPlan> loggers = new LinkedHashMap<>();
+        private Map<DataSourceName, DataSourcePlan> dataSources = new LinkedHashMap<>();
         private Map<DeploymentName, DeployablePlan> deployables = new LinkedHashMap<>();
         private Map<BundleName, BundlePlan> bundles = new LinkedHashMap<>();
 
@@ -119,6 +125,11 @@ public class Plan {
 
         public PlanBuilder logger(LoggerPlan plan) {
             this.loggers.put(plan.getCategory(), plan);
+            return this;
+        }
+
+        public PlanBuilder dataSource(DataSourcePlan plan) {
+            this.dataSources.put(plan.getName(), plan);
             return this;
         }
 
@@ -241,7 +252,7 @@ public class Plan {
 
         public static DeployablePlan fromJson(DeploymentName name, JsonNode node) {
             if (node.isNull())
-                throw new PlanLoadingException("incomplete plan for deployable '" + name + "'");
+                throw new PlanLoadingException("incomplete deployables plan '" + name + "'");
             DeployablePlanBuilder builder = builder().name(name);
             AbstractArtifactPlan.fromJson(node, builder, name.getValue(), "«CURRENT»");
             apply(node, "type", builder::type, ArtifactType::valueOf, "default.deployable-type or «war»");
@@ -250,8 +261,7 @@ public class Plan {
 
         private DeployablePlan verify() {
             if (getType() == bundle)
-                throw new PlanLoadingException(
-                        "a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
+                throw new PlanLoadingException("a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
             return this;
         }
 
@@ -302,7 +312,7 @@ public class Plan {
 
         public static BundlePlan fromJson(BundleName name, JsonNode node) {
             if (node.isNull())
-                throw new PlanLoadingException("incomplete plan for bundle '" + name + "'");
+                throw new PlanLoadingException("incomplete bundles plan '" + name + "'");
             BundlePlanBuilder builder = builder().name(name);
             AbstractArtifactPlan.fromJson(node, builder, name.getValue(), null);
             if (node.has("instances") && !node.get("instances").isNull()) {
@@ -348,7 +358,7 @@ public class Plan {
 
         private static LoggerPlan fromJson(LoggerCategory category, JsonNode node) {
             if (node.isNull())
-                throw new PlanLoadingException("incomplete plan for logger '" + category + "'");
+                throw new PlanLoadingException("incomplete loggers plan '" + category + "'");
             LoggerPlanBuilder builder = builder().category(category);
             apply(node, "state", builder::state, DeploymentState::valueOf);
             apply(node, "level", builder::level, LoggerResource::mapLogLevel, "default.log-level or «DEBUG»");
@@ -492,6 +502,45 @@ public class Plan {
         }
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor(access = PRIVATE)
+    @JsonNaming(KebabCaseStrategy.class)
+    public static class DataSourcePlan implements AbstractPlan {
+        @NonNull @JsonIgnore private final DataSourceName name;
+        private final DeploymentState state;
+        private URI uri;
+        private String jndiName;
+
+        @Override public String getId() { return name.getValue(); }
+
+        private static DataSourcePlan fromJson(DataSourceName name, JsonNode node) {
+            if (node.isNull())
+                throw new PlanLoadingException("incomplete data-sources plan '" + name + "'");
+            DataSourcePlanBuilder builder = builder().name(name);
+            apply(node, "state", builder::state, DeploymentState::valueOf);
+            apply(node, "uri", builder::uri, URI::create);
+            apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "DS»");
+            return builder.build().validate();
+        }
+
+        private DataSourcePlan validate() {
+            if (uri == null && state != undeployed)
+                throw new PlanLoadingException(
+                        "field 'uri' for data-source '" + name + "' can only be null when undeploying");
+            return this;
+        }
+
+        /* make builder fields visible */ public static class DataSourcePlanBuilder {}
+
+        @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
+
+        @Override public String toString() {
+            return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + uri;
+        }
+    }
+
+
     private static <T> void apply(JsonNode node, String fieldName, Consumer<T> setter, Function<String, T> convert) {
         apply(node, fieldName, setter, convert, null);
     }
@@ -515,6 +564,7 @@ public class Plan {
         return ""
                 + "log-handlers:\n" + toStringList(logHandlers())
                 + "loggers:\n" + toStringList(loggers())
+                + "data-sources:\n" + toStringList(dataSources())
                 + "deployables:\n" + toStringList(deployables())
                 + "bundles:\n" + toStringList(bundles());
     }

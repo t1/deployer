@@ -29,7 +29,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
     @Override
     public long getSize(Plan p, Class<?> t, Type g, Annotation[] a, MediaType m) { return -1; }
 
-    @Override
+    @SuppressWarnings("resource") @Override
     public void writeTo(Plan plan, Class<?> type, Type genericType, Annotation[] annotations,
             MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
             throws IOException, WebApplicationException {

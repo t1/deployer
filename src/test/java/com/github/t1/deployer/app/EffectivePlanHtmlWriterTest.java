@@ -40,6 +40,11 @@ public class EffectivePlanHtmlWriterTest {
                     .handler("BAR")
                     .level(INFO)
                     .build())
+            .dataSource(DataSourcePlan
+                    .builder()
+                    .name(new DataSourceName("my-ds"))
+                    .uri(URI.create("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"))
+                    .build())
             .deployable(DeployablePlan
                     .builder()
                     .name(new DeploymentName("foo"))

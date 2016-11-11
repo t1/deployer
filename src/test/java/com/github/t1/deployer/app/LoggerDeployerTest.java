@@ -23,7 +23,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "loggers:\n"
                 + "  foo:\n"));
 
-        assertThat(thrown).hasStackTraceContaining("incomplete plan for logger 'foo'");
+        assertThat(thrown).hasStackTraceContaining("incomplete loggers plan 'foo'");
     }
 
     @Test
@@ -62,7 +62,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "  com.github.t1.deployer.app:\n"
                 + "    level: INFO\n");
 
-        fixture.level(INFO).verifyUpdatedFrom(DEBUG, audits);
+        fixture.level(INFO).verifyUpdatedLogLevelFrom(DEBUG, audits);
     }
 
 
@@ -263,7 +263,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    handler: FOO\n"
                 + "    use-parent-handlers: true\n");
 
-        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(false, audits);
+        logger.useParentHandlers(true).verifyUpdatedUseParentHandlersFrom(false, audits);
     }
 
 
@@ -282,7 +282,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    handler: FOO\n"
                 + "    use-parent-handlers: false\n");
 
-        logger.useParentHandlers(false).verifyUpdatedUseParentHandlers(true, audits);
+        logger.useParentHandlers(false).verifyUpdatedUseParentHandlersFrom(true, audits);
     }
 
 
@@ -299,7 +299,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    use-parent-handlers: true\n");
 
-        logger.useParentHandlers(true).verifyUpdatedUseParentHandlers(false, audits);
+        logger.useParentHandlers(true).verifyUpdatedUseParentHandlersFrom(false, audits);
     }
 
 

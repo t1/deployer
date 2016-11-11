@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.container.DataSourceResource.DataSourceResourceBuilder;
 import com.github.t1.deployer.container.DeploymentResource.DeploymentResourceBuilder;
 import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
@@ -30,6 +31,10 @@ public class Container {
     public LoggerResourceBuilder builderFor(LoggerCategory category) { return LoggerResource.builder(category, cli); }
 
     public Stream<LoggerResource> allLoggers() { return LoggerResource.allLoggers(cli).stream(); }
+
+    public DataSourceResourceBuilder builderFor(DataSourceName name) { return DataSourceResource.builder(name, cli); }
+
+    public Stream<DataSourceResource> allDataSources() { return DataSourceResource.allDataSources(cli).stream(); }
 
     public DeploymentResourceBuilder builderFor(DeploymentName name) { return DeploymentResource.builder(name, cli); }
 

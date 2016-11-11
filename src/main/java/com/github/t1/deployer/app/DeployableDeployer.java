@@ -38,8 +38,8 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
         return new DeploymentName(resource.getId());
     }
 
-    @Override protected DeploymentResource getResource(DeployablePlan plan) {
-        return container.builderFor(toDeploymentName(plan)).build();
+    @Override protected DeploymentResource readResource(DeployablePlan plan) {
+        return container.builderFor(toDeploymentName(plan)).get();
     }
 
     private static DeploymentName toDeploymentName(DeployablePlan plan) {
@@ -57,7 +57,7 @@ public class DeployableDeployer extends AbstractDeployer<DeployablePlan, Deploym
             return;
         }
 
-        container.builderFor(toDeploymentName(plan)).build().redeploy(artifact.getInputStream());
+        container.builderFor(toDeploymentName(plan)).get().redeploy(artifact.getInputStream());
         audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
         if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
