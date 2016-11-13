@@ -66,17 +66,17 @@ public class LogHandlerDeployer extends
                     String oldValue = resource.properties().get(key);
                     if (!Objects.equals(oldValue, newValue)) {
                         resource.updateProperty(key, newValue);
-                        audit.change("property/" + key, oldValue, newValue);
+                        audit.change("property:" + key, oldValue, newValue);
                     }
                 } else {
                     resource.addProperty(key, newValue);
-                    audit.change("property/" + key, null, newValue);
+                    audit.change("property:" + key, null, newValue);
                 }
             }
             for (String removedKey : existing) {
                 String oldValue = resource.properties().get(removedKey);
                 resource.removeProperty(removedKey);
-                audit.change("property/" + removedKey, oldValue, null);
+                audit.change("property:" + removedKey, oldValue, null);
             }
         }
     }
@@ -84,7 +84,7 @@ public class LogHandlerDeployer extends
     @Override protected LogHandlerResourceBuilder buildResource(LogHandlerPlan plan, LogHandlerAuditBuilder audit) {
         LogHandlerResourceBuilder builder = super.buildResource(plan, audit);
 
-        plan.getProperties().forEach((key, value) -> audit.change("property/" + key, null, value));
+        plan.getProperties().forEach((key, value) -> audit.change("property:" + key, null, value));
         builder.properties(plan.getProperties());
 
         return builder;
@@ -95,7 +95,7 @@ public class LogHandlerDeployer extends
         super.auditRegularRemove(resource, plan, audit);
 
         if (resource.properties() != null)
-            resource.properties().forEach((key, value) -> audit.change("property/" + key, value, null));
+            resource.properties().forEach((key, value) -> audit.change("property:" + key, value, null));
     }
 
     @Override public void read(PlanBuilder builder, LogHandlerResource handler) {

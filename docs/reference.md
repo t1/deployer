@@ -74,6 +74,13 @@ The key is the `category` of the logger, usually the fully qualified name of the
 Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
 - `user-name`: The user name to authenticate with. Default is vendor specific.
 - `password`: The password to authenticate with. Default is vendor specific.
+- `pool:min`: The minimum number of connections to keep in the connection pool. Default is vendor specific.
+- `pool:initial`: The number of connections that should be opened at startup. Default is vendor specific.
+- `pool:max`: The maximum number of connections to keep in the connection pool. Default is vendor specific.
+- `pool:age`: The maximum age in seconds that an unused connection is kept in the pool. Default is vendor specific.
+Note that on JBoss this value is configured in minutes, so values below 60 seconds will be rounded to one minute.
+
+Note that the `pool` settings are nested, i.e. they share one `pool` parent tag.
 
 
 ### `data-sources`

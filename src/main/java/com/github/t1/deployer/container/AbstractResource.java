@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
 
+import java.util.Optional;
+
 import static com.github.t1.deployer.container.CLI.*;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
@@ -59,6 +61,8 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     public void writeAttribute(String name, boolean value) { cli.writeAttribute(address(), name, value); }
 
+    public void writeAttribute(String name, long value) { cli.writeAttribute(address(), name, value); }
+
     public void mapPut(String name, String key, String value) { cli.mapPut(address(), name, key, value); }
 
     protected void mapRemove(String name, String key) { cli.mapRemove(address(), name, key); }
@@ -70,4 +74,16 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
     public abstract String getId();
 
     public boolean matchesId(T that) { return this.getId().equals(that.getId()); }
+
+    protected static String stringOrNull(ModelNode node, String name) {
+        return getOptional(node,name).map(ModelNode::asString).orElse(null);
+    }
+
+    protected static Integer integerOrNull(ModelNode node, String name) {
+        return getOptional(node, name).map(ModelNode::asInt).orElse(null);
+    }
+
+    protected static Optional<ModelNode> getOptional(ModelNode node, String name) {
+        return node.get(name).isDefined() ? Optional.of(node.get(name)) : Optional.empty();
+    }
 }

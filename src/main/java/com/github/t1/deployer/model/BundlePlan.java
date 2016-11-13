@@ -1,7 +1,8 @@
 package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
@@ -13,7 +14,7 @@ import static java.util.Collections.*;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonNaming(KebabCaseStrategy.class)
 public class BundlePlan extends AbstractArtifactPlan {
     @NonNull @JsonIgnore private final BundleName name;
     @NonNull @Singular private final Map<String, Map<Expressions.VariableName, String>> instances;

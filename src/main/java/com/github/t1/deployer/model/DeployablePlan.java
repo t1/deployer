@@ -1,16 +1,18 @@
 package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
+import static com.github.t1.deployer.model.Plan.*;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonNaming(KebabCaseStrategy.class)
 public class DeployablePlan extends AbstractArtifactPlan {
     @NonNull @JsonIgnore private final DeploymentName name;
     @NonNull private final ArtifactType type;
@@ -40,19 +42,19 @@ public class DeployablePlan extends AbstractArtifactPlan {
             throw new Plan.PlanLoadingException("incomplete deployables plan '" + name + "'");
         DeployablePlanBuilder builder = builder().name(name);
         AbstractArtifactPlan.fromJson(node, builder, name.getValue(), "«CURRENT»");
-        Plan.apply(node, "type", builder::type, ArtifactType::valueOf, "default.deployable-type or «war»");
+        apply(node, "type", builder::type, ArtifactType::valueOf, "default.deployable-type or «war»");
         return builder.build().verify();
     }
 
     private DeployablePlan verify() {
         if (getType() == bundle)
-            throw new Plan.PlanLoadingException("a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
+            throw new Plan.PlanLoadingException(
+                    "a deployable may not be of type 'bundle'; use 'bundles' plan instead.");
         return this;
     }
 
     @Override public String toString() {
-        return "deployment:" + name + ":" + super.toString()
-                + ":" + type
+        return "deployment:" + name + ":" + super.toString() + ":" + type
                 + ((getChecksum() == null) ? "" : ":" + getChecksum())
                 + ((error == null) ? "" : ": ### " + error + " ###");
     }

@@ -467,7 +467,12 @@ public class DeployerIT {
                 + "    jndi-name: java:/datasources/TestDS\n"
                 + "    driver: h2\n"
                 + "    user-name: joe\n"
-                + "    password: secret\n";
+                + "    password: secret\n"
+                + "    pool:\n"
+                + "      min: 0\n"
+                + "      initial: 1\n"
+                + "      max: 10\n"
+                + "      max-age: 5 min\n";
 
         List<Audit> audits = post(plan);
 
@@ -478,6 +483,10 @@ public class DeployerIT {
                                .change("driver", null, "h2")
                                .change("user-name", null, "joe")
                                .change("password", null, "secret")
+                               .change("pool:min", null, "0")
+                               .change("pool:initial", null, "1")
+                               .change("pool:max", null, "10")
+                               .change("pool:max-age", null, "5 min")
                                .added());
     }
 
@@ -495,6 +504,10 @@ public class DeployerIT {
                                .change("driver", "h2", null)
                                .change("user-name", "joe", null)
                                .change("password", "secret", null)
+                               .change("pool:min", "0", null)
+                               .change("pool:initial", "1", null)
+                               .change("pool:max", "10", null)
+                               .change("pool:max-age", "5 min", null)
                                .removed());
     }
 

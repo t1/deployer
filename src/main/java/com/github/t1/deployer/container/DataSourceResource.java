@@ -1,6 +1,6 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.DataSourceName;
+import com.github.t1.deployer.model.*;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -31,10 +31,10 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
     private String userName;
     private String password;
 
-    // int initialPoolSize() default -1;
-    // int maxPoolSize() default -1;
-    // int minPoolSize() default -1;
-    // int maxIdleTime() default -1;
+    private Integer minPoolSize;
+    private Integer initialPoolSize;
+    private Integer maxPoolSize;
+    private Age maxPoolAge;
 
     private DataSourceResource(@NonNull DataSourceName name, @NonNull CLI cli) {
         super(cli);
@@ -78,6 +78,12 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
 
             dataSource.userName = userName;
             dataSource.password = password;
+
+            dataSource.minPoolSize = minPoolSize;
+            dataSource.initialPoolSize = initialPoolSize;
+            dataSource.maxPoolSize = maxPoolSize;
+            dataSource.maxPoolAge = maxPoolAge;
+
             return dataSource;
         }
     }
@@ -118,6 +124,26 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
         writeAttribute("password", newPassword);
     }
 
+    public void updateMinPoolSize(Integer newMinPoolSize) {
+        checkDeployed();
+        writeAttribute("min-pool-size", newMinPoolSize);
+    }
+
+    public void updateInitialPoolSize(Integer newInitialPoolSize) {
+        checkDeployed();
+        writeAttribute("initial-pool-size", newInitialPoolSize);
+    }
+
+    public void updateMaxPoolSize(Integer newMaxPoolSize) {
+        checkDeployed();
+        writeAttribute("max-pool-size", newMaxPoolSize);
+    }
+
+    public void updateMaxAge(Age newMaxAge) {
+        checkDeployed();
+        writeAttribute("idle-timeout-minutes", newMaxAge.asMinutes());
+    }
+
     @Override protected void readFrom(ModelNode result) {
         this.uri = URI.create(result.get("connection-url").asString());
         this.jndiName = result.get("jndi-name").asString();
@@ -125,10 +151,15 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
 
         this.userName = stringOrNull(result, "user-name");
         this.password = stringOrNull(result, "password");
+
+        this.minPoolSize = integerOrNull(result, "min-pool-size");
+        this.initialPoolSize = integerOrNull(result, "initial-pool-size");
+        this.maxPoolSize = integerOrNull(result, "max-pool-size");
+        this.maxPoolAge = minutesOrNull(result, "idle-timeout-minutes");
     }
 
-    private String stringOrNull(ModelNode node, String name) {
-        return node.get(name).isDefined() ? node.get(name).asString() : null;
+    private static Age minutesOrNull(ModelNode node, String name) {
+        return node.get(name).isDefined() ? Age.ofMinutes(node.get(name).asInt()) : null;
     }
 
     @Override public void add() {
@@ -144,6 +175,15 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
             request.get("user-name").set(userName);
         if (password != null)
             request.get("password").set(password);
+
+        if (minPoolSize != null)
+            request.get("min-pool-size").set(minPoolSize);
+        if (initialPoolSize != null)
+            request.get("initial-pool-size").set(initialPoolSize);
+        if (maxPoolSize != null)
+            request.get("max-pool-size").set(maxPoolSize);
+        if (maxPoolAge != null)
+            request.get("idle-timeout-minutes").set(maxPoolAge.asMinutes());
 
         execute(request);
 

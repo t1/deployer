@@ -1,7 +1,8 @@
 package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.log.LogLevel;
 import lombok.*;
@@ -9,14 +10,16 @@ import lombok.*;
 import java.util.*;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.deployer.model.Plan.*;
 import static java.lang.Boolean.*;
 import static java.util.function.Function.*;
 import static lombok.AccessLevel.*;
 
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 @Data
 @Builder
 @AllArgsConstructor(access = PRIVATE)
-@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonNaming(KebabCaseStrategy.class)
 public class LoggerPlan implements Plan.AbstractPlan {
     @NonNull @JsonIgnore private final LoggerCategory category;
     private final DeploymentState state;
@@ -30,13 +33,13 @@ public class LoggerPlan implements Plan.AbstractPlan {
         if (node.isNull())
             throw new Plan.PlanLoadingException("incomplete loggers plan '" + category + "'");
         LoggerPlanBuilder builder = builder().category(category);
-        Plan.apply(node, "state", builder::state, DeploymentState::valueOf);
-        Plan.apply(node, "level", builder::level, LogLevel::valueOf, "default.log-level or «DEBUG»");
-        Plan.apply(node, "handler", builder::handler, identity());
+        apply(node, "state", builder::state, DeploymentState::valueOf);
+        apply(node, "level", builder::level, LogLevel::valueOf, "default.log-level or «DEBUG»");
+        apply(node, "handler", builder::handler, identity());
         if (node.has("handlers"))
             applyHandlers(node, builder);
         if (!builder.category.isRoot())
-            Plan.apply(node, "use-parent-handlers", builder::useParentHandlers, Boolean::valueOf);
+            apply(node, "use-parent-handlers", builder::useParentHandlers, Boolean::valueOf);
         return builder.build().validate();
     }
 

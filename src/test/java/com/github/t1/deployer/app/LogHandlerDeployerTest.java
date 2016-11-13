@@ -705,7 +705,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "      bax: bbb");
 
         fixture.verifyMapPut("property", "bax", "bbb");
-        fixture.expectChange("property/bax", null, "bbb").verifyChanged(audits);
+        fixture.expectChange("property:bax", null, "bbb").verifyChanged(audits);
     }
 
     @Test
@@ -732,7 +732,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "      foos: bars\n");
 
         fixture.verifyMapPut("property", "foo", "bax");
-        fixture.expectChange("property/foo", "bar", "bax").verifyChanged(audits);
+        fixture.expectChange("property:foo", "bar", "bax").verifyChanged(audits);
     }
 
     @Test
@@ -758,7 +758,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "      foo: bar\n");
 
         fixture.verifyMapRemove("property", "foos");
-        fixture.expectChange("property/foos", "bars", null).verifyChanged(audits);
+        fixture.expectChange("property:foos", "bars", null).verifyChanged(audits);
     }
 
     @Test
@@ -786,8 +786,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
 
         fixture.verifyMapRemove("property", "foo");
         fixture.verifyMapPut("property", "bax", "bar");
-        fixture.expectChange("property/bax", null, "bar")
-               .expectChange("property/foo", "bar", null)
+        fixture.expectChange("property:bax", null, "bar")
+               .expectChange("property:foo", "bar", null)
                .verifyChanged(audits);
     }
 

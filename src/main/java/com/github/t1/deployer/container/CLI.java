@@ -36,11 +36,16 @@ public class CLI {
     @SneakyThrows({ InterruptedException.class, TimeoutException.class })
     public void waitForBoot() { waitForStandalone(client, STARTUP_TIMEOUT); }
 
+
     public ModelNode writeAttribute(ModelNode address, String name, String value) {
         return execute(createWriteAttributeOperation(address, name, value));
     }
 
     public ModelNode writeAttribute(ModelNode address, String name, boolean value) {
+        return execute(createWriteAttributeOperation(address, name, value));
+    }
+
+    public ModelNode writeAttribute(ModelNode address, String name, long value) {
         return execute(createWriteAttributeOperation(address, name, value));
     }
 

@@ -220,25 +220,20 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     }
 
     @Override protected void readFrom(ModelNode result) {
-        this.level = (result.get("level").isDefined()) ? mapLogLevel(result.get("level").asString()) : null;
+        this.level = getOptional(result, "level").map(node -> mapLogLevel(node.asString())).orElse(null);
         this.format = readFormat(result);
-        this.formatter = getString(result, "named-formatter");
-        this.encoding = getString(result, "encoding");
+        this.formatter = stringOrNull(result, "named-formatter");
+        this.encoding = stringOrNull(result, "encoding");
         this.file = (result.get("file").isDefined()) ? result.get("file").get("path").asString() : null;
-        this.suffix = getString(result, "suffix");
-        this.module = getString(result, "module");
-        this.class_ = getString(result, "class");
+        this.suffix = stringOrNull(result, "suffix");
+        this.module = stringOrNull(result, "module");
+        this.class_ = stringOrNull(result, "class");
         this.properties = getMap(result.get("properties"));
     }
 
     @Nullable private String readFormat(ModelNode result) {
         ModelNode node = result.get("formatter");
         return (node.isDefined() && !DEFAULT_FORMAT.equals(node.asString())) ? node.asString() : null;
-    }
-
-    private static String getString(ModelNode node, String name) {
-        ModelNode value = node.get(name);
-        return (value.isDefined()) ? value.asString() : null;
     }
 
     private static Map<String, String> getMap(ModelNode value) {

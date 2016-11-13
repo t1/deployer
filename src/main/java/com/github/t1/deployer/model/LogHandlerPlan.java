@@ -1,7 +1,8 @@
 package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.log.LogLevel;
 import lombok.*;
@@ -10,15 +11,17 @@ import java.util.Map;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.model.Plan.*;
 import static java.util.function.Function.*;
 import static lombok.AccessLevel.*;
 
 @Data
 @Builder
 @AllArgsConstructor(access = PRIVATE)
-@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonNaming(KebabCaseStrategy.class)
 public class LogHandlerPlan implements Plan.AbstractPlan {
-    private static final Expressions.VariableName DEFAULT_LOG_FORMATTER = new Expressions.VariableName("default.log-formatter");
+    private static final Expressions.VariableName DEFAULT_LOG_FORMATTER
+            = new Expressions.VariableName("default.log-formatter");
     public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
     public static final String DEFAULT_SUFFIX = ".yyyy-MM-dd";
 
@@ -43,15 +46,15 @@ public class LogHandlerPlan implements Plan.AbstractPlan {
 
     static LogHandlerPlan fromJson(LogHandlerName name, JsonNode node) {
         LogHandlerPlanBuilder builder = builder().name(name);
-        Plan.apply(node, "state", builder::state, DeploymentState::valueOf);
-        Plan.apply(node, "level", builder::level, LogLevel::valueOf, "«ALL»");
-        Plan.apply(node, "type", builder::type, LogHandlerType::valueOfTypeName,
+        apply(node, "state", builder::state, DeploymentState::valueOf);
+        apply(node, "level", builder::level, LogLevel::valueOf, "«ALL»");
+        apply(node, "type", builder::type, LogHandlerType::valueOfTypeName,
                 "default.log-handler-type or «" + periodicRotatingFile + "»");
         if (node.has("format") || (!node.has("formatter") && !Plan.expressions.contains(DEFAULT_LOG_FORMATTER)))
-            Plan.apply(node, "format", builder::format, identity(),
+            apply(node, "format", builder::format, identity(),
                     "default.log-format or «" + DEFAULT_LOG_FORMAT + "»");
-        Plan.apply(node, "formatter", builder::formatter, identity(), "default.log-formatter");
-        Plan.apply(node, "encoding", builder::encoding, identity(), "default.log-encoding");
+        apply(node, "formatter", builder::formatter, identity(), "default.log-formatter");
+        apply(node, "encoding", builder::encoding, identity(), "default.log-encoding");
         applyByType(node, builder);
         return builder.build().validate();
     }
@@ -62,14 +65,14 @@ public class LogHandlerPlan implements Plan.AbstractPlan {
             // nothing more to load here
             return;
         case periodicRotatingFile:
-            Plan.apply(node, "file", builder::file, identity(),
+            apply(node, "file", builder::file, identity(),
                     "«" + (builder.name.getValue().toLowerCase() + ".log") + "»");
-            Plan.apply(node, "suffix", builder::suffix, identity(),
+            apply(node, "suffix", builder::suffix, identity(),
                     "default.log-file-suffix or «" + DEFAULT_SUFFIX + "»");
             return;
         case custom:
-            Plan.apply(node, "module", builder::module, identity());
-            Plan.apply(node, "class", builder::class_, identity());
+            apply(node, "module", builder::module, identity());
+            apply(node, "class", builder::class_, identity());
             if (node.has("properties") && !node.get("properties").isNull())
                 node.get("properties").fieldNames().forEachRemaining(fieldName
                         -> builder.property(fieldName, node.get("properties").get(fieldName).asText()));

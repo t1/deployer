@@ -1,11 +1,12 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Plan.*;
+import com.github.t1.deployer.model.DataSourcePlan.PoolPlan;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.io.StringReader;
+import java.net.URI;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
@@ -117,6 +118,17 @@ public class PlanSerializationTest {
     }
 
 
+    private static final String BUNDLE_YAML = ""
+            + "bundles:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    artifact-id: foo\n"
+            + "    version: 1\n"
+            + "    instances:\n"
+            + "      bar:\n"
+            + "        version: 2\n"
+            + "      baz:\n"
+            + "        version: 3\n";
     private static final Plan BUNDLE_PLAN = Plan
             .builder()
             .bundle(BundlePlan
@@ -129,21 +141,10 @@ public class PlanSerializationTest {
                     .instance("baz", ImmutableMap.of(VERSION, "3"))
                     .build())
             .build();
-    private static final String BUNDLE_PLAN_YAML = ""
-            + "bundles:\n"
-            + "  foo:\n"
-            + "    group-id: org.foo\n"
-            + "    artifact-id: foo\n"
-            + "    version: 1\n"
-            + "    instances:\n"
-            + "      bar:\n"
-            + "        version: 2\n"
-            + "      baz:\n"
-            + "        version: 3\n";
 
     @Test
     public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {
-        Plan plan = Plan.load(expressions, new StringReader(BUNDLE_PLAN_YAML), "yaml-bundle");
+        Plan plan = Plan.load(expressions, new StringReader(BUNDLE_YAML), "yaml-bundle");
 
         assertThat(plan).isEqualTo(BUNDLE_PLAN);
     }
@@ -152,7 +153,7 @@ public class PlanSerializationTest {
     public void shouldSerializePlanWithBundleDeploymentWithVars() throws Exception {
         String yaml = BUNDLE_PLAN.toYaml();
 
-        assertThat(yaml).isEqualTo(BUNDLE_PLAN_YAML);
+        assertThat(yaml).isEqualTo(BUNDLE_YAML);
     }
 
 
@@ -163,16 +164,15 @@ public class PlanSerializationTest {
             + "    handlers:\n"
             + "    - CONSOLE\n"
             + "    use-parent-handlers: true\n";
-    private static final LoggerPlan LOGGER = LoggerPlan
-            .builder()
-            .category(LoggerCategory.of("some.logger.category"))
-            .level(TRACE)
-            .handler("CONSOLE")
-            .useParentHandlers(true)
-            .build();
     private static final Plan ONE_LOGGER_PLAN = Plan
             .builder()
-            .logger(LOGGER)
+            .logger(LoggerPlan
+                    .builder()
+                    .category(LoggerCategory.of("some.logger.category"))
+                    .level(TRACE)
+                    .handler("CONSOLE")
+                    .useParentHandlers(true)
+                    .build())
             .build();
 
     @Test
@@ -198,18 +198,17 @@ public class PlanSerializationTest {
             + "    format: the-format\n"
             + "    file: the-file\n"
             + "    suffix: the-suffix\n";
-    private static final LogHandlerPlan LOGHANDLER = LogHandlerPlan
-            .builder()
-            .name(new LogHandlerName("FOO"))
-            .level(INFO)
-            .type(periodicRotatingFile)
-            .file("the-file")
-            .suffix("the-suffix")
-            .format("the-format")
-            .build();
     private static final Plan ONE_LOGHANDLER_PLAN = Plan
             .builder()
-            .logHandler(LOGHANDLER)
+            .logHandler(LogHandlerPlan
+                    .builder()
+                    .name(new LogHandlerName("FOO"))
+                    .level(INFO)
+                    .type(periodicRotatingFile)
+                    .file("the-file")
+                    .suffix("the-suffix")
+                    .format("the-format")
+                    .build())
             .build();
 
     @Test
@@ -288,5 +287,53 @@ public class PlanSerializationTest {
         ), "xc"));
 
         assertThat(thrown).hasStackTraceContaining("log-handler [FOO] is of type [custom], so it requires a 'class'");
+    }
+
+
+    private static final String DATASOURCE_YAML = ""
+            + "data-sources:\n"
+            + "  FOO:\n"
+            + "    uri: jdbc:h2:mem:test\n"
+            + "    jndi-name: java:/datasources/TestDS\n"
+            + "    driver: h3\n"
+            + "    user-name: joe\n"
+            + "    password: secret\n"
+            + "    pool:\n"
+            + "      min: 3\n"
+            + "      initial: 5\n"
+            + "      max: 10\n"
+            + "      max-age: 3600 ms\n";
+    private static final Plan DATASOURCE_PLAN = Plan
+            .builder()
+            .dataSource(DataSourcePlan
+                    .builder()
+                    .name(new DataSourceName("FOO"))
+                    .uri(URI.create("jdbc:h2:mem:test"))
+                    .jndiName("java:/datasources/TestDS")
+                    .driver("h3")
+                    .userName("joe")
+                    .password("secret")
+                    .pool(PoolPlan
+                            .builder()
+                            .min(3)
+                            .initial(5)
+                            .max(10)
+                            .maxAge(Age.ofMillis(3600))
+                            .build())
+                    .build())
+            .build();
+
+    @Test
+    public void shouldDeserializePlanWithDataSource() throws Exception {
+        Plan plan = Plan.load(expressions, new StringReader(DATASOURCE_YAML), "ds-h");
+
+        assertThat(plan).isEqualTo(DATASOURCE_PLAN);
+    }
+
+    @Test
+    public void shouldSerializePlanWithDataSource() throws Exception {
+        String yaml = DATASOURCE_PLAN.toYaml();
+
+        assertThat(yaml).isEqualTo(DATASOURCE_YAML);
     }
 }

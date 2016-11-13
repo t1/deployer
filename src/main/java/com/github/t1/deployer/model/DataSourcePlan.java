@@ -1,37 +1,50 @@
 package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.github.t1.deployer.model.DataSourcePlan.PoolPlan.PoolPlanBuilder;
 import lombok.*;
 
 import java.net.URI;
 import java.util.regex.*;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.deployer.model.Plan.*;
 import static java.util.function.Function.*;
 import static lombok.AccessLevel.*;
 
 @Data
 @Builder
 @AllArgsConstructor(access = PRIVATE)
-@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonNaming(KebabCaseStrategy.class)
 public class DataSourcePlan implements Plan.AbstractPlan {
     private static final Pattern JDBC_URI = Pattern.compile("jdbc:(\\p{Alnum}{1,256}):.*");
 
     @NonNull @JsonIgnore private final DataSourceName name;
     private final DeploymentState state;
-    private final String driver;
-    private final String jndiName;
     private final URI uri;
+    private final String jndiName;
+    private final String driver;
 
     private final String userName;
     private final String password;
 
-    // private final int initialPoolSize
-    // private final int maxPoolSize
-    // private final int minPoolSize
-    // private final int maxIdleTime
+    private final PoolPlan pool;
+
+    @lombok.Value
+    @lombok.Builder
+    @lombok.AllArgsConstructor(access = PRIVATE)
+    @JsonNaming(KebabCaseStrategy.class)
+    public static class PoolPlan {
+        private final Integer min;
+        private final Integer initial;
+        private final Integer max;
+        private final Age maxAge;
+
+        @Override public String toString() { return min + "/" + initial + "/" + max + "/" + maxAge; }
+    }
 
     @Override public String getId() { return name.getValue(); }
 
@@ -39,13 +52,23 @@ public class DataSourcePlan implements Plan.AbstractPlan {
         if (node.isNull())
             throw new Plan.PlanLoadingException("incomplete data-sources plan '" + name + "'");
         DataSourcePlanBuilder builder = builder().name(name);
-        Plan.apply(node, "state", builder::state, DeploymentState::valueOf);
-        Plan.apply(node, "uri", builder::uri, URI::create);
-        Plan.apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "DS»");
-        Plan.apply(node, "driver", builder::driver, identity(), defaultDriver(builder.uri));
+        apply(node, "state", builder::state, DeploymentState::valueOf);
+        apply(node, "uri", builder::uri, URI::create);
+        apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "DS»");
+        apply(node, "driver", builder::driver, identity(), defaultDriver(builder.uri));
 
-        Plan.apply(node, "user-name", builder::userName, identity());
-        Plan.apply(node, "password", builder::password, identity());
+        apply(node, "user-name", builder::userName, identity());
+        apply(node, "password", builder::password, identity());
+
+        if (node.hasNonNull("pool")) {
+            PoolPlanBuilder pool = PoolPlan.builder();
+            JsonNode poolNode = node.get("pool");
+            apply(poolNode, "min", pool::min, Integer::valueOf);
+            apply(poolNode, "initial", pool::initial, Integer::valueOf);
+            apply(poolNode, "max", pool::max, Integer::valueOf);
+            apply(poolNode, "max-age", pool::maxAge, Age::new);
+            builder.pool(pool.build());
+        }
 
         return builder.build().validate();
     }
@@ -71,6 +94,7 @@ public class DataSourcePlan implements Plan.AbstractPlan {
     @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
     @Override public String toString() {
-        return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + driver + ":" + uri;
+        return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + driver + ":" + uri
+                + ((pool == null) ? "" : "{" + pool + "}");
     }
 }

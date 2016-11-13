@@ -1,7 +1,8 @@
 package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
 
@@ -12,7 +13,7 @@ import static lombok.AccessLevel.*;
 @Data
 @Builder
 @AllArgsConstructor(access = MODULE)
-@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonNaming(KebabCaseStrategy.class)
 public class AbstractArtifactPlan implements Plan.AbstractPlan {
     final DeploymentState state;
     final GroupId groupId;

@@ -23,9 +23,7 @@ public class LogHandlerName implements Comparable<LogHandlerName> {
     @JsonCreator public LogHandlerName(String value) { this.value = value; }
 
     @Override
-    public String toString() {
-        return value;
-    }
+    public String toString() { return value; }
 
     @Override public int compareTo(@NotNull LogHandlerName that) { return this.value.compareTo(that.value); }
 }

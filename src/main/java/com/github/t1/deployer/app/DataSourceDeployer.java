@@ -22,6 +22,26 @@ public class DataSourceDeployer extends
         property("driver", String.class);
         property("user-name", String.class);
         property("password", String.class);
+        this.<Integer>property("pool:min")
+                .resource(DataSourceResource::minPoolSize)
+                .plan(plan -> (plan.getPool() == null) ? null : plan.getPool().getMin())
+                .addTo(DataSourceResourceBuilder::minPoolSize)
+                .write(DataSourceResource::updateMinPoolSize);
+        this.<Integer>property("pool:initial")
+                .resource(DataSourceResource::initialPoolSize)
+                .plan(plan -> (plan.getPool() == null) ? null : plan.getPool().getInitial())
+                .addTo(DataSourceResourceBuilder::initialPoolSize)
+                .write(DataSourceResource::updateInitialPoolSize);
+        this.<Integer>property("pool:max")
+                .resource(DataSourceResource::maxPoolSize)
+                .plan(plan -> (plan.getPool() == null) ? null : plan.getPool().getMax())
+                .addTo(DataSourceResourceBuilder::maxPoolSize)
+                .write(DataSourceResource::updateMaxPoolSize);
+        this.<Age>property("pool:max-age")
+                .resource(DataSourceResource::maxPoolAge)
+                .plan(plan -> (plan.getPool() == null) ? null : plan.getPool().getMaxAge())
+                .addTo(DataSourceResourceBuilder::maxPoolAge)
+                .write(DataSourceResource::updateMaxAge);
     }
 
     private void property(String name, Class<?> type) {

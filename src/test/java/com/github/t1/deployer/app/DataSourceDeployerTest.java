@@ -1,5 +1,6 @@
 package com.github.t1.deployer.app;
 
+import com.github.t1.deployer.model.Age;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
@@ -104,6 +105,66 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
         foo.userName("foo").password("bar").verifyAdded(audits);
     }
 
+    @Test
+    public void shouldAddDataSourceWithMinPoolSize() {
+        DataSourceFixture foo = givenDataSource("foo");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    user-name: foo\n"
+                + "    pool:\n"
+                + "      min: 3\n");
+
+        foo.userName("foo").minPoolSize(3).verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldAddDataSourceWithInitialPoolSize() {
+        DataSourceFixture foo = givenDataSource("foo");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    user-name: foo\n"
+                + "    pool:\n"
+                + "      initial: 5\n");
+
+        foo.userName("foo").initialPoolSize(5).verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldAddDataSourceWithMaxPoolSize() {
+        DataSourceFixture foo = givenDataSource("foo");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    user-name: foo\n"
+                + "    pool:\n"
+                + "      max: 10\n");
+
+        foo.userName("foo").maxPoolSize(10).verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldAddDataSourceWithMaxAge() {
+        DataSourceFixture foo = givenDataSource("foo");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    user-name: foo\n"
+                + "    pool:\n"
+                + "      max-age: 10 min\n");
+
+        foo.userName("foo").maxAge(Age.ofMinutes(10)).verifyAdded(audits);
+    }
+
 
     @Test
     public void shouldNotAddExistingDataSource() {
@@ -181,6 +242,62 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
                 + "    password: baz\n");
 
         fixture.password("baz").verifyUpdatedPasswordFrom("bar", audits);
+    }
+
+    @Test
+    public void shouldUpdateMinPoolSize() {
+        DataSourceFixture fixture = givenDataSource("foo").minPoolSize(1).deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    pool:\n"
+                + "      min: 2\n");
+
+        fixture.minPoolSize(2).verifyUpdatedMinPoolSizeFrom(1, audits);
+    }
+
+    @Test
+    public void shouldUpdateInitialPoolSize() {
+        DataSourceFixture fixture = givenDataSource("foo").initialPoolSize(1).deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    pool:\n"
+                + "      initial: 2\n");
+
+        fixture.initialPoolSize(2).verifyUpdatedInitialPoolSizeFrom(1, audits);
+    }
+
+    @Test
+    public void shouldUpdateMaxPoolSize() {
+        DataSourceFixture fixture = givenDataSource("foo").maxPoolSize(1).deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    pool:\n"
+                + "      max: 2\n");
+
+        fixture.maxPoolSize(2).verifyUpdatedMaxPoolSizeFrom(1, audits);
+    }
+
+    @Test
+    public void shouldUpdateMaxAge() {
+        DataSourceFixture fixture = givenDataSource("foo").maxAge(Age.ofMinutes(2)).deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    pool:\n"
+                + "      max-age: 3 min\n");
+
+        fixture.maxAge(Age.ofMinutes(3)).verifyUpdatedMaxAgeFrom(Age.ofMinutes(2), audits);
     }
 
 

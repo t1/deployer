@@ -5,6 +5,7 @@ import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.DataSourcePlan.*;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
@@ -902,7 +903,7 @@ public class AbstractDeployerTest {
             if (class_ != null)
                 expectedAudit.change("class", null, class_);
             if (properties != null)
-                properties.forEach((key, value) -> expectedAudit.change("property/" + key, null, value));
+                properties.forEach((key, value) -> expectedAudit.change("property:" + key, null, value));
             assertThat(audits.getAudits()).contains(expectedAudit.added());
         }
 
@@ -927,7 +928,7 @@ public class AbstractDeployerTest {
             if (this.class_ != null)
                 expectedAudit.change("class", this.class_, null);
             if (properties != null)
-                properties.forEach((key, value) -> expectedAudit.change("property/" + key, value, null));
+                properties.forEach((key, value) -> expectedAudit.change("property:" + key, value, null));
             assertThat(audits.getAudits()).contains(expectedAudit.removed());
         }
 
@@ -963,6 +964,11 @@ public class AbstractDeployerTest {
         private String userName;
         private String password;
 
+        private Integer minPoolSize;
+        private Integer initialPoolSize;
+        private Integer maxPoolSize;
+        private Age maxAge;
+
         public DataSourceFixture(@NonNull String name) {
             this.name = new DataSourceName(name);
             this.uri = "jdbc:h2:mem:" + name;
@@ -982,8 +988,18 @@ public class AbstractDeployerTest {
                     + "    'connection-url' => '" + uri + "',\n"
                     + "    'jndi-name' => '" + jndiName + "',\n"
                     + "    'driver-name' => '" + driver + "',\n"
+
                     + "    'user-name' => " + ((userName == null) ? "undefined" : "'" + userName + "'") + ",\n"
                     + "    'password' => " + ((password == null) ? "undefined" : "'" + password + "'") + ",\n"
+
+                    + "    'min-pool-size' => " + ((minPoolSize == null)
+                                                           ? "undefined" : "'" + minPoolSize + "'") + ",\n"
+                    + "    'initial-pool-size' => " + ((initialPoolSize == null)
+                                                               ? "undefined" : "'" + initialPoolSize + "'") + ",\n"
+                    + "    'max-pool-size' => " + ((maxPoolSize == null)
+                                                           ? "undefined" : "'" + maxPoolSize + "'") + ",\n"
+                    + "    'idle-timeout-minutes' => "
+                    + ((maxAge == null) ? "undefined" : "'" + maxAge.asMinutes() + "'") + "\n"
                     + "}\n";
         }
 
@@ -1012,6 +1028,26 @@ public class AbstractDeployerTest {
             return this;
         }
 
+        public DataSourceFixture minPoolSize(Integer minPoolSize) {
+            this.minPoolSize = minPoolSize;
+            return this;
+        }
+
+        public DataSourceFixture initialPoolSize(Integer initialPoolSize) {
+            this.initialPoolSize = initialPoolSize;
+            return this;
+        }
+
+        public DataSourceFixture maxPoolSize(Integer maxPoolSize) {
+            this.maxPoolSize = maxPoolSize;
+            return this;
+        }
+
+        public DataSourceFixture maxAge(Age maxAge) {
+            this.maxAge = maxAge;
+            return this;
+        }
+
         public DataSourceFixture pinned() {
             givenPinned("data-sources", name.getValue());
             return this;
@@ -1036,8 +1072,14 @@ public class AbstractDeployerTest {
                     + "    'connection-url' => '" + uri + "',\n"
                     + "    'jndi-name' => '" + jndiName + "',\n"
                     + "    'driver-name' => '" + driver + "'\n"
+
                     + ((userName == null) ? "" : ",    'user-name' => '" + userName + "'\n")
                     + ((password == null) ? "" : ",    'password' => '" + password + "'\n")
+
+                    + ((minPoolSize == null) ? "" : ",    'min-pool-size' => " + minPoolSize + "\n")
+                    + ((initialPoolSize == null) ? "" : ",    'initial-pool-size' => " + initialPoolSize + "\n")
+                    + ((maxPoolSize == null) ? "" : ",    'max-pool-size' => " + maxPoolSize + "\n")
+                    + ((maxAge == null) ? "" : ",    'idle-timeout-minutes' => " + maxAge.asMinutes() + "L\n")
                     + "}");
             verify(cli).execute(request);
             AuditBuilder audit = DataSourceAudit
@@ -1045,10 +1087,18 @@ public class AbstractDeployerTest {
                     .change("uri", null, uri)
                     .change("jndi-name", null, jndiName)
                     .change("driver", null, driver);
-            if (userName!=null)
+            if (userName != null)
                 audit.change("user-name", null, userName);
-            if (password!=null)
+            if (password != null)
                 audit.change("password", null, password);
+            if (minPoolSize != null)
+                audit.change("pool:min", null, minPoolSize);
+            if (initialPoolSize != null)
+                audit.change("pool:initial", null, initialPoolSize);
+            if (maxPoolSize != null)
+                audit.change("pool:max", null, maxPoolSize);
+            if (maxAge != null)
+                audit.change("pool:max-age", null, maxAge);
             assertThat(audits.getAudits()).contains(audit.added());
         }
 
@@ -1082,6 +1132,30 @@ public class AbstractDeployerTest {
                     DataSourceAudit.of(name).change("password", oldPassword, password).changed());
         }
 
+        public void verifyUpdatedMinPoolSizeFrom(Integer oldMinPoolSize, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "min-pool-size", minPoolSize);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("pool:min", oldMinPoolSize, minPoolSize).changed());
+        }
+
+        public void verifyUpdatedInitialPoolSizeFrom(Integer oldInitialPoolSize, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "initial-pool-size", initialPoolSize);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("pool:initial", oldInitialPoolSize, initialPoolSize).changed());
+        }
+
+        public void verifyUpdatedMaxPoolSizeFrom(Integer oldMaxPoolSize, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "max-pool-size", maxPoolSize);
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("pool:max", oldMaxPoolSize, maxPoolSize).changed());
+        }
+
+        public void verifyUpdatedMaxAgeFrom(Age oldMaxAge, Audits audits) {
+            verify(cli).writeAttribute(dataSourceAddressNode(), "idle-timeout-minutes", maxAge.asMinutes());
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("pool:max-age", oldMaxAge, maxAge).changed());
+        }
+
         public void verifyRemoved(Audits audits) {
             verify(cli).execute(toModelNode(""
                     + "{\n"
@@ -1093,15 +1167,23 @@ public class AbstractDeployerTest {
                     .change("uri", uri, null)
                     .change("jndi-name", jndiName, null)
                     .change("driver", driver, null);
-            if(userName!=null)
+            if (userName != null)
                 audit.change("user-name", userName, null);
-            if(password!=null)
+            if (password != null)
                 audit.change("password", password, null);
+            if (minPoolSize != null)
+                audit.change("pool:min", minPoolSize, null);
+            if (initialPoolSize != null)
+                audit.change("pool:initial", initialPoolSize, null);
+            if (maxPoolSize != null)
+                audit.change("pool:max", maxPoolSize, null);
+            if (maxAge != null)
+                audit.change("pool:max-age", maxAge, null);
             assertThat(audits.getAudits()).contains(audit.removed());
         }
 
         public DataSourcePlan asPlan() {
-            return DataSourcePlan
+            DataSourcePlanBuilder builder = DataSourcePlan
                     .builder()
                     .name(name)
                     .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
@@ -1109,8 +1191,15 @@ public class AbstractDeployerTest {
                     .jndiName(jndiName)
                     .driver(driver)
                     .userName(userName)
-                    .password(password)
-                    .build();
+                    .password(this.password);
+            if (minPoolSize != null)
+                builder.pool(PoolPlan.builder()
+                                     .min(minPoolSize)
+                                     .initial(initialPoolSize)
+                                     .max(maxPoolSize)
+                                     .maxAge(maxAge)
+                                     .build());
+            return builder.build();
         }
     }
 }
