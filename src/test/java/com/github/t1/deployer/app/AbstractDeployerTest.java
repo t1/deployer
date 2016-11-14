@@ -1018,6 +1018,10 @@ public class AbstractDeployerTest {
             return this;
         }
 
+        public DataSourceFixture credentials(String userName, String password) {
+            return userName(userName).password(password);
+        }
+
         public DataSourceFixture userName(String userName) {
             this.userName = userName;
             return this;
@@ -1191,14 +1195,13 @@ public class AbstractDeployerTest {
                     .jndiName(jndiName)
                     .driver(driver)
                     .userName(userName)
-                    .password(this.password);
-            if (minPoolSize != null)
-                builder.pool(PoolPlan.builder()
-                                     .min(minPoolSize)
-                                     .initial(initialPoolSize)
-                                     .max(maxPoolSize)
-                                     .maxAge(maxAge)
-                                     .build());
+                    .password(password)
+                    .pool(PoolPlan.builder()
+                                  .min(minPoolSize)
+                                  .initial(initialPoolSize)
+                                  .max(maxPoolSize)
+                                  .maxAge(maxAge)
+                                  .build());
             return builder.build();
         }
     }

@@ -50,6 +50,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
         private int depth = 0;
         private String rowHeader = null;
         private String key = null;
+        private String parentKey = null;
         private Map<String, Object> row = new LinkedHashMap<>();
 
         private HtmlWriter(PrintWriter out, String title) {
@@ -152,15 +153,16 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
                 rowHeader = name;
                 break;
             case 3:
-                key = name;
+                parentKey = key = name;
                 break;
             default:
-                key = "*" + name;
+                key = parentKey + ":" + name;
                 break;
             }
         }
 
-        @Override public void writeString(String text) throws IOException {
+
+        private void add(Object text) {
             Object value;
             if (row.containsKey(key)) {
                 Object tmp = row.get(key);
@@ -172,45 +174,50 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
             row.put(key, value);
         }
 
+        @Override public void writeString(String text) { add(text); }
 
-        @Override public void writeString(char[] text, int offset, int len) throws IOException {}
+        @Override public void writeString(char[] text, int offset, int len) { add(new String(text, offset, len)); }
 
-        @Override public void writeRawUTF8String(byte[] text, int offset, int length) throws IOException {}
+        @Override public void writeRawUTF8String(byte[] text, int offset, int length) {
+            add(new String(text, offset, length));
+        }
 
-        @Override public void writeUTF8String(byte[] text, int offset, int length) throws IOException {}
+        @Override public void writeUTF8String(byte[] text, int offset, int length) {
+            add(new String(text, offset, length));
+        }
 
-        @Override public void writeRaw(String text) throws IOException {}
+        @Override public void writeRaw(String value) { add(value); }
 
-        @Override public void writeRaw(String text, int offset, int len) throws IOException {}
+        @Override public void writeRaw(String text, int offset, int len) { add(text.substring(offset, offset + len)); }
 
-        @Override public void writeRaw(char[] text, int offset, int len) throws IOException {}
+        @Override public void writeRaw(char[] text, int offset, int len) { add(new String(text, offset, len)); }
 
-        @Override public void writeRaw(char c) throws IOException {}
+        @Override public void writeRaw(char c) { add(c); }
 
-        @Override public void writeBinary(Base64Variant bv, byte[] data, int offset, int len) throws IOException {}
+        @Override public void writeBinary(Base64Variant bv, byte[] data, int offset, int len) {}
 
-        @Override public void writeNumber(int v) throws IOException {}
+        @Override public void writeNumber(int value) { add(value); }
 
-        @Override public void writeNumber(long v) throws IOException {}
+        @Override public void writeNumber(long value) { add(value); }
 
-        @Override public void writeNumber(BigInteger v) throws IOException {}
+        @Override public void writeNumber(BigInteger value) { add(value); }
 
-        @Override public void writeNumber(double v) throws IOException {}
+        @Override public void writeNumber(double value) { add(value); }
 
-        @Override public void writeNumber(float v) throws IOException {}
+        @Override public void writeNumber(float value) { add(value); }
 
-        @Override public void writeNumber(BigDecimal v) throws IOException {}
+        @Override public void writeNumber(BigDecimal value) { add(value); }
 
-        @Override public void writeNumber(String encodedValue) throws IOException {}
+        @Override public void writeNumber(String value) { add(value); }
 
-        @Override public void writeBoolean(boolean state) throws IOException { row.put(key, Boolean.toString(state)); }
+        @Override public void writeBoolean(boolean value) { add(value); }
 
-        @Override public void writeNull() throws IOException {}
+        @Override public void writeNull() {}
 
         @Override public void flush() throws IOException { out.flush(); }
 
         @Override protected void _releaseBuffers() {}
 
-        @Override protected void _verifyValueWrite(String typeMsg) throws IOException {}
+        @Override protected void _verifyValueWrite(String typeMsg) {}
     }
 }

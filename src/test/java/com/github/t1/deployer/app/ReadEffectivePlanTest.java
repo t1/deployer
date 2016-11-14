@@ -132,20 +132,21 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
 
     @Test
     public void shouldReadOneDataSource() throws Exception {
-        DataSourceFixture foo = givenDataSource("foo").deployed();
+        DataSourceFixture foo = givenDataSource("foo").credentials("joe", "secret").deployed();
 
         Plan plan = boundary.getEffectivePlan();
 
-        assertThat(dataSources(plan)).containsExactly(foo.asPlan());
+        assertThat(dataSources(plan)).containsExactly(foo.password(null).asPlan());
     }
 
     @Test
     public void shouldReadTwoDataSources() throws Exception {
-        DataSourceFixture foo = givenDataSource("foo").deployed();
-        DataSourceFixture bar = givenDataSource("bar").deployed();
+        DataSourceFixture foo = givenDataSource("foo").credentials("joe", "secret").deployed();
+        DataSourceFixture bar = givenDataSource("bar").credentials("joe", "secret").deployed();
 
         Plan plan = boundary.getEffectivePlan();
 
-        assertThat(dataSources(plan)).containsExactly(bar.asPlan(), foo.asPlan()); // sorted!
+        assertThat(dataSources(plan))
+                .containsExactly(bar.password(null).asPlan(), foo.password(null).asPlan()); // sorted!
     }
 }

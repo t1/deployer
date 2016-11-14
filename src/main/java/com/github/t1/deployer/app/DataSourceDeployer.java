@@ -5,6 +5,7 @@ import com.github.t1.deployer.app.Audit.DataSourceAudit.DataSourceAuditBuilder;
 import com.github.t1.deployer.container.DataSourceResource;
 import com.github.t1.deployer.container.DataSourceResource.DataSourceResourceBuilder;
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.DataSourcePlan.PoolPlan;
 import com.github.t1.deployer.model.Plan.PlanBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,7 +72,14 @@ public class DataSourceDeployer extends
                 .jndiName(resource.jndiName())
                 .driver(resource.driver())
                 .userName(resource.userName())
-                .password(resource.password());
+                // hide .password(resource.password())
+                .pool(PoolPlan
+                        .builder()
+                        .min(resource.minPoolSize())
+                        .initial(resource.initialPoolSize())
+                        .max(resource.maxPoolSize())
+                        .maxAge(resource.maxPoolAge())
+                        .build());
         builder.dataSource(dataSourcePlan.build());
     }
 }
