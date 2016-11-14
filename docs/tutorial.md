@@ -7,7 +7,7 @@ how to combine them into bundles, and how to integrate it all into a CI or even 
 'Resources' are all the things that the deployer can change, e.g. deployables (`war` files, etc.) as well as loggers, etc.
 
 
-## GET config
+## GET Plan
 
 Before we start, you can also _read_ the currently effective configuration by simply GETting `http://localhost:8080/deployer`.
 This resource provides a concise overview of the relevant configuration without providing confidential data like passwords
@@ -160,7 +160,7 @@ To take an app centric view, you can group things into so called bundles.
 You already know how bundles look: The `deployer.root.bundle` is one.
 So let's define one bundle for each app above:
 
-### `myapp1.bundle`
+#### `myapp1.bundle`
 
 ```yaml
 log-handlers:
@@ -176,7 +176,7 @@ deployables:
     version: 1.0
 ```
 
-### `myapp2.bundle`
+#### `myapp2.bundle`
 
 ```yaml
 log-handlers:
@@ -194,7 +194,7 @@ deployables:
 
 If these were in the repository, we could include them in the root bundle as seen before:
 
-### `deployer.root.bundle`
+#### `deployer.root.bundle`
 
 ```yaml
 bundles:
@@ -629,3 +629,45 @@ root-bundle:
   classifier: slot-1
   version: UNSTABLE
 ```
+
+
+## Security
+
+There are other resources that you can configure with The Deployer.
+For a complete list, see [the reference](reference.md#bundle-file-format).
+But some resources, e.g. data sources, require credentials, most often a user name and a password.
+You should *not* just put them into a bundle stored in your repository... too many people will be able to see that!
+While security-wise the best alternative is to use client certificates to authenticate and authorize,
+this option is often not available.
+You can instead encrypt the password and let The Deployer decrypt it with a key stored on the machine.
+The encryption can be symmetric, but you'll get the most comfort/security balance by using public key encryption,
+eventually even with the public key from the server certificate of the machine:
+
+Assuming that you have a server certificate named `server-certificate` in a keystore file `~/keystores/keystore.jks`,
+add this to your [config](reference.md#config):
+
+```yaml
+key-store:
+  path: ~/keystores/keystore.jks
+  alias: server-certificate
+```
+
+To store a password, e.g. `secret`, encrypt it like this:
+
+```bash
+mvn exec:java -Dexec.mainClass="com.github.t1.deployer.tools.CipherFacade" -Dexec.args="--keystore ~/keystores/keystore.jks --alias server-certificate secret"
+```
+
+In the maven output, you'll see a long binhex string of the encrypted key.
+Take this and paste it to the bundle containing the data source:
+
+```yaml
+data-sources:
+  TestDS:
+    uri: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ${decode(«bar»)}
+```
+
+where `bar` has to be replaced with that long binhex encrypted key string.
+

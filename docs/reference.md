@@ -116,7 +116,8 @@ A variable name can contain the name of a function to be applied to the value:
 - `hostName()`: Returns the DNS name of the local host (without the domain name).
 - `domainName()`: Returns the DNS domain of the local host.
 - `regex(a, b)`: Apply the regular expression `b` to `a`, returning the first matching group.
-- `decrypt(x)`: Use a key from a keystore to decrypt `x`. See [key-store config](#key-store).
+- `decrypt(secret)`: Use a key from a keystore to decrypt a secret. See [key-store config](#key-store).
+- `decrypt(secret, alias)`: Use a key with a specific alias from a keystore to decrypt a secret. See [key-store config](#key-store).
 
 You can chain variable expressions, by separating them with ` or `.
 E.g. `toLowerCase(foo) or bar` will resolve to `baz`, if the variable `foo` is set to `BAZ`,
@@ -200,9 +201,9 @@ The key to be used for the `decrypt` expression.
 | path | The file path to the keystore. Mandatory to use `decrypt`. |
 | type | The format of the keystore, e.g. `jks` or `jceks`. Defaults to `jks`. Note that you can't store secret keys (i.e. symmetric encryption keys) in `jks`. |
 | pass | The password required for the keystore. Defaults to `changeit`, the JDK default. |
-| alias | The name of the key in the keystore. Defaults to `secretkey`. |
+| alias | The default name of the key in the keystore. Can be overridden in the call to `decrypt`. Defaults to `secretkey`. |
 
-To encrypt some key, you can use the `main` method in the `CipherFacade` class, e.g. via Maven:
+To encrypt some key, you can use the `main` method in the `CipherFacade` class, e.g. to get the CLI help via Maven:
 
     mvn exec:java -Dexec.mainClass="com.github.t1.deployer.app.CipherFacade" -Dexec.args="--help"
 

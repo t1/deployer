@@ -3,7 +3,7 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Expressions.*;
-import com.github.t1.deployer.model.Plan.*;
+import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.Logged;
@@ -60,9 +60,14 @@ public class DeployerBoundary {
 
     @POST
     public AuditsResponse post(Map<String, String> form) {
-        Map<VariableName, String> map = (form == null) ? emptyMap() : form.entrySet().stream().collect(
-                toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
-        return new AuditsResponse(apply(post, map).getAudits());
+        return new AuditsResponse(apply(post, mapVariableNames(form)).getAudits());
+    }
+
+    private Map<VariableName, String> mapVariableNames(Map<String, String> form) {
+        return (form == null)
+                ? emptyMap()
+                : form.entrySet().stream()
+                      .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
     }
 
     @Asynchronous

@@ -179,7 +179,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("undefined variable function with 1 params: [hostName]");
+                .hasMessageContaining("undefined function [hostName] with 1 params");
     }
 
 
@@ -207,7 +207,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("undefined variable function with 1 params: [domainName]");
+                .hasMessageContaining("undefined function [domainName] with 1 params");
     }
 
 
@@ -291,6 +291,21 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithPublicKeyEncryptedVersionUsingAliasParameter() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        givenConfiguredKeyStore(KEYSTORE);
+
+        String secret = CipherFacade.encrypt(foo.getVersion().getValue(), boundary.keyStore.withAlias("keypair"));
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${decrypt(«" + secret + "», «keypair»)}\n");
 
         foo.verifyDeployed(audits);
     }
@@ -480,7 +495,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("undefined variable function with 1 params: [bar]");
+                .hasMessageContaining("undefined function [bar] with 1 params");
     }
 
     @Test
@@ -494,7 +509,7 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
         assertThat(thrown)
                 .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("undefined variable function with 0 params: [toLowerCase]");
+                .hasMessageContaining("undefined function [toLowerCase] with 0 params");
     }
 
     @Test

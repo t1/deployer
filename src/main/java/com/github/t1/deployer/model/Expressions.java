@@ -300,11 +300,12 @@ public class Expressions {
                 return apply1(s -> s.toLowerCase(US));
             case "decrypt#1":
                 return apply1(this::decrypt);
+            case "decrypt#2":
+                return apply2(this::decrypt);
             case "regex#2":
                 return apply2(this::regex);
             default:
-                throw badRequest(
-                        "undefined variable function with " + params.size() + " params: [" + functionName + "]");
+                throw badRequest("undefined function [" + functionName + "] with " + params.size() + " params");
             }
         }
 
@@ -321,6 +322,10 @@ public class Expressions {
         private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
 
         private String decrypt(String text) { return CipherFacade.decrypt(text, keyStore); }
+
+        private String decrypt(String text, String alias) {
+            return CipherFacade.decrypt(text, keyStore.withAlias(alias));
+        }
 
         private String regex(String text, String pattern) {
             Matcher matcher = Pattern.compile(pattern).matcher(text);
