@@ -637,9 +637,10 @@ There are other resources that you can configure with The Deployer.
 For a complete list, see [the reference](reference.md#bundle-file-format).
 But some resources, e.g. data sources, require credentials, most often a user name and a password.
 You should *not* just put them into a bundle stored in your repository... too many people will be able to see that!
+
 While security-wise the best alternative is to use client certificates to authenticate and authorize,
 this option is often not available.
-You can instead encrypt the password and let The Deployer decrypt it with a key stored on the machine.
+But you can instead encrypt the password and let The Deployer decrypt it with a key stored on the machine.
 The encryption can be symmetric, but you'll get the most comfort/security balance by using public key encryption,
 eventually even with the public key from the server certificate of the machine:
 
@@ -666,8 +667,9 @@ data-sources:
   TestDS:
     uri: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
-    password: ${decode(«bar»)}
+    password: ${decrypt(«bar»)}
 ```
 
 where `bar` has to be replaced with that long binhex encrypted key string.
 
+If you need a specific key from the keystore, you can pass its alias as a second parameter to the `decrypt` method.
