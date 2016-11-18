@@ -76,7 +76,7 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
     public boolean matchesId(T that) { return this.getId().equals(that.getId()); }
 
     protected static String stringOrNull(ModelNode node, String name) {
-        return getOptional(node,name).map(ModelNode::asString).orElse(null);
+        return getOptional(node, name).map(ModelNode::asString).orElse(null);
     }
 
     protected static Integer integerOrNull(ModelNode node, String name) {

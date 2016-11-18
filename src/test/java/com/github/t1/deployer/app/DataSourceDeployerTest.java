@@ -78,6 +78,19 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
 
 
     @Test
+    public void shouldAddXaDataSource() {
+        DataSourceFixture foo = givenDataSource("foo");
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    xa: true\n"
+                + "    uri: jdbc:h2:mem:foo\n");
+
+        foo.xa(true).verifyAdded(audits);
+    }
+
+    @Test
     public void shouldAddDataSourceWithJndiName() {
         DataSourceFixture foo = givenDataSource("foo");
 
@@ -298,6 +311,19 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
                 + "      max-age: 3 min\n");
 
         fixture.maxAge(Age.ofMinutes(3)).verifyUpdatedMaxAgeFrom(Age.ofMinutes(2), audits);
+    }
+
+    @Test
+    public void shouldUpdateXaToTrue() {
+        DataSourceFixture fixture = givenDataSource("foo").deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    xa: true\n");
+
+        fixture.xa(true).verifyUpdatedXaFrom(null, audits);
     }
 
 

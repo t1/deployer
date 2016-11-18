@@ -5,12 +5,14 @@ import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
+import com.github.t1.deployer.testtools.ModelNodeTools;
 import com.github.t1.testtools.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Condition;
 import org.jboss.arquillian.junit.*;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.dmr.ModelNode;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -29,6 +31,7 @@ import java.util.stream.Stream;
 import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.testtools.ModelNodeTools.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
 import static java.util.concurrent.TimeUnit.*;
@@ -86,6 +89,7 @@ public class DeployerIT {
         return new WebArchiveBuilder(DEPLOYER_IT.getValue())
                 .with(DeployerBoundary.class.getPackage())
                 .with(TestLoggerRule.class, FileMemento.class, LoggerMemento.class, SystemPropertiesRule.class)
+                .with(ModelNodeTools.class)
                 .library("org.assertj", "assertj-core")
                 .print()
                 .build();
@@ -198,6 +202,11 @@ public class DeployerIT {
     protected Condition<DeploymentResource> deployment(String name, Checksum checksum) {
         return allOf(deployment(name), checksum(checksum));
     }
+
+    @SuppressWarnings("deprecation") private ModelNode readDataSource(String name, boolean xa) {
+        return container.getCli().execute(readDatasourceRequest(name, xa));
+    }
+
 
     @Test
     @InSequence(value = 100)
@@ -488,17 +497,110 @@ public class DeployerIT {
                                .change("pool:max", null, "10")
                                .change("pool:max-age", null, "5 min")
                                .added());
+        assertThat(definedPropertiesOf(readDataSource("foo", false)))
+                .has(property("connection-url", "jdbc:h2:mem:test"))
+                .has(property("driver-name", "h2"))
+                .has(property("enabled", "true"))
+                .has(property("idle-timeout-minutes", "5"))
+                .has(property("initial-pool-size", "1"))
+                .has(property("jndi-name", "java:/datasources/TestDS"))
+                .has(property("max-pool-size", "10"))
+                .has(property("min-pool-size", "0"))
+                .has(property("password", "secret"))
+                .has(property("user-name", "joe"));
+    }
+
+    @Test
+    @InSequence(value = 1020)
+    @Ignore // TODO fix deploying xa data-sources
+    public void shouldDeployXaDataSource() throws Exception {
+        String plan = ""
+                + "data-sources:\n"
+                + "  bar:\n"
+                + "    xa: true\n"
+                + "    uri: jdbc:h2:mem:test\n"
+                + "    user-name: joe\n"
+                + "    password: secret\n"
+                + "    pool:\n"
+                + "      min: 0\n"
+                + "      initial: 1\n"
+                + "      max: 10\n"
+                + "      max-age: 5 min\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                DataSourceAudit.builder().name(new DataSourceName("bar"))
+                               .change("xa", null, true)
+                               .change("uri", null, "jdbc:h2:mem:test")
+                               .change("user-name", null, "joe")
+                               .change("password", null, "secret")
+                               .change("pool:min", null, "0")
+                               .change("pool:initial", null, "1")
+                               .change("pool:max", null, "10")
+                               .change("pool:max-age", null, "5 min")
+                               .added());
+        assertThat(definedPropertiesOf(readDataSource("bar", true)))
+                .has(property("connection-url", "jdbc:h2:mem:test"))
+                .has(property("driver-name", "h2"))
+                .has(property("enabled", "true"))
+                .has(property("idle-timeout-minutes", "5"))
+                .has(property("initial-pool-size", "1"))
+                .has(property("jndi-name", "java:/datasources/TestDS"))
+                .has(property("max-pool-size", "10"))
+                .has(property("min-pool-size", "0"))
+                .has(property("password", "secret"))
+                .has(property("user-name", "joe"));
+    }
+
+    @Test
+    @InSequence(value = 1050)
+    public void shouldChangeDataSourceMaxAge10() throws Exception {
+        String plan = ""
+                + "data-sources:\n"
+                + "  foo:\n"
+                // TODO + "    xa: true\n"
+                + "    uri: jdbc:h2:mem:test\n"
+                + "    jndi-name: java:/datasources/TestDS\n"
+                + "    driver: h2\n"
+                + "    user-name: joe\n"
+                + "    password: secret\n"
+                + "    pool:\n"
+                + "      min: 0\n"
+                + "      initial: 1\n"
+                + "      max: 10\n"
+                + "      max-age: 600 seconds\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                DataSourceAudit.builder().name(new DataSourceName("foo"))
+                               // TODO .change("xa", null, true)
+                               .change("pool:max-age", "5 min", "10 min")
+                               .changed());
+        assertThat(definedPropertiesOf(readDataSource("foo", false)))
+                .has(property("connection-url", "jdbc:h2:mem:test"))
+                .has(property("driver-name", "h2"))
+                .has(property("enabled", "true"))
+                .has(property("idle-timeout-minutes", "10"))
+                .has(property("initial-pool-size", "1"))
+                .has(property("jndi-name", "java:/datasources/TestDS"))
+                .has(property("max-pool-size", "10"))
+                .has(property("min-pool-size", "0"))
+                .has(property("password", "secret"))
+                .has(property("user-name", "joe"));
     }
 
     @Test
     @InSequence(value = 1100)
-    public void shouldUndeployDataSource() throws Exception {
+    public void shouldUndeployAllDataSources() throws Exception {
         String plan = "---\n";
 
         List<Audit> audits = post(plan);
 
         assertThat(audits).containsExactly(
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
+                               // TODO .change("xa", true, null)
                                .change("uri", "jdbc:h2:mem:test", null)
                                .change("jndi-name", "java:/datasources/TestDS", null)
                                .change("driver", "h2", null)
@@ -507,7 +609,19 @@ public class DeployerIT {
                                .change("pool:min", "0", null)
                                .change("pool:initial", "1", null)
                                .change("pool:max", "10", null)
-                               .change("pool:max-age", "5 min", null)
+                               .change("pool:max-age", "10 min", null)
+                               // .removed()
+                               // DataSourceAudit.builder().name(new DataSourceName("bar"))
+                               //                .change("xa", true, null)
+                               //                .change("uri", "jdbc:h2:mem:test", null)
+                               //                .change("jndi-name", "java:/datasources/TestDS", null)
+                               //                .change("driver", "h2", null)
+                               //                .change("user-name", "joe", null)
+                               //                .change("password", "secret", null)
+                               //                .change("pool:min", "0", null)
+                               //                .change("pool:initial", "1", null)
+                               //                .change("pool:max", "10", null)
+                               //                .change("pool:max-age", "10 min", null)
                                .removed());
     }
 

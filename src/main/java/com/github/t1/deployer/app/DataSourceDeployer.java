@@ -21,6 +21,7 @@ public class DataSourceDeployer extends
         property("uri", URI.class);
         property("jndi-name", String.class);
         property("driver", String.class);
+        property("xa", Boolean.class);
         property("user-name", String.class);
         property("password", String.class);
         this.<Integer>property("pool:min")
@@ -67,12 +68,13 @@ public class DataSourceDeployer extends
         DataSourcePlan.DataSourcePlanBuilder dataSourcePlan = DataSourcePlan
                 .builder()
                 .name(resource.name())
+                .xa(resource.xa())
                 .state(deployed)
                 .uri(resource.uri())
                 .jndiName(resource.jndiName())
                 .driver(resource.driver())
                 .userName(resource.userName())
-                // hide .password(resource.password())
+                // hide: .password(resource.password())
                 .pool(PoolPlan
                         .builder()
                         .min(resource.minPoolSize())

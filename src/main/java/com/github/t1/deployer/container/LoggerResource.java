@@ -128,6 +128,7 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
         ModelNode request = createOperation("add-handler", address());
         request.get("name").set(handler.getValue());
         execute(request);
+        this.handlers.add(handler);
     }
 
     public void removeLoggerHandler(LogHandlerName handler) {
@@ -135,11 +136,13 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
         ModelNode request = createOperation("remove-handler", address());
         request.get("name").set(handler.getValue());
         execute(request);
+        this.handlers.remove(handler);
     }
 
     public void updateUseParentHandlers(Boolean newUseParentHandlers) {
         checkDeployed();
         writeAttribute("use-parent-handlers", newUseParentHandlers);
+        this.useParentHandlers = newUseParentHandlers;
     }
 
     public void updateLevel(LogLevel newLevel) {
@@ -147,6 +150,7 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
         if (newLevel == null)
             newLevel = LogLevel.ALL;
         writeAttribute("level", newLevel.name());
+        this.level = newLevel;
     }
 
 

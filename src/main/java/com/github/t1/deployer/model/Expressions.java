@@ -152,6 +152,7 @@ public class Expressions {
 
     private static final List<Class<? extends Resolver>> RESOLVERS = asList(
             NullResolver.class,
+            BooleanResolver.class,
             LiteralResolver.class,
             FunctionResolver.class,
             VariableResolver.class,
@@ -198,6 +199,14 @@ public class Expressions {
         public NullResolver(String expression) {
             this.match = "null".equals(expression);
             this.value = null;
+        }
+    }
+
+
+    private class BooleanResolver extends Resolver {
+        public BooleanResolver(String expression) {
+            this.match = "true".equals(expression) || "false".equals(expression);
+            this.value = match ? expression : null;
         }
     }
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.deployer.model.DataSourcePlan.PoolPlan.PoolPlanBuilder;
+import com.github.t1.deployer.tools.Tools;
 import lombok.*;
 
 import java.net.URI;
@@ -24,6 +25,7 @@ public class DataSourcePlan implements Plan.AbstractPlan {
 
     @NonNull @JsonIgnore private final DataSourceName name;
     private final DeploymentState state;
+    private final Boolean xa;
     private final URI uri;
     private final String jndiName;
     private final String driver;
@@ -52,6 +54,7 @@ public class DataSourcePlan implements Plan.AbstractPlan {
         if (node.isNull())
             throw new Plan.PlanLoadingException("incomplete data-sources plan '" + name + "'");
         DataSourcePlanBuilder builder = builder().name(name);
+        apply(node, "xa", builder::xa, Tools::trueOrNull, "false");
         apply(node, "state", builder::state, DeploymentState::valueOf);
         apply(node, "uri", builder::uri, URI::create);
         apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "DS»");
@@ -95,6 +98,7 @@ public class DataSourcePlan implements Plan.AbstractPlan {
 
     @Override public String toString() {
         return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + driver + ":" + uri
+                + ((xa == null) ? "" : ":xa=" + xa)
                 + ((pool == null) ? "" : "{" + pool + "}");
     }
 }

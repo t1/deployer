@@ -8,7 +8,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -160,56 +160,77 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     public void updateLevel(LogLevel newLevel) {
         checkDeployed();
         writeAttribute("level", newLevel.name());
+        this.level = newLevel;
     }
 
     public void updateFormat(String newFormat) {
         checkDeployed();
         writeAttribute("formatter", newFormat);
+        this.format = newFormat;
     }
 
     public void updateFormatter(String newFormatter) {
         checkDeployed();
         writeAttribute("named-formatter", newFormatter);
+        this.formatter = newFormatter;
     }
 
     public void updateEncoding(String newEncoding) {
         checkDeployed();
         writeAttribute("encoding", newEncoding);
+        this.encoding = newEncoding;
     }
 
     public void updateFile(String newFile) {
         checkDeployed();
         writeAttribute("file.path", newFile);
+        this.file = newFile;
     }
 
     public void updateSuffix(String newSuffix) {
         checkDeployed();
         writeAttribute("suffix", newSuffix);
+        this.suffix = newSuffix;
     }
 
     public void updateModule(String newModule) {
         checkDeployed();
         writeAttribute("module", newModule);
+        this.module = newModule;
     }
 
     public void updateClass(String newClass) {
         checkDeployed();
         writeAttribute("class", newClass);
+        this.class_ = newClass;
     }
 
     public void addProperty(String key, String value) {
         checkDeployed();
         mapPut("property", key, value);
+        this.properties = propertiesBuilder().put(key, value).build();
     }
 
     public void updateProperty(String key, String value) {
         checkDeployed();
         mapPut("property", key, value);
+        this.properties = propertiesBuilderWithout(key).put(key, value).build();
     }
 
     public void removeProperty(String key) {
         checkDeployed();
         mapRemove("property", key);
+        this.properties = propertiesBuilderWithout(key).build();
+    }
+
+    @NotNull private ImmutableMap.Builder<String, String> propertiesBuilderWithout(String key) {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        this.properties.entrySet().stream().filter(e -> !e.getKey().equals(key)).forEach(builder::put);
+        return builder;
+    }
+
+    private ImmutableMap.Builder<String, String> propertiesBuilder() {
+        return ImmutableMap.<String, String>builder().putAll(this.properties);
     }
 
 

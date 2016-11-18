@@ -31,9 +31,13 @@ abstract class ResourceDeployer<
         private Predicate<RESOURCE> writeFilter = r -> true;
 
         protected void update(RESOURCE resource, PLAN plan, AUDIT audit) {
-            if (writeFilter.test(resource) && !Objects.equals(from(resource), from(plan))) {
-                write(resource, plan);
-                audit.change(name(), from(resource), from(plan));
+            if (writeFilter.test(resource)) {
+                TYPE before = from(resource);
+                TYPE after = from(plan);
+                if (!Objects.equals(before, after)) {
+                    write(resource, plan);
+                    audit.change(name(), before, after);
+                }
             }
         }
 

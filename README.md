@@ -73,7 +73,7 @@ They may be configured to use a real MavenCentral and/or locally running Artifac
 
 ## Plans
 
-See the [open milestones](https://github.com/t1/deployer/milestones).
+See the open [milestones](https://github.com/t1/deployer/milestones) and [issues](https://github.com/t1/deployer/issues).
 
 ## Contribute
 

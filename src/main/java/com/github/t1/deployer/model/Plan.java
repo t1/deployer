@@ -144,14 +144,9 @@ public class Plan {
     }
 
     static <T> void apply(JsonNode node, String fieldName, Consumer<T> setter, Function<String, T> convert,
-            CharSequence alternativeExpression) {
-        apply(node, fieldName, setter, convert, alternativeExpression, null);
-    }
-
-    static <T> void apply(JsonNode node, String fieldName, Consumer<T> setter, Function<String, T> convert,
-            CharSequence alternativeExpression, String expressionAlternative) {
+            String alternativeExpression) {
         String value = (node.has(fieldName) && !node.get(fieldName).isNull())
-                ? expressions.resolve(node.get(fieldName).asText(), expressionAlternative)
+                ? expressions.resolve(node.get(fieldName).asText(), alternativeExpression)
                 : null;
         if (value == null && alternativeExpression != null)
             value = expressions.resolver(alternativeExpression).getValueOr(null);

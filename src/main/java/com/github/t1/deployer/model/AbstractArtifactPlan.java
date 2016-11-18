@@ -63,7 +63,7 @@ public class AbstractArtifactPlan implements Plan.AbstractPlan {
         apply(node, "state", builder::state, DeploymentState::valueOf);
         apply(node, "group-id", builder::groupId, GroupId::of, "default.group-id");
         apply(node, "artifact-id", builder::artifactId, ArtifactId::new, "«" + defaultArtifactId + "»");
-        apply(node, "version", builder::version, Version::new, defaultVersion, defaultVersion);
+        apply(node, "version", builder::version, Version::new, defaultVersion);
         apply(node, "classifier", builder::classifier, Classifier::new);
         apply(node, "checksum", builder::checksum, Checksum::fromString);
         verify(builder);

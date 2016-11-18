@@ -34,6 +34,7 @@ import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.Plan.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static com.github.t1.deployer.testtools.ModelNodeTools.*;
 import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
@@ -81,12 +82,13 @@ public class AbstractDeployerTest {
     private final Map<String, List<String>> pinnedResourceNames = new LinkedHashMap<>();
     private final List<String> allDeployments = new ArrayList<>();
     private final List<String> allLoggers = new ArrayList<>();
-    private final List<String> allDataSources = new ArrayList<>();
+    private final List<String> allNonXaDataSources = new ArrayList<>();
+    private final List<String> allXaDataSources = new ArrayList<>();
     private final Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
 
     private final Map<String, List<Version>> versions = new LinkedHashMap<>();
 
-    @Before
+    @Before @SuppressWarnings("deprecation")
     public void before() {
         container.cli = cli;
 
@@ -123,11 +125,12 @@ public class AbstractDeployerTest {
             return null;
         }).when(deployers).forEach(any(Consumer.class));
 
-        when(cli.executeRaw(readResource(rootLogger()))).then(i -> rootLoggerResponse());
-        when(cli.execute(readLogger("*"))).then(i -> allLoggersResponse());
-        when(cli.execute(readDatasource("*"))).then(i -> allDataSourcesResponse());
+        when(cli.executeRaw(readResourceRequest(rootLogger()))).then(i -> rootLoggerResponse());
+        when(cli.execute(readLoggerRequest("*"))).then(i -> allLoggersResponse());
+        when(cli.execute(readDatasourceRequest("*", false))).then(i -> allNonXaDataSourcesResponse());
+        when(cli.execute(readDatasourceRequest("*", true))).then(i -> allXaDataSourcesResponse());
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
-        when(cli.execute(readDeployment("*"))).then(i -> allDeploymentsResponse());
+        when(cli.execute(readDeploymentRequest("*"))).then(i -> allDeploymentsResponse());
 
         //noinspection deprecation
         when(repository.listVersions(isA(GroupId.class), isA(ArtifactId.class), isA(Boolean.class)))
@@ -160,7 +163,7 @@ public class AbstractDeployerTest {
     }
 
     private void stubAllLogHandlers(LogHandlerType type) {
-        when(cli.execute(readLogHandler(type, "*")))
+        when(cli.execute(readLogHandlerRequest(type, "*")))
                 .then(i -> joinModelNode(allLogHandlers.getOrDefault(type, emptyList())));
     }
 
@@ -168,7 +171,9 @@ public class AbstractDeployerTest {
 
     private ModelNode allDeploymentsResponse() { return joinModelNode(allDeployments); }
 
-    private ModelNode allDataSourcesResponse() { return joinModelNode(allDataSources); }
+    private ModelNode allNonXaDataSourcesResponse() { return joinModelNode(allNonXaDataSources); }
+
+    private ModelNode allXaDataSourcesResponse() { return joinModelNode(allXaDataSources); }
 
     private ModelNode joinModelNode(List<String> list) {
         return toModelNode(list.stream().collect(joining(",", "[", "]")));
@@ -179,45 +184,14 @@ public class AbstractDeployerTest {
     @After
     public void after() {
         verify(cli, atLeast(0)).executeRaw(any(ModelNode.class));
-        verify(cli, atLeast(0)).execute(readDeployment("*"));
-        verify(cli, atLeast(0)).execute(readLogger("*"));
-        verify(cli, atLeast(0)).execute(readDatasource("*"));
+        verify(cli, atLeast(0)).execute(readDeploymentRequest("*"));
+        verify(cli, atLeast(0)).execute(readLoggerRequest("*"));
+        verify(cli, atLeast(0)).execute(readDatasourceRequest("*", true));
+        verify(cli, atLeast(0)).execute(readDatasourceRequest("*", false));
         Arrays.stream(LogHandlerType.values()).forEach(type ->
-                verify(cli, atLeast(0)).execute(readLogHandler(type, "*")));
+                verify(cli, atLeast(0)).execute(readLogHandlerRequest(type, "*")));
 
         verifyNoMoreInteractions(cli);
-    }
-
-    private ModelNode readLogger(String name) { return readResource("logging", "logger", name); }
-
-    private ModelNode readLogHandler(LogHandlerType type, String name) {
-        return readResource("logging", type.getHandlerTypeName(), name);
-    }
-
-    private ModelNode readDatasource(String name) { return readResource("datasources", "data-source", name); }
-
-    private ModelNode readDeployment(String name) { return readResource(null, "deployment", name); }
-
-
-    public static ModelNode readResource(String subsystem, String type, Object name) {
-        return readResource(address(subsystem, type, name));
-    }
-
-    public static ModelNode readResource(String address) {
-        return toModelNode(""
-                + "{\n"
-                + "    'operation' => 'read-resource',\n"
-                + address
-                + "    'recursive' => true\n"
-                + "}");
-    }
-
-    private static String address(String subsystem, String type, Object name) {
-        return ""
-                + "    'address' => [\n"
-                + ((subsystem == null) ? "" : "        ('subsystem' => '" + subsystem + "'),\n")
-                + "        ('" + type + "' => '" + name + "')\n"
-                + "    ],\n";
     }
 
     private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
@@ -231,8 +205,6 @@ public class AbstractDeployerTest {
                 + "    \"rolled-back\" => true\n"
                 + "}");
     }
-
-    public static ModelNode toModelNode(String string) { return ModelNode.fromString(string.replace('\'', '\"')); }
 
 
     @SneakyThrows(IOException.class)
@@ -295,7 +267,7 @@ public class AbstractDeployerTest {
             this.type = type;
             this.name = name;
 
-            when(cli.executeRaw(readDeployment(fullName()))).then(i -> (deployed == null)
+            when(cli.executeRaw(readDeploymentRequest(fullName()))).then(i -> (deployed == null)
                     ? notDeployedNode(null, "deployment", name)
                     : toModelNode("{" + deployed.deployedNode() + "}"));
         }
@@ -557,7 +529,7 @@ public class AbstractDeployerTest {
         public LoggerFixture(@NonNull String category) {
             this.category = LoggerCategory.of(category);
 
-            when(cli.executeRaw(readLogger(category))).then(i -> deployed
+            when(cli.executeRaw(readLoggerRequest(category))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", "logger", category));
         }
@@ -727,7 +699,7 @@ public class AbstractDeployerTest {
             this.expectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
             this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
-            when(cli.executeRaw(readLogHandler(type, name))).then(i -> deployed
+            when(cli.executeRaw(readLogHandlerRequest(type, name))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", type.getHandlerTypeName(), name));
         }
@@ -827,7 +799,9 @@ public class AbstractDeployerTest {
         }
 
 
-        private String logHandlerAddress() { return address("logging", type.getHandlerTypeName(), name); }
+        private String logHandlerAddress() {
+            return address("logging", type.getHandlerTypeName(), name);
+        }
 
         private ModelNode logHandlerAddressNode() {
             return createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
@@ -956,14 +930,15 @@ public class AbstractDeployerTest {
     @Getter
     public class DataSourceFixture {
         private final DataSourceName name;
+        private boolean xa;
         private boolean deployed;
         private String driver;
         private String jndiName;
+
         private String uri;
-
         private String userName;
-        private String password;
 
+        private String password;
         private Integer minPoolSize;
         private Integer initialPoolSize;
         private Integer maxPoolSize;
@@ -975,9 +950,12 @@ public class AbstractDeployerTest {
             this.jndiName = "java:/datasources/" + name + "DS";
             this.driver = "h2";
 
-            when(cli.executeRaw(readDatasource(name))).then(i -> deployed
+            when(cli.executeRaw(readDatasourceRequest(name, true))).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
-                    : notDeployedNode("datasources", "data-source", name));
+                    : notDeployedNode("datasources", dataSource(xa), name));
+            when(cli.executeRaw(readDatasourceRequest(name, false))).then(i -> deployed
+                    ? toModelNode("{" + deployedNode() + "}")
+                    : notDeployedNode("datasources", dataSource(xa), name));
         }
 
         public String deployedNode() {
@@ -1005,6 +983,12 @@ public class AbstractDeployerTest {
 
         public DataSourceFixture uri(String uri) {
             this.uri = uri;
+            return this;
+        }
+
+
+        public DataSourceFixture xa(boolean xa) {
+            this.xa = xa;
             return this;
         }
 
@@ -1059,17 +1043,41 @@ public class AbstractDeployerTest {
 
         public DataSourceFixture deployed() {
             this.deployed = true;
-            allDataSources.add("{" + dataSourceAddress() + deployedNode() + "}");
+            (xa ? allXaDataSources : allNonXaDataSources).add("{" + dataSourceAddress() + deployedNode() + "}");
             return this;
         }
 
-        public String dataSourceAddress() { return address("datasources", "data-source", name); }
+        public String dataSourceAddress() { return address("datasources", dataSource(xa), name); }
 
         private ModelNode dataSourceAddressNode() {
-            return createAddress("subsystem", "datasources", "data-source", name.getValue());
+            return createAddress("subsystem", "datasources", dataSource(xa), name.getValue());
         }
 
         public void verifyAdded(Audits audits) {
+            verifyAddCli();
+            AuditBuilder audit = DataSourceAudit
+                    .of(getName())
+                    .change("uri", null, uri)
+                    .change("jndi-name", null, jndiName)
+                    .change("driver", null, driver);
+            if (xa)
+                audit.change("xa", null, true);
+            if (userName != null)
+                audit.change("user-name", null, userName);
+            if (password != null)
+                audit.change("password", null, password);
+            if (minPoolSize != null)
+                audit.change("pool:min", null, minPoolSize);
+            if (initialPoolSize != null)
+                audit.change("pool:initial", null, initialPoolSize);
+            if (maxPoolSize != null)
+                audit.change("pool:max", null, maxPoolSize);
+            if (maxAge != null)
+                audit.change("pool:max-age", null, maxAge);
+            assertThat(audits.getAudits()).contains(audit.added());
+        }
+
+        private void verifyAddCli() {
             ModelNode request = toModelNode("{\n"
                     + "    'operation' => 'add',\n"
                     + dataSourceAddress()
@@ -1086,24 +1094,6 @@ public class AbstractDeployerTest {
                     + ((maxAge == null) ? "" : ",    'idle-timeout-minutes' => " + maxAge.asMinutes() + "L\n")
                     + "}");
             verify(cli).execute(request);
-            AuditBuilder audit = DataSourceAudit
-                    .of(getName())
-                    .change("uri", null, uri)
-                    .change("jndi-name", null, jndiName)
-                    .change("driver", null, driver);
-            if (userName != null)
-                audit.change("user-name", null, userName);
-            if (password != null)
-                audit.change("password", null, password);
-            if (minPoolSize != null)
-                audit.change("pool:min", null, minPoolSize);
-            if (initialPoolSize != null)
-                audit.change("pool:initial", null, initialPoolSize);
-            if (maxPoolSize != null)
-                audit.change("pool:max", null, maxPoolSize);
-            if (maxAge != null)
-                audit.change("pool:max-age", null, maxAge);
-            assertThat(audits.getAudits()).contains(audit.added());
         }
 
         public void verifyUpdatedUriFrom(String oldUri, Audits audits) {
@@ -1160,12 +1150,19 @@ public class AbstractDeployerTest {
                     DataSourceAudit.of(name).change("pool:max-age", oldMaxAge, maxAge).changed());
         }
 
+        public void verifyUpdatedXaFrom(Boolean oldXa, Audits audits) {
+            boolean previousXa = this.xa;
+            this.xa = (oldXa == null) ? false : oldXa;
+            verifyRemoveCli();
+            this.xa = previousXa;
+            verifyAddCli();
+
+            assertThat(audits.getAudits()).contains(
+                    DataSourceAudit.of(name).change("xa", oldXa, xa).changed());
+        }
+
         public void verifyRemoved(Audits audits) {
-            verify(cli).execute(toModelNode(""
-                    + "{\n"
-                    + dataSourceAddress()
-                    + "    'operation' => 'remove'\n"
-                    + "}"));
+            verifyRemoveCli();
             AuditBuilder audit = DataSourceAudit
                     .of(getName())
                     .change("uri", uri, null)
@@ -1184,6 +1181,15 @@ public class AbstractDeployerTest {
             if (maxAge != null)
                 audit.change("pool:max-age", maxAge, null);
             assertThat(audits.getAudits()).contains(audit.removed());
+        }
+
+        private void verifyRemoveCli() {
+            ModelNode request = toModelNode(""
+                    + "{\n"
+                    + "    'operation' => 'remove',\n"
+                    + dataSourceAddress().substring(0, dataSourceAddress().length() - 1)
+                    + "}");
+            verify(cli).execute(request);
         }
 
         public DataSourcePlan asPlan() {

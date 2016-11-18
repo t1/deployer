@@ -6,6 +6,7 @@ import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBui
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.Stateless;
@@ -16,8 +17,10 @@ import java.util.stream.Stream;
 @Slf4j
 @Logged
 @Stateless
+@SuppressWarnings("deprecation")
 public class Container {
-    @Inject public CLI cli;
+    /** @deprecated Only to be used privately or in tests */
+    @Deprecated @Getter @Inject public CLI cli;
 
     public void waitForBoot() { cli.waitForBoot(); }
 
