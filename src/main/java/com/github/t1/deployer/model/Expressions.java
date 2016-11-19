@@ -63,42 +63,9 @@ public class Expressions {
 
     public Expressions() { this(ImmutableMap.copyOf(systemProperties()), null, null); }
 
-    private static final List<String> SYSTEM_PROPERTY_WHITELIST = asList(
-            "file.encoding",
-            "java.class.version",
-            "java.home",
-            "java.io.tmpdir",
-            "java.runtime.name",
-            "java.runtime.version",
-            "java.specification.name",
-            "java.specification.vendor",
-            "java.specification.version",
-            "java.vendor",
-            "java.vendor.url",
-            "java.vendor.url.bug",
-            "java.version",
-            "java.vm.info",
-            "java.vm.name",
-            "java.vm.specification.name",
-            "java.vm.specification.vendor",
-            "java.vm.specification.version",
-            "java.vm.vendor",
-            "java.vm.version",
-            "jboss.server.config.dir",
-            "os.arch",
-            "os.name",
-            "os.version",
-            "user.country",
-            "user.country.format",
-            "user.dir",
-            "user.home",
-            "user.language",
-            "user.name",
-            "user.timezone");
-
     private static Map<VariableName, String> systemProperties() {
         return System.getProperties().stringPropertyNames().stream()
-                     .filter(SYSTEM_PROPERTY_WHITELIST::contains)
+                     .filter(name -> NAME_TOKEN.matcher(name).matches())
                      .collect(toMap(VariableName::new, System::getProperty));
     }
 
@@ -153,6 +120,7 @@ public class Expressions {
     private static final List<Class<? extends Resolver>> RESOLVERS = asList(
             NullResolver.class,
             BooleanResolver.class,
+            SwitchResolver.class,
             LiteralResolver.class,
             FunctionResolver.class,
             VariableResolver.class,
@@ -208,6 +176,43 @@ public class Expressions {
             this.match = "true".equals(expression) || "false".equals(expression);
             this.value = match ? expression : null;
         }
+    }
+
+
+    private class SwitchResolver extends Resolver {
+        public SwitchResolver(String expression) {
+            this.match = expression.startsWith("switch");
+            this.value = match ? doSwitch(expression.substring(6)) : null;
+        }
+
+        private String doSwitch(String expression) {
+            String head = findBrackets("()", expression);
+            String value = resolver(head).getValue();
+            String body = expression.substring(head.length() + 2, expression.length()).trim();
+            int i = body.indexOf(value + ":");
+            String rest = body.substring(i + value.length() + 2, body.length());
+            return findBrackets("«»", rest);
+        }
+    }
+
+    private static String findBrackets(String type, String text) {
+        assert type.length() == 2;
+        char open = type.charAt(0);
+        char close = type.charAt(1);
+
+        int nesting = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == open)
+                nesting++;
+            else if (c == close)
+                nesting--;
+            if (nesting < 0)
+                throw new IllegalArgumentException("mismatched closing brackets");
+            if (nesting == 0)
+                return text.substring(1, i);
+        }
+        throw new IllegalArgumentException("mismatched closing brackets");
     }
 
 

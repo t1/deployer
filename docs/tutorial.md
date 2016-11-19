@@ -673,3 +673,27 @@ data-sources:
 where `bar` has to be replaced with that long binhex encrypted key string.
 
 If you need a specific key from the keystore, you can pass its alias as a second parameter to the `decrypt` method.
+
+
+## Stage Specific Variables
+
+Some values _have_ to be different on each stage.
+You can use a `switch` statement for that:
+
+```yaml
+data-sources:
+  foo:
+    password: "${switch(stage)
+      dev: «A»
+      qa: «B»
+      prod: «C»
+      }"
+```
+
+Please note that this syntax is (currently) very limited:
+* You need the quotes so YAML doesn't complain about the colons,
+* the closing brackets have to be on the same indent level as the case labels,
+so YAML parses them to be a part of the string,
+* the newlines and leading spaces are collapsed by YAML, but the placement of whitespace is important,
+* the labels must be simple values, and
+* the resulting values must be string literals.

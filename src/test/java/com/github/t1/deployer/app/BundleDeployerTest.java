@@ -357,6 +357,25 @@ public class BundleDeployerTest extends AbstractDeployerTest {
     }
 
 
+    @Test
+    public void shouldDeployWebArchiveWithSwitch() throws Exception {
+        givenConfiguredVariable("bar", "B");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${switch(bar)\n"
+                + "    A: «1.3.1»\n"
+                + "    B: «1.3.2»\n"
+                + "    C: «1.3.3»\n"
+                + "    }\"\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
     @Test public void shouldFailToReplaceVariableValueWithNewline() {
         shouldFailToReplaceVariableValueWith("foo\nbar");
     }

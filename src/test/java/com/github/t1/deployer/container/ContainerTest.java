@@ -33,6 +33,7 @@ public class ContainerTest {
     ModelControllerClient client;
 
     @Before
+    @SuppressWarnings("deprecation")
     @SneakyThrows(IOException.class)
     public void setup() {
         container.cli = new CLI();
