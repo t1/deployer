@@ -218,7 +218,47 @@ public class BundleDeployerTest extends AbstractDeployerTest {
         Audits audits = deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
-                + "    group-id: ${undefined or «org.foo»}\n"
+                + "    group-id: ${«org.foo»}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithStringLiteralContainingSingleQuotes() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").groupId("foo'bar'baz").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${«foo'bar'baz»}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithStringLiteralContainingDoubleQuotes() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").groupId("foo\"bar\"baz").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${«foo\"bar\"baz»}\n"
+                + "    version: 1.3.2\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithStringLiteralContainingGuillemetQuotes() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").groupId("foo«bar»baz").version("1.3.2");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: ${«foo«bar»baz»}\n"
                 + "    version: 1.3.2\n");
 
         foo.verifyDeployed(audits);
@@ -358,7 +398,25 @@ public class BundleDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldDeployWebArchiveWithSwitch() throws Exception {
+    public void shouldDeployWebArchiveWithFirstSwitch() throws Exception {
+        givenConfiguredVariable("bar", "A");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.1");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${switch(bar)\n"
+                + "    A: «1.3.1»\n"
+                + "    B: «1.3.2»\n"
+                + "    C: «1.3.3»\n"
+                + "    }\"\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithMiddleSwitch() throws Exception {
         givenConfiguredVariable("bar", "B");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -371,6 +429,121 @@ public class BundleDeployerTest extends AbstractDeployerTest {
                 + "    B: «1.3.2»\n"
                 + "    C: «1.3.3»\n"
                 + "    }\"\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldDeployWebArchiveWithLastSwitch() throws Exception {
+        givenConfiguredVariable("bar", "C");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.3");
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${switch(bar)\n"
+                + "    A: «1.3.1»\n"
+                + "    B: «1.3.2»\n"
+                + "    C: «1.3.3»\n"
+                + "    }\"\n");
+
+        foo.verifyDeployed(audits);
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithSwitchWithoutHead() throws Exception {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${switch\n"
+                + "    A: «1.3.1»\n"
+                + "    B: «1.3.2»\n"
+                + "    C: «1.3.3»\n"
+                + "    }\"\n"));
+
+        assertThat(thrown)
+                .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unmatched brackets for switch statement");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithSwitchWithUnsetVariable() throws Exception {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${switch(bar)\n"
+                + "    A: «1.3.1»\n"
+                + "    X: «1.3.2»\n"
+                + "    C: «1.3.3»\n"
+                + "    }\"\n"));
+
+        assertThat(thrown)
+                .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no variable defined in switch header: 'bar'");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCase() throws Exception {
+        givenConfiguredVariable("bar", "B");
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${switch(bar)\n"
+                + "    A: «1.3.1»\n"
+                + "    X: «1.3.2»\n"
+                + "    C: «1.3.3»\n"
+                + "    }\"\n"));
+
+        assertThat(thrown)
+                .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no case label for 'B' in switch statement");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCaseButSomethingWithAPrefix() throws Exception {
+        givenConfiguredVariable("bar", "B");
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${switch(bar)\n"
+                + "    A: «1.3.1»\n"
+                + "    notB: «1.3.2»\n"
+                + "    C: «1.3.3»\n"
+                + "    }\"\n"));
+
+        assertThat(thrown)
+                .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no case label for 'B' in switch statement");
+    }
+
+
+    @Test
+    public void shouldDeployWebArchiveWithEncryptedVersionUsingSwitch() throws Exception {
+        givenConfiguredVariable("stage", "QA");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        givenConfiguredKeyStore(KeyStoreConfig
+                .builder()
+                .path(Paths.get("src/test/resources/jks.keystore"))
+                .pass("changeit")
+                .alias("keypair")
+                .build());
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: \"${decrypt(switch(stage)\n"
+                + "      TEST: «test-dummy»\n"
+                + "      QA: «" + encrypt(foo.getVersion().getValue()) + "»\n"
+                + "      PROD: «prod-dummy»\n"
+                + "      )}\"\n");
 
         foo.verifyDeployed(audits);
     }

@@ -697,3 +697,16 @@ so YAML parses them to be a part of the string,
 * the newlines and leading spaces are collapsed by YAML, but the placement of whitespace is important,
 * the labels must be simple values, and
 * the resulting values must be string literals.
+
+
+You can combine this with the `decrypt` function:
+
+```yaml
+data-sources:
+  foo:
+    password: "${decrypt(switch(stage)
+      dev: «A»
+      qa: «B»
+      prod: «C»
+      })"
+```

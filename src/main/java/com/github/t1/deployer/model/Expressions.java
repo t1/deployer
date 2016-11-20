@@ -186,19 +186,28 @@ public class Expressions {
         }
 
         private String doSwitch(String expression) {
-            String head = findBrackets("()", expression);
+            String head = findBrackets("()", expression)
+                    .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch statement"));
             String value = resolver(head).getValue();
-            String body = expression.substring(head.length() + 2, expression.length()).trim();
-            int i = body.indexOf(value + ":");
-            String rest = body.substring(i + value.length() + 2, body.length());
-            return findBrackets("«»", rest);
+            if (value == null)
+                throw new IllegalArgumentException("no variable defined in switch header: '" + head + "'");
+            String body = expression.substring(head.length() + 2, expression.length());
+            int i = body.indexOf(" " + value + ":");
+            if (i < 0)
+                throw new IllegalArgumentException("no case label for '" + value + "' in switch statement");
+            String rest = body.substring(i + value.length() + 2, body.length()).trim();
+            return findBrackets("«»", rest)
+                    .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch literal"));
         }
     }
 
-    private static String findBrackets(String type, String text) {
+    private static Optional<String> findBrackets(String type, String text) {
         assert type.length() == 2;
         char open = type.charAt(0);
         char close = type.charAt(1);
+
+        if (text.indexOf(open) != 0)
+            return Optional.empty();
 
         int nesting = 0;
         for (int i = 0; i < text.length(); i++) {
@@ -210,21 +219,17 @@ public class Expressions {
             if (nesting < 0)
                 throw new IllegalArgumentException("mismatched closing brackets");
             if (nesting == 0)
-                return text.substring(1, i);
+                return Optional.of(text.substring(1, i));
         }
-        throw new IllegalArgumentException("mismatched closing brackets");
+        return Optional.empty();
     }
 
 
-    private static final Pattern LITERAL = Pattern.compile("«(\\V*)»");
-
     private class LiteralResolver extends Resolver {
-        private final Matcher matcher;
-
         public LiteralResolver(String expression) {
-            this.matcher = LITERAL.matcher(expression);
-            this.match = matcher.matches();
-            this.value = match ? matcher.group(1) : null;
+            Optional<String> o = findBrackets("«»", expression);
+            this.match = o.isPresent();
+            this.value = o.orElse(null);
         }
     }
 

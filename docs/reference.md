@@ -110,7 +110,7 @@ or if the resulting plan has unresolved variables.
 
 A variable name can contain the name of a function to be applied to the value:
 
-- `«x»`: The literal string `x` – useful for, e.g., ` or ` expressions. This quote type has the advantage of being nestable.
+- `«x»`: The literal string `x` – useful for, e.g., ` or ` expressions. This quote type (guillemet) has the advantage of being nestable.
 - `toUpperCase(x)`: Turns the value of the variable `x` into all upper case.
 - `toLowerCase(x)`: Turns the value of the variable `x` into all lower case.
 - `hostName()`: Returns the DNS name of the local host (without the domain name).
@@ -118,10 +118,22 @@ A variable name can contain the name of a function to be applied to the value:
 - `regex(a, b)`: Apply the regular expression `b` to `a`, returning the first matching group.
 - `decrypt(secret)`: Use a key from a keystore to decrypt a secret. See [key-store config](#key-store).
 - `decrypt(secret, alias)`: Use a key with a specific alias from a keystore to decrypt a secret. See [key-store config](#key-store).
+- `switch(x) body`: Use one of a map of string literals in the body, depending on the value of expression `x`.
+For an example, see below.
 
 You can chain variable expressions, by separating them with ` or `.
 E.g. `toLowerCase(foo) or bar` will resolve to `baz`, if the variable `foo` is set to `BAZ`,
 or fall back to `bar` if `foo` is not set.
+
+The body of the `switch` function maps some labels to string literals, e.g.:
+
+```yaml
+password: "${switch(stage)
+  dev: «A»
+  qa: «B»
+  prod: «C»
+  }"
+```
 
 
 ## Config
