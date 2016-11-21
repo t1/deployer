@@ -91,7 +91,7 @@ public class Expressions {
                 if (alternative != null)
                     expression += " or " + alternative;
                 Resolver resolver = resolver(expression);
-                if (!resolver.isMatch())
+                if (!resolver.matches())
                     throw new UnresolvedVariableException(expression);
                 if (resolver.getValue() == null)
                     hasNullValue = true;
@@ -109,12 +109,32 @@ public class Expressions {
     public boolean contains(VariableName name) { return variables.containsKey(name); }
 
     public abstract static class Resolver {
-        @Getter protected boolean match;
+        protected boolean match;
         @Getter protected String value;
 
-        @Override public String toString() { return getClass().getSimpleName() + ":" + match + ":" + value; }
+        protected void setNoMatch() { set(Optional.empty()); }
 
-        public String getValueOr(String fallback) { return match ? value : fallback; }
+        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+        protected void set(Optional<String> value) { set(value.isPresent(), value.orElse(null)); }
+
+        protected void set(boolean match, Supplier<String> value) { set(match, match ? value.get() : null); }
+
+        protected void set(boolean match, String value) {
+            this.match = match;
+            this.value = value;
+        }
+
+        @Override public String toString() { return getClass().getSimpleName() + ":" + value; }
+
+        public boolean matches() { return match; }
+
+        public String getOrElseThrow(Supplier<? extends RuntimeException> thrower) {
+            if (match)
+                return value;
+            throw thrower.get();
+        }
+
+        public String getValueOr(String alternative) { return match ? value : alternative; }
     }
 
     private static final List<Class<? extends Resolver>> RESOLVERS = asList(
@@ -132,15 +152,13 @@ public class Expressions {
                 log.trace("try to resolve variable expression [{}]", subExpression);
                 for (Class<? extends Resolver> resolverType : RESOLVERS) {
                     Resolver resolver = create(resolverType, subExpression);
-                    if (resolver.isMatch()) {
-                        this.match = true;
-                        this.value = resolver.getValue();
+                    if (resolver.matches()) {
+                        set(true, resolver.getValue());
                         return;
                     }
                 }
             }
-            this.match = false;
-            this.value = null;
+            setNoMatch();
         }
 
         public Resolver create(Class<? extends Resolver> type, String subExpression) {
@@ -173,24 +191,21 @@ public class Expressions {
 
     private class BooleanResolver extends Resolver {
         public BooleanResolver(String expression) {
-            this.match = "true".equals(expression) || "false".equals(expression);
-            this.value = match ? expression : null;
+            set("true".equals(expression) || "false".equals(expression), expression);
         }
     }
 
 
     private class SwitchResolver extends Resolver {
         public SwitchResolver(String expression) {
-            this.match = expression.startsWith("switch");
-            this.value = match ? doSwitch(expression.substring(6)) : null;
+            set(expression.startsWith("switch"), () -> doSwitch(expression.substring(6)));
         }
 
         private String doSwitch(String expression) {
             String head = findBrackets("()", expression)
                     .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch statement"));
-            String value = resolver(head).getValue();
-            if (value == null)
-                throw new IllegalArgumentException("no variable defined in switch header: '" + head + "'");
+            String value = resolver(head).getOrElseThrow(() ->
+                    new IllegalArgumentException("no variable defined in switch header: '" + head + "'"));
             String body = expression.substring(head.length() + 2, expression.length());
             int i = body.indexOf(" " + value + ":");
             if (i < 0)
@@ -226,31 +241,27 @@ public class Expressions {
 
 
     private class LiteralResolver extends Resolver {
-        public LiteralResolver(String expression) {
-            Optional<String> o = findBrackets("«»", expression);
-            this.match = o.isPresent();
-            this.value = o.orElse(null);
-        }
+        public LiteralResolver(String expression) { set(findBrackets("«»", expression)); }
     }
 
 
     private class VariableResolver extends Resolver {
-        private final Matcher matcher;
-        private final VariableName variableName;
-
         public VariableResolver(String expression) {
-            this.matcher = NAME_TOKEN.matcher(expression);
+            Matcher matcher = NAME_TOKEN.matcher(expression);
             this.match = matcher.matches();
-            this.variableName = match ? new VariableName(matcher.group()) : null;
-            if (match && variables.containsKey(variableName)) {
-                log.trace("did resolve [{}]", variableName);
-                this.value = resolve(variables.get(variableName), "null");
-                if (value != null && !VARIABLE_VALUE.matcher(value).matches())
-                    throw badRequest("invalid character in variable value for [" + variableName + "]");
+            if (match) {
+                VariableName variableName = new VariableName(matcher.group());
+                if (variables.containsKey(variableName)) {
+                    log.trace("did resolve [{}]", variableName);
+                    this.value = resolve(variables.get(variableName), "null");
+                    if (value != null && !VARIABLE_VALUE.matcher(value).matches())
+                        throw badRequest("invalid character in variable value for [" + variableName + "]");
+                } else {
+                    log.trace("undefined variable [{}]", expression);
+                    setNoMatch();
+                }
             } else {
-                log.trace("undefined variable [{}]", expression);
-                this.match = false;
-                this.value = null;
+                setNoMatch();
             }
         }
     }
@@ -265,11 +276,12 @@ public class Expressions {
 
     private class RootBundleResolver extends Resolver {
         public RootBundleResolver(String expression) {
-            boolean potentialMatch = expression.startsWith(ROOT_BUNDLE)
+            if (expression.startsWith(ROOT_BUNDLE)
                     && BUNDLE.containsKey(fieldName(expression))
-                    && rootBundle != null;
-            this.value = potentialMatch ? resolve(fieldName(expression)) : null;
-            this.match = this.value != null; // could have been resolved to null
+                    && rootBundle != null)
+                set(Optional.ofNullable(resolve(fieldName(expression))));
+            else
+                setNoMatch();
         }
 
         private String fieldName(String expression) { return expression.substring(ROOT_BUNDLE.length()); }
@@ -283,26 +295,22 @@ public class Expressions {
     private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");
 
     private class FunctionResolver extends Resolver {
-        private final Matcher matcher;
-        private final String functionName;
-        private final List<Supplier<String>> params;
+        private String functionName;
+        private List<Supplier<String>> params;
 
         public FunctionResolver(String expression) {
-            this.matcher = FUNCTION.matcher(expression);
-            this.match = matcher.matches();
+            Matcher matcher = FUNCTION.matcher(expression);
+            this.match = matcher.matches(); // will be overwritten when function doesn't resolve. see #fail()
             this.functionName = match ? matcher.group("name") : null;
-            this.params = match ? params() : null;
+            this.params = match ? params(matcher.group("body")) : null;
             this.value = match ? resolve() : null;
         }
 
-        private List<Supplier<String>> params() {
-            return split(matcher.group("body"), ",")
+        private List<Supplier<String>> params(CharSequence body) {
+            return split(body, ",")
                     .stream()
                     .map(String::trim)
-                    .map(expression -> (Supplier<String>) () -> {
-                        OrResolver resolver = new OrResolver(expression);
-                        return resolver.isMatch() ? resolver.getValue() : null;
-                    })
+                    .map(expression -> (Supplier<String>) () -> new OrResolver(expression).getValue())
                     .collect(toList());
         }
 
@@ -352,7 +360,7 @@ public class Expressions {
         }
 
         private String fail() {
-            match = false;
+            setNoMatch();
             return null;
         }
     }

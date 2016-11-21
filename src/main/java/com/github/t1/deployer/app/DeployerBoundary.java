@@ -151,7 +151,7 @@ public class DeployerBoundary {
                 throw e;
             } catch (RuntimeException e) {
                 log.debug(failureMessage, e);
-                for (Throwable cause = e; cause.getCause() != null; cause = cause.getCause())
+                for (Throwable cause = e; cause != null; cause = cause.getCause())
                     if (cause.getMessage() != null && !cause.getMessage().isEmpty())
                         failureMessage += ": " + cause.getMessage();
                 throw WebException
