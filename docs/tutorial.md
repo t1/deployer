@@ -653,11 +653,14 @@ key-store:
   alias: server-certificate
 ```
 
-To store a password, e.g. `secret`, encrypt it like this:
+If you have configured your server to use this certificate for `https`,
+you can encrypt a password (e.g. `secret`) like this:
 
 ```bash
-mvn exec:java -Dexec.mainClass="com.github.t1.deployer.tools.CipherFacade" -Dexec.args="--keystore ~/keystores/keystore.jks --alias server-certificate secret"
+mvn exec:java -Dexec.mainClass="com.github.t1.deployer.tools.CipherFacade" -Dexec.args="--uri https://my-service.example.org secret"
 ```
+
+For other options to decrypt secrets, see the `decrypt` methods in the [reference](reference.md#variables).
 
 In the maven output, you'll see a long binhex string of the encrypted key.
 Take this and paste it to the bundle containing the data source:
