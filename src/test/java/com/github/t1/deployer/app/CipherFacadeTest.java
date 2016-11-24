@@ -4,7 +4,10 @@ import com.github.t1.deployer.tools.CipherFacade;
 import com.github.t1.testtools.SystemOutCaptorRule;
 import org.junit.*;
 
+import java.net.UnknownHostException;
+
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assume.*;
 
 public class CipherFacadeTest {
     private static final String PLAIN_TEXT = "foo";
@@ -73,9 +76,14 @@ public class CipherFacadeTest {
 
     @Test
     public void shouldEncryptPublicToUri() throws Exception {
-        CipherFacade.main("--uri", "https://www.github.com", PLAIN_TEXT);
+        Throwable e = catchThrowable(() -> {
+            CipherFacade.main("--uri", "https://www.github.com", PLAIN_TEXT);
 
-        // the cipher text is not reproducible :-(
-        assertThat(out.out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());
+            // the cipher text is not reproducible :-(
+            assertThat(out.out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());
+        });
+
+        if (e instanceof UnknownHostException)
+            assumeNoException(e);
     }
 }
