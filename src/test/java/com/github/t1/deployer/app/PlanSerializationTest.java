@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.io.StringReader;
 import java.net.URI;
+import java.time.Duration;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
@@ -318,7 +319,7 @@ public class PlanSerializationTest {
                             .min(3)
                             .initial(5)
                             .max(10)
-                            .maxAge(Age.ofMillis(3600))
+                            .maxAge(new Age(Duration.ofMillis(3600)))
                             .build())
                     .build())
             .build();

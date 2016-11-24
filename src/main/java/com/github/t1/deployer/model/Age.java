@@ -15,8 +15,6 @@ import static lombok.AccessLevel.*;
 @RequiredArgsConstructor
 @JsonSerialize(using = ToStringSerializer.class)
 public class Age {
-    public static Age ofMillis(int millis) { return new Age(Duration.ofMillis(millis)); }
-
     public static Age ofMinutes(int minutes) { return new Age(Duration.ofMinutes(minutes)); }
 
     @JsonCreator public Age(String string) { this.duration = parseDuration(string); }
@@ -34,6 +32,8 @@ public class Age {
         switch (split[1]) {
         case "milliseconds":
         case "millisecond":
+        case "millis":
+        case "milli":
         case "ms":
             return Duration.ofMillis(amount);
         case "seconds":
