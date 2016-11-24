@@ -72,15 +72,6 @@ The key is the `category` of the logger, usually the fully qualified name of the
 - `handler`: Alternative syntax for a single log handler name. Defaults to an empty list.
 - `use-parent-handlers`: Should the log handlers of the parent logger be used?
 Defaults to `true` if the `handlers` are empty, or `false`, if there _are_ log handlers.
-- `user-name`: The user name to authenticate with. Default is vendor specific.
-- `password`: The password to authenticate with. Default is vendor specific.
-- `pool:min`: The minimum number of connections to keep in the connection pool. Default is vendor specific.
-- `pool:initial`: The number of connections that should be opened at startup. Default is vendor specific.
-- `pool:max`: The maximum number of connections to keep in the connection pool. Default is vendor specific.
-- `pool:age`: The maximum age in seconds that an unused connection is kept in the pool. Default is vendor specific.
-Note that on JBoss this value is configured in minutes, so values below 60 seconds will be rounded to one minute.
-
-Note that the `pool` settings are nested, i.e. they share one `pool` parent tag.
 
 
 ### `data-sources`
@@ -93,6 +84,21 @@ The key is the `pool-name` of the data source.
 Defaults to `java:/datasources/<name>DS` where `<name>` is the name of the data source.
 - `driver`: The `driver-name` to be used to connect.
 Defaults to the part after `jdbc` in the `uri` or `default.data-source-driver`, if the URN isn't a `jdbc`.
+- `user-name`: The user name to authenticate with. Default is vendor specific.
+- `password`: The password to authenticate with. Default is vendor specific.
+- `pool:min`: The minimum number of connections to keep in the connection pool. Default is vendor specific.
+- `pool:initial`: The number of connections that should be opened at startup. Default is vendor specific.
+- `pool:max`: The maximum number of connections to keep in the connection pool. Default is vendor specific.
+- `pool:age`: The maximum age in some time unit that an unused connection is kept in the pool. Default is vendor specific.
+Note that on JBoss this value is configured in minutes, so values below 60 seconds will be rounded to one minute.
+
+Note that the `pool` settings are nested, i.e. they share one `pool` parent tag.
+
+Supported time units:
+
+- `milliseconds`, `millisecond`, `millis`, `milli`, `ms`
+- `seconds`, `second`, `s`
+- `minutes`, `minute`, `min`
 
 
 ### Variables
