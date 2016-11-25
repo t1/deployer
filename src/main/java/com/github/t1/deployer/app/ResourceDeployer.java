@@ -12,6 +12,8 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
 
+import static com.github.t1.deployer.model.Password.*;
+
 @Slf4j
 abstract class ResourceDeployer<
         PLAN extends AbstractPlan,
@@ -29,6 +31,7 @@ abstract class ResourceDeployer<
         private BiFunction<BUILDER, TYPE, BUILDER> addTo;
         private BiConsumer<RESOURCE, TYPE> write;
         private Predicate<RESOURCE> writeFilter = r -> true;
+        private boolean confidential = false;
 
         protected void update(RESOURCE resource, PLAN plan, AUDIT audit) {
             if (writeFilter.test(resource)) {
@@ -36,9 +39,13 @@ abstract class ResourceDeployer<
                 TYPE after = from(plan);
                 if (!Objects.equals(before, after)) {
                     write(resource, plan);
-                    audit.change(name(), before, after);
+                    audit.changeRaw(name(), conceal(before), conceal(after));
                 }
             }
+        }
+
+        protected String conceal(Object value) {
+            return (value == null) ? null : confidential ? CONCEALED : value.toString();
         }
 
         private TYPE from(RESOURCE resource) { return this.resource.apply(resource); }
@@ -48,7 +55,7 @@ abstract class ResourceDeployer<
         private void addTo(BUILDER builder, PLAN plan, AUDIT audit) {
             TYPE newValue = from(plan);
             this.addTo.apply(builder, newValue);
-            audit.change(name, null, newValue);
+            audit.change(name, null, conceal(newValue));
         }
 
         private void write(RESOURCE resource, PLAN plan) { this.write.accept(resource, from(plan)); }
@@ -67,7 +74,7 @@ abstract class ResourceDeployer<
                 resource.getName() + "$" + resource.getSimpleName() + "Builder");
         return this.<TYPE>property(name)
                 .resource(function(resource, toMethodName(name, false), type))
-                .plan(function(plan, "get" + toMethodName(name, true), type))
+                .plan(function(plan, ((boolean.class.equals(type)) ? "is" : "get") + toMethodName(name, true), type))
                 .addTo(addTo(resourceBuilder, toMethodName(name, false), type))
                 .write(update(resource, "update" + toMethodName(name, true), type));
     }
@@ -114,7 +121,7 @@ abstract class ResourceDeployer<
             try {
                 method.invoke(i, j);
             } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException("can't invoke", e);
+                throw new RuntimeException("can't invoke '" + name + "' in " + methodContainer.getSimpleName(), e);
             }
         };
     }
@@ -150,14 +157,18 @@ abstract class ResourceDeployer<
     }
 
     @Override protected void auditRegularRemove(RESOURCE resource, PLAN plan, AUDIT audit) {
-        properties.forEach(property -> audit.change(property.name(), property.from(resource), null));
+        auditRemove(resource, audit);
     }
 
     @Override protected void cleanupRemove(RESOURCE resource) {
         AUDIT audit = auditBuilder(resource);
-        properties.forEach(property -> audit.change(property.name(), property.from(resource), null));
+        auditRemove(resource, audit);
         audits.add(audit.removed());
 
         resource.remove();
+    }
+
+    private void auditRemove(RESOURCE resource, AUDIT audit) {
+        properties.forEach(property -> audit.change(property.name(), property.conceal(property.from(resource)), null));
     }
 }

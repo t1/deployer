@@ -7,6 +7,8 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.DataSourcePlan.*;
 import com.github.t1.deployer.model.Expressions.VariableName;
+import com.github.t1.deployer.model.LogHandlerPlan;
+import com.github.t1.deployer.model.LogHandlerType;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.LogLevel;
@@ -21,6 +23,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.enterprise.inject.Instance;
 import java.io.*;
+import java.lang.Boolean;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.ArrayList;
@@ -32,6 +35,7 @@ import static com.github.t1.deployer.app.Trigger.mock;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.model.Password.*;
 import static com.github.t1.deployer.model.Plan.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.deployer.testtools.ModelNodeTools.*;
@@ -45,8 +49,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("SameParameterValue")
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class AbstractDeployerTest {
+
     @SneakyThrows(IOException.class)
     private static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
 
@@ -620,10 +626,11 @@ public class AbstractDeployerTest {
                     + loggerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));
-            AuditBuilder audit = LoggerAudit
-                    .of(getCategory())
-                    .change("level", level, null)
-                    .change("use-parent-handlers", useParentHandlers, null);
+            AuditBuilder audit = LoggerAudit.of(getCategory());
+            if (level != null)
+                audit.change("level", level, null);
+            if (useParentHandlers != null)
+                audit.change("use-parent-handlers", useParentHandlers, null);
             for (LogHandlerName handler : handlerNames())
                 audit.change("handler", handler, null);
             assertThat(audits.getAudits()).contains(audit.removed());
@@ -886,7 +893,8 @@ public class AbstractDeployerTest {
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));
-            expectedAudit.change("level", this.level, null);
+            if (this.level != null)
+                expectedAudit.change("level", this.level, null);
             if (this.format != null)
                 expectedAudit.change("format", this.format, null);
             if (this.formatter != null)
@@ -950,10 +958,10 @@ public class AbstractDeployerTest {
             this.jndiName = "java:/datasources/" + name + "DS";
             this.driver = "h2";
 
-            when(cli.executeRaw(readDatasourceRequest(name, true))).then(i -> deployed
+            when(cli.executeRaw(readDatasourceRequest(name, true))).then(i -> xa && deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("datasources", dataSource(xa), name));
-            when(cli.executeRaw(readDatasourceRequest(name, false))).then(i -> deployed
+            when(cli.executeRaw(readDatasourceRequest(name, false))).then(i -> !xa && deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("datasources", dataSource(xa), name));
         }
@@ -963,7 +971,7 @@ public class AbstractDeployerTest {
                     + "'outcome' => 'success',\n"
                     + "'result' => {\n"
                     + "    'name' => " + ((name == null) ? "undefined" : "'" + name + "'") + ",\n"
-                    + "    'connection-url' => '" + uri + "',\n"
+                    + (xa ? "" : "    'connection-url' => '" + uri + "',\n")
                     + "    'jndi-name' => '" + jndiName + "',\n"
                     + "    'driver-name' => '" + driver + "',\n"
 
@@ -978,6 +986,11 @@ public class AbstractDeployerTest {
                                                            ? "undefined" : "'" + maxPoolSize + "'") + ",\n"
                     + "    'idle-timeout-minutes' => "
                     + ((maxAge == null) ? "undefined" : "'" + maxAge.asMinutes() + "'") + "\n"
+                    + (xa
+                               ? ", 'xa-datasource-properties' => {"
+                    + "'ServerName' => {'value' => '" + jdbcHost() + "'}, "
+                    + "'DatabaseName' => {'value' => '" + jdbcDbName() + "'}}"
+                               : "")
                     + "}\n";
         }
 
@@ -1055,33 +1068,14 @@ public class AbstractDeployerTest {
 
         public void verifyAdded(Audits audits) {
             verifyAddCli();
-            AuditBuilder audit = DataSourceAudit
-                    .of(getName())
-                    .change("uri", null, uri)
-                    .change("jndi-name", null, jndiName)
-                    .change("driver", null, driver);
-            if (xa)
-                audit.change("xa", null, true);
-            if (userName != null)
-                audit.change("user-name", null, userName);
-            if (password != null)
-                audit.change("password", null, password);
-            if (minPoolSize != null)
-                audit.change("pool:min", null, minPoolSize);
-            if (initialPoolSize != null)
-                audit.change("pool:initial", null, initialPoolSize);
-            if (maxPoolSize != null)
-                audit.change("pool:max", null, maxPoolSize);
-            if (maxAge != null)
-                audit.change("pool:max-age", null, maxAge);
-            assertThat(audits.getAudits()).contains(audit.added());
+            assertAddAudit(audits);
         }
 
-        private void verifyAddCli() {
-            ModelNode request = toModelNode("{\n"
+        @SuppressWarnings("resource") public void verifyAddCli() {
+            ModelNode addRequest = toModelNode("{\n"
                     + "    'operation' => 'add',\n"
                     + dataSourceAddress()
-                    + "    'connection-url' => '" + uri + "',\n"
+                    + (xa ? "" : "    'connection-url' => '" + uri + "',\n")
                     + "    'jndi-name' => '" + jndiName + "',\n"
                     + "    'driver-name' => '" + driver + "'\n"
 
@@ -1093,7 +1087,67 @@ public class AbstractDeployerTest {
                     + ((maxPoolSize == null) ? "" : ",    'max-pool-size' => " + maxPoolSize + "\n")
                     + ((maxAge == null) ? "" : ",    'idle-timeout-minutes' => " + maxAge.asMinutes() + "L\n")
                     + "}");
-            verify(cli).execute(request);
+
+            if (xa) {
+                CompositeOperationBuilder composite = CompositeOperationBuilder.create();
+                composite.addStep(addRequest);
+                composite.addStep(addXaDataSourceProperty("ServerName", jdbcHost()));
+                composite.addStep(addXaDataSourceProperty("PortNumber", jdbcPort()));
+                composite.addStep(addXaDataSourceProperty("DatabaseName", jdbcDbName()));
+                Operation operation = composite.build();
+
+                assertThat(captureOperations()).hasSize(1).first()
+                                               .extracting(Operation::getOperation)
+                                               .containsExactly(operation.getOperation());
+            } else {
+                verify(cli).execute(addRequest);
+            }
+        }
+
+        private String jdbcHost() { return jdbcUri().getHost(); }
+
+        private String jdbcPort() { return Integer.toString(jdbcUri().getPort()); }
+
+        private String jdbcDbName() { return jdbcUri().getPath().substring(1); }
+
+        private URI jdbcUri() {
+            assert this.uri.startsWith("jdbc:");
+            return URI.create(this.uri.substring(5));
+        }
+
+        private ModelNode addXaDataSourceProperty(String propertyName, String value) {
+            return toModelNode("{\n"
+                    + "'operation' => 'add',\n"
+                    + "'address' => [\n"
+                    + "    ('subsystem' => 'datasources'),\n"
+                    + "    ('xa-data-source' => '" + name + "'),\n"
+                    + "    ('xa-datasource-properties' => '" + propertyName + "')\n"
+                    + "],\n"
+                    + "'value' => '" + value + "'\n"
+                    + "}");
+        }
+
+        private void assertAddAudit(Audits audits) {
+            AuditBuilder audit = DataSourceAudit
+                    .of(getName())
+                    .change("uri", null, uri)
+                    .change("jndi-name", null, jndiName)
+                    .change("driver", null, driver);
+            if (xa)
+                audit.change("xa", null, true);
+            if (userName != null)
+                audit.change("user-name", null, CONCEALED);
+            if (password != null)
+                audit.change("password", null, CONCEALED);
+            if (minPoolSize != null)
+                audit.change("pool:min", null, minPoolSize);
+            if (initialPoolSize != null)
+                audit.change("pool:initial", null, initialPoolSize);
+            if (maxPoolSize != null)
+                audit.change("pool:max", null, maxPoolSize);
+            if (maxAge != null)
+                audit.change("pool:max-age", null, maxAge);
+            assertThat(audits.getAudits()).containsExactly(audit.added());
         }
 
         public void verifyUpdatedUriFrom(String oldUri, Audits audits) {
@@ -1117,13 +1171,21 @@ public class AbstractDeployerTest {
         public void verifyUpdatedUserNameFrom(String oldUserName, Audits audits) {
             verify(cli).writeAttribute(dataSourceAddressNode(), "user-name", userName);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("user-name", oldUserName, userName).changed());
+                    DataSourceAudit.of(name)
+                                   .changeRaw("user-name",
+                                           oldUserName == null ? null : CONCEALED,
+                                           userName == null ? null : CONCEALED)
+                                   .changed());
         }
 
         public void verifyUpdatedPasswordFrom(String oldPassword, Audits audits) {
             verify(cli).writeAttribute(dataSourceAddressNode(), "password", password);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("password", oldPassword, password).changed());
+                    DataSourceAudit.of(name)
+                                   .changeRaw("password",
+                                           oldPassword == null ? null : CONCEALED,
+                                           password == null ? null : CONCEALED)
+                                   .changed());
         }
 
         public void verifyUpdatedMinPoolSizeFrom(Integer oldMinPoolSize, Audits audits) {
@@ -1150,17 +1212,6 @@ public class AbstractDeployerTest {
                     DataSourceAudit.of(name).change("pool:max-age", oldMaxAge, maxAge).changed());
         }
 
-        public void verifyUpdatedXaFrom(Boolean oldXa, Audits audits) {
-            boolean previousXa = this.xa;
-            this.xa = (oldXa == null) ? false : oldXa;
-            verifyRemoveCli();
-            this.xa = previousXa;
-            verifyAddCli();
-
-            assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("xa", oldXa, xa).changed());
-        }
-
         public void verifyRemoved(Audits audits) {
             verifyRemoveCli();
             AuditBuilder audit = DataSourceAudit
@@ -1168,10 +1219,12 @@ public class AbstractDeployerTest {
                     .change("uri", uri, null)
                     .change("jndi-name", jndiName, null)
                     .change("driver", driver, null);
+            if (xa)
+                audit.change("xa", true, null);
             if (userName != null)
-                audit.change("user-name", userName, null);
+                audit.change("user-name", CONCEALED, null);
             if (password != null)
-                audit.change("password", password, null);
+                audit.change("password", CONCEALED, null);
             if (minPoolSize != null)
                 audit.change("pool:min", minPoolSize, null);
             if (initialPoolSize != null)
@@ -1183,7 +1236,7 @@ public class AbstractDeployerTest {
             assertThat(audits.getAudits()).contains(audit.removed());
         }
 
-        private void verifyRemoveCli() {
+        public void verifyRemoveCli() {
             ModelNode request = toModelNode(""
                     + "{\n"
                     + "    'operation' => 'remove',\n"

@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.model.Password.*;
 import static com.github.t1.deployer.testtools.ModelNodeTools.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
@@ -70,6 +71,23 @@ public class DeployerIT {
             + "    artifact-id: jolokia-war\n"
             + "    version: ${jolokia.version}\n";
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
+    private static final String POSTGRESQL = ""
+            + "deployables:\n"
+            + "  postgresql:\n"
+            + "    group-id: org.postgresql\n"
+            + "    version: 9.4.1207\n"
+            + "    type: jar\n";
+    private static final String FOO_DATASOURCE = ""
+            + "  foo:\n"
+            + "    uri: jdbc:h2:mem:test\n"
+            + "    jndi-name: java:/datasources/TestDS\n"
+            + "    driver: h2\n"
+            + "    user-name: joe\n"
+            + "    password: secret\n"
+            + "    pool:\n"
+            + "      min: 0\n"
+            + "      initial: 1\n"
+            + "      max: 10\n";
 
     private static Condition<DeploymentResource> deployment(String name) {
         return deployment(new DeploymentName(name));
@@ -468,19 +486,27 @@ public class DeployerIT {
 
     @Test
     @InSequence(value = 1000)
+    public void shouldDeployJdbcDriver() throws Exception {
+        List<Audit> audits = post(POSTGRESQL);
+
+        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(audits).containsExactly(
+                DeployableAudit.builder().name("postgresql")
+                               .change("group-id", null, "org.postgresql")
+                               .change("artifact-id", null, "postgresql")
+                               .change("version", null, "9.4.1207")
+                               .change("type", null, "jar")
+                               .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
+                               .added());
+    }
+
+    @Test
+    @InSequence(value = 2000)
     public void shouldDeployDataSource() throws Exception {
         String plan = ""
+                + POSTGRESQL
                 + "data-sources:\n"
-                + "  foo:\n"
-                + "    uri: jdbc:h2:mem:test\n"
-                + "    jndi-name: java:/datasources/TestDS\n"
-                + "    driver: h2\n"
-                + "    user-name: joe\n"
-                + "    password: secret\n"
-                + "    pool:\n"
-                + "      min: 0\n"
-                + "      initial: 1\n"
-                + "      max: 10\n"
+                + FOO_DATASOURCE
                 + "      max-age: 5 min\n";
 
         List<Audit> audits = post(plan);
@@ -490,8 +516,8 @@ public class DeployerIT {
                                .change("uri", null, "jdbc:h2:mem:test")
                                .change("jndi-name", null, "java:/datasources/TestDS")
                                .change("driver", null, "h2")
-                               .change("user-name", null, "joe")
-                               .change("password", null, "secret")
+                               .change("user-name", null, CONCEALED)
+                               .change("password", null, CONCEALED)
                                .change("pool:min", null, "0")
                                .change("pool:initial", null, "1")
                                .change("pool:max", null, "10")
@@ -511,65 +537,14 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 1020)
-    @Ignore // TODO fix deploying xa data-sources
-    public void shouldDeployXaDataSource() throws Exception {
-        String plan = ""
-                + "data-sources:\n"
-                + "  bar:\n"
-                + "    xa: true\n"
-                + "    uri: jdbc:h2:mem:test\n"
-                + "    user-name: joe\n"
-                + "    password: secret\n"
-                + "    pool:\n"
-                + "      min: 0\n"
-                + "      initial: 1\n"
-                + "      max: 10\n"
-                + "      max-age: 5 min\n";
-
-        List<Audit> audits = post(plan);
-
-        assertThat(audits).containsExactly(
-                DataSourceAudit.builder().name(new DataSourceName("bar"))
-                               .change("xa", null, true)
-                               .change("uri", null, "jdbc:h2:mem:test")
-                               .change("user-name", null, "joe")
-                               .change("password", null, "secret")
-                               .change("pool:min", null, "0")
-                               .change("pool:initial", null, "1")
-                               .change("pool:max", null, "10")
-                               .change("pool:max-age", null, "5 min")
-                               .added());
-        assertThat(definedPropertiesOf(readDataSource("bar", true)))
-                .has(property("connection-url", "jdbc:h2:mem:test"))
-                .has(property("driver-name", "h2"))
-                .has(property("enabled", "true"))
-                .has(property("idle-timeout-minutes", "5"))
-                .has(property("initial-pool-size", "1"))
-                .has(property("jndi-name", "java:/datasources/TestDS"))
-                .has(property("max-pool-size", "10"))
-                .has(property("min-pool-size", "0"))
-                .has(property("password", "secret"))
-                .has(property("user-name", "joe"));
-    }
-
-    @Test
-    @InSequence(value = 1050)
+    @InSequence(value = 2050)
     public void shouldChangeDataSourceMaxAge10() throws Exception {
         String plan = ""
+                + POSTGRESQL
                 + "data-sources:\n"
-                + "  foo:\n"
-                // TODO + "    xa: true\n"
-                + "    uri: jdbc:h2:mem:test\n"
-                + "    jndi-name: java:/datasources/TestDS\n"
-                + "    driver: h2\n"
-                + "    user-name: joe\n"
-                + "    password: secret\n"
-                + "    pool:\n"
-                + "      min: 0\n"
-                + "      initial: 1\n"
-                + "      max: 10\n"
+                + FOO_DATASOURCE
                 + "      max-age: 600 seconds\n";
+        // TODO + "    xa: true\n"
 
         List<Audit> audits = post(plan);
 
@@ -592,60 +567,87 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 1100)
-    public void shouldUndeployAllDataSources() throws Exception {
-        String plan = "---\n";
+    @InSequence(value = 2100)
+    public void shouldDeployXaDataSource() throws Exception {
+        String plan = ""
+                + POSTGRESQL
+                + "data-sources:\n"
+                + FOO_DATASOURCE
+                + "      max-age: 600 seconds\n"
+                // TODO + "    xa: true\n"
+                + "  bar:\n"
+                + "    xa: true\n"
+                + "    uri: jdbc:postgresql://my-db.server.lan:5432/bar\n"
+                + "    user-name: joe\n"
+                + "    password: secret\n"
+                + "    pool:\n"
+                + "      min: 0\n"
+                + "      initial: 0\n"
+                + "      max: 10\n"
+                + "      max-age: 5 min\n";
 
         List<Audit> audits = post(plan);
 
         assertThat(audits).containsExactly(
+                DataSourceAudit.builder().name(new DataSourceName("bar"))
+                               .change("uri", null, "jdbc:postgresql://my-db.server.lan:5432/bar")
+                               .change("jndi-name", null, "java:/datasources/barDS")
+                               .change("driver", null, "postgresql")
+                               .change("xa", null, true)
+                               .change("user-name", null, CONCEALED)
+                               .change("password", null, CONCEALED)
+                               .change("pool:min", null, "0")
+                               .change("pool:initial", null, "0")
+                               .change("pool:max", null, "10")
+                               .change("pool:max-age", null, "5 min")
+                               .added());
+        assertThat(definedPropertiesOf(readDataSource("bar", true)))
+                .has(property("driver-name", "postgresql"))
+                .has(property("enabled", "true"))
+                .has(property("idle-timeout-minutes", "5"))
+                .has(property("initial-pool-size", "0"))
+                .has(property("jndi-name", "java:/datasources/barDS"))
+                .has(property("max-pool-size", "10"))
+                .has(property("min-pool-size", "0"))
+                .has(property("password", "secret"))
+                .has(property("user-name", "joe"))
+                .has(property("xa-datasource-properties", "{"
+                        + "\"ServerName\" => {\"value\" => \"my-db.server.lan\"},"
+                        + "\"PortNumber\" => {\"value\" => \"5432\"},"
+                        + "\"DatabaseName\" => {\"value\" => \"bar\"}"
+                        + "}"));
+    }
+
+    @Test
+    @InSequence(value = 2200)
+    public void shouldUndeployAllDataSources() throws Exception {
+        List<Audit> audits = post(POSTGRESQL);
+
+        assertThat(audits).containsExactly(
+                DataSourceAudit.builder().name(new DataSourceName("bar")) // sorted!
+                               .change("uri", "jdbc:postgresql://my-db.server.lan:5432/bar", null)
+                               .change("jndi-name", "java:/datasources/barDS", null)
+                               .change("driver", "postgresql", null)
+                               .change("xa", true, null)
+                               .change("user-name", CONCEALED, null)
+                               .change("password", CONCEALED, null)
+                               .change("pool:min", "0", null)
+                               .change("pool:initial", "0", null)
+                               .change("pool:max", "10", null)
+                               .change("pool:max-age", "5 min", null)
+                               .removed(),
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
-                               // TODO .change("xa", true, null)
                                .change("uri", "jdbc:h2:mem:test", null)
                                .change("jndi-name", "java:/datasources/TestDS", null)
                                .change("driver", "h2", null)
-                               .change("user-name", "joe", null)
-                               .change("password", "secret", null)
+                               // TODO .change("xa", true, null)
+                               .change("user-name", CONCEALED, null)
+                               .change("password", CONCEALED, null)
                                .change("pool:min", "0", null)
                                .change("pool:initial", "1", null)
                                .change("pool:max", "10", null)
                                .change("pool:max-age", "10 min", null)
-                               // .removed()
-                               // DataSourceAudit.builder().name(new DataSourceName("bar"))
-                               //                .change("xa", true, null)
-                               //                .change("uri", "jdbc:h2:mem:test", null)
-                               //                .change("jndi-name", "java:/datasources/TestDS", null)
-                               //                .change("driver", "h2", null)
-                               //                .change("user-name", "joe", null)
-                               //                .change("password", "secret", null)
-                               //                .change("pool:min", "0", null)
-                               //                .change("pool:initial", "1", null)
-                               //                .change("pool:max", "10", null)
-                               //                .change("pool:max-age", "10 min", null)
                                .removed());
-    }
-
-    @Test
-    @InSequence(value = 8000)
-    public void shouldDeployJdbcDriver() throws Exception {
-        String plan = ""
-                + "deployables:\n"
-                + "  postgresql:\n"
-                + "    group-id: org.postgresql\n"
-                + "    version: 9.4.1207\n"
-                + "    type: jar\n";
-
-        List<Audit> audits = post(plan);
-
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
-        assertThat(audits).containsExactly(
-                DeployableAudit.builder().name("postgresql")
-                               .change("group-id", null, "org.postgresql")
-                               .change("artifact-id", null, "postgresql")
-                               .change("version", null, "9.4.1207")
-                               .change("type", null, "jar")
-                               .change("checksum", null, POSTGRESQL_9_4_1207_CHECKSUM)
-                               .added());
     }
 
     @Test

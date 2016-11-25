@@ -1,5 +1,6 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.Age;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.Operation;
@@ -30,23 +31,27 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     public boolean isDeployed() {
         if (deployed == null) {
-            log.debug("isDeployed: {}", address());
-            ModelNode readResource = createReadResourceOperation(address(), true);
-            ModelNode response = cli.executeRaw(readResource);
-            if (response == null)
-                throw new RuntimeException("read-resource not properly mocked: " + this);
-            if (isSuccessfulOutcome(response)) {
-                this.deployed = true;
-                readFrom(response.get(RESULT));
-            } else if (isNotFoundMessage(response)) {
-                this.deployed = false;
-            } else {
-                log.error("failed: {}", response);
-                throw new RuntimeException("outcome " + response.get("outcome").asString()
-                        + ": " + getFailureDescription(response));
-            }
+            read(address());
         }
         return deployed;
+    }
+
+    protected void read(ModelNode address) {
+        log.debug("isDeployed: {}", address);
+        ModelNode readResource = createReadResourceOperation(address, true);
+        ModelNode response = cli.executeRaw(readResource);
+        if (response == null)
+            throw new RuntimeException("read-resource not properly mocked: " + this);
+        if (isSuccessfulOutcome(response)) {
+            this.deployed = true;
+            readFrom(response.get(RESULT));
+        } else if (isNotFoundMessage(response)) {
+            this.deployed = false;
+        } else {
+            log.error("failed: {}", response);
+            throw new RuntimeException("outcome " + response.get("outcome").asString()
+                    + ": " + getFailureDescription(response));
+        }
     }
 
     protected abstract ModelNode address();
@@ -81,6 +86,10 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected static Integer integerOrNull(ModelNode node, String name) {
         return getOptional(node, name).map(ModelNode::asInt).orElse(null);
+    }
+
+    protected static Age minutesOrNull(ModelNode node, String name) {
+        return node.get(name).isDefined() ? Age.ofMinutes(node.get(name).asInt()) : null;
     }
 
     protected static Optional<ModelNode> getOptional(ModelNode node, String name) {

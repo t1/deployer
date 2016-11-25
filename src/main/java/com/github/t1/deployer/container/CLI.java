@@ -34,7 +34,11 @@ public class CLI {
 
 
     @SneakyThrows({ InterruptedException.class, TimeoutException.class })
-    public void waitForBoot() { waitForStandalone(client, STARTUP_TIMEOUT); }
+    public void waitForBoot() {
+        log.info("wait for boot");
+        waitForStandalone(client, STARTUP_TIMEOUT);
+        log.info("boot done");
+    }
 
 
     public ModelNode writeAttribute(ModelNode address, String name, String value) {
@@ -88,15 +92,12 @@ public class CLI {
         return result.get("result");
     }
 
+    @SneakyThrows(IOException.class)
     private ModelNode executeRaw(Operation operation) {
-        log.debug("execute operation {}", operation);
-        try {
-            ModelNode result = client.execute(operation);
-            log.debug("response {}", result);
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException("operation fails", e);
-        }
+        log.debug("execute operation {}", operation.getOperation());
+        ModelNode result = client.execute(operation);
+        log.debug("response {}", result);
+        return result;
     }
 
     public void checkOutcome(ModelNode result) {

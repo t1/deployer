@@ -4,16 +4,12 @@ import lombok.Value;
 
 @Value
 public class Password {
-    public static final String UNDISCLOSED_PASSWORD = "undisclosed password";
+    public static final String CONCEALED = "concealed";
 
-    String value;
+    private final String value;
 
-    public Password(String value) {
-        this.value = value;
-    }
+    /** strange, but Jackson seems to not find the lombok generated String constructor :( */
+    public Password(String value) { this.value = value; }
 
-    @Override
-    public String toString() {
-        return UNDISCLOSED_PASSWORD;
-    }
+    @Override public String toString() { return CONCEALED; }
 }

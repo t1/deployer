@@ -22,8 +22,8 @@ public class DataSourceDeployer extends
         property("jndi-name", String.class);
         property("driver", String.class);
         property("xa", Boolean.class);
-        property("user-name", String.class);
-        property("password", String.class);
+        property("user-name", String.class).confidential(true);
+        property("password", String.class).confidential(true);
         this.<Integer>property("pool:min")
                 .resource(DataSourceResource::minPoolSize)
                 .plan(plan -> (plan.getPool() == null) ? null : plan.getPool().getMin())
@@ -46,8 +46,8 @@ public class DataSourceDeployer extends
                 .write(DataSourceResource::updateMaxAge);
     }
 
-    private void property(String name, Class<?> type) {
-        property(name, type, DataSourceResource.class, DataSourcePlan.class);
+    private <T> Property<T> property(String name, Class<T> type) {
+        return property(name, type, DataSourceResource.class, DataSourcePlan.class);
     }
 
     @Override protected String getType() { return "data-sources"; }

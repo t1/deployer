@@ -97,8 +97,7 @@ public class DataSourcePlan implements Plan.AbstractPlan {
     @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
     @Override public String toString() {
-        return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + driver + ":" + uri
-                + ((xa == null) ? "" : ":xa=" + xa)
+        return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + driver + ":" + uri + ":xa=" + xa
                 + ((pool == null) ? "" : "{" + pool + "}");
     }
 }

@@ -79,15 +79,18 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldAddXaDataSource() {
-        DataSourceFixture foo = givenDataSource("foo");
+        DataSourceFixture foo = givenDataSource("foo")
+                .xa(true)
+                .uri("jdbc:postgresql://my-db.server.lan:5432/foo")
+                .driver("postgresql");
 
         Audits audits = deploy(""
                 + "data-sources:\n"
                 + "  foo:\n"
                 + "    xa: true\n"
-                + "    uri: jdbc:h2:mem:foo\n");
+                + "    uri: jdbc:postgresql://my-db.server.lan:5432/foo\n");
 
-        foo.xa(true).verifyAdded(audits);
+        foo.verifyAdded(audits);
     }
 
     @Test
@@ -315,15 +318,46 @@ public class DataSourceDeployerTest extends AbstractDeployerTest {
 
     @Test
     public void shouldUpdateXaToTrue() {
-        DataSourceFixture fixture = givenDataSource("foo").deployed();
+        DataSourceFixture fixture = givenDataSource("foo")
+                .uri("jdbc:postgresql://my-db.server.lan:5432/foo")
+                .driver("postgresql")
+                .deployed();
 
         Audits audits = deploy(""
                 + "data-sources:\n"
                 + "  foo:\n"
-                + "    uri: jdbc:h2:mem:foo\n"
+                + "    uri: jdbc:postgresql://my-db.server.lan:5432/foo\n"
                 + "    xa: true\n");
 
-        fixture.xa(true).verifyUpdatedXaFrom(null, audits);
+        fixture.verifyRemoveCli();
+        fixture.xa(true);
+        fixture.verifyAddCli();
+
+        assertThat(audits.getAudits()).containsExactly(
+                Audit.DataSourceAudit.of(fixture.getName()).change("xa", null, true).changed());
+    }
+
+
+    @Test
+    public void shouldUpdateXaToFalse() {
+        DataSourceFixture fixture = givenDataSource("foo")
+                .xa(true)
+                .uri("jdbc:postgresql://my-db.server.lan/foo")
+                .driver("postgresql")
+                .deployed();
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:postgresql://my-db.server.lan/foo\n"
+                + "    xa: false\n");
+
+        fixture.verifyRemoveCli();
+        fixture.xa(false);
+        fixture.verifyAddCli();
+
+        assertThat(audits.getAudits()).containsExactly(
+                Audit.DataSourceAudit.of(fixture.getName()).change("xa", true, null).changed());
     }
 
 
