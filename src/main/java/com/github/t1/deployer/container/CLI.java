@@ -15,6 +15,7 @@ import static org.wildfly.plugin.core.ServerHelper.*;
 
 @Slf4j
 public class CLI {
+    private static final boolean DEBUG = Boolean.getBoolean(CLI.class.getName() + "#DEBUG");
     private static final int STARTUP_TIMEOUT = 30;
 
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
@@ -80,9 +81,9 @@ public class CLI {
 
     @SneakyThrows(IOException.class)
     public ModelNode executeRaw(ModelNode command) {
-        log.debug("execute command {}", command);
+        logCli("execute command {}", command);
         ModelNode result = client.execute(command, LOGGING);
-        log.debug("response {}", result);
+        logCli("response {}", result);
         return result;
     }
 
@@ -94,9 +95,9 @@ public class CLI {
 
     @SneakyThrows(IOException.class)
     private ModelNode executeRaw(Operation operation) {
-        log.debug("execute operation {}", operation.getOperation());
+        logCli("execute operation {}", operation.getOperation());
         ModelNode result = client.execute(operation);
-        log.debug("response {}", result);
+        logCli("response {}", result);
         return result;
     }
 
@@ -119,5 +120,11 @@ public class CLI {
         log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]", //
                 jboss7start, jboss8start, notFoundEnd, isNotFound, message);
         return isNotFound;
+    }
+
+    /** see debug-cli in reference.md */
+    private void logCli(String format, Object arg) {
+        if (DEBUG)
+            log.debug(format, arg);
     }
 }
