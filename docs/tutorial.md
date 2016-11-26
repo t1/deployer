@@ -681,7 +681,7 @@ If you need a specific key from the keystore, you can pass its alias as a second
 ## Stage Specific Variables
 
 Some values _have_ to be different on each stage.
-You can use a `switch` statement for that:
+If you have a variable `stage`, you can use a `switch` statement for that:
 
 ```yaml
 data-sources:
