@@ -3,6 +3,7 @@ package com.github.t1.deployer.tools;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.*;
 import java.io.*;
@@ -44,6 +45,7 @@ public class FormMessageBodyReader implements MessageBodyReader<Map<String, Stri
 
     protected String read(InputStream entityStream) {
         try {
+            //noinspection resource
             return new Scanner(entityStream).useDelimiter("\\Z").next();
         } catch (NoSuchElementException e) {
             return "";

@@ -295,8 +295,8 @@ public class Expressions {
     private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");
 
     private class FunctionResolver extends Resolver {
-        private String functionName;
-        private List<Supplier<String>> params;
+        private final String functionName;
+        private final List<Supplier<String>> params;
 
         public FunctionResolver(String expression) {
             Matcher matcher = FUNCTION.matcher(expression);

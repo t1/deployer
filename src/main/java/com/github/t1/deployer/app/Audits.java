@@ -33,7 +33,6 @@ public class Audits {
     @Override public String toString() { return audits.stream().map(Audit::toString).collect(joining("\n", "", "\n")); }
 
     /** @param audits ugly: repeats `this`, but we want it `@Logged`! */
-    @SuppressWarnings("unused")
     @Logged(level = INFO, json = JsonLogDetail.ALL)
     public void applied(Trigger trigger, Principal principal, Map<VariableName, String> variables, Audits audits) {}
 

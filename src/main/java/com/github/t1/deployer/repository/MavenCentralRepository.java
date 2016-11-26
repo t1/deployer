@@ -61,6 +61,7 @@ public class MavenCentralRepository extends Repository {
         Version version = new Version(doc.v);
         ArtifactType type = ArtifactType.valueOf(doc.p);
 
+        //noinspection resource
         return Artifact.builder()
                        .groupId(groupId)
                        .artifactId(artifactId)
@@ -87,6 +88,7 @@ public class MavenCentralRepository extends Repository {
             @NonNull Version version,
             @NonNull ArtifactType type,
             Classifier classifier) {
+        //noinspection resource
         return Artifact.builder()
                        .groupId(groupId)
                        .artifactId(artifactId)

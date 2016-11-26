@@ -105,7 +105,7 @@ public class CLI {
             fail(result);
     }
 
-    public boolean fail(ModelNode result) {
+    public void fail(ModelNode result) {
         throw new RuntimeException("outcome " + result.get("outcome")
                 + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : ""));
     }

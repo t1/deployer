@@ -539,7 +539,7 @@ to be able to parse the output of your `mvn versions:update-properties` (the `sc
 
 @Library('updates') _
 
-def String mvn(args) {
+String mvn(args) {
     return sh(returnStdout: true, script: "${tool 'M3'}/bin/mvn ${args}")
 }
 

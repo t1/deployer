@@ -68,9 +68,9 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     public void writeAttribute(String name, long value) { cli.writeAttribute(address(), name, value); }
 
-    public void mapPut(String name, String key, String value) { cli.mapPut(address(), name, key, value); }
+    public void propertyPut(String key, String value) { cli.mapPut(address(), "property", key, value); }
 
-    protected void mapRemove(String name, String key) { cli.mapRemove(address(), name, key); }
+    protected void propertyRemove(String key) { cli.mapRemove(address(), "property", key); }
 
     public abstract void add();
 

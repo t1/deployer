@@ -191,6 +191,7 @@ public class ArtifactoryRepository extends Repository {
         FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),
                 "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
                 FileInfo.class, groupId, artifactId, version, type);
+        //noinspection resource
         return Artifact
                 .builder()
                 .groupId(groupId)

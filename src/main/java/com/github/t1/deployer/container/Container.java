@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("deprecation")
 public class Container {
     /** @deprecated Only to be used privately or in tests */
-    @Deprecated @Getter @Inject public CLI cli;
+    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated @Getter @Inject public CLI cli;
 
     public void waitForBoot() { cli.waitForBoot(); }
 

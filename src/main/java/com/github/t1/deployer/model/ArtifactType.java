@@ -7,6 +7,4 @@ public enum ArtifactType {
     pom, bundle, unknown;
 
     public String extension() { return name(); }
-
-    public String type() { return name(); }
 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.deployer.model.Plan;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.*;
 import javax.ws.rs.ext.*;
 import java.io.*;
@@ -45,13 +46,13 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
                 .findAndRegisterModules();
 
         private final PrintWriter out;
-        private String title;
+        private final String title;
 
         private int depth = 0;
         private String rowHeader = null;
         private String key = null;
         private String parentKey = null;
-        private Map<String, Object> row = new LinkedHashMap<>();
+        private final Map<String, Object> row = new LinkedHashMap<>();
 
         private HtmlWriter(PrintWriter out, String title) {
             super(0, MAPPER);

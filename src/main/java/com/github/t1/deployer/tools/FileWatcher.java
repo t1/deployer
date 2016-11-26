@@ -30,6 +30,7 @@ public class FileWatcher extends Thread {
     @Override
     public void run() {
         log.info("start watching {}", filePath);
+        //noinspection resource
         try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
             filePath.getParent().register(watcher, EVENT_KINDS);
             while (running.get()) {
