@@ -5,14 +5,15 @@ import com.github.t1.rest.RestContext;
 import org.junit.*;
 
 import java.io.*;
+import java.net.*;
 import java.util.List;
 
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.RepositoryProducer.*;
 import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assume.*;
 
-@Ignore("requires internet connection")
 public class MavenCentralIT {
     private static final Checksum JOLOKIA_133_CHECKSUM
             = Checksum.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
@@ -32,6 +33,13 @@ public class MavenCentralIT {
         assertThat(artifact.getVersion()).isEqualTo(VERSION_1_3_3);
         assertThat(artifact.getType()).isEqualTo(type);
         assertThat(artifact.getChecksum()).isEqualTo(checksum);
+    }
+
+    @BeforeClass
+    public static void setUp() throws Exception {
+        Throwable e = catchThrowable(() -> InetAddress.getByName(DEFAULT_MAVEN_CENTRAL_URI.getHost()));
+        if (e instanceof UnknownHostException)
+            assumeNoException(e);
     }
 
     @Test
