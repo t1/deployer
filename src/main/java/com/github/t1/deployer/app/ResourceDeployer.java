@@ -30,17 +30,14 @@ abstract class ResourceDeployer<
         private Function<PLAN, TYPE> plan;
         private BiFunction<BUILDER, TYPE, BUILDER> addTo;
         private BiConsumer<RESOURCE, TYPE> write;
-        private Predicate<RESOURCE> writeFilter = r -> true;
         private boolean confidential = false;
 
         protected void update(RESOURCE resource, PLAN plan, AUDIT audit) {
-            if (writeFilter.test(resource)) {
-                TYPE before = from(resource);
-                TYPE after = from(plan);
-                if (!Objects.equals(before, after)) {
-                    write(resource, plan);
-                    audit.changeRaw(name(), conceal(before), conceal(after));
-                }
+            TYPE before = from(resource);
+            TYPE after = from(plan);
+            if (!Objects.equals(before, after)) {
+                write(resource, plan);
+                audit.changeRaw(name(), conceal(before), conceal(after));
             }
         }
 
@@ -168,7 +165,7 @@ abstract class ResourceDeployer<
         resource.remove();
     }
 
-    private void auditRemove(RESOURCE resource, AUDIT audit) {
+    protected void auditRemove(RESOURCE resource, AUDIT audit) {
         properties.forEach(property -> audit.change(property.name(), property.conceal(property.from(resource)), null));
     }
 }

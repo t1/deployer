@@ -5,12 +5,12 @@ import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.container.LoggerResource;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Plan.*;
+import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
 
@@ -18,9 +18,12 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 public class LoggerDeployer
         extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder, LoggerResource, LoggerAuditBuilder> {
     public LoggerDeployer() {
-        property("level", LogLevel.class, LoggerResource.class, LoggerPlan.class);
-        property("use-parent-handlers", Boolean.class, LoggerResource.class, LoggerPlan.class)
-                .writeFilter(LoggerResource::isNotRoot);
+        property("level", LogLevel.class);
+        property("use-parent-handlers", Boolean.class);
+    }
+
+    private <T> Property<T> property(String name, Class<T> type) {
+        return property(name, type, LoggerResource.class, LoggerPlan.class);
     }
 
     @Override protected String getType() { return "loggers"; }
@@ -41,33 +44,32 @@ public class LoggerDeployer
         super.update(resource, plan, audit);
 
         if (!Objects.equals(resource.handlers(), plan.getHandlers())) {
-            List<LogHandlerName> existing = new ArrayList<>(resource.handlers());
-            plan.getHandlers()
-                .stream()
-                .filter(newHandler -> !existing.remove(newHandler))
-                .forEach(newHandler -> {
-                    resource.addLoggerHandler(newHandler);
-                    audit.change("handler", null, newHandler);
-                });
-            for (LogHandlerName oldHandler : existing) {
-                resource.removeLoggerHandler(oldHandler);
-                audit.change("handler", oldHandler, null);
-            }
+            List<LogHandlerName> oldHandlers = new ArrayList<>(resource.handlers());
+            List<LogHandlerName> newHandlers = plan
+                    .getHandlers()
+                    .stream()
+                    .filter(newHandler -> !oldHandlers.remove(newHandler))
+                    .collect(Collectors.toList());
+            newHandlers.forEach(resource::addLoggerHandler);
+            oldHandlers.forEach(resource::removeLoggerHandler);
+            audit.change("handlers",
+                    (oldHandlers.isEmpty()) ? null : oldHandlers,
+                    (newHandlers.isEmpty()) ? null : newHandlers);
         }
     }
 
     @Override protected LoggerResourceBuilder buildResource(LoggerPlan plan, LoggerAuditBuilder audit) {
         LoggerResourceBuilder builder = super.buildResource(plan, audit);
-        for (LogHandlerName handler : plan.getHandlers())
-            audit.change("handler", null, handler);
+        if (!plan.getHandlers().isEmpty())
+            audit.change("handlers", null, plan.getHandlers());
         return builder.handlers(plan.getHandlers());
     }
 
-    @Override protected void auditRegularRemove(LoggerResource resource, LoggerPlan plan, LoggerAuditBuilder audit) {
-        super.auditRegularRemove(resource, plan, audit);
+    @Override protected void auditRemove(LoggerResource resource, LoggerAuditBuilder audit) {
+        super.auditRemove(resource, audit);
 
-        for (LogHandlerName handler : resource.handlers())
-            audit.change("handler", handler, null);
+        if (!resource.handlers().isEmpty())
+            audit.change("handlers", resource.handlers(), null);
     }
 
     @Override protected void cleanupRemove(LoggerResource resource) {

@@ -605,8 +605,8 @@ public class AbstractDeployerTest {
                     .of(getCategory())
                     .change("level", null, level)
                     .change("use-parent-handlers", null, useParentHandlers);
-            for (LogHandlerName handler : handlerNames())
-                audit.change("handler", null, handler);
+            if (!handlerNames().isEmpty())
+                audit.change("handlers", null, handlerNames());
             assertThat(audits.getAudits()).contains(audit.added());
         }
 
@@ -631,8 +631,8 @@ public class AbstractDeployerTest {
                 audit.change("level", level, null);
             if (useParentHandlers != null)
                 audit.change("use-parent-handlers", useParentHandlers, null);
-            for (LogHandlerName handler : handlerNames())
-                audit.change("handler", handler, null);
+            if (!handlerNames().isEmpty())
+                audit.change("handlers", handlerNames(), null);
             assertThat(audits.getAudits()).contains(audit.removed());
         }
 
@@ -644,7 +644,6 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAddedHandler(Audits audits, String name) {
-            LogHandlerName handlerName = new LogHandlerName(name);
             verify(cli).execute(toModelNode(""
                     + "{\n"
                     + loggerAddress()
@@ -652,11 +651,10 @@ public class AbstractDeployerTest {
                     + "    'name' => '" + name + "'\n"
                     + "}"));
             assertThat(audits.getAudits()).contains(
-                    LoggerAudit.of(getCategory()).change("handler", null, handlerName).changed());
+                    LoggerAudit.of(getCategory()).change("handlers", null, "[" + name + "]").changed());
         }
 
         public void verifyRemovedHandler(Audits audits, String name) {
-            LogHandlerName handlerName = new LogHandlerName(name);
             verify(cli).execute(toModelNode(""
                     + "{\n"
                     + loggerAddress()
@@ -664,7 +662,7 @@ public class AbstractDeployerTest {
                     + "    'name' => '" + name + "'\n"
                     + "}"));
             assertThat(audits.getAudits()).contains(
-                    LoggerAudit.of(getCategory()).change("handler", handlerName, null).changed());
+                    LoggerAudit.of(getCategory()).change("handlers", "[" + name + "]", null).changed());
         }
 
         public LoggerPlan asPlan() {

@@ -1,5 +1,6 @@
 package com.github.t1.deployer.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.*;
@@ -24,7 +25,7 @@ public enum LogHandlerType {
         throw new IllegalArgumentException("No type name [" + typeName + "]");
     }
 
-    @NotNull public static LogHandlerType valueOfTypeName(String typeName) {
+    @NotNull @JsonCreator public static LogHandlerType valueOfTypeName(String typeName) {
         for (LogHandlerType type : LogHandlerType.values())
             if (type.typeName.equals(typeName))
                 return type;

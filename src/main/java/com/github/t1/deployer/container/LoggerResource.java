@@ -1,12 +1,14 @@
 package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.LoggerCategory;
 import com.github.t1.log.LogLevel;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
+import java.lang.Boolean;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -114,7 +116,7 @@ public class LoggerResource extends AbstractResource<LoggerResource> {
 
     public Boolean useParentHandlers() {
         checkDeployed();
-        return (useParentHandlers == null) ? true : useParentHandlers;
+        return (useParentHandlers == null) ? isNotRoot() : useParentHandlers;
     }
 
     public LogLevel level() {

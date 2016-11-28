@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.log.LogLevel;
 import lombok.*;
 
+import java.lang.Boolean;
 import java.util.*;
 
 import static com.github.t1.deployer.model.DeploymentState.*;
@@ -35,18 +36,21 @@ public class LoggerPlan implements Plan.AbstractPlan {
         LoggerPlanBuilder builder = builder().category(category);
         apply(node, "state", builder::state, DeploymentState::valueOf);
         apply(node, "level", builder::level, LogLevel::valueOf, "default.log-level or «DEBUG»");
-        apply(node, "handler", builder::handler, identity());
-        if (node.has("handlers"))
-            applyHandlers(node, builder);
-        if (!builder.category.isRoot())
-            apply(node, "use-parent-handlers", builder::useParentHandlers, Boolean::valueOf);
+        applyHandlers(node, builder);
+        apply(node, "use-parent-handlers", builder::useParentHandlers, Boolean::valueOf);
         return builder.build().validate();
     }
 
     private static void applyHandlers(JsonNode node, LoggerPlanBuilder builder) {
-        Iterator<JsonNode> handlers = node.get("handlers").elements();
-        while (handlers.hasNext())
-            builder.handler(Plan.expressions.resolve(handlers.next().textValue(), null));
+        if (node.has("handler")) {
+            if (node.has("handlers"))
+                throw new Plan.PlanLoadingException("Can't have 'handler' _and_ 'handlers'");
+            apply(node, "handler", builder::handler, identity());
+        } else if (node.has("handlers")) {
+            Iterator<JsonNode> handlers = node.get("handlers").elements();
+            while (handlers.hasNext())
+                builder.handler(Plan.expressions.resolve(handlers.next().textValue(), null));
+        }
     }
 
     public static class LoggerPlanBuilder {
@@ -63,6 +67,8 @@ public class LoggerPlan implements Plan.AbstractPlan {
         if (useParentHandlers == FALSE && handlers.isEmpty())
             throw new Plan.PlanLoadingException("Can't set use-parent-handlers of [" + category + "] "
                     + "to false when there are no handlers");
+        if (category.isRoot() && useParentHandlers != null)
+            throw new Plan.PlanLoadingException("Can't set use-parent-handlers of ROOT");
         return this;
     }
 

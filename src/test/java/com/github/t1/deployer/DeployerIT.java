@@ -31,6 +31,8 @@ import java.util.stream.Stream;
 
 import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
+import static com.github.t1.deployer.container.LogHandlerResource.*;
+import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.Password.*;
 import static com.github.t1.deployer.testtools.ModelNodeTools.*;
@@ -218,8 +220,8 @@ public class DeployerIT {
         return allOf(deployment(name), checksum(checksum));
     }
 
-    @SuppressWarnings("deprecation") private ModelNode readDataSource(String name, boolean xa) {
-        return container.getCli().execute(readDatasourceRequest(name, xa));
+    @SuppressWarnings("deprecation") private ModelNode execute(ModelNode request) {
+        return container.getCli().execute(request);
     }
 
 
@@ -519,7 +521,7 @@ public class DeployerIT {
                                .change("pool:max", null, "10")
                                .change("pool:max-age", null, "5 min")
                                .added());
-        assertThat(definedPropertiesOf(readDataSource("foo", false)))
+        assertThat(definedPropertiesOf(execute(readDatasourceRequest("foo", false))))
                 .has(property("connection-url", "jdbc:h2:mem:test"))
                 .has(property("driver-name", "h2"))
                 .has(property("enabled", "true"))
@@ -550,7 +552,7 @@ public class DeployerIT {
                                // TODO .change("xa", null, true)
                                .change("pool:max-age", "5 min", "10 min")
                                .changed());
-        assertThat(definedPropertiesOf(readDataSource("foo", false)))
+        assertThat(definedPropertiesOf(execute(readDatasourceRequest("foo", false))))
                 .has(property("connection-url", "jdbc:h2:mem:test"))
                 .has(property("driver-name", "h2"))
                 .has(property("enabled", "true"))
@@ -599,7 +601,7 @@ public class DeployerIT {
                                .change("pool:max", null, "10")
                                .change("pool:max-age", null, "5 min")
                                .added());
-        assertThat(definedPropertiesOf(readDataSource("bar", true)))
+        assertThat(definedPropertiesOf(execute(readDatasourceRequest("bar", true))))
                 .has(property("driver-name", "postgresql"))
                 .has(property("enabled", "true"))
                 .has(property("idle-timeout-minutes", "5"))
@@ -646,6 +648,91 @@ public class DeployerIT {
                                .change("pool:initial", "1", null)
                                .change("pool:max", "10", null)
                                .change("pool:max-age", "10 min", null)
+                               .removed());
+        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+    }
+
+    @Test
+    @InSequence(value = 3000)
+    public void shouldDeployLogHandlerAndLogger() throws Exception {
+        String plan = ""
+                + POSTGRESQL
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: INFO\n"
+                + "loggers:\n"
+                + "  foo:\n"
+                + "    handler: FOO\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                LogHandlerAudit.builder()
+                               .type(periodicRotatingFile)
+                               .name(new LogHandlerName("FOO"))
+                               .change("level", null, INFO)
+                               .change("file", null, "foo.log")
+                               .change("suffix", null, DEFAULT_SUFFIX)
+                               .added(),
+                LoggerAudit.builder().category(LoggerCategory.of("foo"))
+                           .change("level", null, DEBUG)
+                           .change("use-parent-handlers", null, false)
+                           .change("handlers", null, "[FOO]")
+                           .added());
+        assertThat(definedPropertiesOf(execute(readLogHandlerRequest(periodicRotatingFile, "FOO"))))
+                .has(property("append", "true"))
+                .has(property("autoflush", "true"))
+                .has(property("enabled", "true"))
+                .has(property("file", "{"
+                        + "\"path\" => \"foo.log\","
+                        + "\"relative-to\" => \"jboss.server.log.dir\"}"))
+                .has(property("formatter", DEFAULT_LOG_FORMAT))
+                .has(property("level", "INFO"))
+                .has(property("name", "FOO"))
+                .has(property("suffix", DEFAULT_SUFFIX));
+        assertThat(definedPropertiesOf(execute(readLoggerRequest("foo"))))
+                .has(property("category", "foo"))
+                .has(property("handlers", "[\"FOO\"]"))
+                .has(property("level", "DEBUG"))
+                .has(property("use-parent-handlers", "false"));
+        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+    }
+
+    @Test
+    @InSequence(value = 3099) // TODO join with shouldUndeployLogHandler when fixing #20
+    public void shouldUndeployLogger() throws Exception {
+        String plan = ""
+                + POSTGRESQL
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    level: INFO\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                LoggerAudit.builder().category(LoggerCategory.of("foo"))
+                           .change("level", DEBUG, null)
+                           .change("use-parent-handlers", false, null)
+                           .change("handlers", "[FOO]", null)
+                           .removed());
+        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+    }
+
+    @Test
+    @InSequence(value = 3100)
+    public void shouldUndeployLogHandler() throws Exception {
+        String plan = ""
+                + POSTGRESQL;
+
+        List<Audit> audits = post(plan);
+
+        assertThat(audits).containsExactly(
+                LogHandlerAudit.builder()
+                               .type(periodicRotatingFile)
+                               .name(new LogHandlerName("FOO"))
+                               .change("level", INFO, null)
+                               .change("file", "foo.log", null)
+                               .change("suffix", DEFAULT_SUFFIX, null)
                                .removed());
         assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
     }

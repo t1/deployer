@@ -26,7 +26,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @SuppressWarnings("unused")
 public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     /** the format is asymmetric, i.e. when you don't write it, you'll get this when reading. */
-    private static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
+    public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
 
     @NonNull @Getter private final LogHandlerType type;
     @NonNull @Getter private final LogHandlerName name;

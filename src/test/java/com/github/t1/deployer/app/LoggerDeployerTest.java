@@ -67,7 +67,42 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldNotSetUseParentHandlersOfRootLogger() {
+    public void shouldFailToAddPluralHandlersAndSingularHandler() {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "loggers:\n"
+                + "  foo:\n"
+                + "    handler: CONSOLE\n"
+                + "    handlers: [FILE]\n"));
+
+        assertThat(thrown).hasStackTraceContaining("Can't have 'handler' _and_ 'handlers'");
+    }
+
+    @Test
+    public void shouldFailToExplicitlySetUseParentHandlersOfRootLoggerToTrue() {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "loggers:\n"
+                + "  ROOT:\n"
+                + "    level: DEBUG\n"
+                + "    use-parent-handlers: true\n"
+                + "    handlers: [CONSOLE, FILE]\n"));
+
+        assertThat(thrown).hasStackTraceContaining("Can't set use-parent-handlers of ROOT");
+    }
+
+    @Test
+    public void shouldFailToExplicitlySetUseParentHandlersOfRootLoggerToFalse() {
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "loggers:\n"
+                + "  ROOT:\n"
+                + "    level: DEBUG\n"
+                + "    use-parent-handlers: false\n"
+                + "    handlers: [CONSOLE, FILE]\n"));
+
+        assertThat(thrown).hasStackTraceContaining("Can't set use-parent-handlers of ROOT");
+    }
+
+    @Test
+    public void shouldNotImplicitlySetUseParentHandlersOfRootLogger() {
         Audits audits = deploy(""
                 + "loggers:\n"
                 + "  ROOT:\n"
@@ -322,7 +357,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldAddLoggerHandler() {
+    public void shouldAddHandler() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
                 .level(DEBUG)
                 .handler("FOO")
@@ -340,7 +375,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
 
 
     @Test
-    public void shouldRemoveLoggerHandler() {
+    public void shouldRemoveHandler() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
                 .level(DEBUG)
                 .handler("FOO")
@@ -393,7 +428,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldRemoveLoggerWhenManaged() {
         givenLogger("com.github.t1.deployer.app1").level(DEBUG).deployed();
-        LoggerFixture app2 = givenLogger("com.github.t1.deployer.app2").level(DEBUG).deployed();
+        LoggerFixture app2 = givenLogger("com.github.t1.deployer.app2").level(DEBUG).handler("FOO").deployed();
         givenManaged("loggers");
 
         Audits audits = deploy(""
