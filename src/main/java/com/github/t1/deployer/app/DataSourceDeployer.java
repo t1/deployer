@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 import static com.github.t1.deployer.model.DeploymentState.*;
 
 @Slf4j
-public class DataSourceDeployer extends
+class DataSourceDeployer extends
         ResourceDeployer<DataSourcePlan, DataSourceResourceBuilder, DataSourceResource, DataSourceAuditBuilder> {
     public DataSourceDeployer() {
         property("uri", URI.class);

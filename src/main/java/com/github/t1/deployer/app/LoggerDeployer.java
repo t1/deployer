@@ -15,8 +15,7 @@ import java.util.stream.*;
 import static com.github.t1.deployer.model.DeploymentState.*;
 
 @Slf4j
-public class LoggerDeployer
-        extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder, LoggerResource, LoggerAuditBuilder> {
+class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder, LoggerResource, LoggerAuditBuilder> {
     public LoggerDeployer() {
         property("level", LogLevel.class);
         property("use-parent-handlers", Boolean.class);

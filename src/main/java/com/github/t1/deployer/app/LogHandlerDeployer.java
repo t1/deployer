@@ -16,7 +16,7 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 import static java.util.Collections.*;
 
 @Slf4j
-public class LogHandlerDeployer extends
+class LogHandlerDeployer extends
         ResourceDeployer<LogHandlerPlan, LogHandlerResourceBuilder, LogHandlerResource, LogHandlerAuditBuilder> {
     public LogHandlerDeployer() {
         property(LogLevel.class, "level");

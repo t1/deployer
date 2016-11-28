@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
+import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -83,7 +84,7 @@ public class ArtifactoryMock {
     private static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
     static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
 
-    static final List<Version> FOO_VERSIONS = asList(//
+    static final List<Version> FOO_VERSIONS = asList(
             NEWEST_FOO_VERSION,
             new Version("1.3.12"),
             new Version("1.3.2"),

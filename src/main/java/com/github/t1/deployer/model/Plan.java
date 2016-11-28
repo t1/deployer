@@ -30,7 +30,7 @@ import static lombok.AccessLevel.*;
 @Slf4j
 @JsonNaming(KebabCaseStrategy.class)
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-public class Plan {
+public final class Plan {
     public static final ObjectMapper YAML = new ObjectMapper(
             new YAMLFactory()
                     .enable(MINIMIZE_QUOTES)
@@ -41,6 +41,8 @@ public class Plan {
             .findAndRegisterModules();
 
     public static class PlanLoadingException extends RuntimeException {
+        private static final long serialVersionUID = -1L;
+
         public PlanLoadingException(String message) { super(message); }
 
         public PlanLoadingException(String message, Throwable cause) { super(message, cause); }
@@ -149,7 +151,7 @@ public class Plan {
                 ? expressions.resolve(node.get(fieldName).asText(), alternativeExpression)
                 : null;
         if (value == null && alternativeExpression != null)
-            value = expressions.resolver(alternativeExpression).getValueOr(null);
+            value = expressions.resolver(alternativeExpression).getValueOrNull();
         setter.accept((value == null) ? null : convert.apply(value));
     }
 

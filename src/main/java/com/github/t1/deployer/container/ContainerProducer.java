@@ -16,17 +16,17 @@ import static com.github.t1.log.LogLevel.*;
 @Slf4j
 @Logged(level = DEBUG)
 @ApplicationScoped
-public class ContainerProducer implements Serializable {
+class ContainerProducer implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
     private static final String SOCKET_BINDING =
             "jboss.as:socket-binding-group=standard-sockets,socket-binding=" + SOCKET_BINDING_PREFIX;
-    private static final ObjectName[] MANAGEMENT_INTERFACES = { //
-            objectName(SOCKET_BINDING + "native"), //
-            objectName(SOCKET_BINDING + "https"), //
-            objectName(SOCKET_BINDING + "http"), //
-    };
+    private static final ObjectName[] MANAGEMENT_INTERFACES = {
+            objectName(SOCKET_BINDING + "native"),
+            objectName(SOCKET_BINDING + "https"),
+            objectName(SOCKET_BINDING + "http"),
+            };
 
     private static ObjectName objectName(String name) {
         try {
@@ -49,9 +49,9 @@ public class ContainerProducer implements Serializable {
         ObjectName managementInterface = findManagementInterface();
         if (managementInterface == null)
             throw new RuntimeException("no appropriate MBean found");
-        return URI.create(boundScheme(managementInterface) //
-                + "://" + getAttribute(managementInterface, "boundAddress", "localhost") //
-                + ":" + getAttribute(managementInterface, "boundPort", "9990") //
+        return URI.create(boundScheme(managementInterface)
+                + "://" + getAttribute(managementInterface, "boundAddress", "localhost")
+                + ":" + getAttribute(managementInterface, "boundPort", "9990")
         );
     }
 

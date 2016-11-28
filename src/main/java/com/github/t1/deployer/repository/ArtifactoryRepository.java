@@ -20,7 +20,7 @@ import static javax.xml.bind.annotation.XmlAccessType.*;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ArtifactoryRepository extends Repository {
+class ArtifactoryRepository extends Repository {
     public static Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
         Path path = Paths.get(uri.getPath());
         return Artifact

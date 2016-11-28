@@ -19,7 +19,7 @@ import static lombok.AccessLevel.*;
 @Builder
 @AllArgsConstructor(access = PRIVATE)
 @JsonNaming(KebabCaseStrategy.class)
-public class LogHandlerPlan implements Plan.AbstractPlan {
+public final class LogHandlerPlan implements AbstractPlan {
     private static final Expressions.VariableName DEFAULT_LOG_FORMATTER
             = new Expressions.VariableName("default.log-formatter");
     public static final String DEFAULT_SUFFIX = ".yyyy-MM-dd";
@@ -76,7 +76,7 @@ public class LogHandlerPlan implements Plan.AbstractPlan {
                         -> builder.property(fieldName, node.get("properties").get(fieldName).asText()));
             return;
         }
-        throw new Plan.PlanLoadingException("unhandled log-handler type [" + builder.type + "]"
+        throw new PlanLoadingException("unhandled log-handler type [" + builder.type + "]"
                 + " in [" + builder.name + "]");
     }
 
@@ -84,14 +84,13 @@ public class LogHandlerPlan implements Plan.AbstractPlan {
 
     private LogHandlerPlan validate() {
         if (format != null && formatter != null)
-            throw new Plan.PlanLoadingException(
-                    "log-handler [" + name + "] can't have both a format and a formatter");
+            throw new PlanLoadingException("log-handler [" + name + "] can't have both a format and a formatter");
         if (type == custom) {
             if (module == null)
-                throw new Plan.PlanLoadingException(
+                throw new PlanLoadingException(
                         "log-handler [" + name + "] is of type [" + type + "], so it requires a 'module'");
             if (class_ == null)
-                throw new Plan.PlanLoadingException(
+                throw new PlanLoadingException(
                         "log-handler [" + name + "] is of type [" + type + "], so it requires a 'class'");
         }
         return this;

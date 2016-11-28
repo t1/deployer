@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.ServerHelper.*;
 
 @Slf4j
+@TestOnly
 public class CLI {
     private static final boolean DEBUG = Boolean.getBoolean(CLI.class.getName() + "#DEBUG");
     private static final int STARTUP_TIMEOUT = 30;
@@ -22,6 +24,7 @@ public class CLI {
         switch (severity) {
         case ERROR:
             log.error(message);
+            break;
         case WARN:
             log.warn(message);
             break;
@@ -117,7 +120,7 @@ public class CLI {
         boolean jboss8start = message.startsWith("\"WFLYCTL0216: Management resource");
         boolean notFoundEnd = message.endsWith(" not found\"");
         boolean isNotFound = (jboss7start || jboss8start) && notFoundEnd;
-        log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]", //
+        log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]",
                 jboss7start, jboss8start, notFoundEnd, isNotFound, message);
         return isNotFound;
     }

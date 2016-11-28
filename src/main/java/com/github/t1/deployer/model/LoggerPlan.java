@@ -21,7 +21,7 @@ import static lombok.AccessLevel.*;
 @Builder
 @AllArgsConstructor(access = PRIVATE)
 @JsonNaming(KebabCaseStrategy.class)
-public class LoggerPlan implements Plan.AbstractPlan {
+public final class LoggerPlan implements Plan.AbstractPlan {
     @NonNull @JsonIgnore private final LoggerCategory category;
     private final DeploymentState state;
     private final LogLevel level;

@@ -40,7 +40,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
         new HtmlWriter(out, title).writeObject(plan);
     }
 
-    private static class HtmlWriter extends GeneratorBase {
+    private static final class HtmlWriter extends GeneratorBase {
         private static final ObjectMapper MAPPER = new ObjectMapper()
                 .setSerializationInclusion(NON_EMPTY)
                 .findAndRegisterModules();
@@ -129,13 +129,13 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
                     + "    </tr>\n");
         }
 
-        @Override public void writeStartArray() throws IOException {}
+        @Override public void writeStartArray() {}
 
-        @Override public void writeEndArray() throws IOException {}
+        @Override public void writeEndArray() {}
 
-        @Override public void writeStartObject() throws IOException { ++depth; }
+        @Override public void writeStartObject() { ++depth; }
 
-        @Override public void writeEndObject() throws IOException {
+        @Override public void writeEndObject() {
             --depth;
             endRow();
             if (depth == 1) {
@@ -143,7 +143,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
             }
         }
 
-        @Override public void writeFieldName(String name) throws IOException {
+        @Override public void writeFieldName(String name) {
             switch (depth) {
             case 1:
                 printHeader(out, name);
@@ -167,6 +167,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
             Object value;
             if (row.containsKey(key)) {
                 Object tmp = row.get(key);
+                @SuppressWarnings("unchecked")
                 List<Object> list = (tmp instanceof List) ? (List) tmp : new ArrayList<>(singleton(tmp));
                 list.add(text);
                 value = list;
@@ -215,7 +216,7 @@ public class EffectivePlanHtmlWriter implements MessageBodyWriter<Plan> {
 
         @Override public void writeNull() {}
 
-        @Override public void flush() throws IOException { out.flush(); }
+        @Override public void flush() { out.flush(); }
 
         @Override protected void _releaseBuffers() {}
 

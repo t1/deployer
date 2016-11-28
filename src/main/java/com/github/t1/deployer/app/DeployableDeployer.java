@@ -3,8 +3,9 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.container.DeploymentResource;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Plan.*;
+import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.deployer.repository.Repository;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +20,7 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.problem.WebException.*;
 
 @Slf4j
-public class DeployableDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {
+class DeployableDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {
     @Inject Container container;
     @Inject Repository repository;
 

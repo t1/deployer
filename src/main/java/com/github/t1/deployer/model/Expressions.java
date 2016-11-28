@@ -134,7 +134,7 @@ public class Expressions {
             throw thrower.get();
         }
 
-        public String getValueOr(String alternative) { return match ? value : alternative; }
+        public String getValueOrNull() { return match ? value : null; }
     }
 
     private static final List<Class<? extends Resolver>> RESOLVERS = asList(
@@ -434,6 +434,8 @@ public class Expressions {
 
     @ReturnStatus(BAD_REQUEST)
     public static class UnresolvedVariableException extends WebApplicationApplicationException {
+        private static final long serialVersionUID = -1L;
+
         @Getter private final String expression;
 
         protected UnresolvedVariableException(String expression) {

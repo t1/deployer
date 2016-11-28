@@ -14,7 +14,7 @@ import static lombok.AccessLevel.*;
 @Builder
 @AllArgsConstructor(access = MODULE)
 @JsonNaming(KebabCaseStrategy.class)
-public class AbstractArtifactPlan implements Plan.AbstractPlan {
+class AbstractArtifactPlan implements Plan.AbstractPlan {
     final DeploymentState state;
     final GroupId groupId;
     @NonNull final ArtifactId artifactId;

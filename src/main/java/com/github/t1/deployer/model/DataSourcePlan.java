@@ -20,7 +20,7 @@ import static lombok.AccessLevel.*;
 @Builder
 @AllArgsConstructor(access = PRIVATE)
 @JsonNaming(KebabCaseStrategy.class)
-public class DataSourcePlan implements Plan.AbstractPlan {
+public final class DataSourcePlan implements Plan.AbstractPlan {
     private static final Pattern JDBC_URI = Pattern.compile("jdbc:(\\p{Alnum}{1,256}):.*");
 
     @NonNull @JsonIgnore private final DataSourceName name;

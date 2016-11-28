@@ -15,7 +15,7 @@ import static javax.ws.rs.core.Response.Status.*;
 
 @Slf4j
 @RequiredArgsConstructor
-public class MavenCentralRepository extends Repository {
+class MavenCentralRepository extends Repository {
     @Data
     private static class MavenCentralSearchResult {
         MavenCentralSearchResponse response;

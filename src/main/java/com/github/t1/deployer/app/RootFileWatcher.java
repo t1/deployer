@@ -17,7 +17,7 @@ import static java.util.Collections.*;
 @Singleton
 @Startup
 @Logged(level = INFO)
-public class RootFileWatcher {
+class RootFileWatcher {
     @Inject DeployerBoundary deployer;
 
     private FileWatcher fileWatcher;

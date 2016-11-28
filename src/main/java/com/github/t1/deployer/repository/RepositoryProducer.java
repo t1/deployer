@@ -2,6 +2,7 @@ package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
+import com.github.t1.rest.RestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -14,7 +15,7 @@ import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.rest.RestContext.*;
 
 @Slf4j
-public class RepositoryProducer {
+class RepositoryProducer {
     static final URI DEFAULT_ARTIFACTORY_URI = URI.create("http://localhost:8081/artifactory");
     static final URI DEFAULT_MAVEN_CENTRAL_URI = URI.create("https://search.maven.org");
     static final String REST_ALIAS = "repository";
