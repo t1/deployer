@@ -22,7 +22,6 @@ import static lombok.AccessLevel.*;
 public class LogHandlerPlan implements Plan.AbstractPlan {
     private static final Expressions.VariableName DEFAULT_LOG_FORMATTER
             = new Expressions.VariableName("default.log-formatter");
-    public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
     public static final String DEFAULT_SUFFIX = ".yyyy-MM-dd";
 
     @NonNull @JsonIgnore private final LogHandlerName name;
@@ -51,8 +50,7 @@ public class LogHandlerPlan implements Plan.AbstractPlan {
         apply(node, "type", builder::type, LogHandlerType::valueOfTypeName,
                 "default.log-handler-type or «" + periodicRotatingFile + "»");
         if (node.has("format") || (!node.has("formatter") && !Plan.expressions.contains(DEFAULT_LOG_FORMATTER)))
-            apply(node, "format", builder::format, identity(),
-                    "default.log-format or «" + DEFAULT_LOG_FORMAT + "»");
+            apply(node, "format", builder::format, identity(), "default.log-format or null");
         apply(node, "formatter", builder::formatter, identity(), "default.log-formatter");
         apply(node, "encoding", builder::encoding, identity(), "default.log-encoding");
         applyByType(node, builder);

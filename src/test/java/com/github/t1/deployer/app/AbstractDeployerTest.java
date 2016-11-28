@@ -847,9 +847,8 @@ public class AbstractDeployerTest {
                     + logHandlerAddress()
                     + "    'operation' => 'add'"
                     + ",\n    'level' => '" + ((level == null) ? "ALL" : level) + "'"
-                    + ",\n    " + ((formatter == null)
-                                           ? "'formatter' => '" + ((format == null) ? DEFAULT_LOG_FORMAT : format) + "'"
-                                           : "'named-formatter' => '" + formatter + "'")
+                    + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
+                    + ((format == null) ? "" : ",\n    'formatter' => '" + format + "'")
                     + ((type != periodicRotatingFile) ? "" : ",\n    'file' => {\n"
                     + "        'path' => '" + ((file == null) ? name.getValue().toLowerCase() + ".log" : file) + "',\n"
                     + "        'relative-to' => 'jboss.server.log.dir'\n"
@@ -867,8 +866,6 @@ public class AbstractDeployerTest {
                     + "\n}");
             verify(cli).execute(request);
             expectedAudit.change("level", null, (level == null) ? ALL : level);
-            if (format == null && formatter == null)
-                expectedAudit.change("format", null, DEFAULT_LOG_FORMAT);
             if (format != null)
                 expectedAudit.change("format", null, format);
             if (formatter != null)

@@ -25,7 +25,8 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @Accessors(fluent = true, chain = true)
 @SuppressWarnings("unused")
 public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
-    private static final String DEFAULT_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
+    /** the format is asymmetric, i.e. when you don't write it, you'll get this when reading. */
+    private static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
 
     @NonNull @Getter private final LogHandlerType type;
     @NonNull @Getter private final LogHandlerName name;
@@ -255,7 +256,7 @@ public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
 
     @Nullable private String readFormat(ModelNode result) {
         ModelNode node = result.get("formatter");
-        return (node.isDefined() && !DEFAULT_FORMAT.equals(node.asString())) ? node.asString() : null;
+        return (node.isDefined() && !DEFAULT_LOG_FORMAT.equals(node.asString())) ? node.asString() : null;
     }
 
     private static Map<String, String> getMap(ModelNode value) {
