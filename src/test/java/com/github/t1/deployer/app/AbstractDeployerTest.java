@@ -20,6 +20,8 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.OngoingStubbing;
+import org.mockito.verification.VerificationMode;
 
 import javax.enterprise.inject.Instance;
 import java.io.*;
@@ -131,12 +133,12 @@ public class AbstractDeployerTest {
             return null;
         }).when(deployers).forEach(any(Consumer.class));
 
-        when(cli.executeRaw(readResourceRequest(rootLogger()))).then(i -> rootLoggerResponse());
-        when(cli.execute(readLoggerRequest("*"))).then(i -> allLoggersResponse());
-        when(cli.execute(readDatasourceRequest("*", false))).then(i -> allNonXaDataSourcesResponse());
-        when(cli.execute(readDatasourceRequest("*", true))).then(i -> allXaDataSourcesResponse());
+        whenCliRaw(readResourceRequest(rootLogger())).then(i -> rootLoggerResponse());
+        whenCli(readLoggerRequest("*")).then(i -> allLoggersResponse());
+        whenCli(readDatasourceRequest("*", false)).then(i -> allNonXaDataSourcesResponse());
+        whenCli(readDatasourceRequest("*", true)).then(i -> allXaDataSourcesResponse());
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
-        when(cli.execute(readDeploymentRequest("*"))).then(i -> allDeploymentsResponse());
+        whenCli(readDeploymentRequest("*")).then(i -> allDeploymentsResponse());
 
         //noinspection deprecation
         when(repository.listVersions(isA(GroupId.class), isA(ArtifactId.class), isA(Boolean.class)))
@@ -145,6 +147,11 @@ public class AbstractDeployerTest {
                                    .filter(i.getArgument(2) ? Version::isSnapshot : Version::isStable)
                                    .collect(toList()));
     }
+
+    public OngoingStubbing<ModelNode> whenCli(ModelNode request) { return when(cli.execute(request)); }
+
+    public OngoingStubbing<ModelNode> whenCliRaw(ModelNode request) { return when(cli.executeRaw(request)); }
+
 
     private static String versionsKey(GroupId groupId, ArtifactId artifactId) { return groupId + ":" + artifactId; }
 
@@ -169,7 +176,7 @@ public class AbstractDeployerTest {
     }
 
     private void stubAllLogHandlers(LogHandlerType type) {
-        when(cli.execute(readLogHandlerRequest(type, "*")))
+        whenCli(readLogHandlerRequest(type, "*"))
                 .then(i -> joinModelNode(allLogHandlers.getOrDefault(type, emptyList())));
     }
 
@@ -190,14 +197,30 @@ public class AbstractDeployerTest {
     @After
     public void after() {
         verify(cli, atLeast(0)).executeRaw(any(ModelNode.class));
-        verify(cli, atLeast(0)).execute(readDeploymentRequest("*"));
-        verify(cli, atLeast(0)).execute(readLoggerRequest("*"));
-        verify(cli, atLeast(0)).execute(readDatasourceRequest("*", true));
-        verify(cli, atLeast(0)).execute(readDatasourceRequest("*", false));
+        verifyCli(readDeploymentRequest("*"), atLeast(0));
+        verifyCli(readLoggerRequest("*"), atLeast(0));
+        verifyCli(readDatasourceRequest("*", true), atLeast(0));
+        verifyCli(readDatasourceRequest("*", false), atLeast(0));
         Arrays.stream(LogHandlerType.values()).forEach(type ->
-                verify(cli, atLeast(0)).execute(readLogHandlerRequest(type, "*")));
+                verifyCli(readLogHandlerRequest(type, "*"), atLeast(0)));
 
         verifyNoMoreInteractions(cli);
+    }
+
+    private void verifyCli(ModelNode request) { verify(cli).execute(request); }
+
+    private void verifyCli(ModelNode request, VerificationMode mode) { verify(cli, mode).execute(request); }
+
+    public void verifyWriteAttribute(ModelNode address, String name, String value) {
+        verify(cli).writeAttribute(address, name, value);
+    }
+
+    public void verifyWriteAttribute(ModelNode address, String name, long value) {
+        verify(cli).writeAttribute(address, name, value);
+    }
+
+    public void verifyWriteAttribute(ModelNode address, String name, boolean value) {
+        verify(cli).writeAttribute(address, name, value);
     }
 
     private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
@@ -273,7 +296,7 @@ public class AbstractDeployerTest {
             this.type = type;
             this.name = name;
 
-            when(cli.executeRaw(readDeploymentRequest(fullName()))).then(i -> (deployed == null)
+            whenCliRaw(readDeploymentRequest(fullName())).then(i -> (deployed == null)
                     ? notDeployedNode(null, "deployment", name)
                     : toModelNode("{" + deployed.deployedNode() + "}"));
         }
@@ -535,7 +558,7 @@ public class AbstractDeployerTest {
         public LoggerFixture(@NonNull String category) {
             this.category = LoggerCategory.of(category);
 
-            when(cli.executeRaw(readLoggerRequest(category))).then(i -> deployed
+            whenCliRaw(readLoggerRequest(category)).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", "logger", category));
         }
@@ -600,7 +623,7 @@ public class AbstractDeployerTest {
                     + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
                     + "    'use-parent-handlers' => " + useParentHandlers + "\n"
                     + "}");
-            verify(cli).execute(request);
+            verifyCli(request);
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", null, level)
@@ -615,13 +638,13 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedLogLevelFrom(LogLevel oldLevel, Audits audits) {
-            verify(cli).writeAttribute(loggerAddressNode(), "level", level.toString());
+            verifyWriteAttribute(loggerAddressNode(), "level", level.toString());
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
         }
 
         public void verifyRemoved(Audits audits) {
-            verify(cli).execute(toModelNode(""
+            verifyCli(toModelNode(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'remove'\n"
@@ -637,14 +660,14 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedUseParentHandlersFrom(Boolean oldUseParentHandlers, Audits audits) {
-            verify(cli).writeAttribute(loggerAddressNode(), "use-parent-handlers", useParentHandlers);
+            verifyWriteAttribute(loggerAddressNode(), "use-parent-handlers", useParentHandlers);
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
                                .changed());
         }
 
         public void verifyAddedHandler(Audits audits, String name) {
-            verify(cli).execute(toModelNode(""
+            verifyCli(toModelNode(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'add-handler',\n"
@@ -655,7 +678,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyRemovedHandler(Audits audits, String name) {
-            verify(cli).execute(toModelNode(""
+            verifyCli(toModelNode(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'remove-handler',\n"
@@ -676,7 +699,6 @@ public class AbstractDeployerTest {
                     .build();
         }
     }
-
 
     public LogHandlerFixture givenLogHandler(LogHandlerType type, String name) {
         return new LogHandlerFixture(type, name);
@@ -704,7 +726,7 @@ public class AbstractDeployerTest {
             this.expectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
             this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
-            when(cli.executeRaw(readLogHandlerRequest(type, name))).then(i -> deployed
+            whenCliRaw(readLogHandlerRequest(type, name)).then(i -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", type.getHandlerTypeName(), name));
         }
@@ -820,7 +842,7 @@ public class AbstractDeployerTest {
         }
 
         public <T> void verifyWriteAttribute(String name, T value) {
-            verify(cli).writeAttribute(logHandlerAddressNode(), name, toStringOrNull(value));
+            AbstractDeployerTest.this.verifyWriteAttribute(logHandlerAddressNode(), name, toStringOrNull(value));
         }
 
         public <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
@@ -862,7 +884,7 @@ public class AbstractDeployerTest {
                                         .collect(joining(",\n        "))
                             + "\n    ]\n")
                     + "\n}");
-            verify(cli).execute(request);
+            verifyCli(request);
             expectedAudit.change("level", null, (level == null) ? ALL : level);
             if (format != null)
                 expectedAudit.change("format", null, format);
@@ -884,7 +906,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyRemoved(Audits audits) {
-            verify(cli).execute(toModelNode("{\n"
+            verifyCli(toModelNode("{\n"
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}"));
@@ -953,10 +975,10 @@ public class AbstractDeployerTest {
             this.jndiName = "java:/datasources/" + name + "DS";
             this.driver = "h2";
 
-            when(cli.executeRaw(readDatasourceRequest(name, true))).then(i -> xa && deployed
+            whenCliRaw(readDatasourceRequest(name, true)).then(i -> xa && deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("datasources", dataSource(xa), name));
-            when(cli.executeRaw(readDatasourceRequest(name, false))).then(i -> !xa && deployed
+            whenCliRaw(readDatasourceRequest(name, false)).then(i -> !xa && deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("datasources", dataSource(xa), name));
         }
@@ -1095,7 +1117,7 @@ public class AbstractDeployerTest {
                                                .extracting(Operation::getOperation)
                                                .containsExactly(operation.getOperation());
             } else {
-                verify(cli).execute(addRequest);
+                verifyCli(addRequest);
             }
         }
 
@@ -1146,25 +1168,25 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedUriFrom(String oldUri, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "uri", uri);
+            verifyWriteAttribute(dataSourceAddressNode(), "uri", uri);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("uri", oldUri, uri).changed());
         }
 
         public void verifyUpdatedJndiNameFrom(String oldJndiName, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "jndi-name", jndiName);
+            verifyWriteAttribute(dataSourceAddressNode(), "jndi-name", jndiName);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("jndi-name", oldJndiName, jndiName).changed());
         }
 
         public void verifyUpdatedDriverNameFrom(String oldDriverName, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "driver-name", driver);
+            verifyWriteAttribute(dataSourceAddressNode(), "driver-name", driver);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("driver", oldDriverName, driver).changed());
         }
 
         public void verifyUpdatedUserNameFrom(String oldUserName, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "user-name", userName);
+            verifyWriteAttribute(dataSourceAddressNode(), "user-name", userName);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name)
                                    .changeRaw("user-name",
@@ -1174,7 +1196,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedPasswordFrom(String oldPassword, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "password", password);
+            verifyWriteAttribute(dataSourceAddressNode(), "password", password);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name)
                                    .changeRaw("password",
@@ -1184,25 +1206,25 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedMinPoolSizeFrom(Integer oldMinPoolSize, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "min-pool-size", minPoolSize);
+            verifyWriteAttribute(dataSourceAddressNode(), "min-pool-size", minPoolSize);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("pool:min", oldMinPoolSize, minPoolSize).changed());
         }
 
         public void verifyUpdatedInitialPoolSizeFrom(Integer oldInitialPoolSize, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "initial-pool-size", initialPoolSize);
+            verifyWriteAttribute(dataSourceAddressNode(), "initial-pool-size", initialPoolSize);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("pool:initial", oldInitialPoolSize, initialPoolSize).changed());
         }
 
         public void verifyUpdatedMaxPoolSizeFrom(Integer oldMaxPoolSize, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "max-pool-size", maxPoolSize);
+            verifyWriteAttribute(dataSourceAddressNode(), "max-pool-size", maxPoolSize);
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("pool:max", oldMaxPoolSize, maxPoolSize).changed());
         }
 
         public void verifyUpdatedMaxAgeFrom(Age oldMaxAge, Audits audits) {
-            verify(cli).writeAttribute(dataSourceAddressNode(), "idle-timeout-minutes", maxAge.asMinutes());
+            verifyWriteAttribute(dataSourceAddressNode(), "idle-timeout-minutes", maxAge.asMinutes());
             assertThat(audits.getAudits()).contains(
                     DataSourceAudit.of(name).change("pool:max-age", oldMaxAge, maxAge).changed());
         }
@@ -1237,7 +1259,7 @@ public class AbstractDeployerTest {
                     + "    'operation' => 'remove',\n"
                     + dataSourceAddress().substring(0, dataSourceAddress().length() - 1)
                     + "}");
-            verify(cli).execute(request);
+            verifyCli(request);
         }
 
         public DataSourcePlan asPlan() {
