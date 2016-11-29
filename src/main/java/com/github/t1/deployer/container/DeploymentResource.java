@@ -5,7 +5,6 @@ import com.github.t1.deployer.model.DeploymentName;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.plugin.core.*;
 
@@ -16,7 +15,6 @@ import java.util.stream.Stream;
 import static com.github.t1.deployer.model.DeploymentName.*;
 import static java.util.Comparator.*;
 import static org.jboss.as.controller.client.helpers.Operations.createAddress;
-import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.DeploymentOperations.*;
 
 @Slf4j
@@ -42,8 +40,7 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
     }
 
     public static Stream<DeploymentResource> allDeployments(CLI cli) {
-        return cli.execute(createReadResourceOperation(address(ALL), true))
-                  .asList().stream()
+        return cli.readResource(address(ALL))
                   .map(match -> toDeployment(match.get("result"), cli))
                   .sorted(comparing(DeploymentResource::name));
     }
@@ -105,22 +102,21 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
     @Override public void add() {
         assert inputStream != null : "need an input stream to deploy";
         Deployment deployment = deployment(inputStream);
-        execute(createAddDeploymentOperation(deployment));
+        writeOp(createAddDeploymentOperation(deployment));
         this.deployed = true;
     }
 
     public void redeploy(InputStream inputStream) {
         assert inputStream != null : "need an input stream to redeploy";
         Deployment deployment = deployment(inputStream);
-        Operation operation = createReplaceOperation(deployment);
-        execute(operation);
+        writeOp(createReplaceOperation(deployment));
     }
 
     private Deployment deployment(InputStream inputStream) { return Deployment.of(inputStream, name.getValue()); }
 
     @Override public void remove() {
         UndeployDescription deployment = UndeployDescription.of(name.getValue()).setFailOnMissing(true);
-        execute(createUndeployOperation(deployment));
+        writeOp(createUndeployOperation(deployment));
         this.deployed = false;
     }
 

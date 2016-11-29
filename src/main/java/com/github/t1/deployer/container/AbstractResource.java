@@ -58,9 +58,9 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected abstract void readFrom(ModelNode result);
 
-    protected ModelNode execute(ModelNode request) { return cli.execute(request); }
+    protected ModelNode writeOp(ModelNode request) { return cli.execute(request); }
 
-    protected ModelNode execute(Operation operation) { return cli.execute(operation); }
+    protected ModelNode writeOp(Operation operation) { return cli.execute(operation); }
 
     public void writeAttribute(String name, String value) { cli.writeAttr(address(), name, ModelNode::set, value); }
 
@@ -76,7 +76,7 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     public abstract void add();
 
-    public void remove() { execute(createRemoveOperation(address())); }
+    public void remove() { writeOp(createRemoveOperation(address())); }
 
     public abstract String getId();
 

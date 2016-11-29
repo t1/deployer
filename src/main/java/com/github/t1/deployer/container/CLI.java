@@ -9,13 +9,14 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.ServerHelper.*;
 
 @Slf4j
-public class CLI {
+class CLI {
     private static final boolean DEBUG = Boolean.getBoolean(CLI.class.getName() + "#DEBUG");
     private static final int STARTUP_TIMEOUT = 30;
 
@@ -34,6 +35,8 @@ public class CLI {
     };
 
     @Inject public ModelControllerClient client;
+
+    private CompositeOperationBuilder batch;
 
 
     @SneakyThrows({ InterruptedException.class, TimeoutException.class })
@@ -70,6 +73,10 @@ public class CLI {
         return execute(request);
     }
 
+
+    public Stream<ModelNode> readResource(ModelNode address) {
+        return execute(createReadResourceOperation(address, true)).asList().stream();
+    }
 
     public ModelNode execute(ModelNode request) {
         ModelNode result = executeRaw(request);
@@ -124,5 +131,17 @@ public class CLI {
     private void logCli(String format, Object arg) {
         if (DEBUG)
             log.debug(format, arg);
+    }
+
+    public void startBatch() {
+        if (this.batch != null)
+            throw new IllegalStateException("already started a batch");
+        this.batch = CompositeOperationBuilder.create();
+    }
+
+    public void commitBatch() {
+        if (this.batch == null)
+            throw new IllegalStateException("no batch started");
+        this.batch = null;
     }
 }

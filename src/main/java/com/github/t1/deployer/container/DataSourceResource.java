@@ -13,6 +13,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DataSourceName.*;
 import static java.lang.Boolean.*;
@@ -54,20 +55,16 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
     }
 
     public static List<DataSourceResource> allDataSources(CLI cli) {
-        ModelNode nonXaRequest = createReadResourceOperation(address(ALL, false), true);
-        ModelNode xaRequest = createReadResourceOperation(address(ALL, true), true);
+        return Stream.concat(
+                readDataSources(cli, false),
+                readDataSources(cli, true))
+                     .sorted(comparing(DataSourceResource::name))
+                     .collect(toList());
+    }
 
-        List<DataSourceResource> all = new ArrayList<>();
-        cli.execute(nonXaRequest).asList().stream()
-           .map(node -> toDataSourceResource(name(node, false), cli, node.get("result"), false))
-           .forEach(all::add);
-        cli.execute(xaRequest).asList().stream()
-           .map(node -> toDataSourceResource(name(node, true), cli, node.get("result"), true))
-           .forEach(all::add);
-
-        return all.stream()
-                  .sorted(comparing(DataSourceResource::name))
-                  .collect(toList());
+    private static Stream<DataSourceResource> readDataSources(CLI cli, boolean xa) {
+        return cli.readResource(address(ALL, xa))
+                  .map(node -> toDataSourceResource(name(node, xa), cli, node.get("result"), xa));
     }
 
     private static DataSourceName name(ModelNode node, boolean xa) {
@@ -255,9 +252,9 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
             if (uri.getPort() >= 0)
                 composite.addStep(addXaProperty("PortNumber", Integer.toString(uri.getPort())));
             composite.addStep(addXaProperty("DatabaseName", databaseName(uri)));
-            execute(composite.build());
+            writeOp(composite.build());
         } else {
-            execute(addDataSource);
+            writeOp(addDataSource);
         }
 
         this.deployed = true;

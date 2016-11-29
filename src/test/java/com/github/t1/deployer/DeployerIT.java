@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Condition;
 import org.jboss.arquillian.junit.*;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.*;
@@ -42,6 +43,8 @@ import static java.util.concurrent.TimeUnit.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.junit.Assume.*;
 
 @Slf4j
@@ -167,6 +170,7 @@ public class DeployerIT {
     @ArquillianResource URI baseUri;
 
     @Inject Container container;
+    @Inject ModelControllerClient client;
 
     @Before
     public void setup() throws Exception {
@@ -220,8 +224,10 @@ public class DeployerIT {
         return allOf(deployment(name), checksum(checksum));
     }
 
-    @SuppressWarnings("deprecation") private ModelNode execute(ModelNode request) {
-        return container.getCli().execute(request);
+    @SneakyThrows(IOException.class) private ModelNode execute(ModelNode request) {
+        ModelNode result = client.execute(request);
+        assert isSuccessfulOutcome(result);
+        return result.get(RESULT);
     }
 
 

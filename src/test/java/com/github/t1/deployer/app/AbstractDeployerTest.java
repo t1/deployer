@@ -53,6 +53,7 @@ import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("SameParameterValue")
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -85,8 +86,8 @@ public class AbstractDeployerTest {
 
     @Mock Repository repository;
 
-    @Spy Container container;
-    @Mock ModelControllerClient cli;
+    @SuppressWarnings("resource") ModelControllerClient cli = mock(ModelControllerClient.class);
+    @Spy Container container = ContainerTest.buildContainer(cli);
 
     private final Map<VariableName, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
@@ -99,11 +100,8 @@ public class AbstractDeployerTest {
 
     private final Map<String, List<Version>> versions = new LinkedHashMap<>();
 
-    @Before @SuppressWarnings("deprecation")
+    @Before
     public void before() {
-        container.cli = new CLI();
-        container.cli.client = this.cli;
-
         logHandlerDeployer.managedResourceNames
                 = loggerDeployer.managedResourceNames
                 = dataSourceDeployer.managedResourceNames

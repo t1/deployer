@@ -1,6 +1,7 @@
 package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.LoggerCategory;
 import com.github.t1.log.LogLevel;
 import lombok.SneakyThrows;
 import org.jboss.as.controller.client.*;
@@ -21,6 +22,14 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings("resource")
 @RunWith(MockitoJUnitRunner.class)
 public class ContainerTest {
+    @SuppressWarnings("deprecation")
+    public static Container buildContainer(ModelControllerClient cli) {
+        Container container = new Container();
+        container.cli = new CLI();
+        container.cli.client = cli;
+        return container;
+    }
+
     private static final LogLevel ROOT_LEVEL = DEBUG;
     private static final LogLevel FOO_LEVEL = WARN;
 

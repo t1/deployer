@@ -57,10 +57,9 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
 
     public static List<LogHandlerResource> allHandlers(CLI cli) {
         return Arrays.stream(LogHandlerType.values())
-                     .flatMap(type -> cli.execute(createReadResourceOperation(address(type, ALL), true))
-                                         .asList().stream()
-                                         .map(node -> toLoggerResource(type(node), name(node), cli,
-                                                 node.get("result"))))
+                     .flatMap(type -> cli
+                             .readResource(address(type, ALL))
+                             .map(node -> toLoggerResource(type(node), name(node), cli, node.get("result"))))
                      .sorted(comparing(LogHandlerResource::name))
                      .collect(toList());
     }
@@ -293,7 +292,7 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
         if (properties != null)
             properties.forEach((key, value) -> request.get("properties").add(key, value));
 
-        execute(request);
+        writeOp(request);
 
         this.deployed = true;
     }

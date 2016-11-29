@@ -43,4 +43,6 @@ public class Container {
     public DeploymentResourceBuilder builderFor(DeploymentName name) { return DeploymentResource.builder(name, cli); }
 
     public Stream<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(cli); }
+
+    public void startBatch() { cli.startBatch(); }
 }

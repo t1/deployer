@@ -73,10 +73,8 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
     }
 
     public static List<LoggerResource> allLoggers(CLI cli) {
-        ModelNode request = createReadResourceOperation(address(LoggerCategory.ALL), true);
         List<LoggerResource> loggers =
-                cli.execute(request)
-                   .asList().stream()
+                cli.readResource(address(LoggerCategory.ALL))
                    .map(node -> toLoggerResource(category(node), cli, node.get("result")))
                    .sorted(comparing(LoggerResource::category))
                    .collect(toList());
@@ -129,7 +127,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
         checkDeployed();
         ModelNode request = createOperation("add-handler", address());
         request.get("name").set(handler.getValue());
-        execute(request);
+        writeOp(request);
         this.handlers.add(handler);
     }
 
@@ -137,7 +135,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
         checkDeployed();
         ModelNode request = createOperation("remove-handler", address());
         request.get("name").set(handler.getValue());
-        execute(request);
+        writeOp(request);
         this.handlers.remove(handler);
     }
 
@@ -198,7 +196,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
         if (useParentHandlers != null)
             request.get("use-parent-handlers").set(useParentHandlers);
 
-        execute(request);
+        writeOp(request);
 
         this.deployed = true;
     }
