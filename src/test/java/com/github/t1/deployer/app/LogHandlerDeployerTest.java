@@ -4,6 +4,7 @@ import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
 import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -383,7 +384,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.verifyWriteAttribute("file.path", "the-new-file");
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "file.path", toStringOrNull("the-new-file"));
         fixture.expectChange("file", "the-old-file", "the-new-file");
         fixture.verifyChanged(audits);
     }
@@ -451,7 +452,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-new-format\n");
 
-        fixture.verifyWriteAttribute("formatter", "the-new-format");
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "formatter", toStringOrNull("the-new-format"));
         fixture.expectChange("format", "the-old-format", "the-new-format");
         fixture.verifyChanged(audits);
     }
@@ -475,7 +476,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-new-formatter\n");
 
-        fixture.verifyWriteAttribute("named-formatter", "the-new-formatter");
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "named-formatter", toStringOrNull("the-new-formatter"));
         fixture.expectChange("formatter", "the-old-formatter", "the-new-formatter");
         fixture.verifyChanged(audits);
     }
@@ -499,9 +500,9 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    formatter: the-formatter\n");
 
-        fixture.verifyWriteAttribute("formatter", null);
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "formatter", toStringOrNull(null));
         fixture.expectChange("format", "the-format", null);
-        fixture.verifyWriteAttribute("named-formatter", "the-formatter");
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "named-formatter", toStringOrNull("the-formatter"));
         fixture.expectChange("formatter", null, "the-formatter");
         fixture.verifyChanged(audits);
     }
@@ -525,9 +526,9 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.verifyWriteAttribute("formatter", "the-format");
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "formatter", toStringOrNull("the-format"));
         fixture.expectChange("format", null, "the-format");
-        fixture.verifyWriteAttribute("named-formatter", null);
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "named-formatter", toStringOrNull(null));
         fixture.expectChange("formatter", "the-formatter", null);
         fixture.verifyChanged(audits);
     }
@@ -551,7 +552,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    suffix: the-new-suffix\n"
                 + "    format: the-format\n");
 
-        fixture.verifyWriteAttribute("file.path", "the-new-file");
+        verifyWriteAttribute(fixture.logHandlerAddressNode(), "file.path", toStringOrNull("the-new-file"));
         fixture.expectChange("file", "the-old-file", "the-new-file");
         fixture.verifyChange("suffix", "the-old-suffix", "the-new-suffix");
         fixture.verifyChanged(audits);
@@ -704,7 +705,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "      foos: bars\n"
                 + "      bax: bbb");
 
-        fixture.verifyMapPut("property", "bax", "bbb");
+        fixture.verifyPutProperty("bax", "bbb");
         fixture.expectChange("property:bax", null, "bbb").verifyChanged(audits);
     }
 
@@ -731,7 +732,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "      foo: bax\n"
                 + "      foos: bars\n");
 
-        fixture.verifyMapPut("property", "foo", "bax");
+        fixture.verifyPutProperty("foo", "bax");
         fixture.expectChange("property:foo", "bar", "bax").verifyChanged(audits);
     }
 
@@ -757,7 +758,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "    properties:\n"
                 + "      foo: bar\n");
 
-        fixture.verifyMapRemove("property", "foos");
+        fixture.verifyRemoveProperty("foos");
         fixture.expectChange("property:foos", "bars", null).verifyChanged(audits);
     }
 
@@ -784,8 +785,8 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
                 + "      bax: bar\n"
                 + "      foos: bars\n");
 
-        fixture.verifyMapRemove("property", "foo");
-        fixture.verifyMapPut("property", "bax", "bar");
+        fixture.verifyRemoveProperty("foo");
+        fixture.verifyPutProperty("bax", "bar");
         fixture.expectChange("property:bax", null, "bar")
                .expectChange("property:foo", "bar", null)
                .verifyChanged(audits);
@@ -884,8 +885,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
     public void shouldFailToDeployPinnedLogHandler() {
         givenLogHandler(periodicRotatingFile, "FOO").deployed().pinned();
 
-        Throwable thrown = catchThrowable(() ->
-        deploy(""
+        Throwable thrown = catchThrowable(() -> deploy(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    formatter: foo"));

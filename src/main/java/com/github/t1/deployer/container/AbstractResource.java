@@ -62,15 +62,17 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected ModelNode execute(Operation operation) { return cli.execute(operation); }
 
-    public void writeAttribute(String name, String value) { cli.writeAttribute(address(), name, value); }
+    public void writeAttribute(String name, String value) { cli.writeAttr(address(), name, ModelNode::set, value); }
 
-    public void writeAttribute(String name, boolean value) { cli.writeAttribute(address(), name, value); }
+    public void writeAttribute(String name, Boolean value) { cli.writeAttr(address(), name, ModelNode::set, value); }
 
-    public void writeAttribute(String name, long value) { cli.writeAttribute(address(), name, value); }
+    public void writeAttribute(String name, Integer value) { cli.writeAttr(address(), name, ModelNode::set, value); }
 
-    public void propertyPut(String key, String value) { cli.mapPut(address(), "property", key, value); }
+    public void writeAttribute(String name, Long value) { cli.writeAttr(address(), name, ModelNode::set, value); }
 
-    protected void propertyRemove(String key) { cli.mapRemove(address(), "property", key); }
+    public void propertyPut(String key, String value) { cli.putProperty(address(), key, value); }
+
+    protected void propertyRemove(String key) { cli.removeProperty(address(), key); }
 
     public abstract void add();
 

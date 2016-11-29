@@ -27,7 +27,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @Accessors(fluent = true, chain = true)
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @SuppressWarnings("unused")
-public class DataSourceResource extends AbstractResource<DataSourceResource> {
+public final class DataSourceResource extends AbstractResource<DataSourceResource> {
     private final DataSourceName name;
     private boolean xa;
     private String driver;
@@ -226,30 +226,30 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
 
     @Override public void add() {
         log.debug("add data-source {}", name);
-        ModelNode addDs = createAddOperation(address());
+        ModelNode addDataSource = createAddOperation(address());
 
         if (!xa)
-            addDs.get("connection-url").set(uri.toString());
-        addDs.get("jndi-name").set(jndiName);
-        addDs.get("driver-name").set(driver);
+            addDataSource.get("connection-url").set(uri.toString());
+        addDataSource.get("jndi-name").set(jndiName);
+        addDataSource.get("driver-name").set(driver);
 
         if (userName != null)
-            addDs.get("user-name").set(userName);
+            addDataSource.get("user-name").set(userName);
         if (password != null)
-            addDs.get("password").set(password);
+            addDataSource.get("password").set(password);
 
         if (minPoolSize != null)
-            addDs.get("min-pool-size").set(minPoolSize);
+            addDataSource.get("min-pool-size").set(minPoolSize);
         if (initialPoolSize != null)
-            addDs.get("initial-pool-size").set(initialPoolSize);
+            addDataSource.get("initial-pool-size").set(initialPoolSize);
         if (maxPoolSize != null)
-            addDs.get("max-pool-size").set(maxPoolSize);
+            addDataSource.get("max-pool-size").set(maxPoolSize);
         if (maxPoolAge != null)
-            addDs.get("idle-timeout-minutes").set(maxPoolAge.asMinutes());
+            addDataSource.get("idle-timeout-minutes").set(maxPoolAge.asMinutes());
 
         if (xa) {
             CompositeOperationBuilder composite = CompositeOperationBuilder.create();
-            composite.addStep(addDs);
+            composite.addStep(addDataSource);
             URI uri = (this.uri.getScheme().equals("jdbc")) ? URI.create(this.uri.getSchemeSpecificPart()) : this.uri;
             composite.addStep(addXaProperty("ServerName", uri.getHost()));
             if (uri.getPort() >= 0)
@@ -257,7 +257,7 @@ public class DataSourceResource extends AbstractResource<DataSourceResource> {
             composite.addStep(addXaProperty("DatabaseName", databaseName(uri)));
             execute(composite.build());
         } else {
-            execute(addDs);
+            execute(addDataSource);
         }
 
         this.deployed = true;

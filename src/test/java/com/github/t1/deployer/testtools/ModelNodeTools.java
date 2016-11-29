@@ -6,6 +6,8 @@ import org.jboss.dmr.*;
 
 import java.util.stream.Collector;
 
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+
 public class ModelNodeTools {
     public static ModelNode readLoggerRequest(String name) { return readResourceRequest("logging", "logger", name); }
 
@@ -64,5 +66,15 @@ public class ModelNodeTools {
     public static Condition<ModelNode> property(String key, String value) {
         return new Condition<>((ModelNode node) -> node.asObject().get(key).asString().equals(value),
                 "property '%s' equal to '%s'", key, value);
+    }
+
+    public static ModelNode success() { return success(null); }
+
+    public static ModelNode success(ModelNode outcome) {
+        ModelNode wrapper = new ModelNode();
+        wrapper.get(OUTCOME).set(SUCCESS);
+        if (outcome != null)
+            wrapper.get(RESULT).set(outcome);
+        return wrapper;
     }
 }

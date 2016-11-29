@@ -24,7 +24,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @Accessors(fluent = true, chain = true)
 @SuppressWarnings("unused")
-public class LogHandlerResource extends AbstractResource<LogHandlerResource> {
+public final class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     /** the format is asymmetric, i.e. when you don't write it, you'll get this when reading. */
     public static final String DEFAULT_LOG_FORMAT = "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n";
 

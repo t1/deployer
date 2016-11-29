@@ -8,7 +8,6 @@ import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.LoggerCategory.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class LoggerDeployerTest extends AbstractDeployerTest {
     @Test
@@ -109,7 +108,7 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
                 + "    level: DEBUG\n"
                 + "    handlers: [CONSOLE, FILE]\n");
 
-        verify(cli).writeAttribute(rootLoggerNode(), "level", "DEBUG");
+        verifyWriteAttribute(rootLoggerNode(), "level", "DEBUG");
         assertThat(audits.getAudits()).containsExactly(LoggerAudit.of(ROOT).change("level", "INFO", "DEBUG").changed());
     }
 

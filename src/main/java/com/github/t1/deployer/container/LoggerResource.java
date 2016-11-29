@@ -23,7 +23,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @Slf4j
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @Accessors(fluent = true, chain = true)
-public class LoggerResource extends AbstractResource<LoggerResource> {
+public final class LoggerResource extends AbstractResource<LoggerResource> {
     static LogLevel mapLogLevel(String level) {
         switch (level) {
         case "ALL":

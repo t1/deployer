@@ -4,18 +4,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.ServerHelper.*;
 
 @Slf4j
-@TestOnly
 public class CLI {
     private static final boolean DEBUG = Boolean.getBoolean(CLI.class.getName() + "#DEBUG");
     private static final int STARTUP_TIMEOUT = 30;
@@ -34,7 +33,7 @@ public class CLI {
         }
     };
 
-    @Inject ModelControllerClient client;
+    @Inject public ModelControllerClient client;
 
 
     @SneakyThrows({ InterruptedException.class, TimeoutException.class })
@@ -45,31 +44,27 @@ public class CLI {
     }
 
 
-    public ModelNode writeAttribute(ModelNode address, String name, String value) {
-        return execute(createWriteAttributeOperation(address, name, value));
-    }
-
-    public ModelNode writeAttribute(ModelNode address, String name, boolean value) {
-        return execute(createWriteAttributeOperation(address, name, value));
-    }
-
-    public ModelNode writeAttribute(ModelNode address, String name, long value) {
-        return execute(createWriteAttributeOperation(address, name, value));
+    public <T> ModelNode writeAttr(ModelNode address, String name, BiFunction<ModelNode, T, ModelNode> set, T value) {
+        ModelNode request = createOperation(WRITE_ATTRIBUTE_OPERATION, address);
+        request.get(NAME).set(name);
+        if (value != null)
+            set.apply(request.get(VALUE), value);
+        return execute(request);
     }
 
 
-    public ModelNode mapPut(ModelNode address, String name, String key, String value) {
+    public ModelNode putProperty(ModelNode address, String key, String value) {
         ModelNode request = createOperation("map-put", address);
-        request.get("name").set(name);
+        request.get("name").set("property");
         request.get("key").set(key);
         request.get("value").set(value);
 
         return execute(request);
     }
 
-    public ModelNode mapRemove(ModelNode address, String name, String key) {
+    public ModelNode removeProperty(ModelNode address, String key) {
         ModelNode request = createOperation("map-remove", address);
-        request.get("name").set(name);
+        request.get("name").set("property");
         request.get("key").set(key);
 
         return execute(request);
@@ -99,7 +94,7 @@ public class CLI {
     @SneakyThrows(IOException.class)
     private ModelNode executeRaw(Operation operation) {
         logCli("execute operation {}", operation.getOperation());
-        ModelNode result = client.execute(operation);
+        ModelNode result = client.execute(operation, LOGGING);
         logCli("response {}", result);
         return result;
     }

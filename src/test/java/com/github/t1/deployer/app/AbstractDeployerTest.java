@@ -14,13 +14,13 @@ import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.*;
 import lombok.*;
+import org.jboss.as.controller.client.*;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.OngoingStubbing;
 import org.mockito.verification.VerificationMode;
 
 import javax.enterprise.inject.Instance;
@@ -30,7 +30,7 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.*;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.app.Trigger.mock;
@@ -48,8 +48,11 @@ import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
 
 @SuppressWarnings("SameParameterValue")
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -83,7 +86,7 @@ public class AbstractDeployerTest {
     @Mock Repository repository;
 
     @Spy Container container;
-    @Mock CLI cli;
+    @Mock ModelControllerClient cli;
 
     private final Map<VariableName, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
@@ -98,7 +101,8 @@ public class AbstractDeployerTest {
 
     @Before @SuppressWarnings("deprecation")
     public void before() {
-        container.cli = cli;
+        container.cli = new CLI();
+        container.cli.client = this.cli;
 
         logHandlerDeployer.managedResourceNames
                 = loggerDeployer.managedResourceNames
@@ -133,12 +137,14 @@ public class AbstractDeployerTest {
             return null;
         }).when(deployers).forEach(any(Consumer.class));
 
-        whenCliRaw(readResourceRequest(rootLogger())).then(i -> rootLoggerResponse());
-        whenCli(readLoggerRequest("*")).then(i -> allLoggersResponse());
-        whenCli(readDatasourceRequest("*", false)).then(i -> allNonXaDataSourcesResponse());
-        whenCli(readDatasourceRequest("*", true)).then(i -> allXaDataSourcesResponse());
+        when(anyModelNode()).then(i -> success()); // write-attribute calls
+        when(anyOperation()).then(i -> success()); // composite calls
+        whenCli(readResourceRequest(rootLogger())).thenRaw(this::rootLoggerResponse);
+        whenCli(readLoggerRequest("*")).then(this::allLoggersResponse);
+        whenCli(readDatasourceRequest("*", false)).then(this::allNonXaDataSourcesResponse);
+        whenCli(readDatasourceRequest("*", true)).then(this::allXaDataSourcesResponse);
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
-        whenCli(readDeploymentRequest("*")).then(i -> allDeploymentsResponse());
+        whenCli(readDeploymentRequest("*")).then(this::allDeploymentsResponse);
 
         //noinspection deprecation
         when(repository.listVersions(isA(GroupId.class), isA(ArtifactId.class), isA(Boolean.class)))
@@ -148,9 +154,29 @@ public class AbstractDeployerTest {
                                    .collect(toList()));
     }
 
-    public OngoingStubbing<ModelNode> whenCli(ModelNode request) { return when(cli.execute(request)); }
+    @SneakyThrows(IOException.class)
+    private ModelNode anyModelNode() { return cli.execute(any(ModelNode.class), any(OperationMessageHandler.class)); }
 
-    public OngoingStubbing<ModelNode> whenCliRaw(ModelNode request) { return when(cli.executeRaw(request)); }
+    @SneakyThrows(IOException.class)
+    private ModelNode anyOperation() { return cli.execute(any(Operation.class), any(OperationMessageHandler.class)); }
+
+    @RequiredArgsConstructor
+    public class OngoingCli {
+        private final ModelNode request;
+
+        public void then(Supplier<ModelNode> supplier) {
+            thenRaw(() -> success(supplier.get()));
+        }
+
+        @SneakyThrows(IOException.class)
+        public void thenRaw(Supplier<ModelNode> supplier) {
+            when(cli.execute(eq(request), any(OperationMessageHandler.class))).then(i -> supplier.get());
+        }
+    }
+
+    public OngoingCli whenCli(ModelNode request) {
+        return new OngoingCli(request);
+    }
 
 
     private static String versionsKey(GroupId groupId, ArtifactId artifactId) { return groupId + ":" + artifactId; }
@@ -177,7 +203,7 @@ public class AbstractDeployerTest {
 
     private void stubAllLogHandlers(LogHandlerType type) {
         whenCli(readLogHandlerRequest(type, "*"))
-                .then(i -> joinModelNode(allLogHandlers.getOrDefault(type, emptyList())));
+                .then(() -> joinModelNode(allLogHandlers.getOrDefault(type, emptyList())));
     }
 
     private ModelNode allLoggersResponse() { return joinModelNode(allLoggers); }
@@ -195,8 +221,9 @@ public class AbstractDeployerTest {
     @Test public void dummyTestToStopJUnitFromComplainingAboutMissingTestsInAbstractDeployerTest() {}
 
     @After
+    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
     public void after() {
-        verify(cli, atLeast(0)).executeRaw(any(ModelNode.class));
+        verify(cli, atLeast(0)).execute(any(ModelNode.class), any(OperationMessageHandler.class));
         verifyCli(readDeploymentRequest("*"), atLeast(0));
         verifyCli(readLoggerRequest("*"), atLeast(0));
         verifyCli(readDatasourceRequest("*", true), atLeast(0));
@@ -207,20 +234,37 @@ public class AbstractDeployerTest {
         verifyNoMoreInteractions(cli);
     }
 
-    private void verifyCli(ModelNode request) { verify(cli).execute(request); }
+    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
+    private void verifyCli(ModelNode request) { verify(cli).execute(eq(request), any(OperationMessageHandler.class)); }
 
-    private void verifyCli(ModelNode request, VerificationMode mode) { verify(cli, mode).execute(request); }
+    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
+    private void verifyCli(ModelNode request, VerificationMode mode) {
+        verify(cli, mode).execute(eq(request), any(OperationMessageHandler.class));
+    }
 
     public void verifyWriteAttribute(ModelNode address, String name, String value) {
-        verify(cli).writeAttribute(address, name, value);
+        verifyWriteAttribute(address, name, ModelNode::set, value);
     }
 
-    public void verifyWriteAttribute(ModelNode address, String name, long value) {
-        verify(cli).writeAttribute(address, name, value);
+    public void verifyWriteAttribute(ModelNode address, String name, Integer value) {
+        verifyWriteAttribute(address, name, ModelNode::set, value);
     }
 
-    public void verifyWriteAttribute(ModelNode address, String name, boolean value) {
-        verify(cli).writeAttribute(address, name, value);
+    public void verifyWriteAttribute(ModelNode address, String name, Long value) {
+        verifyWriteAttribute(address, name, ModelNode::set, value);
+    }
+
+    public void verifyWriteAttribute(ModelNode address, String name, Boolean value) {
+        verifyWriteAttribute(address, name, ModelNode::set, value);
+    }
+
+    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
+    private <T> void verifyWriteAttribute(ModelNode addr, String name, BiFunction<ModelNode, T, ModelNode> set, T v) {
+        ModelNode op = createOperation(WRITE_ATTRIBUTE_OPERATION, addr);
+        op.get(NAME).set(name);
+        if (v != null)
+            set.apply(op.get(VALUE), v);
+        verify(cli).execute(eq(op), any(OperationMessageHandler.class));
     }
 
     private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
@@ -296,7 +340,7 @@ public class AbstractDeployerTest {
             this.type = type;
             this.name = name;
 
-            whenCliRaw(readDeploymentRequest(fullName())).then(i -> (deployed == null)
+            whenCli(readDeploymentRequest(fullName())).thenRaw(() -> (deployed == null)
                     ? notDeployedNode(null, "deployment", name)
                     : toModelNode("{" + deployed.deployedNode() + "}"));
         }
@@ -535,10 +579,11 @@ public class AbstractDeployerTest {
 
     private List<Operation> operations;
 
+    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
     private List<Operation> captureOperations() {
         if (operations == null) {
             ArgumentCaptor<Operation> captor = ArgumentCaptor.forClass(Operation.class);
-            verify(cli, atLeastOnce()).execute(captor.capture());
+            verify(cli, atLeastOnce()).execute(captor.capture(), any(OperationMessageHandler.class));
             operations = captor.getAllValues();
         }
         return operations;
@@ -558,7 +603,7 @@ public class AbstractDeployerTest {
         public LoggerFixture(@NonNull String category) {
             this.category = LoggerCategory.of(category);
 
-            whenCliRaw(readLoggerRequest(category)).then(i -> deployed
+            whenCli(readLoggerRequest(category)).thenRaw(() -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", "logger", category));
         }
@@ -726,7 +771,7 @@ public class AbstractDeployerTest {
             this.expectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
             this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
-            whenCliRaw(readLogHandlerRequest(type, name)).then(i -> deployed
+            whenCli(readLogHandlerRequest(type, name)).thenRaw(() -> deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("logging", type.getHandlerTypeName(), name));
         }
@@ -830,19 +875,15 @@ public class AbstractDeployerTest {
             return address("logging", type.getHandlerTypeName(), name);
         }
 
-        private ModelNode logHandlerAddressNode() {
+        public ModelNode logHandlerAddressNode() {
             return createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
         }
 
 
         public <T> LogHandlerFixture verifyChange(String name, T oldValue, T newValue) {
-            verifyWriteAttribute(name, newValue);
+            verifyWriteAttribute(logHandlerAddressNode(), name, toStringOrNull(newValue));
             expectChange(name, oldValue, newValue);
             return this;
-        }
-
-        public <T> void verifyWriteAttribute(String name, T value) {
-            AbstractDeployerTest.this.verifyWriteAttribute(logHandlerAddressNode(), name, toStringOrNull(value));
         }
 
         public <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
@@ -854,12 +895,21 @@ public class AbstractDeployerTest {
             assertThat(audits.getAudits()).contains(this.expectedAudit.changed());
         }
 
-        public void verifyMapPut(String name, String key, String value) {
-            verify(cli).mapPut(logHandlerAddressNode(), name, key, value);
+        public void verifyPutProperty(String key, String value) {
+            ModelNode request = createOperation("map-put", logHandlerAddressNode());
+            request.get("name").set("property");
+            request.get("key").set(key);
+            request.get("value").set(value);
+
+            verifyCli(request);
         }
 
-        public void verifyMapRemove(String name, String key) {
-            verify(cli).mapRemove(logHandlerAddressNode(), name, key);
+        public void verifyRemoveProperty(String key) {
+            ModelNode request = createOperation("map-remove", logHandlerAddressNode());
+            request.get("name").set("property");
+            request.get("key").set(key);
+
+            verifyCli(request);
         }
 
         public void verifyAdded(Audits audits) {
@@ -975,10 +1025,10 @@ public class AbstractDeployerTest {
             this.jndiName = "java:/datasources/" + name + "DS";
             this.driver = "h2";
 
-            whenCliRaw(readDatasourceRequest(name, true)).then(i -> xa && deployed
+            whenCli(readDatasourceRequest(name, true)).thenRaw(() -> xa && deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("datasources", dataSource(xa), name));
-            whenCliRaw(readDatasourceRequest(name, false)).then(i -> !xa && deployed
+            whenCli(readDatasourceRequest(name, false)).thenRaw(() -> !xa && deployed
                     ? toModelNode("{" + deployedNode() + "}")
                     : notDeployedNode("datasources", dataSource(xa), name));
         }
