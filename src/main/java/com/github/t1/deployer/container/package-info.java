@@ -1,6 +1,7 @@
 @DependsUpon(packagesOf = {
         com.github.t1.deployer.model.Checksum.class,
 
+        com.github.t1.problem.ProblemDetail.class,
         org.jboss.as.controller.client.ModelControllerClient.class,
         org.jboss.as.controller.client.helpers.Operations.class,
         org.jboss.dmr.ModelNode.class,

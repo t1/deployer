@@ -177,6 +177,8 @@ public class DeployerIT {
         if (first && !runningOnClient()) {
             first = false;
 
+            System.setProperty("com.github.t1.deployer.container.CLI#DEBUG", "true");
+
             //noinspection resource
             jbossConfig = new FileMemento(System.getProperty("jboss.server.config.dir") + "/standalone.xml").setup();
             jbossConfig.setOrig(jbossConfig.getOrig().replaceFirst(""
@@ -210,7 +212,11 @@ public class DeployerIT {
                     .request(APPLICATION_JSON_TYPE)
                     .buildPost(entity)
                     .invoke();
-            assertThat(response.getStatusInfo()).isEqualTo(expectedStatus);
+            assertThat(response.getStatusInfo())
+                    .as("failed: %s", new Object() {
+                        @Override public String toString() { return response.readEntity(String.class); }
+                    })
+                    .isEqualTo(expectedStatus);
             return response;
         }
     }

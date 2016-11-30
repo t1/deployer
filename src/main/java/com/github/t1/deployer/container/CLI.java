@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import static com.github.t1.problem.WebException.*;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.ServerHelper.*;
@@ -117,7 +118,7 @@ class CLI {
     }
 
     public void fail(ModelNode result) {
-        throw new RuntimeException("outcome " + result.get("outcome")
+        throw badRequest("outcome " + result.get("outcome")
                 + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : ""));
     }
 
@@ -151,7 +152,7 @@ class CLI {
         Operation operation = batch.build();
         assert operation.getOperation().has(STEPS);
         if (operation.getOperation().get(STEPS).has(0)) {
-            log.debug("execute batch");
+            logCli("execute batch: {}", operation.getOperation());
             ModelNode result = client.execute(operation, LOGGING);
             logCli("response {}", result);
             checkOutcome(result);

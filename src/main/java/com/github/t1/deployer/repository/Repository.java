@@ -64,7 +64,7 @@ public abstract class Repository {
         Optional<Version> max = versions.stream().max(Comparator.naturalOrder());
         if (!max.isPresent())
             throw badRequest("no versions found for " + groupId + ":" + artifactId);
-        log.debug("resolved {} to {}", versionExpression, max.get());
+        log.debug("resolved {}:{} {} to {}", groupId, artifactId, versionExpression, max.get());
         return max.get();
     }
 

@@ -96,11 +96,11 @@ public class DeployerBoundary {
             } else {
                 applying.applyDefaultRoot();
             }
-            container.commitBatch();
         } catch (RuntimeException e) {
             container.rollbackBatch();
             throw e;
         }
+        container.commitBatch();
 
         audits.applied(trigger, principal, variables, audits);
 
