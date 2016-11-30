@@ -45,4 +45,8 @@ public class Container {
     public Stream<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(cli); }
 
     public void startBatch() { cli.startBatch(); }
+
+    public void commitBatch() { cli.commitBatch();    }
+
+    public void rollbackBatch() { cli.rollbackBatch();    }
 }

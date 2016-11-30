@@ -208,13 +208,13 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
 
     public void addProperty(String key, String value) {
         checkDeployed();
-        propertyPut(key, value);
+        writeProperty(key, value);
         this.properties = propertiesBuilder().put(key, value).build();
     }
 
     public void updateProperty(String key, String value) {
         checkDeployed();
-        propertyPut(key, value);
+        writeProperty(key, value);
         this.properties = propertiesBuilderWithout(key).put(key, value).build();
     }
 

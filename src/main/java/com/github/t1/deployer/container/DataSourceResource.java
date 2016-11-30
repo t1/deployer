@@ -192,7 +192,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
 
     public void updateMaxAge(Age newMaxAge) {
         checkDeployed();
-        writeAttribute("idle-timeout-minutes", newMaxAge.asMinutes());
+        writeIdleTimeout(newMaxAge.asMinutes());
         this.maxPoolAge = newMaxAge;
     }
 

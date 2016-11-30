@@ -58,19 +58,23 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected abstract void readFrom(ModelNode result);
 
-    protected ModelNode writeOp(ModelNode request) { return cli.execute(request); }
+    protected void writeOp(ModelNode request) { cli.execute(request); }
 
-    protected ModelNode writeOp(Operation operation) { return cli.execute(operation); }
+    protected void writeOp(Operation operation) { cli.execute(operation); }
 
-    public void writeAttribute(String name, String value) { cli.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeAttribute(String name, String value) { cli.writeAttr(address(), name, ModelNode::set, value); }
 
-    public void writeAttribute(String name, Boolean value) { cli.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeUseParentHandlers(Boolean value) {
+        cli.writeAttr(address(), "use-parent-handlers", ModelNode::set, value);
+    }
 
-    public void writeAttribute(String name, Integer value) { cli.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeAttribute(String name, Integer value) { cli.writeAttr(address(), name, ModelNode::set, value); }
 
-    public void writeAttribute(String name, Long value) { cli.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeIdleTimeout(Long value) {
+        cli.writeAttr(address(), "idle-timeout-minutes", ModelNode::set, value);
+    }
 
-    public void propertyPut(String key, String value) { cli.putProperty(address(), key, value); }
+    protected void writeProperty(String key, String value) { cli.writeProperty(address(), key, value); }
 
     protected void propertyRemove(String key) { cli.removeProperty(address(), key); }
 
@@ -90,7 +94,7 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
         return getOptional(node, name).map(ModelNode::asInt).orElse(null);
     }
 
-    protected static Age minutesOrNull(ModelNode node, String name) {
+    @SuppressWarnings("SameParameterValue") protected static Age minutesOrNull(ModelNode node, String name) {
         return node.get(name).isDefined() ? Age.ofMinutes(node.get(name).asInt()) : null;
     }
 

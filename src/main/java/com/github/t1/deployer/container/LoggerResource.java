@@ -141,7 +141,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
 
     public void updateUseParentHandlers(Boolean newUseParentHandlers) {
         checkDeployed();
-        writeAttribute("use-parent-handlers", newUseParentHandlers);
+        writeUseParentHandlers(newUseParentHandlers);
         this.useParentHandlers = newUseParentHandlers;
     }
 

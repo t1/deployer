@@ -20,7 +20,7 @@ import static com.github.t1.deployer.model.DeploymentState.*;
 import static com.github.t1.problem.WebException.*;
 
 @Slf4j
-class DeployableDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {
+class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {
     @Inject Container container;
     @Inject Repository repository;
 

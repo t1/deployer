@@ -47,41 +47,46 @@ class CLI {
     }
 
 
-    public <T> ModelNode writeAttr(ModelNode address, String name, BiFunction<ModelNode, T, ModelNode> set, T value) {
+    public <T> void writeAttr(ModelNode address, String name, BiFunction<ModelNode, T, ModelNode> set, T value) {
         ModelNode request = createOperation(WRITE_ATTRIBUTE_OPERATION, address);
         request.get(NAME).set(name);
         if (value != null)
             set.apply(request.get(VALUE), value);
-        return execute(request);
+        execute(request);
     }
 
 
-    public ModelNode putProperty(ModelNode address, String key, String value) {
+    public void writeProperty(ModelNode address, String key, String value) {
         ModelNode request = createOperation("map-put", address);
         request.get("name").set("property");
         request.get("key").set(key);
         request.get("value").set(value);
 
-        return execute(request);
+        execute(request);
     }
 
-    public ModelNode removeProperty(ModelNode address, String key) {
+    public void removeProperty(ModelNode address, String key) {
         ModelNode request = createOperation("map-remove", address);
         request.get("name").set("property");
         request.get("key").set(key);
 
-        return execute(request);
+        execute(request);
     }
 
 
     public Stream<ModelNode> readResource(ModelNode address) {
-        return execute(createReadResourceOperation(address, true)).asList().stream();
+        ModelNode result = executeRaw(createReadResourceOperation(address, true));
+        checkOutcome(result);
+        return result.get("result").asList().stream();
     }
 
-    public ModelNode execute(ModelNode request) {
-        ModelNode result = executeRaw(request);
-        checkOutcome(result);
-        return result.get("result");
+    public void execute(ModelNode request) {
+        if (batch != null) {
+            batch.addStep(request);
+        } else {
+            ModelNode result = executeRaw(request);
+            checkOutcome(result);
+        }
     }
 
     @SneakyThrows(IOException.class)
@@ -92,18 +97,18 @@ class CLI {
         return result;
     }
 
-    public ModelNode execute(Operation operation) {
-        ModelNode result = executeRaw(operation);
-        checkOutcome(result);
-        return result.get("result");
-    }
-
     @SneakyThrows(IOException.class)
-    private ModelNode executeRaw(Operation operation) {
-        logCli("execute operation {}", operation.getOperation());
-        ModelNode result = client.execute(operation, LOGGING);
-        logCli("response {}", result);
-        return result;
+    public void execute(Operation operation) {
+        if (batch != null) {
+            batch.addStep(operation.getOperation());
+            operation.getInputStreams().forEach(inputStream -> batch.addInputStream(inputStream));
+            batch.setAutoCloseStreams(operation.isAutoCloseStreams());
+        } else {
+            logCli("execute operation {}", operation.getOperation());
+            ModelNode result = client.execute(operation, LOGGING);
+            logCli("response {}", result);
+            checkOutcome(result);
+        }
     }
 
     public void checkOutcome(ModelNode result) {
@@ -139,7 +144,24 @@ class CLI {
         this.batch = CompositeOperationBuilder.create();
     }
 
+    @SneakyThrows(IOException.class)
     public void commitBatch() {
+        if (this.batch == null)
+            throw new IllegalStateException("no batch started");
+        Operation operation = batch.build();
+        assert operation.getOperation().has(STEPS);
+        if (operation.getOperation().get(STEPS).has(0)) {
+            log.debug("execute batch");
+            ModelNode result = client.execute(operation, LOGGING);
+            logCli("response {}", result);
+            checkOutcome(result);
+        } else {
+            log.debug("no batch to execute");
+        }
+        this.batch = null;
+    }
+
+    public void rollbackBatch() {
         if (this.batch == null)
             throw new IllegalStateException("no batch started");
         this.batch = null;

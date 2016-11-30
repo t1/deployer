@@ -81,7 +81,7 @@ public class AbstractDeployerTest {
     @Spy private LogHandlerDeployer logHandlerDeployer;
     @Spy private LoggerDeployer loggerDeployer;
     @Spy private DataSourceDeployer dataSourceDeployer;
-    @Spy private DeployableDeployer deployableDeployer;
+    @Spy private ArtifactDeployer artifactDeployer;
     @Mock Instance<Deployer> deployers;
 
     @Mock Repository repository;
@@ -105,32 +105,32 @@ public class AbstractDeployerTest {
         logHandlerDeployer.managedResourceNames
                 = loggerDeployer.managedResourceNames
                 = dataSourceDeployer.managedResourceNames
-                = deployableDeployer.managedResourceNames
+                = artifactDeployer.managedResourceNames
                 = managedResourceNames;
         logHandlerDeployer.pinnedResourceNames
                 = loggerDeployer.pinnedResourceNames
                 = dataSourceDeployer.pinnedResourceNames
-                = deployableDeployer.pinnedResourceNames
+                = artifactDeployer.pinnedResourceNames
                 = pinnedResourceNames;
-        deployableDeployer.repository
+        artifactDeployer.repository
                 = repository;
         logHandlerDeployer.container
                 = loggerDeployer.container
                 = dataSourceDeployer.container
-                = deployableDeployer.container
+                = artifactDeployer.container
                 = container;
         boundary.audits
                 = logHandlerDeployer.audits
                 = loggerDeployer.audits
                 = dataSourceDeployer.audits
-                = deployableDeployer.audits
+                = artifactDeployer.audits
                 = new Audits();
         boundary.configuredVariables = this.configuredVariables;
         boundary.deployers = this.deployers;
 
         //noinspection unchecked
         doAnswer(i -> {
-            asList(logHandlerDeployer, loggerDeployer, dataSourceDeployer, deployableDeployer)
+            asList(logHandlerDeployer, loggerDeployer, dataSourceDeployer, artifactDeployer)
                     .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
             return null;
         }).when(deployers).forEach(any(Consumer.class));
@@ -256,13 +256,13 @@ public class AbstractDeployerTest {
         verifyWriteAttribute(address, name, ModelNode::set, value);
     }
 
-    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
+    @SuppressWarnings("resource")
     private <T> void verifyWriteAttribute(ModelNode addr, String name, BiFunction<ModelNode, T, ModelNode> set, T v) {
         ModelNode op = createOperation(WRITE_ATTRIBUTE_OPERATION, addr);
         op.get(NAME).set(name);
         if (v != null)
             set.apply(op.get(VALUE), v);
-        verify(cli).execute(eq(op), any(OperationMessageHandler.class));
+        assertThat(captureOperations()).haveExactly(1, step(op));
     }
 
     private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
@@ -478,17 +478,19 @@ public class AbstractDeployerTest {
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
             public void verifyDeployed(Audits audits) {
-                assertThat(captureOperations().remove(0).getOperation()).hasToString("{\n"
-                        + "    \"operation\" => \"composite\",\n"
-                        + "    \"address\" => [],\n"
-                        + "    \"rollback-on-runtime-failure\" => true,\n"
-                        + "    \"steps\" => [{\n"
-                        + "        \"operation\" => \"add\",\n"
-                        + "        \"address\" => [(\"deployment\" => \"" + fullName() + "\")],\n"
-                        + "        \"enabled\" => true,\n"
-                        + "        \"content\" => [{\"input-stream-index\" => 0}]\n"
-                        + "    }]\n"
-                        + "}");
+                ModelNode request = toModelNode("{\n"
+                        + "        \"operation\" => \"composite\",\n"
+                        + "        \"address\" => [],\n"
+                        + "        \"rollback-on-runtime-failure\" => true,\n"
+                        + "        \"steps\" => [{\n"
+                        + "            \"operation\" => \"add\",\n"
+                        + "            \"address\" => [(\"deployment\" => \"" + fullName() + "\")],\n"
+                        + "            \"enabled\" => true,\n"
+                        + "            \"content\" => [{\"input-stream-index\" => 0}]\n"
+                        + "        }]\n"
+                        + "    }");
+                assertThat(captureOperations()).haveExactly(1, step(request));
+
                 assertThat(audits.getAudits()).contains(addedAudit());
             }
 
@@ -504,6 +506,7 @@ public class AbstractDeployerTest {
 
             public void verifyRedeployed(Audits audits) {
                 verifyRedeployExecuted();
+
                 Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
                 assertThat(audits.getAudits()).contains(artifactAudit()
@@ -513,7 +516,7 @@ public class AbstractDeployerTest {
             }
 
             private void verifyRedeployExecuted() {
-                assertThat(captureOperations().remove(0).getOperation()).hasToString("{\n"
+                ModelNode request = toModelNode("{\n"
                         + "    \"operation\" => \"composite\",\n"
                         + "    \"address\" => [],\n"
                         + "    \"rollback-on-runtime-failure\" => true,\n"
@@ -525,6 +528,7 @@ public class AbstractDeployerTest {
                         + "        \"enabled\" => true\n"
                         + "    }]\n"
                         + "}");
+                assertThat(captureOperations()).haveExactly(1, step(request));
             }
 
             public void verifyRemoved(Audits audits) {
@@ -533,21 +537,22 @@ public class AbstractDeployerTest {
             }
 
             public void verifyUndeployExecuted() {
-                assertThat(captureOperations().remove(0).getOperation()).hasToString("{\n"
-                        + "    \"operation\" => \"composite\",\n"
-                        + "    \"address\" => [],\n"
-                        + "    \"rollback-on-runtime-failure\" => true,\n"
-                        + "    \"steps\" => [\n"
-                        + "        {\n"
-                        + "            \"operation\" => \"undeploy\",\n"
-                        + "            \"address\" => [(\"deployment\" => \"" + fullName() + "\")]\n"
-                        + "        },\n"
-                        + "        {\n"
-                        + "            \"operation\" => \"remove\",\n"
-                        + "            \"address\" => [(\"deployment\" => \"" + fullName() + "\")]\n"
-                        + "        }\n"
-                        + "    ]\n"
-                        + "}");
+                ModelNode request = toModelNode("{\n"
+                        + "        \"operation\" => \"composite\",\n"
+                        + "        \"address\" => [],\n"
+                        + "        \"rollback-on-runtime-failure\" => true,\n"
+                        + "        \"steps\" => [\n"
+                        + "            {\n"
+                        + "                \"operation\" => \"undeploy\",\n"
+                        + "                \"address\" => [(\"deployment\" => \"" + fullName() + "\")]\n"
+                        + "            },\n"
+                        + "            {\n"
+                        + "                \"operation\" => \"remove\",\n"
+                        + "                \"address\" => [(\"deployment\" => \"" + fullName() + "\")]\n"
+                        + "            }\n"
+                        + "        ]\n"
+                        + "    }");
+                assertThat(captureOperations()).haveExactly(1, step(request));
             }
 
             public Audit removedAudit() {
@@ -662,11 +667,13 @@ public class AbstractDeployerTest {
             ModelNode request = toModelNode("{\n"
                     + loggerAddress()
                     + "    'operation' => 'add',\n"
+                    + loggerAddress()
                     + ((level == null) ? "" : "    'level' => '" + level + "',\n")
                     + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
                     + "    'use-parent-handlers' => " + useParentHandlers + "\n"
                     + "}");
-            verifyCli(request);
+            assertThat(captureOperations()).haveExactly(1, step(request));
+
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
                     .change("level", null, level)
@@ -687,11 +694,13 @@ public class AbstractDeployerTest {
         }
 
         public void verifyRemoved(Audits audits) {
-            verifyCli(toModelNode(""
+            Operation operation = batchOperation(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'remove'\n"
-                    + "}"));
+                    + "}");
+            assertThat(captureOperations()).haveExactly(1, operation(operation));
+
             AuditBuilder audit = LoggerAudit.of(getCategory());
             if (level != null)
                 audit.change("level", level, null);
@@ -710,23 +719,25 @@ public class AbstractDeployerTest {
         }
 
         public void verifyAddedHandler(Audits audits, String name) {
-            verifyCli(toModelNode(""
+            Operation operation = batchOperation(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'add-handler',\n"
                     + "    'name' => '" + name + "'\n"
-                    + "}"));
+                    + "}");
+            assertThat(captureOperations()).haveExactly(1, operation(operation));
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("handlers", null, "[" + name + "]").changed());
         }
 
         public void verifyRemovedHandler(Audits audits, String name) {
-            verifyCli(toModelNode(""
+            Operation operation = batchOperation(""
                     + "{\n"
                     + loggerAddress()
                     + "    'operation' => 'remove-handler',\n"
                     + "    'name' => '" + name + "'\n"
-                    + "}"));
+                    + "}");
+            assertThat(captureOperations()).haveExactly(1, operation(operation));
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("handlers", "[" + name + "]", null).changed());
         }
@@ -899,7 +910,7 @@ public class AbstractDeployerTest {
             request.get("key").set(key);
             request.get("value").set(value);
 
-            verifyCli(request);
+            assertThat(captureOperations()).haveExactly(1, step(request));
         }
 
         public void verifyRemoveProperty(String key) {
@@ -907,7 +918,7 @@ public class AbstractDeployerTest {
             request.get("name").set("property");
             request.get("key").set(key);
 
-            verifyCli(request);
+            assertThat(captureOperations()).haveExactly(1, step(request));
         }
 
         public void verifyAdded(Audits audits) {
@@ -932,7 +943,8 @@ public class AbstractDeployerTest {
                                         .collect(joining(",\n        "))
                             + "\n    ]\n")
                     + "\n}");
-            verifyCli(request);
+            assertThat(captureOperations()).haveExactly(1, step(request));
+
             expectedAudit.change("level", null, (level == null) ? ALL : level);
             if (format != null)
                 expectedAudit.change("format", null, format);
@@ -954,10 +966,12 @@ public class AbstractDeployerTest {
         }
 
         public void verifyRemoved(Audits audits) {
-            verifyCli(toModelNode("{\n"
+            Operation operation = batchOperation("{\n"
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
-                    + "}"));
+                    + "}");
+            assertThat(captureOperations()).haveExactly(1, operation(operation));
+
             if (this.level != null)
                 expectedAudit.change("level", this.level, null);
             if (this.format != null)
@@ -1161,11 +1175,9 @@ public class AbstractDeployerTest {
                 composite.addStep(addXaDataSourceProperty("DatabaseName", jdbcDbName()));
                 Operation operation = composite.build();
 
-                assertThat(captureOperations()).hasSize(1).first()
-                                               .extracting(Operation::getOperation)
-                                               .containsExactly(operation.getOperation());
+                assertThat(captureOperations()).haveExactly(1, step(operation.getOperation()));
             } else {
-                verifyCli(addRequest);
+                assertThat(captureOperations()).haveExactly(1, step(addRequest));
             }
         }
 
@@ -1279,6 +1291,7 @@ public class AbstractDeployerTest {
 
         public void verifyRemoved(Audits audits) {
             verifyRemoveCli();
+
             AuditBuilder audit = DataSourceAudit
                     .of(getName())
                     .change("uri", uri, null)
@@ -1307,7 +1320,7 @@ public class AbstractDeployerTest {
                     + "    'operation' => 'remove',\n"
                     + dataSourceAddress().substring(0, dataSourceAddress().length() - 1)
                     + "}");
-            verifyCli(request);
+            assertThat(captureOperations()).haveExactly(1, step(request));
         }
 
         public DataSourcePlan asPlan() {

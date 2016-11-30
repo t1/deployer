@@ -88,11 +88,18 @@ public class DeployerBoundary {
     public synchronized Audits apply(Trigger trigger, Map<VariableName, String> variables) {
         Applying applying = new Applying().withVariables(variables);
 
-        Path root = getRootBundlePath();
-        if (isRegularFile(root)) {
-            applying.apply(root);
-        } else {
-            applying.applyDefaultRoot();
+        try {
+            container.startBatch();
+            Path root = getRootBundlePath();
+            if (isRegularFile(root)) {
+                applying.apply(root);
+            } else {
+                applying.applyDefaultRoot();
+            }
+            container.commitBatch();
+        } catch (RuntimeException e) {
+            container.rollbackBatch();
+            throw e;
         }
 
         audits.applied(trigger, principal, variables, audits);

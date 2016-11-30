@@ -9,7 +9,7 @@ import org.junit.Test;
 import static com.github.t1.deployer.app.Trigger.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class DeployableDeployerTest extends AbstractDeployerTest {
+public class ArtifactDeployerTest extends AbstractDeployerTest {
     @Test
     public void shouldDeployWebArchive() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
