@@ -113,6 +113,18 @@ public class LoggerDeployerTest extends AbstractDeployerTest {
     }
 
     @Test
+    public void shouldFailToUndeployRootLogger() {
+        Throwable throwable = catchThrowable(() -> deploy(""
+                + "loggers:\n"
+                + "  ROOT:\n"
+                + "    state: undeployed\n"));
+
+        assertThat(throwable)
+                .isInstanceOf(WebApplicationApplicationException.class)
+                .hasMessageContaining("can't remove root logger");
+    }
+
+    @Test
     public void shouldAddLoggerWithExplicitState() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 

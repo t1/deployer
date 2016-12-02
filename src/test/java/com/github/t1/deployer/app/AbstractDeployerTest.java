@@ -87,7 +87,7 @@ public class AbstractDeployerTest {
     @Mock Repository repository;
 
     @SuppressWarnings("resource") ModelControllerClient cli = mock(ModelControllerClient.class);
-    @Spy Container container = ContainerTest.buildContainer(cli);
+    @Spy Container container = JBossCliTestClient.buildContainer(cli);
 
     private final Map<VariableName, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
@@ -599,7 +599,7 @@ public class AbstractDeployerTest {
     public class LoggerFixture {
         private final LoggerCategory category;
         private final List<String> handlers = new ArrayList<>();
-        private LogLevel level;
+        private String level;
         private Boolean useParentHandlers = true;
         private boolean deployed;
 
@@ -624,7 +624,9 @@ public class AbstractDeployerTest {
                     + "}\n";
         }
 
-        public LoggerFixture level(LogLevel level) {
+        public LoggerFixture level(LogLevel level) { return level(level.name()); }
+
+        public LoggerFixture level(String level) {
             this.level = level;
             return this;
         }
@@ -688,7 +690,7 @@ public class AbstractDeployerTest {
         }
 
         public void verifyUpdatedLogLevelFrom(LogLevel oldLevel, Audits audits) {
-            verifyWriteAttribute(loggerAddressNode(), "level", level.toString());
+            verifyWriteAttribute(loggerAddressNode(), "level", level);
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
         }
@@ -747,7 +749,7 @@ public class AbstractDeployerTest {
                     .builder()
                     .category(category)
                     .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
-                    .level(level)
+                    .level((level == null) ? null : LogLevel.valueOf(level))
                     .handlers(handlerNames())
                     .useParentHandlers((useParentHandlers == FALSE) ? false : null) // true -> null (default)
                     .build();

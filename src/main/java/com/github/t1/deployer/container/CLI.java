@@ -82,12 +82,9 @@ class CLI {
     }
 
     public void execute(ModelNode request) {
-        if (batch != null) {
-            batch.addStep(request);
-        } else {
-            ModelNode result = executeRaw(request);
-            checkOutcome(result);
-        }
+        assert batch != null : "batch not started";
+
+        batch.addStep(request);
     }
 
     @SneakyThrows(IOException.class)
@@ -98,18 +95,12 @@ class CLI {
         return result;
     }
 
-    @SneakyThrows(IOException.class)
     public void execute(Operation operation) {
-        if (batch != null) {
-            batch.addStep(operation.getOperation());
-            operation.getInputStreams().forEach(inputStream -> batch.addInputStream(inputStream));
-            batch.setAutoCloseStreams(operation.isAutoCloseStreams());
-        } else {
-            logCli("execute operation {}", operation.getOperation());
-            ModelNode result = client.execute(operation, LOGGING);
-            logCli("response {}", result);
-            checkOutcome(result);
-        }
+        assert batch != null : "batch not started";
+
+        batch.addStep(operation.getOperation());
+        operation.getInputStreams().forEach(inputStream -> batch.addInputStream(inputStream));
+        batch.setAutoCloseStreams(operation.isAutoCloseStreams());
     }
 
     public void checkOutcome(ModelNode result) {

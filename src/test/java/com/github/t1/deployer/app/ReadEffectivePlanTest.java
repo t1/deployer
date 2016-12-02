@@ -2,6 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.*;
+import com.github.t1.log.LogLevel;
 import org.junit.Test;
 
 import java.util.List;
@@ -89,6 +90,42 @@ public class ReadEffectivePlanTest extends AbstractDeployerTest {
         Plan plan = boundary.getEffectivePlan();
 
         assertThat(loggers(plan)).containsExactly(ROOT, bar.asPlan(), foo.asPlan()); // sorted!
+    }
+
+    @Test public void shouldReadOneLoggerAtLevelOff() { shouldReadOneLoggerAtLevel("OFF", OFF); }
+
+    @Test public void shouldReadOneLoggerAtLevelTrace() { shouldReadOneLoggerAtLevel("TRACE", TRACE); }
+
+    @Test public void shouldReadOneLoggerAtLevelFinest() { shouldReadOneLoggerAtLevel("FINEST", TRACE); }
+
+    @Test public void shouldReadOneLoggerAtLevelFiner() { shouldReadOneLoggerAtLevel("FINER", DEBUG); }
+
+    @Test public void shouldReadOneLoggerAtLevelFine() { shouldReadOneLoggerAtLevel("FINE", DEBUG); }
+
+    @Test public void shouldReadOneLoggerAtLevelDebug() { shouldReadOneLoggerAtLevel("DEBUG", DEBUG); }
+
+    @Test public void shouldReadOneLoggerAtLevelConfig() { shouldReadOneLoggerAtLevel("CONFIG", INFO); }
+
+    @Test public void shouldReadOneLoggerAtLevelInfo() { shouldReadOneLoggerAtLevel("INFO", INFO); }
+
+    @Test public void shouldReadOneLoggerAtLevelWarn() { shouldReadOneLoggerAtLevel("WARN", WARN); }
+
+    @Test public void shouldReadOneLoggerAtLevelWarning() { shouldReadOneLoggerAtLevel("WARNING", WARN); }
+
+    @Test public void shouldReadOneLoggerAtLevelSevere() { shouldReadOneLoggerAtLevel("SEVERE", ERROR); }
+
+    @Test public void shouldReadOneLoggerAtLevelFatal() { shouldReadOneLoggerAtLevel("FATAL", ERROR); }
+
+    @Test public void shouldReadOneLoggerAtLevelError() { shouldReadOneLoggerAtLevel("ERROR", ERROR); }
+
+    @Test public void shouldReadOneLoggerAtLevelAll() { shouldReadOneLoggerAtLevel("ALL", ALL); }
+
+    private void shouldReadOneLoggerAtLevel(String actual, LogLevel expected) {
+        LoggerFixture foo = givenLogger("foo").level(actual).deployed();
+
+        Plan plan = boundary.getEffectivePlan();
+
+        assertThat(loggers(plan)).containsExactly(ROOT, foo.level(expected).asPlan());
     }
 
 

@@ -1,12 +1,11 @@
 package com.github.t1.deployer.container;
 
-import java.net.InetAddress;
-import java.util.concurrent.Future;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.helpers.standalone.*;
+
+import java.net.InetAddress;
+import java.util.concurrent.Future;
 
 @Slf4j
 public class JBossCliTestClient {
@@ -61,5 +60,13 @@ public class JBossCliTestClient {
         if (firstThrowable != null || failed) {
             throw new RuntimeException("failed to execute " + plan.getClass().getSimpleName(), firstThrowable);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    public static Container buildContainer(ModelControllerClient cli) {
+        Container container = new Container();
+        container.cli = new CLI();
+        container.cli.client = cli;
+        return container;
     }
 }
