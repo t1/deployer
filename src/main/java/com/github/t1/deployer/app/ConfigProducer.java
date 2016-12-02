@@ -70,7 +70,7 @@ public class ConfigProducer {
 
     @PostConstruct
     public void initConfig() {
-        Path path = container.getConfigDir().resolve(DEPLOYER_CONFIG_YAML);
+        Path path = Container.getConfigDir().resolve(DEPLOYER_CONFIG_YAML);
         if (Files.isRegularFile(path)) {
             log.info("load deployer config from '" + path + "'");
             try (Reader reader = Files.newBufferedReader(path)) {

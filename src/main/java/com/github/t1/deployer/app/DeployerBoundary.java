@@ -43,7 +43,7 @@ public class DeployerBoundary {
             + "    version: ${root-bundle:version or version}\n";
     private static final VariableName NAME = new VariableName("name");
 
-    public Path getRootBundlePath() { return container.getConfigDir().resolve(ROOT_BUNDLE); }
+    public Path getRootBundlePath() { return Container.getConfigDir().resolve(ROOT_BUNDLE); }
 
     @GET
     public Plan getEffectivePlan() {
@@ -72,7 +72,9 @@ public class DeployerBoundary {
 
     @Asynchronous
     public void applyAsync(Trigger trigger) {
+        Container.waitForMBean();
         container.waitForBoot();
+
         try {
             apply(trigger, emptyMap());
         } catch (RuntimeException e) {
@@ -84,6 +86,7 @@ public class DeployerBoundary {
             throw e;
         }
     }
+
 
     public synchronized Audits apply(Trigger trigger, Map<VariableName, String> variables) {
         Applying applying = new Applying().withVariables(variables);

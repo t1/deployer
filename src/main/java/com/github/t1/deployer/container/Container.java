@@ -6,11 +6,12 @@ import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBui
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
-import lombok.Getter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.management.ObjectName;
 import java.nio.file.*;
 import java.util.stream.Stream;
 
@@ -19,12 +20,24 @@ import java.util.stream.Stream;
 @Stateless
 @SuppressWarnings("deprecation")
 public class Container {
+    @SneakyThrows(InterruptedException.class)
+    public static void waitForMBean() {
+        for (int i = 0; i < 10; i++) {
+            ObjectName objectName = ContainerProducer.findManagementInterface();
+            if (objectName != null)
+                return;
+            log.debug("waiting for MBean server");
+            //noinspection MagicNumber
+            Thread.sleep(1000L);
+        }
+    }
+
     /** @deprecated Only to be used privately or in tests */
     @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated @Getter @Inject public CLI cli;
 
     public void waitForBoot() { cli.waitForBoot(); }
 
-    public Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
+    public static Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
 
     public LogHandlerResourceBuilder builderFor(LogHandlerType type, LogHandlerName name) {
         return LogHandlerResource.builder(type, name, cli);
@@ -46,7 +59,7 @@ public class Container {
 
     public void startBatch() { cli.startBatch(); }
 
-    public void commitBatch() { cli.commitBatch();    }
+    public void commitBatch() { cli.commitBatch(); }
 
-    public void rollbackBatch() { cli.rollbackBatch();    }
+    public void rollbackBatch() { cli.rollbackBatch(); }
 }

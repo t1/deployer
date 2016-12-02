@@ -16,7 +16,7 @@ import static com.github.t1.log.LogLevel.*;
 @Slf4j
 @Logged(level = DEBUG)
 @ApplicationScoped
-class ContainerProducer implements Serializable {
+public class ContainerProducer implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
@@ -36,7 +36,7 @@ class ContainerProducer implements Serializable {
         }
     }
 
-    private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+    private static final MBeanServer MBEAN = ManagementFactory.getPlatformMBeanServer();
 
     @Produces
     ModelControllerClient produceModelControllerClient() throws IOException {
@@ -55,9 +55,9 @@ class ContainerProducer implements Serializable {
         );
     }
 
-    private ObjectName findManagementInterface() {
+    static ObjectName findManagementInterface() {
         for (ObjectName objectName : MANAGEMENT_INTERFACES)
-            if (server.isRegistered(objectName)) {
+            if (MBEAN.isRegistered(objectName)) {
                 if ("true".equals(getAttribute(objectName, "bound", "false"))) {
                     log.trace("found registered and bound management interface {}", objectName);
                     return objectName;
@@ -77,9 +77,9 @@ class ContainerProducer implements Serializable {
         return (socketBinding.equals("native")) ? "remote" : socketBinding + "-remoting";
     }
 
-    private String getAttribute(ObjectName objectName, String attributeName, String defaultValue) {
+    private static String getAttribute(ObjectName objectName, String attributeName, String defaultValue) {
         try {
-            Object value = server.getAttribute(objectName, attributeName);
+            Object value = MBEAN.getAttribute(objectName, attributeName);
             if (value == null)
                 return defaultValue;
             log.trace("{}#{} = {}", objectName, attributeName, value);
