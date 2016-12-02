@@ -1,17 +1,20 @@
 package com.github.t1.deployer.container;
 
-import lombok.SneakyThrows;
+import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static com.github.t1.problem.WebException.*;
+import static java.util.Locale.*;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.ServerHelper.*;
@@ -97,8 +100,10 @@ class CLI {
 
     public void execute(Operation operation) {
         assert batch != null : "batch not started";
+        assert COMPOSITE.equals(operation.getOperation().get(OP).asString());
+        assert operation.getOperation().get(ADDRESS).asList().isEmpty();
 
-        batch.addStep(operation.getOperation());
+        operation.getOperation().get(STEPS).asList().forEach(step -> batch.addStep(step));
         operation.getInputStreams().forEach(inputStream -> batch.addInputStream(inputStream));
         batch.setAutoCloseStreams(operation.isAutoCloseStreams());
     }
@@ -115,7 +120,9 @@ class CLI {
 
     public static boolean isNotFoundMessage(ModelNode result) {
         String message = result.get("failure-description").toString();
+        @SuppressWarnings("SpellCheckingInspection")
         boolean jboss7start = message.startsWith("\"JBAS014807: Management resource");
+        @SuppressWarnings("SpellCheckingInspection")
         boolean jboss8start = message.startsWith("\"WFLYCTL0216: Management resource");
         boolean notFoundEnd = message.endsWith(" not found\"");
         boolean isNotFound = (jboss7start || jboss8start) && notFoundEnd;
@@ -143,6 +150,7 @@ class CLI {
         Operation operation = batch.build();
         assert operation.getOperation().has(STEPS);
         if (operation.getOperation().get(STEPS).has(0)) {
+            sortSteps(operation.getOperation().get(STEPS));
             logCli("execute batch: {}", operation.getOperation());
             ModelNode result = client.execute(operation, LOGGING);
             logCli("response {}", result);
@@ -151,6 +159,70 @@ class CLI {
             log.debug("no batch to execute");
         }
         this.batch = null;
+    }
+
+    /**
+     * We sort the steps to prevent dependency problems like loggers depending on log-handlers and so that deployables
+     * can use their loggers when they are deployed.
+     *
+     * - add log-handlers
+     * - add loggers
+     * - add data-sources
+     * - add deployables
+     * - all updates
+     * - remove deployables
+     * - remove data-sources
+     * - remove loggers
+     * - remove log-handlers
+     *
+     * We can't reasonably do this ordering from within the deployers, as they do the adding _and_ the removing.
+     */
+    private void sortSteps(ModelNode steps) {
+        List<ModelNode> list = new ArrayList<>(steps.asList());
+        list.sort(Comparator.comparing(CLI::operation)
+                            .thenComparing(node -> operation(node).factor() * type(node).ordinal()));
+        steps.set(list);
+    }
+
+    @RequiredArgsConstructor
+    private enum OperationEnum {
+        ADD(1), WRITE_ATTRIBUTE(1), MAP_PUT(1), MAP_REMOVE(1), UNDEPLOY(-1), REMOVE(-1);
+
+        @Getter @Accessors(fluent = true)
+        private final int factor;
+    }
+
+    private enum TypeEnum {LOG_HANDLER, LOGGER, DATA_SOURCE, DEPLOYABLE}
+
+    private static OperationEnum operation(ModelNode node) {
+        return OperationEnum.valueOf(node.get(OP).asString().toUpperCase(US).replace('-', '_'));
+    }
+
+    private static TypeEnum type(ModelNode node) {
+        ModelNode address = node.get(ADDRESS);
+        switch (address.asPropertyList().get(0).getName()) {
+        case "deployment":
+            return TypeEnum.DEPLOYABLE;
+        case "subsystem":
+            switch (address.asPropertyList().get(0).getValue().asString()) {
+            case "logging":
+                switch (address.asPropertyList().get(1).getName()) {
+                case "logger":
+                    return TypeEnum.LOGGER;
+                case "console-handler":
+                case "custom-handler":
+                case "periodic-rotating-file-handler":
+                    return TypeEnum.LOG_HANDLER;
+                }
+            case "datasources":
+                switch (address.asPropertyList().get(1).getName()) {
+                case "data-source":
+                case "xa-data-source":
+                    return TypeEnum.DATA_SOURCE;
+                }
+            }
+        }
+        throw new IllegalArgumentException("unsupported node type: " + address);
     }
 
     public void rollbackBatch() {

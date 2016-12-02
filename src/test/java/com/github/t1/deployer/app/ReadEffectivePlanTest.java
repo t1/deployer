@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
+import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 import org.junit.Test;
@@ -13,7 +13,7 @@ import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class ReadEffectivePlanTest extends AbstractDeployerTest {
+public class ReadEffectivePlanTest extends AbstractDeployerTests {
     private static final LoggerPlan ROOT = LoggerPlan
             .builder()
             .category(LoggerCategory.ROOT)

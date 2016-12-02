@@ -1,6 +1,6 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.AbstractDeployerTest.ArtifactFixtureBuilder.ArtifactFixture;
+import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Expressions.*;
 import com.github.t1.deployer.tools.*;
@@ -20,7 +20,7 @@ import static com.github.t1.log.LogLevel.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class BundleDeployerTest extends AbstractDeployerTest {
+public class BundleDeployerTest extends AbstractDeployerTests {
     private static final KeyStoreConfig KEYSTORE = KeyStoreConfig
             .builder()
             .path(Paths.get("src/test/resources/test.keystore"))

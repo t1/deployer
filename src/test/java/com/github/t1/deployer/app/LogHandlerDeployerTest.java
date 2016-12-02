@@ -8,7 +8,7 @@ import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class LogHandlerDeployerTest extends AbstractDeployerTest {
+public class LogHandlerDeployerTest extends AbstractDeployerTests {
     @Test
     public void shouldAddEmptyLogHandlers() {
         deploy(""
@@ -863,8 +863,6 @@ public class LogHandlerDeployerTest extends AbstractDeployerTest {
         // #after(): foo not undeployed
         bar.verifyRemoved(audits);
     }
-
-    // TODO shouldAddLoggerAndHandler
 
     @Test
     public void shouldIgnorePinnedLogHandlerWhenManaged() {

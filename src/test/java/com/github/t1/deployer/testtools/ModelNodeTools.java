@@ -3,7 +3,6 @@ package com.github.t1.deployer.testtools;
 import com.github.t1.deployer.model.LogHandlerType;
 import org.assertj.core.api.Condition;
 import org.jboss.as.controller.client.Operation;
-import org.jboss.as.controller.client.helpers.Operations.CompositeOperationBuilder;
 import org.jboss.dmr.*;
 
 import java.util.stream.Collector;
@@ -80,35 +79,16 @@ public class ModelNodeTools {
         return wrapper;
     }
 
-    public static Operation batchOperation(String steps) { return batch(toModelNode(steps)); }
-
-    public static Operation batch(ModelNode steps) {
-        CompositeOperationBuilder builder = CompositeOperationBuilder.create();
-        builder.addStep(steps);
-        return builder.build();
+    public static Condition<Operation> operation(Operation expected) {
+        return new Condition<>(actual -> actual.getOperation().equals(expected.getOperation()),
+                "operation matching " + expected.getOperation());
     }
 
-    public static String batch(String body) {
-        return "{\n"
-                + "    \"operation\" => \"composite\",\n"
-                + "    \"address\" => [],\n"
-                + "    \"rollback-on-runtime-failure\" => true,\n"
-                + "    \"steps\" => ["
-                + body
-                + "]\n"
-                + "}";
-    }
-
-    public static Condition<Operation> operation(Operation op) {
-        return new Condition<>(operation -> operation.getOperation().equals(op.getOperation()),
-                "operation matching " + op.getOperation());
-    }
-
-    public static Condition<Operation> step(ModelNode step) {
-        return new Condition<>(operation -> {
-            assert operation.getOperation().get(OP).asString().equals(COMPOSITE);
-            return operation.getOperation().get(STEPS).asList().contains(step);
+    public static Condition<Operation> step(ModelNode expected) {
+        return new Condition<>(actual -> {
+            assert actual.getOperation().get(OP).asString().equals(COMPOSITE);
+            return actual.getOperation().get(STEPS).asList().contains(expected);
         },
-                "composite operation containing " + step);
+                "composite operation containing " + expected);
     }
 }

@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.*;
 
-public class DataSourceDeployerTest extends AbstractDeployerTest {
+public class DataSourceDeployerTest extends AbstractDeployerTests {
     @Test
     public void shouldAddEmptyDataSources() {
         deploy(""

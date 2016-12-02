@@ -9,7 +9,7 @@ import static com.github.t1.deployer.model.LoggerCategory.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class LoggerDeployerTest extends AbstractDeployerTest {
+public class LoggerDeployerTest extends AbstractDeployerTests {
     @Test
     public void shouldAddEmptyLoggers() {
         deploy(""

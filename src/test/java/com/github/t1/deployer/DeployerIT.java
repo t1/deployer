@@ -188,8 +188,10 @@ public class DeployerIT {
             // restore after JBoss is down
             jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
 
+            container.startBatch();
             container.builderFor(console, new LogHandlerName("CONSOLE")).get().updateLevel(ALL);
             container.builderFor(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).get().add();
+            container.commitBatch();
 
             log.info("deployables: {}", container.allDeployments());
             assertThat(theDeployments()).isEmpty();
@@ -226,7 +228,8 @@ public class DeployerIT {
         return container.allDeployments().filter(deployment -> !DEPLOYER_IT.equals(deployment.name()));
     }
 
-    protected Condition<DeploymentResource> deployment(String name, Checksum checksum) {
+    protected Condition<DeploymentResource> deployment(@SuppressWarnings("SameParameterValue") String name,
+            Checksum checksum) {
         return allOf(deployment(name), checksum(checksum));
     }
 
@@ -711,26 +714,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 3099) // TODO join with shouldUndeployLogHandler when fixing #20
-    public void shouldUndeployLogger() throws Exception {
-        String plan = ""
-                + POSTGRESQL
-                + "log-handlers:\n"
-                + "  FOO:\n"
-                + "    level: INFO\n";
-
-        List<Audit> audits = post(plan);
-
-        assertThat(audits).containsExactly(
-                LoggerAudit.builder().category(LoggerCategory.of("foo"))
-                           .change("level", DEBUG, null)
-                           .change("use-parent-handlers", false, null)
-                           .change("handlers", "[FOO]", null)
-                           .removed());
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
-    }
-
-    @Test
     @InSequence(value = 3100)
     public void shouldUndeployLogHandler() throws Exception {
         String plan = ""
@@ -745,7 +728,12 @@ public class DeployerIT {
                                .change("level", INFO, null)
                                .change("file", "foo.log", null)
                                .change("suffix", DEFAULT_SUFFIX, null)
-                               .removed());
+                               .removed(),
+                LoggerAudit.builder().category(LoggerCategory.of("foo"))
+                           .change("level", DEBUG, null)
+                           .change("use-parent-handlers", false, null)
+                           .change("handlers", "[FOO]", null)
+                           .removed());
         assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
     }
 

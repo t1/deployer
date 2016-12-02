@@ -244,17 +244,13 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
         if (maxPoolAge != null)
             addDataSource.get("idle-timeout-minutes").set(maxPoolAge.asMinutes());
 
+        writeOp(addDataSource);
         if (xa) {
-            CompositeOperationBuilder composite = CompositeOperationBuilder.create();
-            composite.addStep(addDataSource);
             URI uri = (this.uri.getScheme().equals("jdbc")) ? URI.create(this.uri.getSchemeSpecificPart()) : this.uri;
-            composite.addStep(addXaProperty("ServerName", uri.getHost()));
+            writeOp(addXaProperty("ServerName", uri.getHost()));
             if (uri.getPort() >= 0)
-                composite.addStep(addXaProperty("PortNumber", Integer.toString(uri.getPort())));
-            composite.addStep(addXaProperty("DatabaseName", databaseName(uri)));
-            writeOp(composite.build());
-        } else {
-            writeOp(addDataSource);
+                writeOp(addXaProperty("PortNumber", Integer.toString(uri.getPort())));
+            writeOp(addXaProperty("DatabaseName", databaseName(uri)));
         }
 
         this.deployed = true;
