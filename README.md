@@ -56,6 +56,22 @@ For a comprehensive list of all details, see the [reference](docs/reference.md).
 
 More questions? Take a look at the [FAQ](docs/faq.md).
 
+## A Note On [Docker](https://www.docker.com)
+
+At first sight, it may look like The Deployer would not have any role to play when you use Docker,
+as in a fully containerized approach, there's no need to change a running system:
+any change in the configuration should result in a restart of the whole stack
+and it's sufficiently easy to use the normal CLI for that.
+
+But we found that the abstraction layer that The Deployer provides can be useful nonetheless:
+A bundle file may be more readable than a long list of CLI statements,
+as it is more concise and clear (e.g., xa and non-xa data sources both use the same connection uri syntax),
+and it provides mechanics to reuse common configuration schemes, further DRYing your code.
+
+OTOH you can also go for a mixed approach, i.e. use a Docker container to build the Java EE container,
+and then use The Deployer to configure and deploy your application(s).
+You then have an idempotent server, not a Docker-style immutable server.
+
 
 ## Building
 
