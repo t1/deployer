@@ -1,15 +1,14 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
-import com.github.t1.testtools.LoggerMemento;
+import com.github.t1.rest.RestContext;
+import com.github.t1.testtools.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
-import org.junit.*;
-import org.junit.rules.*;
 
 import java.net.URI;
 import java.util.List;
 
+import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 import static com.github.t1.log.LogLevel.*;
@@ -21,7 +20,7 @@ public class ArtifactoryRepositoryIT {
     private static boolean TEST_WITH_REAL_ARTIFACTORY = false;
     private static final String SNAPSHOTS = TEST_WITH_REAL_ARTIFACTORY ? "snapshots-virtual" : "snapshots";
     private static final String RELEASES = TEST_WITH_REAL_ARTIFACTORY ? "releases-virtual" : "releases";
-    private static ArtifactoryMock ARTIFACTORY_MOCK = TEST_WITH_REAL_ARTIFACTORY ? null : new ArtifactoryMock();
+    private static final ArtifactoryMock ARTIFACTORY_MOCK = TEST_WITH_REAL_ARTIFACTORY ? null : new ArtifactoryMock();
 
     @ClassRule
     public static TestRule ARTIFACTORY = TEST_WITH_REAL_ARTIFACTORY
@@ -35,13 +34,11 @@ public class ArtifactoryRepositoryIT {
     private RestContext rest = REST.register("repository", baseUri);
     private final ArtifactoryRepository repository = new ArtifactoryRepository(rest, SNAPSHOTS, RELEASES);
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Rule
-    public LoggerMemento loggerMemento = new LoggerMemento()
-            // .with("org.apache.http.wire", DEBUG)
-            .with("org.apache.http.headers", DEBUG)
+    @Rule public ExpectedException expectedException = ExpectedException.none();
+    @Rule public TestLoggerRule logger = new TestLoggerRule();
+    @Rule public LoggerMemento loggerMemento = new LoggerMemento()
+            .with("org.apache.http.wire", DEBUG)
+            // .with("org.apache.http.headers", DEBUG)
             // .with("com.github.t1.rest", DEBUG)
             .with("com.github.t1.deployer", DEBUG);
 
@@ -115,11 +112,12 @@ public class ArtifactoryRepositoryIT {
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
         assertThat(artifact.getVersion()).isEqualTo(version);
-        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("F6E5786754116CC8E1E9261B2A117701747B1259"));
+        assertThat(artifact.getChecksum()).isEqualTo(JOLOKIA_133_CHECKSUM);
     }
 
     @Test
     public void shouldFetchSnapshotArtifact() throws Exception {
+        JOLOKIA_134_SNAPSHOT_CHECKSUM.hexByteArray(); // init
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.4-SNAPSHOT");
@@ -129,11 +127,12 @@ public class ArtifactoryRepositoryIT {
         assertThat(artifact.getGroupId()).isEqualTo(groupId);
         assertThat(artifact.getArtifactId()).isEqualTo(artifactId);
         assertThat(artifact.getVersion()).isEqualTo(version);
-        assertThat(artifact.getChecksum()).isEqualTo(Checksum.fromString("C8BB60C0CE61C2BEEC370D9127ED340DCA5F566D"));
+        assertThat(artifact.getChecksum()).isEqualTo(JOLOKIA_134_SNAPSHOT_CHECKSUM);
     }
 
     @Test
     public void shouldFetchStableVersions() throws Exception {
+        assert JOLOKIA_134_CHECKSUM != null; // make sure it's indexed
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 

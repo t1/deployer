@@ -8,6 +8,7 @@ import java.io.*;
 import java.net.*;
 import java.util.List;
 
+import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.RepositoryProducer.*;
 import static com.github.t1.rest.RestContext.*;
@@ -15,14 +16,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assume.*;
 
 public class MavenCentralIT {
-    private static final Checksum JOLOKIA_133_CHECKSUM
-            = Checksum.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
-    private static final Checksum JOLOKIA_133_POM_CHECKSUM
-            = Checksum.fromString("a255283f2278ad0fb638d56683a456a3ddd7331e");
-    private static final GroupId ORG_JOLOKIA = new GroupId("org.jolokia");
-    private static final ArtifactId JOLOKIA_WAR = new ArtifactId("jolokia-war");
-    private static final Version VERSION_1_3_3 = new Version("1.3.3");
-
     private final RestContext rest = REST.register(REST_ALIAS, DEFAULT_MAVEN_CENTRAL_URI);
     private final Repository repository = new MavenCentralRepository(rest);
 

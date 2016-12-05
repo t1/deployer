@@ -1,22 +1,27 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
+import com.github.t1.testtools.WebArchiveBuilder;
+import com.google.common.collect.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
 
 import javax.ws.rs.*;
-import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
-import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.format.*;
 import java.util.*;
 
+import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
 import static com.github.t1.problem.WebException.*;
+import static java.time.ZoneOffset.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -28,6 +33,8 @@ import static javax.ws.rs.core.Response.Status.*;
 @Slf4j
 @Path("/")
 public class ArtifactoryMock {
+    @SuppressWarnings("SpellCheckingInspection") public static final DateTimeFormatter TIMESTAMP
+            = new DateTimeFormatterBuilder().appendPattern("yyyyMMddHHmmss").toFormatter();
     private static final String BASIC_FOO_BAR_AUTHORIZATION = "Basic Zm9vOmJhcg==";
     private static final String MAVEN_METADATA_XML = "maven-metadata.xml";
 
@@ -46,9 +53,96 @@ public class ArtifactoryMock {
     static final java.nio.file.Path MAVEN_REPOSITORY = MAVEN_HOME.resolve("repository");
     static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
 
-    static final Map<Checksum, java.nio.file.Path> INDEX = new HashMap<>();
+    static final BiMap<Checksum, java.nio.file.Path> INDEX = HashBiMap.create();
 
-    static Map<Checksum, java.nio.file.Path> index() {
+    public static Checksum dummyWar(GroupId groupId, ArtifactId artifactId, Version version) {
+        java.nio.file.Path path = toPath(groupId, artifactId, war, version);
+        if (!isIndexed(path)) {
+            java.nio.file.Path fullPath = MAVEN_REPOSITORY.resolve(path);
+            createDummyWar(artifactId.getValue(), fullPath);
+            createDummyMetaData(groupId, artifactId, version, fullPath);
+            index(path);
+        }
+        return Objects.requireNonNull(index().inverse().get(path),
+                "no war checksum created for " + groupId + ":" + artifactId + ":" + version);
+    }
+
+    @SneakyThrows(IOException.class)
+    private static void createDummyWar(String name, java.nio.file.Path path) {
+        log.debug("create dummy war {} in {}", name, path);
+        WebArchive webArchive = new WebArchiveBuilder(name).with(String.class).print().build();
+        Files.createDirectories(path.getParent());
+        new ZipExporterImpl(webArchive).exportTo(Files.newOutputStream(path));
+    }
+
+    @SneakyThrows(IOException.class)
+    private static void createDummyMetaData(GroupId groupId, ArtifactId artifactId, Version version,
+            java.nio.file.Path path) {
+        log.debug("create dummy meta-data {}:{}:{} in {}", groupId, artifactId, version, path);
+        String lastUpdate = TIMESTAMP.format(Files.getLastModifiedTime(path).toInstant().atOffset(UTC));
+        Files.write(path.getParent().resolve("maven-metadata-local.xml"),
+                ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                         + "<metadata modelVersion=\"1.1.0\">\n"
+                         + "  <groupId>" + groupId + "</groupId>\n"
+                         + "  <artifactId>" + artifactId + "</artifactId>\n"
+                         + "  <version>" + version + "</version>\n"
+                         + "  <versioning>\n"
+                         + "    <snapshot>\n"
+                         + "      <localCopy>true</localCopy>\n"
+                         + "    </snapshot>\n"
+                         + "    <lastUpdated>" + lastUpdate + "</lastUpdated>\n"
+                         + "    <snapshotVersions>\n"
+                         + "      <snapshotVersion>\n"
+                         + "        <extension>war</extension>\n"
+                         + "        <value>" + version + "</value>\n"
+                         + "        <updated>" + lastUpdate + "</updated>\n"
+                         + "      </snapshotVersion>\n"
+                         + "      <snapshotVersion>\n"
+                         + "        <extension>pom</extension>\n"
+                         + "        <value>" + version + "</value>\n"
+                         + "        <updated>" + lastUpdate + "</updated>\n"
+                         + "      </snapshotVersion>\n"
+                         + "    </snapshotVersions>\n"
+                         + "  </versioning>\n"
+                         + "</metadata>\n"
+                ).getBytes());
+    }
+
+    public static Checksum checksumFor(GroupId groupId, ArtifactId artifactId, ArtifactType type, Version version) {
+        java.nio.file.Path path = toPath(groupId, artifactId, type, version);
+        if (!isIndexed(path)) {
+            download(groupId, artifactId, type, version);
+            index(path);
+        }
+        return Objects.requireNonNull(index().inverse().get(path),
+                "no checksum for " + groupId + ":" + artifactId + ":" + type + ":" + version);
+    }
+
+    private static java.nio.file.Path toPath(GroupId groupId, ArtifactId artifactId, ArtifactType type,
+            Version version) {
+        return groupId.asPath().resolve(artifactId.getValue()).resolve(version.getValue())
+                      .resolve(artifactId + "-" + version + "." + type);
+    }
+
+    @SneakyThrows({ IOException.class, InterruptedException.class })
+    private static void download(GroupId groupId, ArtifactId artifactId, ArtifactType type, Version version) {
+        log.debug("download {}:{}:{}:{}", groupId, artifactId, type, version);
+        Process process = Runtime.getRuntime().exec("mvn dependency:get"
+                + " -DgroupId=" + groupId
+                + " -DartifactId=" + artifactId
+                + " -Dpackaging=" + type
+                + " -Dversion=" + version);
+        int returnCode = process.waitFor();
+        assert returnCode == 0 : "unexpected return code: " + returnCode;
+    }
+
+    private static void index(java.nio.file.Path path) {
+        Checksum checksum = Checksum.sha1(MAVEN_REPOSITORY.resolve(path));
+        INDEX.put(checksum, path);
+        writeIndex();
+    }
+
+    static BiMap<Checksum, java.nio.file.Path> index() {
         if (INDEX.isEmpty())
             readIndex();
         return INDEX;
@@ -70,6 +164,24 @@ public class ArtifactoryMock {
                     INDEX.put(checksum, path);
                 }
             }
+    }
+
+    @SneakyThrows(IOException.class)
+    static void writeIndex() {
+        try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
+            INDEX.entrySet().stream()
+                 .sorted(Comparator.comparing(Map.Entry::getValue))
+                 .forEach(entry -> write(writer, entry));
+        }
+    }
+
+    private static void write(BufferedWriter writer, Map.Entry<Checksum, java.nio.file.Path> entry) {
+        try {
+            writer.append(entry.getKey().hexString()).append(":")
+                  .append(entry.getValue().toString()).append("\n");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final java.nio.file.Path REPO_NAME = Paths.get("libs-release-local");
@@ -369,11 +481,9 @@ public class ArtifactoryMock {
     }
 
     private static boolean isIndexed(java.nio.file.Path path) {
-        for (java.nio.file.Path p : index().values()) {
-            if (p.startsWith(path)) {
+        for (java.nio.file.Path p : index().values())
+            if (p.startsWith(path) && Files.exists(MAVEN_REPOSITORY.resolve(path)))
                 return true;
-            }
-        }
         return false;
     }
 

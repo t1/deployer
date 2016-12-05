@@ -3,11 +3,10 @@ package com.github.t1.deployer.repository;
 import com.github.t1.deployer.model.Checksum;
 import lombok.*;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.*;
-import java.util.*;
 
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 
@@ -16,11 +15,10 @@ public class ArtifactoryMockIndexBuilder {
         new ArtifactoryMockIndexBuilder().run();
     }
 
-    private final Map<Checksum, java.nio.file.Path> INDEX = new HashMap<>();
-
     @SneakyThrows(IOException.class)
     public void run() {
         System.out.println("build local maven repository checksum index");
+        INDEX.clear();
         BuildChecksumsFileVisitor visitor = new BuildChecksumsFileVisitor(MAVEN_REPOSITORY);
         Instant start = Instant.now();
 
@@ -55,24 +53,6 @@ public class ArtifactoryMockIndexBuilder {
                     fileName.contains("postgresql") && fileName.endsWith(".jar")
                             && !fileName.endsWith("-javadoc.jar") && !fileName.endsWith("-sources.jar")
             );
-        }
-    }
-
-    @SneakyThrows(IOException.class)
-    private void writeIndex() {
-        try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
-            INDEX.entrySet().stream()
-                 .sorted((left, right) -> left.getValue().compareTo(right.getValue()))
-                 .forEach(entry -> write(writer, entry));
-        }
-    }
-
-    private Writer write(BufferedWriter writer, Map.Entry<Checksum, java.nio.file.Path> entry) {
-        try {
-            return writer.append(entry.getKey().hexString()).append(":")
-                         .append(entry.getValue().toString()).append("\n");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 }
