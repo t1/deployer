@@ -1,9 +1,12 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
+import com.github.t1.rest.*;
 import com.github.t1.rest.RestContext;
 import com.github.t1.testtools.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
+import org.junit.*;
+import org.junit.rules.*;
 
 import java.net.URI;
 import java.util.List;

@@ -9,7 +9,9 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
 
 import javax.ws.rs.*;
+import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
+import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -21,6 +23,7 @@ import java.util.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
 import static com.github.t1.problem.WebException.*;
+import static java.lang.ProcessBuilder.Redirect.*;
 import static java.time.ZoneOffset.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
@@ -127,11 +130,18 @@ public class ArtifactoryMock {
     @SneakyThrows({ IOException.class, InterruptedException.class })
     private static void download(GroupId groupId, ArtifactId artifactId, ArtifactType type, Version version) {
         log.debug("download {}:{}:{}:{}", groupId, artifactId, type, version);
-        Process process = Runtime.getRuntime().exec("mvn dependency:get"
-                + " -DgroupId=" + groupId
-                + " -DartifactId=" + artifactId
-                + " -Dpackaging=" + type
-                + " -Dversion=" + version);
+        File out = Paths.get("target/download-" + groupId + ":" + artifactId + ":" + type + ":" + version + ".out")
+                        .toFile();
+        Process process = new ProcessBuilder(
+                "mvn",
+                "dependency:get",
+                "-DgroupId=" + groupId,
+                "-DartifactId=" + artifactId,
+                "-Dpackaging=" + type,
+                "-Dversion=" + version)
+                .redirectOutput(appendTo(out))
+                .redirectError(appendTo(out))
+                .start();
         int returnCode = process.waitFor();
         assert returnCode == 0 : "unexpected return code: " + returnCode;
     }
