@@ -1,11 +1,13 @@
 package com.github.t1.deployer.container;
 
+import com.github.t1.deployer.model.ProcessState;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
 import org.jboss.dmr.ModelNode;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
@@ -13,6 +15,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import static com.github.t1.deployer.container.Container.*;
+import static com.github.t1.deployer.model.ProcessState.*;
 import static com.github.t1.problem.WebException.*;
 import static java.util.Locale.*;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
@@ -20,8 +24,12 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.wildfly.plugin.core.ServerHelper.*;
 
 @Slf4j
-class CLI {
-    private static final boolean DEBUG = Boolean.getBoolean(CLI.class.getName() + "#DEBUG");
+@RequestScoped
+class Batch {
+    private static int nextId = 0;
+    private final int id = nextId++;
+
+    private static final boolean DEBUG = Boolean.getBoolean(CLI_DEBUG);
     private static final int STARTUP_TIMEOUT = 30;
 
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
@@ -38,7 +46,7 @@ class CLI {
         }
     };
 
-    @Inject public ModelControllerClient client;
+    @Inject ModelControllerClient client;
 
     private CompositeOperationBuilder batch;
 
@@ -80,12 +88,12 @@ class CLI {
 
     public Stream<ModelNode> readResource(ModelNode address) {
         ModelNode result = executeRaw(createReadResourceOperation(address, true));
-        checkOutcome(result);
+        checkResponse(result);
         return result.get("result").asList().stream();
     }
 
     public void execute(ModelNode request) {
-        assert batch != null : "batch not started";
+        assert batch != null : "batch " + id + " not started";
 
         batch.addStep(request);
     }
@@ -99,7 +107,7 @@ class CLI {
     }
 
     public void execute(Operation operation) {
-        assert batch != null : "batch not started";
+        assert batch != null : "batch " + id + " not started";
         assert COMPOSITE.equals(operation.getOperation().get(OP).asString());
         assert operation.getOperation().get(ADDRESS).asList().isEmpty();
 
@@ -108,14 +116,41 @@ class CLI {
         batch.setAutoCloseStreams(operation.isAutoCloseStreams());
     }
 
-    public void checkOutcome(ModelNode result) {
+    public ProcessState checkResponse(ModelNode result) {
         if (!isSuccessfulOutcome(result))
             fail(result);
+
+        String processState = processState(result);
+        if (processState == null)
+            return running;
+        switch (processState) {
+        case CONTROLLER_PROCESS_STATE_RUNNING:
+            return running;
+        case CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED:
+            return reloadRequired;
+        case CONTROLLER_PROCESS_STATE_RESTART_REQUIRED:
+            return restartRequired;
+        case CONTROLLER_PROCESS_STATE_STARTING:
+            throw badRequest("unexpectedly still starting");
+        case CONTROLLER_PROCESS_STATE_STOPPING:
+            throw badRequest("unexpectedly already stopping");
+        }
+        throw badRequest("unexpected process-state: " + processState);
     }
 
     public void fail(ModelNode result) {
-        throw badRequest("outcome " + result.get("outcome")
-                + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : ""));
+        String detail = "outcome " + result.get("outcome")
+                + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : "");
+        throw badRequest(detail);
+    }
+
+    private String processState(ModelNode result) {
+        if (!result.has(RESPONSE_HEADERS))
+            return null;
+        ModelNode headers = result.get(RESPONSE_HEADERS);
+        if (!headers.has("process-state"))
+            return null;
+        return headers.get("process-state").asString();
     }
 
     public static boolean isNotFoundMessage(ModelNode result) {
@@ -139,26 +174,38 @@ class CLI {
 
     public void startBatch() {
         if (this.batch != null)
-            throw new IllegalStateException("already started a batch");
+            throw new IllegalStateException("already started batch " + id);
+        log.debug("--------- start batch {}", id);
         this.batch = CompositeOperationBuilder.create();
     }
 
-    @SneakyThrows(IOException.class)
-    public void commitBatch() {
+    public void rollbackBatch() {
         if (this.batch == null)
-            throw new IllegalStateException("no batch started");
+            throw new IllegalStateException("no batch " + id + " started");
+        log.debug("--------- rollback batch " + id, new RuntimeException());
+        this.batch = null;
+    }
+
+    @SneakyThrows(IOException.class)
+    public ProcessState commitBatch() {
+        if (this.batch == null)
+            throw new IllegalStateException("no batch " + id + " started");
+        log.debug("--------- commit batch {}", id);
         Operation operation = batch.build();
         assert operation.getOperation().has(STEPS);
+        ProcessState processState;
         if (operation.getOperation().get(STEPS).has(0)) {
             sortSteps(operation.getOperation().get(STEPS));
             logCli("execute batch: {}", operation.getOperation());
             ModelNode result = client.execute(operation, LOGGING);
             logCli("response {}", result);
-            checkOutcome(result);
+            processState = checkResponse(result);
         } else {
+            processState = running;
             log.debug("no batch to execute");
         }
         this.batch = null;
+        return processState;
     }
 
     /**
@@ -179,11 +226,12 @@ class CLI {
      */
     private void sortSteps(ModelNode steps) {
         List<ModelNode> list = new ArrayList<>(steps.asList());
-        list.sort(Comparator.comparing(CLI::operation)
+        list.sort(Comparator.comparing(Batch::operation)
                             .thenComparing(node -> operation(node).factor() * type(node).ordinal()));
         steps.set(list);
-    }
+}
 
+    @SuppressWarnings("unused")
     @RequiredArgsConstructor
     private enum OperationEnum {
         ADD(1), WRITE_ATTRIBUTE(1), MAP_PUT(1), MAP_REMOVE(1), UNDEPLOY(-1), REMOVE(-1);
@@ -223,11 +271,5 @@ class CLI {
             }
         }
         throw new IllegalArgumentException("unsupported node type: " + address);
-    }
-
-    public void rollbackBatch() {
-        if (this.batch == null)
-            throw new IllegalStateException("no batch started");
-        this.batch = null;
     }
 }

@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
 import static com.github.t1.deployer.model.Plan.*;
+import static com.github.t1.deployer.model.ProcessState.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -33,7 +34,8 @@ public class AuditsSerializationTest {
 
     private static final Audits TWO_AUDITS = new Audits()
             .add(deployerLog().change("level", INFO, DEBUG).added())
-            .add(MOCKSERVER.removed());
+            .add(MOCKSERVER.removed())
+            .setProcessState(reloadRequired);
 
     private static final String TWO_AUDITS_JSON =
             ("{'audits':"
@@ -48,7 +50,8 @@ public class AuditsSerializationTest {
                      + "'type':'deployable',"
                      + "'operation':'remove',"
                      + "'name':'mockserver'"
-                     + "}]}"
+                     + "}],"
+                     + "'process-state':'reloadRequired'}"
             ).replace('\'', '\"');
 
 
@@ -63,7 +66,8 @@ public class AuditsSerializationTest {
             + "  category: com.github.t1.deployer\n"
             + "- !<deployable>\n"
             + "  operation: remove\n"
-            + "  name: mockserver\n";
+            + "  name: mockserver\n"
+            + "processState: reloadRequired\n";
 
 
     @Test

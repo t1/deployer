@@ -43,28 +43,28 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
     private Integer maxPoolSize;
     private Age maxPoolAge;
 
-    private DataSourceResource(@NonNull DataSourceName name, @NonNull CLI cli) {
-        super(cli);
+    private DataSourceResource(@NonNull DataSourceName name, @NonNull Batch batch) {
+        super(batch);
         this.name = name;
     }
 
-    public static DataSourceResourceBuilder builder(DataSourceName name, CLI cli) {
+    public static DataSourceResourceBuilder builder(DataSourceName name, Batch batch) {
         DataSourceResourceBuilder builder = new DataSourceResourceBuilder();
-        builder.cli = cli;
+        builder.batch = batch;
         return builder.name(name);
     }
 
-    public static List<DataSourceResource> allDataSources(CLI cli) {
+    public static List<DataSourceResource> allDataSources(Batch batch) {
         return Stream.concat(
-                readDataSources(cli, false),
-                readDataSources(cli, true))
+                readDataSources(batch, false),
+                readDataSources(batch, true))
                      .sorted(comparing(DataSourceResource::name))
                      .collect(toList());
     }
 
-    private static Stream<DataSourceResource> readDataSources(CLI cli, boolean xa) {
-        return cli.readResource(address(ALL, xa))
-                  .map(node -> toDataSourceResource(name(node, xa), cli, node.get("result"), xa));
+    private static Stream<DataSourceResource> readDataSources(Batch batch, boolean xa) {
+        return batch.readResource(address(ALL, xa))
+                    .map(node -> toDataSourceResource(name(node, xa), batch, node.get("result"), xa));
     }
 
     private static DataSourceName name(ModelNode node, boolean xa) {
@@ -73,8 +73,8 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
         return new DataSourceName(dataSource.asString());
     }
 
-    private static DataSourceResource toDataSourceResource(DataSourceName name, CLI cli, ModelNode node, boolean xa) {
-        DataSourceResource dataSource = new DataSourceResource(name, cli);
+    private static DataSourceResource toDataSourceResource(DataSourceName name, Batch batch, ModelNode node, boolean xa) {
+        DataSourceResource dataSource = new DataSourceResource(name, batch);
         dataSource.readFrom(node);
         dataSource.xa = xa;
         dataSource.deployed = true;
@@ -82,7 +82,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
     }
 
     public static class DataSourceResourceBuilder implements Supplier<DataSourceResource> {
-        private CLI cli;
+        private Batch batch;
 
         public DataSourceResourceBuilder xa(Boolean value) {
             xa = (value == TRUE);
@@ -90,7 +90,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
         }
 
         @Override public DataSourceResource get() {
-            DataSourceResource dataSource = new DataSourceResource(name, cli);
+            DataSourceResource dataSource = new DataSourceResource(name, batch);
             dataSource.xa = xa;
             dataSource.uri = uri;
             dataSource.jndiName = jndiName;

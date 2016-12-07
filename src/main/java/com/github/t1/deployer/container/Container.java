@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 @Stateless
 @SuppressWarnings("deprecation")
 public class Container {
+    public static final String CLI_DEBUG = Batch.class.getName() + "#DEBUG";
+
     @SneakyThrows(InterruptedException.class)
     public static void waitForMBean() {
         for (int i = 0; i < 10; i++) {
@@ -33,33 +35,33 @@ public class Container {
     }
 
     /** @deprecated Only to be used privately or in tests */
-    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated @Getter @Inject public CLI cli;
+    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated @Getter @Inject public Batch batch;
 
-    public void waitForBoot() { cli.waitForBoot(); }
+    public void waitForBoot() { batch.waitForBoot(); }
 
     public static Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
 
     public LogHandlerResourceBuilder builderFor(LogHandlerType type, LogHandlerName name) {
-        return LogHandlerResource.builder(type, name, cli);
+        return LogHandlerResource.builder(type, name, batch);
     }
 
-    public Stream<LogHandlerResource> allLogHandlers() { return LogHandlerResource.allHandlers(cli).stream(); }
+    public Stream<LogHandlerResource> allLogHandlers() { return LogHandlerResource.allHandlers(batch).stream(); }
 
-    public LoggerResourceBuilder builderFor(LoggerCategory category) { return LoggerResource.builder(category, cli); }
+    public LoggerResourceBuilder builderFor(LoggerCategory category) { return LoggerResource.builder(category, batch); }
 
-    public Stream<LoggerResource> allLoggers() { return LoggerResource.allLoggers(cli).stream(); }
+    public Stream<LoggerResource> allLoggers() { return LoggerResource.allLoggers(batch).stream(); }
 
-    public DataSourceResourceBuilder builderFor(DataSourceName name) { return DataSourceResource.builder(name, cli); }
+    public DataSourceResourceBuilder builderFor(DataSourceName name) { return DataSourceResource.builder(name, batch); }
 
-    public Stream<DataSourceResource> allDataSources() { return DataSourceResource.allDataSources(cli).stream(); }
+    public Stream<DataSourceResource> allDataSources() { return DataSourceResource.allDataSources(batch).stream(); }
 
-    public DeploymentResourceBuilder builderFor(DeploymentName name) { return DeploymentResource.builder(name, cli); }
+    public DeploymentResourceBuilder builderFor(DeploymentName name) { return DeploymentResource.builder(name, batch); }
 
-    public Stream<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(cli); }
+    public Stream<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(batch); }
 
-    public void startBatch() { cli.startBatch(); }
+    public void startBatch() { batch.startBatch(); }
 
-    public void commitBatch() { cli.commitBatch(); }
+    public ProcessState commitBatch() { return batch.commitBatch(); }
 
-    public void rollbackBatch() { cli.rollbackBatch(); }
+    public void rollbackBatch() { batch.rollbackBatch(); }
 }

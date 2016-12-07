@@ -61,24 +61,24 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
     private Boolean useParentHandlers;
     private LogLevel level;
 
-    private LoggerResource(LoggerCategory category, CLI cli) {
-        super(cli);
+    private LoggerResource(LoggerCategory category, Batch batch) {
+        super(batch);
         this.category = category;
     }
 
-    public static LoggerResourceBuilder builder(LoggerCategory category, CLI cli) {
+    public static LoggerResourceBuilder builder(LoggerCategory category, Batch batch) {
         LoggerResourceBuilder builder = new LoggerResourceBuilder().category(category);
-        builder.cli = cli;
+        builder.batch = batch;
         return builder;
     }
 
-    public static List<LoggerResource> allLoggers(CLI cli) {
+    public static List<LoggerResource> allLoggers(Batch batch) {
         List<LoggerResource> loggers =
-                cli.readResource(address(LoggerCategory.ALL))
-                   .map(node -> toLoggerResource(category(node), cli, node.get("result")))
-                   .sorted(comparing(LoggerResource::category))
-                   .collect(toList());
-        loggers.add(0, readRootLogger(cli));
+                batch.readResource(address(LoggerCategory.ALL))
+                     .map(node -> toLoggerResource(category(node), batch, node.get("result")))
+                     .sorted(comparing(LoggerResource::category))
+                     .collect(toList());
+        loggers.add(0, readRootLogger(batch));
         return loggers;
     }
 
@@ -86,10 +86,10 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
 
 
     public static class LoggerResourceBuilder implements Supplier<LoggerResource> {
-        private CLI cli;
+        private Batch batch;
 
         @Override public LoggerResource get() {
-            LoggerResource resource = new LoggerResource(category, cli);
+            LoggerResource resource = new LoggerResource(category, batch);
             resource.useParentHandlers = this.useParentHandlers;
             resource.level = this.level;
             if (this.handlers != null)
@@ -205,15 +205,15 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
         return LoggerCategory.of(address.get("address").get(1).get("logger").asString());
     }
 
-    public static LoggerResource toLoggerResource(LoggerCategory category, CLI cli, ModelNode node) {
-        LoggerResource logger = new LoggerResource(category, cli);
+    public static LoggerResource toLoggerResource(LoggerCategory category, Batch batch, ModelNode node) {
+        LoggerResource logger = new LoggerResource(category, batch);
         logger.readFrom(node);
         logger.deployed = true;
         return logger;
     }
 
-    private static LoggerResource readRootLogger(CLI cli) {
-        LoggerResource root = new LoggerResource(ROOT, cli);
+    private static LoggerResource readRootLogger(Batch batch) {
+        LoggerResource root = new LoggerResource(ROOT, batch);
         root.checkDeployed();
         assert root.isRoot();
         return root;

@@ -1,8 +1,10 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.model.Expressions.VariableName;
+import com.github.t1.deployer.model.ProcessState;
 import com.github.t1.log.*;
 import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.RequestScoped;
@@ -20,9 +22,11 @@ import static java.util.stream.Collectors.*;
  */
 @Slf4j
 @Data
+@Accessors(chain = true)
 @RequestScoped
 public class Audits {
     private final List<Audit> audits = new ArrayList<>();
+    private ProcessState processState;
 
     @Logged(level = DEBUG, returnFormat = "")
     public Audits add(Audit audit) {

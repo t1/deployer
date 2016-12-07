@@ -8,7 +8,7 @@ import org.jboss.dmr.ModelNode;
 
 import java.util.Optional;
 
-import static com.github.t1.deployer.container.CLI.*;
+import static com.github.t1.deployer.container.Batch.*;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 
@@ -20,7 +20,7 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractResource<T extends AbstractResource<T>> {
-    @NonNull private final CLI cli;
+    @NonNull private final Batch batch;
 
     protected Boolean deployed = null;
 
@@ -39,7 +39,7 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
     protected void read(ModelNode address) {
         log.debug("isDeployed: {}", address);
         ModelNode readResource = createReadResourceOperation(address, true);
-        ModelNode response = cli.executeRaw(readResource);
+        ModelNode response = batch.executeRaw(readResource);
         if (response == null)
             throw new RuntimeException("read-resource not properly mocked: " + this);
         if (isSuccessfulOutcome(response)) {
@@ -58,25 +58,25 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected abstract void readFrom(ModelNode result);
 
-    protected void writeOp(ModelNode request) { cli.execute(request); }
+    protected void writeOp(ModelNode request) { batch.execute(request); }
 
-    protected void writeOp(Operation operation) { cli.execute(operation); }
+    protected void writeOp(Operation operation) { batch.execute(operation); }
 
-    protected void writeAttribute(String name, String value) { cli.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeAttribute(String name, String value) { batch.writeAttr(address(), name, ModelNode::set, value); }
 
     protected void writeUseParentHandlers(Boolean value) {
-        cli.writeAttr(address(), "use-parent-handlers", ModelNode::set, value);
+        batch.writeAttr(address(), "use-parent-handlers", ModelNode::set, value);
     }
 
-    protected void writeAttribute(String name, Integer value) { cli.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeAttribute(String name, Integer value) { batch.writeAttr(address(), name, ModelNode::set, value); }
 
     protected void writeIdleTimeout(Long value) {
-        cli.writeAttr(address(), "idle-timeout-minutes", ModelNode::set, value);
+        batch.writeAttr(address(), "idle-timeout-minutes", ModelNode::set, value);
     }
 
-    protected void writeProperty(String key, String value) { cli.writeProperty(address(), key, value); }
+    protected void writeProperty(String key, String value) { batch.writeProperty(address(), key, value); }
 
-    protected void propertyRemove(String key) { cli.removeProperty(address(), key); }
+    protected void propertyRemove(String key) { batch.removeProperty(address(), key); }
 
     public abstract void add();
 

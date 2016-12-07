@@ -15,6 +15,7 @@ import javax.ejb.*;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.Path;
@@ -22,6 +23,7 @@ import java.security.Principal;
 import java.util.*;
 
 import static com.github.t1.deployer.app.Trigger.*;
+import static com.github.t1.deployer.model.ProcessState.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.problem.WebException.*;
 import static java.nio.file.Files.*;
@@ -34,6 +36,7 @@ import static javax.ws.rs.core.Response.Status.*;
 @Logged(level = INFO)
 @Slf4j
 public class DeployerBoundary {
+    public static final String IGNORE_SERVER_RELOAD = DeployerBoundary.class + "#IGNORE_SERVER_RELOAD";
     public static final String ROOT_BUNDLE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
             + "bundles:\n"
@@ -56,11 +59,19 @@ public class DeployerBoundary {
     @Value
     public static class AuditsResponse {
         List<Audit> audits;
+        ProcessState processState;
     }
 
     @POST
-    public AuditsResponse post(Map<String, String> form) {
-        return new AuditsResponse(apply(post, mapVariableNames(form)).getAudits());
+    public Response post(Map<String, String> form) {
+
+        apply(post, mapVariableNames(form));
+
+        return Response
+                .status((audits.getProcessState() == running || Boolean.getBoolean(IGNORE_SERVER_RELOAD))
+                        ? OK : INTERNAL_SERVER_ERROR)
+                .entity(new AuditsResponse(audits.getAudits(), audits.getProcessState()))
+                .build();
     }
 
     private Map<VariableName, String> mapVariableNames(Map<String, String> form) {
@@ -88,7 +99,7 @@ public class DeployerBoundary {
     }
 
 
-    public synchronized Audits apply(Trigger trigger, Map<VariableName, String> variables) {
+    public synchronized void apply(Trigger trigger, Map<VariableName, String> variables) {
         Applying applying = new Applying().withVariables(variables);
 
         try {
@@ -103,11 +114,10 @@ public class DeployerBoundary {
             container.rollbackBatch();
             throw e;
         }
-        container.commitBatch();
+        ProcessState processState = container.commitBatch();
 
+        audits.setProcessState(processState);
         audits.applied(trigger, principal, variables, audits);
-
-        return audits;
     }
 
 

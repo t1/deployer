@@ -4,7 +4,9 @@ import com.github.t1.deployer.model.Age;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
+import static com.github.t1.deployer.model.ProcessState.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 
 public class DataSourceDeployerTest extends AbstractDeployerTests {
     @Test
@@ -314,6 +316,42 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
                 + "      max-age: 3 min\n");
 
         fixture.maxAge(Age.ofMinutes(3)).verifyUpdatedMaxAgeFrom(Age.ofMinutes(2), audits);
+    }
+
+    @Test
+    public void shouldFailWhenReloadIsRequired() {
+        DataSourceFixture fixture = givenDataSource("foo")
+                .maxAge(Age.ofMinutes(2))
+                .deployed()
+                .processState(CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED);
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    pool:\n"
+                + "      max-age: 3 min\n");
+
+        fixture.maxAge(Age.ofMinutes(3)).verifyUpdatedMaxAgeFrom(Age.ofMinutes(2), audits);
+        assertThat(audits.getProcessState()).isEqualTo(reloadRequired);
+    }
+
+    @Test
+    public void shouldFailWhenRestartIsRequired() {
+        DataSourceFixture fixture = givenDataSource("foo")
+                .maxAge(Age.ofMinutes(2))
+                .deployed()
+                .processState(CONTROLLER_PROCESS_STATE_RESTART_REQUIRED);
+
+        Audits audits = deploy(""
+                + "data-sources:\n"
+                + "  foo:\n"
+                + "    uri: jdbc:h2:mem:foo\n"
+                + "    pool:\n"
+                + "      max-age: 3 min\n");
+
+        fixture.maxAge(Age.ofMinutes(3)).verifyUpdatedMaxAgeFrom(Age.ofMinutes(2), audits);
+        assertThat(audits.getProcessState()).isEqualTo(restartRequired);
     }
 
     @Test

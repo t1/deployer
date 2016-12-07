@@ -40,7 +40,7 @@ import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.Password.*;
 import static com.github.t1.deployer.model.Plan.*;
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static com.github.t1.deployer.testtools.ModelNodeTools.*;
+import static com.github.t1.deployer.testtools.ModelNodeTestTools.*;
 import static com.github.t1.deployer.tools.Tools.*;
 import static com.github.t1.log.LogLevel.*;
 import static java.lang.Boolean.*;
@@ -73,7 +73,8 @@ public class AbstractDeployerTests {
     @SneakyThrows(IOException.class)
     Audits deploy(String plan) {
         rootBundle.write(plan);
-        return boundary.apply(mock, emptyMap());
+        boundary.apply(mock, emptyMap());
+        return boundary.audits;
     }
 
 
@@ -100,6 +101,8 @@ public class AbstractDeployerTests {
     private final Map<LogHandlerType, List<String>> allLogHandlers = new LinkedHashMap<>();
 
     private final Map<String, List<Version>> versions = new LinkedHashMap<>();
+
+    private String processState;
 
     @Before
     public void before() {
@@ -136,8 +139,8 @@ public class AbstractDeployerTests {
             return null;
         }).when(deployers).forEach(any(Consumer.class));
 
-        when(anyModelNode()).then(i -> success()); // write-attribute calls
-        when(anyOperation()).then(i -> success()); // composite calls
+        when(anyModelNode()).then(i -> success(processState)); // write-attribute calls
+        when(anyOperation()).then(i -> success(processState)); // composite calls
         whenCli(readResourceRequest(rootLogger())).thenRaw(this::rootLoggerResponse);
         whenCli(readLoggerRequest("*")).then(this::allLoggersResponse);
         whenCli(readDatasourceRequest("*", false)).then(this::allNonXaDataSourcesResponse);
@@ -1118,6 +1121,11 @@ public class AbstractDeployerTests {
             return this;
         }
 
+        public DataSourceFixture processState(String processState) {
+            AbstractDeployerTests.this.processState = processState;
+            return this;
+        }
+
         public DataSourceFixture pinned() {
             givenPinned("data-sources", name.getValue());
             return this;
@@ -1131,7 +1139,7 @@ public class AbstractDeployerTests {
 
         public String dataSourceAddress() { return address("datasources", dataSource(xa), name); }
 
-        private ModelNode dataSourceAddressNode() {
+        public ModelNode dataSourceAddressNode() {
             return createAddress("subsystem", "datasources", dataSource(xa), name.getValue());
         }
 

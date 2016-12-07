@@ -2,31 +2,37 @@ package com.github.t1.deployer.container;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.as.controller.client.helpers.standalone.*;
+import org.jboss.dmr.ModelNode;
 
 import java.net.InetAddress;
-import java.util.concurrent.Future;
 
 @Slf4j
 public class JBossCliTestClient {
     public static void main(String[] args) throws Exception {
         InetAddress host = InetAddress.getByName("127.0.0.1");
-        int port = 9999;
+        int port = 9990;
         log.info("connect to JBoss AS on {}:{}", host, port);
 
         // File file = new File("foo.war").getCanonicalFile();
         // log.info("undeploy {}", file);
 
         try (ModelControllerClient client = ModelControllerClient.Factory.create(host, port)) {
-            try (ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(client)) {
-                DeploymentPlan plan =
-                        deploymentManager.newDeploymentPlan().undeploy("foo.war").remove("foo.war").build();
+            ModelNode reload = Operations.createOperation("reload", new ModelNode().setEmptyList());
 
-                Future<ServerDeploymentPlanResult> future = deploymentManager.execute(plan);
-                ServerDeploymentPlanResult result = future.get();
+            ModelNode result = client.execute(reload);
 
-                checkOutcome(plan, result);
-            }
+            log.info("--> {}", result);
+            // try (ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(client)) {
+            //     DeploymentPlan plan =
+            //             deploymentManager.newDeploymentPlan().undeploy("foo.war").remove("foo.war").build();
+            //
+            //     Future<ServerDeploymentPlanResult> future = deploymentManager.execute(plan);
+            //     ServerDeploymentPlanResult result = future.get();
+            //
+            //     checkOutcome(plan, result);
+            // }
         }
     }
 
@@ -39,22 +45,22 @@ public class JBossCliTestClient {
             if (deploymentException != null)
                 firstThrowable = deploymentException;
             switch (actionResult.getResult()) {
-                case CONFIGURATION_MODIFIED_REQUIRES_RESTART:
-                    log.warn("requries restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case EXECUTED:
-                    log.debug("executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case FAILED:
-                    failed = true;
-                    log.error("failed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case NOT_EXECUTED:
-                    log.debug("not executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
-                case ROLLED_BACK:
-                    log.debug("rolled back: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
-                    break;
+            case CONFIGURATION_MODIFIED_REQUIRES_RESTART:
+                log.warn("requries restart: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                break;
+            case EXECUTED:
+                log.debug("executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                break;
+            case FAILED:
+                failed = true;
+                log.error("failed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                break;
+            case NOT_EXECUTED:
+                log.debug("not executed: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                break;
+            case ROLLED_BACK:
+                log.debug("rolled back: {}: {}", action.getType(), action.getDeploymentUnitUniqueName());
+                break;
             }
         }
         if (firstThrowable != null || failed) {
@@ -65,8 +71,8 @@ public class JBossCliTestClient {
     @SuppressWarnings("deprecation")
     public static Container buildContainer(ModelControllerClient cli) {
         Container container = new Container();
-        container.cli = new CLI();
-        container.cli.client = cli;
+        container.batch = new Batch();
+        container.batch.client = cli;
         return container;
     }
 }

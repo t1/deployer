@@ -28,35 +28,35 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
     private Checksum checksum;
     private InputStream inputStream;
 
-    public DeploymentResource(DeploymentName name, CLI cli) {
-        super(cli);
+    public DeploymentResource(DeploymentName name, Batch batch) {
+        super(batch);
         this.name = name;
     }
 
-    public static DeploymentResourceBuilder builder(DeploymentName name, CLI cli) {
+    public static DeploymentResourceBuilder builder(DeploymentName name, Batch batch) {
         DeploymentResourceBuilder builder = new DeploymentResourceBuilder().name(name);
-        builder.cli = cli;
+        builder.batch = batch;
         return builder;
     }
 
-    public static Stream<DeploymentResource> allDeployments(CLI cli) {
-        return cli.readResource(address(ALL))
-                  .map(match -> toDeployment(match.get("result"), cli))
-                  .sorted(comparing(DeploymentResource::name));
+    public static Stream<DeploymentResource> allDeployments(Batch batch) {
+        return batch.readResource(address(ALL))
+                    .map(match -> toDeployment(match.get("result"), batch))
+                    .sorted(comparing(DeploymentResource::name));
     }
 
-    private static DeploymentResource toDeployment(ModelNode node, CLI cli) {
+    private static DeploymentResource toDeployment(ModelNode node, Batch batch) {
         DeploymentName name = readName(node);
         Checksum hash = readHash(node);
         log.debug("read deployment '{}' [{}]", name, hash);
-        return DeploymentResource.builder(name, cli).checksum(hash).get();
+        return DeploymentResource.builder(name, batch).checksum(hash).get();
     }
 
     public static class DeploymentResourceBuilder implements Supplier<DeploymentResource> {
-        private CLI cli;
+        private Batch batch;
 
         @Override public DeploymentResource get() {
-            DeploymentResource resource = new DeploymentResource(name, cli);
+            DeploymentResource resource = new DeploymentResource(name, batch);
             resource.inputStream = inputStream;
             resource.checksum = checksum;
             return resource;

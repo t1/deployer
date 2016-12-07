@@ -43,23 +43,23 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
     private String class_;
     private Map<String, String> properties;
 
-    private LogHandlerResource(LogHandlerType type, LogHandlerName name, CLI cli) {
-        super(cli);
+    private LogHandlerResource(LogHandlerType type, LogHandlerName name, Batch batch) {
+        super(batch);
         this.type = type;
         this.name = name;
     }
 
-    public static LogHandlerResourceBuilder builder(LogHandlerType type, LogHandlerName name, CLI cli) {
+    public static LogHandlerResourceBuilder builder(LogHandlerType type, LogHandlerName name, Batch batch) {
         LogHandlerResourceBuilder builder = new LogHandlerResourceBuilder().type(type).name(name);
-        builder.cli = cli;
+        builder.batch = batch;
         return builder;
     }
 
-    public static List<LogHandlerResource> allHandlers(CLI cli) {
+    public static List<LogHandlerResource> allHandlers(Batch batch) {
         return Arrays.stream(LogHandlerType.values())
-                     .flatMap(type -> cli
+                     .flatMap(type -> batch
                              .readResource(address(type, ALL))
-                             .map(node -> toLoggerResource(type(node), name(node), cli, node.get("result"))))
+                             .map(node -> toLoggerResource(type(node), name(node), batch, node.get("result"))))
                      .sorted(comparing(LogHandlerResource::name))
                      .collect(toList());
     }
@@ -72,19 +72,19 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
         return new LogHandlerName(node.get("address").get(1).get(type(node).getHandlerTypeName()).asString());
     }
 
-    private static LogHandlerResource toLoggerResource(LogHandlerType type, LogHandlerName name, CLI cli,
+    private static LogHandlerResource toLoggerResource(LogHandlerType type, LogHandlerName name, Batch batch,
             ModelNode node) {
-        LogHandlerResource logger = new LogHandlerResource(type, name, cli);
+        LogHandlerResource logger = new LogHandlerResource(type, name, batch);
         logger.readFrom(node);
         logger.deployed = true;
         return logger;
     }
 
     public static class LogHandlerResourceBuilder implements Supplier<LogHandlerResource> {
-        private CLI cli;
+        private Batch batch;
 
         @Override public LogHandlerResource get() {
-            LogHandlerResource resource = new LogHandlerResource(type, name, cli);
+            LogHandlerResource resource = new LogHandlerResource(type, name, batch);
             resource.level = level;
             resource.format = format;
             resource.formatter = formatter;
