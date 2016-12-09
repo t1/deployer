@@ -182,7 +182,7 @@ class Batch {
     public void rollbackBatch() {
         if (this.batch == null)
             throw new IllegalStateException("no batch " + id + " started");
-        log.debug("--------- rollback batch " + id, new RuntimeException());
+        log.debug("--------- rollback batch " + id);
         this.batch = null;
     }
 
