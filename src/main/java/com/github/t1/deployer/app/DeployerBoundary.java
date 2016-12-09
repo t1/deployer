@@ -33,6 +33,7 @@ import static javax.ws.rs.core.Response.Status.*;
 
 @javax.ws.rs.Path("/")
 @Stateless
+@Singleton
 @Logged(level = INFO)
 @Slf4j
 public class DeployerBoundary {
