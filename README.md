@@ -63,14 +63,20 @@ as in a fully containerized approach, there's no need to change a running system
 any change in the configuration should result in a restart of the whole stack
 and it's sufficiently easy to use the normal CLI for that.
 
-But we found that the abstraction layer that The Deployer provides can be useful nonetheless:
+But you may find the abstraction layer that The Deployer provides to be useful nonetheless:
 A bundle file may be more readable than a long list of CLI statements,
 as it is more concise and clear (e.g., xa and non-xa data sources both use the same connection uri syntax),
 and it provides mechanics to reuse common configuration schemes, further DRYing your code.
 
-OTOH you can also go for a mixed approach, i.e. use a Docker container to build the Java EE container,
+You can also go for a mixed approach, i.e. use a Docker container to build the Java EE container,
 and then use The Deployer to configure and deploy your application(s).
 You then have an idempotent server, not a Docker-style immutable server.
+
+If you want to go fully Docker style, this is not enough,
+as it means downloading and applying everything at boot time,
+which happens very often in a dynamic cloud setup, so it has to be as fast as possible;
+so it would have to be done at Docker build time;
+this is yet an [open issue](https://github.com/t1/deployer/issues/56).
 
 
 ## Building
