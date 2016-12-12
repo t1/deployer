@@ -6,10 +6,9 @@ import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBui
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.Logged;
-import lombok.*;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.management.ObjectName;
 import java.nio.file.*;
@@ -17,8 +16,6 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Logged
-@Stateless
-@SuppressWarnings("deprecation")
 public class Container {
     public static final String CLI_DEBUG = Batch.class.getName() + "#DEBUG";
 
@@ -34,8 +31,7 @@ public class Container {
         }
     }
 
-    /** @deprecated Only to be used privately or in tests */
-    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated @Getter @Inject public Batch batch;
+    @Inject Batch batch;
 
     public void waitForBoot() { batch.waitForBoot(); }
 
