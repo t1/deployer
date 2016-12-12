@@ -659,15 +659,15 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithToUpperAndToLowerCaseVariables() {
-        givenConfiguredVariable("foo", "Foo");
+    public void shouldDeployWebArchiveWithChangedCaseVariables() {
+        givenConfiguredVariable("foo", "foo");
         ArtifactFixture foo = givenArtifact("FOO", "org.foo", "Foo").version("1.3.2");
 
         Audits audits = deploy(""
                 + "deployables:\n"
                 + "  ${toUpperCase(foo)}:\n"
                 + "    group-id: org.${toLowerCase(foo)}\n"
-                + "    artifact-id: ${foo}\n"
+                + "    artifact-id: ${toInitCap(foo)}\n"
                 + "    version: 1.3.2\n");
 
         foo.verifyDeployed(audits);

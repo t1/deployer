@@ -325,6 +325,8 @@ public class Expressions {
                 return apply1(s -> s.toUpperCase(US));
             case "toLowerCase#1":
                 return apply1(s -> s.toLowerCase(US));
+            case "toInitCap#1":
+                return apply1(this::toInitCap);
             case "decrypt#1":
                 return apply1(this::decrypt);
             case "decrypt#2":
@@ -347,6 +349,10 @@ public class Expressions {
         }
 
         private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
+
+        private String toInitCap(String text) {
+            return (text.length() == 0) ? "" : (Character.toUpperCase(text.charAt(0)) + text.substring(1));
+        }
 
         private String decrypt(String text) { return CipherFacade.decrypt(text, keyStore); }
 

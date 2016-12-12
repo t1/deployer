@@ -119,6 +119,7 @@ A variable name can contain the name of a function to be applied to the value:
 - `«x»`: The literal string `x` – useful for, e.g., ` or ` expressions. This quote type (guillemet) has the advantage of being nestable.
 - `toUpperCase(x)`: Turns the value of the variable `x` into all upper case.
 - `toLowerCase(x)`: Turns the value of the variable `x` into all lower case.
+- `toInitCap(x)`: Uppercase the first character and append the rest as is.
 - `hostName()`: Returns the DNS name of the local host (without the domain name).
 - `domainName()`: Returns the DNS domain of the local host.
 - `regex(a, b)`: Apply the regular expression `b` to `a`, returning the first matching group.
