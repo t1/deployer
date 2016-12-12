@@ -33,7 +33,6 @@ import static javax.ws.rs.core.Response.Status.*;
 
 @javax.ws.rs.Path("/")
 @Stateless
-@Singleton
 @Logged(level = INFO)
 @Slf4j
 public class DeployerBoundary {
@@ -46,6 +45,7 @@ public class DeployerBoundary {
             + "    classifier: ${root-bundle:classifier or null}\n"
             + "    version: ${root-bundle:version or version}\n";
     private static final VariableName NAME = new VariableName("name");
+    private static final Object CONTAINER_LOCK = new Object();
 
     public Path getRootBundlePath() { return Container.getConfigDir().resolve(ROOT_BUNDLE); }
 
@@ -100,25 +100,27 @@ public class DeployerBoundary {
     }
 
 
-    public synchronized void apply(Trigger trigger, Map<VariableName, String> variables) {
-        Applying applying = new Applying().withVariables(variables);
+    public void apply(Trigger trigger, Map<VariableName, String> variables) {
+        synchronized (CONTAINER_LOCK) {
+            Applying applying = new Applying().withVariables(variables);
 
-        try {
-            container.startBatch();
-            Path root = getRootBundlePath();
-            if (isRegularFile(root)) {
-                applying.apply(root);
-            } else {
-                applying.applyDefaultRoot();
+            try {
+                container.startBatch();
+                Path root = getRootBundlePath();
+                if (isRegularFile(root)) {
+                    applying.apply(root);
+                } else {
+                    applying.applyDefaultRoot();
+                }
+            } catch (RuntimeException e) {
+                container.rollbackBatch();
+                throw e;
             }
-        } catch (RuntimeException e) {
-            container.rollbackBatch();
-            throw e;
-        }
-        ProcessState processState = container.commitBatch();
+            ProcessState processState = container.commitBatch();
 
-        audits.setProcessState(processState);
-        audits.applied(trigger, principal, variables, audits);
+            audits.setProcessState(processState);
+            audits.applied(trigger, principal, variables, audits);
+        }
     }
 
 
