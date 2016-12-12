@@ -229,12 +229,12 @@ class Batch {
         list.sort(Comparator.comparing(Batch::operation)
                             .thenComparing(node -> operation(node).factor() * type(node).ordinal()));
         steps.set(list);
-}
+    }
 
     @SuppressWarnings("unused")
     @RequiredArgsConstructor
     private enum OperationEnum {
-        ADD(1), WRITE_ATTRIBUTE(1), MAP_PUT(1), MAP_REMOVE(1), UNDEPLOY(-1), REMOVE(-1);
+        ADD(1), WRITE_ATTRIBUTE(1), MAP_PUT(1), MAP_REMOVE(1), FULL_REPLACE_DEPLOYMENT(1), UNDEPLOY(-1), REMOVE(-1);
 
         @Getter @Accessors(fluent = true)
         private final int factor;

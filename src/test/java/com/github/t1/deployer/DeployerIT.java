@@ -148,8 +148,8 @@ public class DeployerIT {
 
     @Rule
     public LoggerMemento loggerMemento = new LoggerMemento()
-            // .with("org.apache.http.headers", DEBUG)
-            .with("org.apache.http.wire", DEBUG)
+            .with("org.apache.http.headers", DEBUG)
+            // .with("org.apache.http.wire", DEBUG)
             // .with("com.github.t1.rest", DEBUG)
             // .with("com.github.t1.rest.ResponseConverter", INFO)
             .with("com.github.t1.deployer", DEBUG);
@@ -326,8 +326,12 @@ public class DeployerIT {
 
     @Test
     @InSequence(value = 400)
-    public void shouldUpdateWebArchiveWithConfiguredVariable() throws Exception {
-        String plan = PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}");
+    public void shouldUpdateWebArchiveWithConfiguredVariablePlusAddLogger() throws Exception {
+        String plan = PLAN_JOLOKIA_WITH_VERSION_VAR
+                .replace("${jolokia.version}", "${config-var}")
+                + "loggers:\n"
+                + "  foo:\n"
+                + "    level: DEBUG\n";
 
         List<Audit> audits = post(plan);
 
@@ -336,12 +340,16 @@ public class DeployerIT {
                 DeployableAudit.builder().name("jolokia")
                                .change("checksum", JOLOKIA_131_CHECKSUM, JOLOKIA_132_CHECKSUM)
                                .change("version", "1.3.1", "1.3.2")
-                               .changed());
+                               .changed(),
+                LoggerAudit.builder().category(LoggerCategory.of("foo"))
+                           .change("level", null, DEBUG)
+                           .change("use-parent-handlers", null, true)
+                           .added());
     }
 
     @Test
     @InSequence(value = 500)
-    public void shouldUpdateWebArchiveWithPostParameter() throws Exception {
+    public void shouldUpdateWebArchiveWithPostParameterAndRemoveLogger() throws Exception {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -357,7 +365,11 @@ public class DeployerIT {
                 DeployableAudit.builder().name("jolokia")
                                .change("checksum", JOLOKIA_132_CHECKSUM, JOLOKIA_133_CHECKSUM)
                                .change("version", "1.3.2", "1.3.3")
-                               .changed());
+                               .changed(),
+                LoggerAudit.builder().category(LoggerCategory.of("foo"))
+                           .change("level", DEBUG, null)
+                           .change("use-parent-handlers", true, null)
+                           .removed());
     }
 
     @Test
