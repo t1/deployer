@@ -4,15 +4,7 @@ log-handlers:
     level: ALL
     formatter: COLOR-PATTERN
 
-loggers:
-  com.github.t1.deployer:
-    level: DEBUG
-
 deployables:
-#  postgresql:
-#    group-id: org.postgresql
-#    version: 9.4.1208
-#    type: jar
   jolokia:
     group-id: org.jolokia
     artifact-id: jolokia-war

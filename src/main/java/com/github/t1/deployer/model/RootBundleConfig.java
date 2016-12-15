@@ -16,4 +16,5 @@ public class RootBundleConfig {
     ArtifactId artifactId;
     Version version;
     Classifier classifier;
+    Boolean shutdownAfterBoot;
 }

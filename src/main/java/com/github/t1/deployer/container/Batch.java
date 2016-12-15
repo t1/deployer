@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.*;
+import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
 
 import javax.enterprise.context.RequestScoped;
@@ -56,6 +57,14 @@ class Batch {
         log.info("wait for boot");
         waitForStandalone(client, STARTUP_TIMEOUT);
         log.info("boot done");
+    }
+
+    public void shutdown() {
+        ModelNode reload = Operations.createOperation("shutdown", new ModelNode().setEmptyList());
+
+        ModelNode result = executeRaw(reload);
+
+        log.info("shutdown -> {}", result);
     }
 
 

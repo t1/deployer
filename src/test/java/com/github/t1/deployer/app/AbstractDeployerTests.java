@@ -57,7 +57,7 @@ import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("SameParameterValue")
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class AbstractDeployerTests {
+public abstract class AbstractDeployerTests {
 
     @SneakyThrows(IOException.class)
     private static Path tempDir() { return Files.createTempDirectory("deployer.test"); }

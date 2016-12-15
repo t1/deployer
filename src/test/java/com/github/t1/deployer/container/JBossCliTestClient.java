@@ -19,7 +19,7 @@ public class JBossCliTestClient {
         // log.info("undeploy {}", file);
 
         try (ModelControllerClient client = ModelControllerClient.Factory.create(host, port)) {
-            ModelNode reload = Operations.createOperation("reload", new ModelNode().setEmptyList());
+            ModelNode reload = Operations.createOperation("shutdown", new ModelNode().setEmptyList());
 
             ModelNode result = client.execute(reload);
 

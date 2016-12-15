@@ -1,7 +1,0 @@
-vars:
-  default.log-encoding: UTF-8
-manage: [all]
-pin:
-  log-handlers: [FILE]
-  loggers: [com.arjuna, org.jboss.as.config, sun.rmi]
-  deployables: [deployer]

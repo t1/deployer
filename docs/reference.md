@@ -166,10 +166,13 @@ Where and how to access the repository containing deployables (`war`, etc.) and 
 
 What root bundle should be used when there is no `deployer.root.bundle`:
 
+| key | value |
+| --- | --- |
 | name | The name of the root bundle loaded. Defaults to the DNS host name (without the domain or trailing digits). |
 | group-id | The `group-id` of the bundle loaded. Defaults to the `default.group-id` or the DNS domain name. |
 | classifier | The `classifier` of the bundle loaded. Defaults to null. |
 | version | The `version` of the bundle loaded. Defaults to the `version` variable (or fails). |
+| shutdown-after-boot | Shut the container down right after the root bundle has been applied. Useful when building, e.g., a Docker file. Defaults to `false`. |
 
 These values can be used in expressions as `root-bundle:name`, etc.
 

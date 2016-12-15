@@ -26,6 +26,7 @@ import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.model.ProcessState.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.problem.WebException.*;
+import static java.lang.Boolean.*;
 import static java.nio.file.Files.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
@@ -97,6 +98,9 @@ public class DeployerBoundary {
                             ((UnresolvedVariableException) cause).getExpression());
             throw e;
         }
+
+        if (rootBundle != null && rootBundle.getShutdownAfterBoot() == TRUE)
+            container.shutdown();
     }
 
 

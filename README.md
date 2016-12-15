@@ -56,11 +56,11 @@ For a comprehensive list of all details, see the [reference](docs/reference.md).
 
 More questions? Take a look at the [FAQ](docs/faq.md).
 
-## A Note On [Docker](https://www.docker.com)
+## Docker
 
-At first sight, it may look like The Deployer would not have any role to play when you use Docker,
+At first sight, it may look like The Deployer would not have any role to play when you use [Docker](https://www.docker.com),
 as in a fully containerized approach, there's no need to change a running system:
-any change in the configuration should result in a restart of the whole stack
+changes in the configuration should result in a rebuilds and restarts of the whole stack
 and it's sufficiently easy to use the normal CLI for that.
 
 But you may find the abstraction layer that The Deployer provides to be useful nonetheless:
@@ -68,15 +68,12 @@ A bundle file may be more readable than a long list of CLI statements,
 as it is more concise and clear (e.g., xa and non-xa data sources both use the same connection uri syntax),
 and it provides mechanics to reuse common configuration schemes, further DRYing your code.
 
-You can also go for a mixed approach, i.e. use a Docker container to build the Java EE container,
-and then use The Deployer to configure and deploy your application(s).
-You then have an idempotent server, not a Docker-style immutable server.
-
-If you want to go fully Docker style, this is not enough,
-as it means downloading and applying everything at boot time,
-which happens very often in a dynamic cloud setup, so it has to be as fast as possible;
-so it would have to be done at Docker build time;
-this is yet an [open issue](https://github.com/t1/deployer/issues/56).
+You won't want to download and applying everything at boot time,
+as this happens very often in a dynamic cloud setup, so it has to be as fast as possible.
+To apply The Deployer root bundle at Docker build time, you can start the container from your `Dockerfile`
+with the `shutdown-after-boot` option in your `deployer.config.yaml`.
+For an example, see `src/main/docker/Dockerfile`.
+To use it for your own applications, you'd only need to change the `deployer.root.bundle`.
 
 
 ## Building

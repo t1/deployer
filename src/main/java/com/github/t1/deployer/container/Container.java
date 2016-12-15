@@ -35,6 +35,8 @@ public class Container {
 
     public void waitForBoot() { batch.waitForBoot(); }
 
+    public void shutdown() { batch.shutdown(); }
+
     public static Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
 
     public LogHandlerResourceBuilder builderFor(LogHandlerType type, LogHandlerName name) {
