@@ -9,5 +9,4 @@ RUN rm -r \
     ${JBOSS_HOME}/standalone/configuration/deployer.config.yaml \
     ${JBOSS_HOME}/standalone/configuration/deployer.root.bundle \
     ${JBOSS_HOME}/standalone/configuration/standalone_xml_history
-EXPOSE 8080 9990
 CMD ["/opt/jboss/wildfly/bin/standalone.sh", "--server-config", "standalone-full.xml", "-b", "0.0.0.0"]
