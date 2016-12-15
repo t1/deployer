@@ -226,7 +226,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
                 + "  bar:\n"
                 + "    group-id: org.bar\n"
                 + "    version: ${bar.version}\n");
-        boundary.apply(mock, ImmutableMap.of(new VariableName("bar.version"), "4.0.5"));
+        boundary.apply(post, ImmutableMap.of(new VariableName("bar.version"), "4.0.5"));
 
         bar.verifyDeployed(boundary.audits);
     }

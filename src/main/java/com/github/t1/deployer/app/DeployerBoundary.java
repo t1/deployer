@@ -104,30 +104,6 @@ public class DeployerBoundary {
     }
 
 
-    public void apply(Trigger trigger, Map<VariableName, String> variables) {
-        synchronized (CONTAINER_LOCK) {
-            Applying applying = new Applying().withVariables(variables);
-
-            try {
-                container.startBatch();
-                Path root = getRootBundlePath();
-                if (isRegularFile(root)) {
-                    applying.apply(root);
-                } else {
-                    applying.applyDefaultRoot();
-                }
-            } catch (RuntimeException e) {
-                container.rollbackBatch();
-                throw e;
-            }
-            ProcessState processState = container.commitBatch();
-
-            audits.setProcessState(processState);
-            audits.applied(trigger, principal, variables, audits);
-        }
-    }
-
-
     @Inject Principal principal;
     @Inject Container container;
     @Inject Repository repository;
@@ -135,9 +111,38 @@ public class DeployerBoundary {
     @Inject @Config("variables") Map<VariableName, String> configuredVariables;
     @Inject @Config("root-bundle") RootBundleConfig rootBundle;
     @Inject @Config("key-store") KeyStoreConfig keyStore;
+    @Inject @Config("triggers") EnumSet<Trigger> triggers;
 
     @Inject Audits audits;
     @Inject Instance<Deployer> deployers;
+
+
+    public void apply(Trigger trigger, Map<VariableName, String> variables) {
+        synchronized (CONTAINER_LOCK) {
+            if (triggers.contains(trigger)) {
+                Applying applying = new Applying().withVariables(variables);
+
+                try {
+                    container.startBatch();
+                    Path root = getRootBundlePath();
+                    if (isRegularFile(root)) {
+                        applying.apply(root);
+                    } else {
+                        applying.applyDefaultRoot();
+                    }
+                } catch (RuntimeException e) {
+                    container.rollbackBatch();
+                    throw e;
+                }
+                ProcessState processState = container.commitBatch();
+
+                audits.setProcessState(processState);
+                audits.applied(trigger, principal, variables, audits);
+            } else {
+                log.info("ignoring disabled trigger {}", trigger);
+            }
+        }
+    }
 
 
     private class Applying {

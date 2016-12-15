@@ -27,7 +27,7 @@ public abstract class Repository {
             return errorArtifact(checksum, "unknown");
         } catch (RuntimeException e) {
             log.error("error retrieving artifact by checksum " + checksum, e);
-            return errorArtifact(checksum, "error");
+            return errorArtifact(checksum, "error retrieving artifact");
         }
     }
 

@@ -196,6 +196,23 @@ pin:
   deployables: [myapp]
 ```
 
+### `triggers`
+
+These triggers can cause The Deployer to run:
+
+| name | description |
+| --- | --- |
+| startup | The initial run after the container was booted |
+| post | A http POST coming in |
+| fileChange | The `deployer.root.bundle` file was changed | 
+
+By default all triggers are allowed, but you can limit the allowed triggers in the `deployer.config.yaml`.
+E.g., to only allow the `startup` trigger, add:
+
+```yaml
+triggers: [startup]
+```
+
 
 ### `vars`
 

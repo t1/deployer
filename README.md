@@ -68,20 +68,27 @@ A bundle file may be more readable than a long list of CLI statements,
 as it is more concise and clear (e.g., xa and non-xa data sources both use the same connection uri syntax),
 and it provides mechanics to reuse common configuration schemes, further DRYing your code.
 
-You won't want to download and applying everything at boot time,
+You won't want to download and apply everything at boot time,
 as this happens very often in a dynamic cloud setup, so it has to be as fast as possible.
 To apply The Deployer root bundle at Docker build time, you can start the container from your `Dockerfile`
 with the `shutdown-after-boot` option in your `deployer.config.yaml`.
-For an example, see `src/main/docker/Dockerfile`.
-To use it for your own applications, you'd only need to change the `deployer.root.bundle`.
+For an example, see `src/main/docker/Dockerfile`; to run it do:
+
+    cp ../../../target/deployer.war .
+    docker build --tag=wildfly .
+    docker run -it --rm -p 8080:8080 --name wildfly wildfly
+
+To use it for your own applications, you'd only need to change the `deployer.root.bundle`,
+and maybe configure your `repository` in the `deployer.config.yaml`.
 
 
 ## Building
 
 Just run `mvn clean install`.
- 
+
 If you don't have an Artifactory Pro on your local machine, but still want to test deployments of your own applications,
-you can run the `ArtifactoryMockLauncher` and run `index` in its CLI. This will build an index of all wars in your
+you can run the `ArtifactoryMockLauncher` and run `index` in its CLI.
+This will build an index of every `war`, `ear`, `bundle`, and `postgresql`-`jar` in your
 local maven repository (`~/.m2`) and serve files from there.
 
 

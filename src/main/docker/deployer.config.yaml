@@ -2,3 +2,4 @@ vars:
   default.log-encoding: UTF-8
 root-bundle:
   shutdown-after-boot: true
+triggers: [startup]

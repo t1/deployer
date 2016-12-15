@@ -1344,7 +1344,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        boundary.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyDeployed(boundary.audits);
     }
@@ -1361,7 +1361,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        boundary.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyDeployed(boundary.audits);
     }
@@ -1378,7 +1378,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("artifact-id", "foo");
 
-        boundary.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyDeployed(boundary.audits);
     }
@@ -1395,7 +1395,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("artifact-id", "${hostName()}");
 
-        boundary.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyDeployed(boundary.audits);
     }
@@ -1412,7 +1412,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("group-id", "my.other.group");
 
-        boundary.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyDeployed(boundary.audits);
     }
@@ -1430,7 +1430,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("classifier", "my.classifier");
 
-        boundary.apply(mock, ImmutableMap.of(VERSION, "1.2"));
+        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
 
         jolokia.verifyDeployed(boundary.audits);
     }
@@ -1447,7 +1447,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    version: 1.3.2\n");
         givenConfiguredRootBundle("version", "1.2");
 
-        boundary.apply(mock, emptyMap());
+        boundary.apply(post, emptyMap());
 
         jolokia.verifyDeployed(boundary.audits);
     }
@@ -1463,7 +1463,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                         + "    group-id: org.jolokia\n"
                         + "    version: 1.3.2\n");
 
-        Throwable thrown = catchThrowable(() -> boundary.apply(mock, emptyMap()));
+        Throwable thrown = catchThrowable(() -> boundary.apply(post, emptyMap()));
 
         assertThat(thrown).hasMessageContaining("unresolved variable expression: root-bundle:version or version");
     }
@@ -1502,7 +1502,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "        group-id: org.jolokia\n"
                 + "        artifact-id: jolokia-war\n"
                 + "        version: 1.3.3\n");
-        boundary.apply(mock, ImmutableMap.of(new VariableName("version"), "1"));
+        boundary.apply(post, ImmutableMap.of(new VariableName("version"), "1"));
 
         logHandler.verifyAdded(boundary.audits);
         logger.verifyAdded(boundary.audits);

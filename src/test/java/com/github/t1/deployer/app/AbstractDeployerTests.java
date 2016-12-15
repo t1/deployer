@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.function.*;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
-import static com.github.t1.deployer.app.Trigger.mock;
+import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
@@ -53,7 +53,6 @@ import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("SameParameterValue")
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -73,7 +72,7 @@ public abstract class AbstractDeployerTests {
     @SneakyThrows(IOException.class)
     Audits deploy(String plan) {
         rootBundle.write(plan);
-        boundary.apply(mock, emptyMap());
+        boundary.apply(post, emptyMap());
         return boundary.audits;
     }
 
@@ -233,9 +232,6 @@ public abstract class AbstractDeployerTests {
 
         verifyNoMoreInteractions(cli);
     }
-
-    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
-    private void verifyCli(ModelNode request) { verify(cli).execute(eq(request), any(OperationMessageHandler.class)); }
 
     @SneakyThrows(IOException.class) @SuppressWarnings("resource")
     private void verifyCli(ModelNode request, VerificationMode mode) {

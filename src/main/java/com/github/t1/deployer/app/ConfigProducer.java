@@ -57,6 +57,7 @@ public class ConfigProducer {
         @Singular @JsonProperty("vars") private final Map<VariableName, String> variables;
         @Singular @JsonProperty("manage") private final List<String> managedResourceNames;
         @Singular("pin") @JsonProperty("pin") private final Map<String, List<String>> pinned;
+        private final EnumSet<Trigger> triggers = EnumSet.allOf(Trigger.class);
 
         @Override public String toString() { return toYAML(); }
 
@@ -119,6 +120,9 @@ public class ConfigProducer {
 
     @Produces @Config("pinned.resources")
     public Map<String, List<String>> pinned() { return nvl(config.getPinned(), emptyMap()); }
+
+    @Produces @Config("triggers")
+    public EnumSet<Trigger> triggers() { return config.getTriggers(); }
 
 
     @Produces @Config("variables")

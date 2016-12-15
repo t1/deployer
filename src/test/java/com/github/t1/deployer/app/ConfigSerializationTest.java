@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 import static com.github.t1.deployer.app.ConfigProducer.*;
+import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.repository.RepositoryType.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -301,5 +302,44 @@ public class ConfigSerializationTest {
         ConfigProducer producer = loadConfig();
 
         assertThat(producer.keyStore().getPath()).isNull();
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithOneTrigger() throws Exception {
+        configFile.write(""
+                + "triggers: [startup]");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.triggers()).containsExactly(startup);
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithTwoTriggers() throws Exception {
+        configFile.write(""
+                + "triggers: [startup, post]");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.triggers()).containsExactly(startup, post);
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithThreeTriggers() throws Exception {
+        configFile.write(""
+                + "triggers: [startup, post, fileChange]");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.triggers()).containsExactly(startup, post, fileChange);
+    }
+
+    @Test
+    public void shouldLoadConfigFileWithAllTriggersDefaultToAll() throws Exception {
+        configFile.write("");
+
+        ConfigProducer producer = loadConfig();
+
+        assertThat(producer.triggers()).containsExactly(startup, post, fileChange);
     }
 }
