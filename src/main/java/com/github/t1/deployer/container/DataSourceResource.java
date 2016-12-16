@@ -137,7 +137,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
 
     public void updateXa(Boolean newXa) {
         checkDeployed();
-        remove();
+        addRemoveStep();
         this.xa = (newXa == TRUE);
         add();
     }
@@ -244,13 +244,13 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
         if (maxPoolAge != null)
             addDataSource.get("idle-timeout-minutes").set(maxPoolAge.asMinutes());
 
-        writeOp(addDataSource);
+        addStep(addDataSource);
         if (xa) {
             URI uri = (this.uri.getScheme().equals("jdbc")) ? URI.create(this.uri.getSchemeSpecificPart()) : this.uri;
-            writeOp(addXaProperty("ServerName", uri.getHost()));
+            addStep(addXaProperty("ServerName", uri.getHost()));
             if (uri.getPort() >= 0)
-                writeOp(addXaProperty("PortNumber", Integer.toString(uri.getPort())));
-            writeOp(addXaProperty("DatabaseName", databaseName(uri)));
+                addStep(addXaProperty("PortNumber", Integer.toString(uri.getPort())));
+            addStep(addXaProperty("DatabaseName", databaseName(uri)));
         }
 
         this.deployed = true;

@@ -292,7 +292,7 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
         if (properties != null)
             properties.forEach((key, value) -> request.get("properties").add(key, value));
 
-        writeOp(request);
+        addStep(request);
 
         this.deployed = true;
     }

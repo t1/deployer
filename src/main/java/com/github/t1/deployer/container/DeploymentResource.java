@@ -6,16 +6,21 @@ import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
-import org.wildfly.plugin.core.*;
 
 import java.io.InputStream;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentName.*;
+import static java.lang.Boolean.*;
 import static java.util.Comparator.*;
-import static org.jboss.as.controller.client.helpers.Operations.createAddress;
-import static org.wildfly.plugin.core.DeploymentOperations.*;
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+import static org.jboss.as.controller.client.helpers.Operations.*;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.CONTENT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.INPUT_STREAM_INDEX;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
 
 @Slf4j
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")
@@ -101,22 +106,30 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
 
     @Override public void add() {
         assert inputStream != null : "need an input stream to deploy";
-        Deployment deployment = deployment(inputStream);
-        writeOp(createAddDeploymentOperation(deployment));
+        addDeployOperation(ADD, address());
         this.deployed = true;
     }
 
-    public void redeploy(InputStream inputStream) {
-        assert inputStream != null : "need an input stream to redeploy";
-        Deployment deployment = deployment(inputStream);
-        writeOp(createReplaceOperation(deployment));
+    public void redeploy() {
+        checkDeployed();
+        assert deployed == TRUE;
+        addDeployOperation(FULL_REPLACE_DEPLOYMENT, new ModelNode().setEmptyList());
     }
 
-    private Deployment deployment(InputStream inputStream) { return Deployment.of(inputStream, name.getValue()); }
+    private void addDeployOperation(String operationName, ModelNode address) {
+        assert inputStream != null : "need an input stream to redeploy";
+        int index = addInputStreamAndReturnIndex(inputStream);
+        ModelNode operation = createOperation(operationName, address);
+        operation.get("enabled").set(true);
+        if (address.asList().isEmpty())
+            operation.get(NAME).set(name.getValue());
+        operation.get(CONTENT).set(new ModelNode().add(new ModelNode().set(INPUT_STREAM_INDEX, index)));
+        addStep(operation);
+    }
 
-    @Override public void remove() {
-        UndeployDescription deployment = UndeployDescription.of(name.getValue()).setFailOnMissing(true);
-        writeOp(createUndeployOperation(deployment));
+    @Override public void addRemoveStep() {
+        addStep(createOperation(DEPLOYMENT_UNDEPLOY_OPERATION, address()));
+        addStep(createRemoveOperation(address()));
         this.deployed = false;
     }
 

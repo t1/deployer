@@ -24,5 +24,12 @@ public class TestData {
     public static final Checksum POSTGRESQL_9_4_1207_CHECKSUM = checksumFor
             (new GroupId("org.postgresql"), new ArtifactId("postgresql"), jar, v("9.4.1207"));
 
+    private static final GroupId ORG_MOCKSERVER = new GroupId("org.mock-server");
+    private static final ArtifactId MOCKSERVER_WAR = new ArtifactId("mockserver-war");
+    public static final Checksum MOCKSERVER_3_10_4_CHECKSUM = checksumFor(ORG_MOCKSERVER, MOCKSERVER_WAR, war,
+            v("3.10.4"));
+    public static final Checksum MOCKSERVER_3_10_3_CHECKSUM = checksumFor(ORG_MOCKSERVER, MOCKSERVER_WAR, war,
+            v("3.10.3"));
+
     private static Version v(String value) { return new Version(value); }
 }

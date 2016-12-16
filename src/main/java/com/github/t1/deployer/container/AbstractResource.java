@@ -3,9 +3,9 @@ package com.github.t1.deployer.container;
 import com.github.t1.deployer.model.Age;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
 
+import java.io.InputStream;
 import java.util.Optional;
 
 import static com.github.t1.deployer.container.Batch.*;
@@ -13,8 +13,8 @@ import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 
 /**
- * Resources represent the configured state of the JavaEE container. They are responsible to {@link #add()},
- * {@link #remove()}, or update (using overloaded `updateSomething` methods) the current state in the container;
+ * Resources represent the configured state of the JavaEE container. They are responsible to add,
+ * remove, or update (using overloaded `updateSomething` methods) the current state in the container;
  * and to provide information about an existing resource with {@link #isDeployed()} and various fluent getters.
  */
 @Slf4j
@@ -58,17 +58,15 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected abstract void readFrom(ModelNode result);
 
-    protected void writeOp(ModelNode request) { batch.execute(request); }
+    protected void addStep(ModelNode request) { batch.addStep(request); }
 
-    protected void writeOp(Operation operation) { batch.execute(operation); }
-
-    protected void writeAttribute(String name, String value) { batch.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeAttribute(String name, String v) { batch.writeAttr(address(), name, ModelNode::set, v); }
 
     protected void writeUseParentHandlers(Boolean value) {
         batch.writeAttr(address(), "use-parent-handlers", ModelNode::set, value);
     }
 
-    protected void writeAttribute(String name, Integer value) { batch.writeAttr(address(), name, ModelNode::set, value); }
+    protected void writeAttribute(String name, Integer v) { batch.writeAttr(address(), name, ModelNode::set, v); }
 
     protected void writeIdleTimeout(Long value) {
         batch.writeAttr(address(), "idle-timeout-minutes", ModelNode::set, value);
@@ -78,9 +76,13 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
 
     protected void propertyRemove(String key) { batch.removeProperty(address(), key); }
 
+    protected int addInputStreamAndReturnIndex(InputStream inputStream) {
+        return batch.addInputStreamAndReturnIndex(inputStream);
+    }
+
     public abstract void add();
 
-    public void remove() { writeOp(createRemoveOperation(address())); }
+    public void addRemoveStep() { addStep(createRemoveOperation(address())); }
 
     public abstract String getId();
 

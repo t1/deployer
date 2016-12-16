@@ -125,6 +125,7 @@ public class DeployerIT {
                     + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, com.github.t1.deployer]\n"
                     + "  data-sources: [ExampleDS]\n"
                     + "manage: [all]\n"
+                    + "triggers: [post]\n"
             );
 
             if (USE_ARTIFACTORY_MOCK)
@@ -446,6 +447,95 @@ public class DeployerIT {
                                .change("version", "1.3.3", null)
                                .change("type", "war", null)
                                .change("checksum", JOLOKIA_133_CHECKSUM, null)
+                               .removed());
+    }
+
+    @Test
+    @InSequence(value = 910)
+    public void shouldDeployTwoWebArchives() throws Exception {
+        String plan = ""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: 1.3.3\n"
+                + "  mockserver:\n"
+                + "    group-id: org.mock-server\n"
+                + "    artifact-id: mockserver-war\n"
+                + "    version: 3.10.3\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(theDeployments())
+                .haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM))
+                .haveExactly(1, deployment("mockserver.war", MOCKSERVER_3_10_3_CHECKSUM));
+        assertThat(audits).containsExactly(
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", null, "org.jolokia")
+                               .change("artifact-id", null, "jolokia-war")
+                               .change("version", null, "1.3.3")
+                               .change("type", null, "war")
+                               .change("checksum", null, JOLOKIA_133_CHECKSUM)
+                               .added(),
+                DeployableAudit.builder().name("mockserver")
+                               .change("group-id", null, "org.mock-server")
+                               .change("artifact-id", null, "mockserver-war")
+                               .change("version", null, "3.10.3")
+                               .change("type", null, "war")
+                               .change("checksum", null, MOCKSERVER_3_10_3_CHECKSUM)
+                               .added());
+    }
+
+    @Test
+    @InSequence(value = 920)
+    public void shouldUpdateTwoWebArchives() throws Exception {
+        String plan = ""
+                + "deployables:\n"
+                + "  jolokia:\n"
+                + "    group-id: org.jolokia\n"
+                + "    artifact-id: jolokia-war\n"
+                + "    version: 1.3.4\n"
+                + "  mockserver:\n"
+                + "    group-id: org.mock-server\n"
+                + "    artifact-id: mockserver-war\n"
+                + "    version: 3.10.4\n";
+
+        List<Audit> audits = post(plan);
+
+        assertThat(theDeployments())
+                .haveExactly(1, deployment("jolokia.war", JOLOKIA_134_CHECKSUM))
+                .haveExactly(1, deployment("mockserver.war", MOCKSERVER_3_10_4_CHECKSUM));
+        assertThat(audits).containsExactly(
+                DeployableAudit.builder().name("jolokia")
+                               .change("checksum", JOLOKIA_133_CHECKSUM, JOLOKIA_134_CHECKSUM)
+                               .change("version", "1.3.3", "1.3.4")
+                               .changed(),
+                DeployableAudit.builder().name("mockserver")
+                               .change("checksum", MOCKSERVER_3_10_3_CHECKSUM, MOCKSERVER_3_10_4_CHECKSUM)
+                               .change("version", "3.10.3", "3.10.4")
+                               .changed());
+    }
+
+    @Test
+    @InSequence(value = 930)
+    public void shouldUndeployTwoWebArchives() throws Exception {
+        List<Audit> audits = post("{}");
+
+        assertThat(theDeployments()).isEmpty();
+        assertThat(audits).containsExactly(
+                DeployableAudit.builder().name("jolokia")
+                               .change("group-id", "org.jolokia", null)
+                               .change("artifact-id", "jolokia-war", null)
+                               .change("version", "1.3.4", null)
+                               .change("type", "war", null)
+                               .change("checksum", JOLOKIA_134_CHECKSUM, null)
+                               .removed(),
+                DeployableAudit.builder().name("mockserver")
+                               .change("group-id", "org.mock-server", null)
+                               .change("artifact-id", "mockserver-war", null)
+                               .change("version", "3.10.4", null)
+                               .change("type", "war", null)
+                               .change("checksum", MOCKSERVER_3_10_4_CHECKSUM, null)
                                .removed());
     }
 

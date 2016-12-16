@@ -58,7 +58,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
             return;
         }
 
-        container.builderFor(toDeploymentName(plan)).get().redeploy(artifact.getInputStream());
+        container.builderFor(toDeploymentName(plan)).inputStream(artifact.getInputStream()).get().redeploy();
         audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
         if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
@@ -126,7 +126,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
         auditRemove(audit, repository.lookupByChecksum(resource.checksum()));
         audit.change("checksum", resource.checksum(), null);
         audits.add(audit.removed());
-        resource.remove();
+        resource.addRemoveStep();
     }
 
     private void auditRemove(DeployableAuditBuilder audit, Artifact artifact) {

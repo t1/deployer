@@ -10,12 +10,14 @@ import org.jboss.dmr.ModelNode;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import static com.github.t1.deployer.container.Batch.TypeEnum.*;
+import static com.github.t1.deployer.container.Batch.TypeEnum.LOGGER;
 import static com.github.t1.deployer.container.Container.*;
 import static com.github.t1.deployer.model.ProcessState.*;
 import static com.github.t1.problem.WebException.*;
@@ -68,12 +70,18 @@ class Batch {
     }
 
 
+    public int addInputStreamAndReturnIndex(InputStream inputStream) {
+        int index = batch.getInputStreamCount();
+        batch.addInputStream(inputStream);
+        return index;
+    }
+
     public <T> void writeAttr(ModelNode address, String name, BiFunction<ModelNode, T, ModelNode> set, T value) {
         ModelNode request = createOperation(WRITE_ATTRIBUTE_OPERATION, address);
         request.get(NAME).set(name);
         if (value != null)
             set.apply(request.get(VALUE), value);
-        execute(request);
+        addStep(request);
     }
 
 
@@ -83,7 +91,7 @@ class Batch {
         request.get("key").set(key);
         request.get("value").set(value);
 
-        execute(request);
+        addStep(request);
     }
 
     public void removeProperty(ModelNode address, String key) {
@@ -91,7 +99,7 @@ class Batch {
         request.get("name").set("property");
         request.get("key").set(key);
 
-        execute(request);
+        addStep(request);
     }
 
 
@@ -101,7 +109,7 @@ class Batch {
         return result.get("result").asList().stream();
     }
 
-    public void execute(ModelNode request) {
+    public void addStep(ModelNode request) {
         assert batch != null : "batch " + id + " not started";
 
         batch.addStep(request);
@@ -113,16 +121,6 @@ class Batch {
         ModelNode result = client.execute(command, LOGGING);
         logCli("response {}", result);
         return result;
-    }
-
-    public void execute(Operation operation) {
-        assert batch != null : "batch " + id + " not started";
-        assert COMPOSITE.equals(operation.getOperation().get(OP).asString());
-        assert operation.getOperation().get(ADDRESS).asList().isEmpty();
-
-        operation.getOperation().get(STEPS).asList().forEach(step -> batch.addStep(step));
-        operation.getInputStreams().forEach(inputStream -> batch.addInputStream(inputStream));
-        batch.setAutoCloseStreams(operation.isAutoCloseStreams());
     }
 
     public ProcessState checkResponse(ModelNode result) {
@@ -185,7 +183,7 @@ class Batch {
         if (this.batch != null)
             throw new IllegalStateException("already started batch " + id);
         log.debug("--------- start batch {}", id);
-        this.batch = CompositeOperationBuilder.create();
+        this.batch = CompositeOperationBuilder.create(true);
     }
 
     public void rollbackBatch() {
@@ -249,7 +247,7 @@ class Batch {
         private final int factor;
     }
 
-    private enum TypeEnum {LOG_HANDLER, LOGGER, DATA_SOURCE, DEPLOYABLE}
+    enum TypeEnum {LOG_HANDLER, LOGGER, DATA_SOURCE, DEPLOYABLE, UNKNOWN}
 
     private static OperationEnum operation(ModelNode node) {
         return OperationEnum.valueOf(node.get(OP).asString().toUpperCase(US).replace('-', '_'));
@@ -257,25 +255,27 @@ class Batch {
 
     private static TypeEnum type(ModelNode node) {
         ModelNode address = node.get(ADDRESS);
+        if (address.asPropertyList().size() == 0)
+            return UNKNOWN;
         switch (address.asPropertyList().get(0).getName()) {
         case "deployment":
-            return TypeEnum.DEPLOYABLE;
+            return DEPLOYABLE;
         case "subsystem":
             switch (address.asPropertyList().get(0).getValue().asString()) {
             case "logging":
                 switch (address.asPropertyList().get(1).getName()) {
                 case "logger":
-                    return TypeEnum.LOGGER;
+                    return LOGGER;
                 case "console-handler":
                 case "custom-handler":
                 case "periodic-rotating-file-handler":
-                    return TypeEnum.LOG_HANDLER;
+                    return LOG_HANDLER;
                 }
             case "datasources":
                 switch (address.asPropertyList().get(1).getName()) {
                 case "data-source":
                 case "xa-data-source":
-                    return TypeEnum.DATA_SOURCE;
+                    return DATA_SOURCE;
                 }
             }
         }

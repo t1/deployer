@@ -88,7 +88,7 @@ abstract class AbstractDeployer<
             if (resource.isDeployed()) {
                 removeFromRemaining(resource);
                 auditRegularRemove(resource, plan, audit);
-                resource.remove();
+                resource.addRemoveStep();
                 audits.add(audit.removed());
             } else {
                 log.info("resource already removed: {}", plan);

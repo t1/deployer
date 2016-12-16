@@ -143,7 +143,7 @@ public class ArtifactoryMock {
                 .redirectError(appendTo(out))
                 .start();
         int returnCode = process.waitFor();
-        assert returnCode == 0 : "unexpected return code: " + returnCode;
+        assert returnCode == 0 : "unexpected return code: " + returnCode + ". see mvn output in " + out;
     }
 
     private static void index(java.nio.file.Path path) {

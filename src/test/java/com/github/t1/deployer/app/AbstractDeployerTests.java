@@ -130,6 +130,7 @@ public abstract class AbstractDeployerTests {
                 = new Audits();
         boundary.configuredVariables = this.configuredVariables;
         boundary.deployers = this.deployers;
+        boundary.triggers = EnumSet.allOf(Trigger.class);
 
         //noinspection unchecked
         doAnswer(i -> {
@@ -480,7 +481,7 @@ public abstract class AbstractDeployerTests {
                         + "    'operation' => 'add',\n"
                         + "    'address' => [('deployment' => '" + fullName() + "')],\n"
                         + "    'enabled' => true,\n"
-                        + "    'content' => [{'input-stream-index' => 0}]\n"
+                        + "    'content' => [('input-stream-index' => 0)]\n"
                         + "}");
                 assertThat(captureOperations()).haveExactly(1, step(request));
 
@@ -513,7 +514,7 @@ public abstract class AbstractDeployerTests {
                         + "    'operation' => 'full-replace-deployment',\n"
                         + "    'address' => [],\n"
                         + "    'name' => '" + fullName() + "',\n"
-                        + "    'content' => [{'input-stream-index' => 0}],\n"
+                        + "    'content' => [('input-stream-index' => 0)],\n"
                         + "    'enabled' => true\n"
                         + "}");
                 assertThat(captureOperations()).haveExactly(1, step(request));

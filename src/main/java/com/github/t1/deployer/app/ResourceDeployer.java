@@ -162,7 +162,7 @@ abstract class ResourceDeployer<
         auditRemove(resource, audit);
         audits.add(audit.removed());
 
-        resource.remove();
+        resource.addRemoveStep();
     }
 
     protected void auditRemove(RESOURCE resource, AUDIT audit) {

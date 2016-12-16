@@ -127,7 +127,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
         checkDeployed();
         ModelNode request = createOperation("add-handler", address());
         request.get("name").set(handler.getValue());
-        writeOp(request);
+        addStep(request);
         this.handlers.add(handler);
     }
 
@@ -135,7 +135,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
         checkDeployed();
         ModelNode request = createOperation("remove-handler", address());
         request.get("name").set(handler.getValue());
-        writeOp(request);
+        addStep(request);
         this.handlers.remove(handler);
     }
 
@@ -178,10 +178,10 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
                 category.isRoot() ? ROOT.getValue() : category.getValue());
     }
 
-    @Override public void remove() {
+    @Override public void addRemoveStep() {
         if (isRoot())
             throw new RuntimeException("can't remove root logger");
-        super.remove();
+        super.addRemoveStep();
     }
 
     @Override public void add() {
@@ -196,7 +196,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
         if (useParentHandlers != null)
             request.get("use-parent-handlers").set(useParentHandlers);
 
-        writeOp(request);
+        addStep(request);
 
         this.deployed = true;
     }
