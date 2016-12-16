@@ -213,6 +213,8 @@ E.g., to only allow the `startup` trigger, add:
 triggers: [startup]
 ```
 
+If you specify an empty list, i.e. `triggers: []`, The Deployer runs in read-only mode.
+
 
 ### `vars`
 

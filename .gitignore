@@ -6,5 +6,5 @@
 /target/
 .idea/
 *.iml
-/src/test/docker/deployer.war
+/src/main/docker/deployer.war
 /classes/

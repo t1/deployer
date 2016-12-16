@@ -135,10 +135,10 @@ public class ArtifactoryMock {
         Process process = new ProcessBuilder(
                 "mvn",
                 "dependency:get",
-                "-DgroupId=" + groupId,
-                "-DartifactId=" + artifactId,
-                "-Dpackaging=" + type,
-                "-Dversion=" + version)
+                "-D" + "groupId=" + groupId,
+                "-D" + "artifactId=" + artifactId,
+                "-D" + "packaging=" + type,
+                "-D" + "version=" + version)
                 .redirectOutput(appendTo(out))
                 .redirectError(appendTo(out))
                 .start();

@@ -3,7 +3,10 @@ log-handlers:
     type: console
     level: ALL
     formatter: COLOR-PATTERN
-
+  DEPLOYER:
+loggers:
+  com.github.t1.deployer:
+    handlers: [DEPLOYER,CONSOLE]
 deployables:
   jolokia:
     group-id: org.jolokia
