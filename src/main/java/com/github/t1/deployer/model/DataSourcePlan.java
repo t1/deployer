@@ -57,7 +57,7 @@ public final class DataSourcePlan implements Plan.AbstractPlan {
         apply(node, "xa", builder::xa, Tools::trueOrNull, "false");
         apply(node, "state", builder::state, DeploymentState::valueOf);
         apply(node, "uri", builder::uri, URI::create);
-        apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "DS»");
+        apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "»");
         apply(node, "driver", builder::driver, identity(), defaultDriver(builder.uri));
 
         apply(node, "user-name", builder::userName, identity());
