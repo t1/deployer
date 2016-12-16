@@ -684,7 +684,7 @@ public class DeployerIT {
                 + FOO_DATASOURCE
                 + "      max-age: 5 min\n" // TODO 10 min\n"
                 // TODO + "    xa: true\n"
-                + "  bar:\n"
+                + "  barDS:\n"
                 + "    xa: true\n"
                 + "    uri: jdbc:postgresql://my-db.server.lan:5432/bar\n"
                 + "    user-name: joe\n"
@@ -698,7 +698,7 @@ public class DeployerIT {
         List<Audit> audits = post(plan);
 
         assertThat(audits).containsExactly(
-                DataSourceAudit.builder().name(new DataSourceName("bar"))
+                DataSourceAudit.builder().name(new DataSourceName("barDS"))
                                .change("uri", null, "jdbc:postgresql://my-db.server.lan:5432/bar")
                                .change("jndi-name", null, "java:/datasources/barDS")
                                .change("driver", null, "postgresql")
@@ -710,7 +710,7 @@ public class DeployerIT {
                                .change("pool:max", null, "10")
                                .change("pool:max-age", null, "5 min")
                                .added());
-        assertThat(definedPropertiesOf(execute(readDatasourceRequest("bar", true))))
+        assertThat(definedPropertiesOf(execute(readDatasourceRequest("barDS", true))))
                 .has(property("driver-name", "postgresql"))
                 .has(property("enabled", "true"))
                 .has(property("idle-timeout-minutes", "5"))
@@ -734,7 +734,7 @@ public class DeployerIT {
         List<Audit> audits = post(POSTGRESQL);
 
         assertThat(audits).containsExactly(
-                DataSourceAudit.builder().name(new DataSourceName("bar")) // sorted!
+                DataSourceAudit.builder().name(new DataSourceName("barDS")) // sorted!
                                .change("uri", "jdbc:postgresql://my-db.server.lan:5432/bar", null)
                                .change("jndi-name", "java:/datasources/barDS", null)
                                .change("driver", "postgresql", null)

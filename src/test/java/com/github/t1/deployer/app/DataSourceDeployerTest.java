@@ -218,9 +218,9 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
                 + "data-sources:\n"
                 + "  foo:\n"
                 + "    uri: jdbc:h2:mem:foo\n"
-                + "    jndi-name: java:/datasources/barDS\n");
+                + "    jndi-name: java:/datasources/bar\n");
 
-        fixture.jndiName("java:/datasources/barDS").verifyUpdatedJndiNameFrom("java:/datasources/fooDS", audits);
+        fixture.jndiName("java:/datasources/bar").verifyUpdatedJndiNameFrom("java:/datasources/foo", audits);
     }
 
     @Test

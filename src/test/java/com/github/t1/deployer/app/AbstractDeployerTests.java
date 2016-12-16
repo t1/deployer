@@ -1024,7 +1024,7 @@ public abstract class AbstractDeployerTests {
         public DataSourceFixture(@NonNull String name) {
             this.name = new DataSourceName(name);
             this.uri = "jdbc:h2:mem:" + name;
-            this.jndiName = "java:/datasources/" + name + "DS";
+            this.jndiName = "java:/datasources/" + name;
             this.driver = "h2";
 
             whenCli(readDatasourceRequest(name, true)).thenRaw(() -> xa && deployed
