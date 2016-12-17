@@ -60,13 +60,13 @@ More questions? Take a look at the [FAQ](docs/faq.md).
 
 At first sight, it may look like The Deployer would not have any role to play when you use [Docker](https://www.docker.com),
 as in a fully containerized approach, there's no need to change a running system:
-changes in the configuration should result in a rebuilds and restarts of the whole stack
+changes in the configuration should result in a rebuild and restart of the whole stack
 and it's sufficiently easy to use the normal CLI for that.
 
 But you may find the abstraction layer that The Deployer provides to be useful nonetheless:
 A bundle file may be more readable than a long list of CLI statements,
 as it is more concise and clear (e.g., xa and non-xa data sources both use the same connection uri syntax),
-and it provides mechanics to reuse common configuration schemes, further DRYing your code.
+and it provides mechanics to reuse common configuration schemes, further DRYing your infrastructure code.
 
 You won't want to download and apply everything at boot time,
 as this happens very often in a dynamic cloud setup, so it has to be as fast as possible.
@@ -80,6 +80,9 @@ For an example, see `src/main/docker/Dockerfile`; to run it do:
 
 To use it for your own applications, you'd only need to change the `deployer.root.bundle`,
 and maybe configure your `repository` in the `deployer.config.yaml`.
+
+Starting up a container when building an image is not very fast, so to speed things up,
+we'd like to implement an [offline mode](https://github.com/t1/deployer/issues/59).
 
 
 ## Building
