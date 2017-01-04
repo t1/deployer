@@ -573,8 +573,11 @@ public class ArtifactoryMock {
                 + "maven-metadata-local.xml";
         java.nio.file.Path path = Paths.get(pathString);
         java.nio.file.Path repoPath = MAVEN_REPOSITORY.resolve(path);
-        if (!Files.isRegularFile(repoPath))
-            throw notFound("not found " + repoPath);
+        if (!Files.isRegularFile(repoPath)) {
+            repoPath = repoPath.getParent().resolve("maven-metadata-snapshots.xml");
+            if (!Files.isRegularFile(repoPath))
+                throw notFound("not found " + repoPath);
+        }
         log.info("return repository file stream: {}", repoPath);
         return Files.newInputStream(repoPath);
     }

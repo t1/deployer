@@ -69,7 +69,6 @@ public abstract class AbstractDeployerTests {
     @Rule @SuppressWarnings("resource")
     public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
 
-    @SneakyThrows(IOException.class)
     Audits deploy(String plan) {
         rootBundle.write(plan);
         boundary.apply(post, emptyMap());

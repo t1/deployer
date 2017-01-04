@@ -2,46 +2,55 @@ package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.*;
-import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.repository.*;
-import com.github.t1.deployer.testtools.ModelNodeTestTools;
+import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
 import com.github.t1.log.LogLevel;
+import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.*;
+import com.github.t1.xml.Xml;
+import com.github.t1.xml.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Condition;
-import org.jboss.arquillian.junit.*;
-import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.*;
 import org.junit.runner.RunWith;
 
-import javax.inject.Inject;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
-import java.util.List;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
+import java.util.zip.*;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.Container.*;
+import static com.github.t1.deployer.container.DeploymentResource.*;
 import static com.github.t1.deployer.container.LogHandlerResource.*;
+import static com.github.t1.deployer.container.ModelControllerClientProducer.*;
 import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.Password.*;
 import static com.github.t1.deployer.testtools.ModelNodeTestTools.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
-import static java.util.concurrent.TimeUnit.*;
+import static com.github.t1.testtools.FileMemento.*;
+import static com.github.t1.xml.Xml.*;
+import static java.nio.file.Files.*;
+import static java.nio.file.StandardCopyOption.*;
+import static java.time.temporal.ChronoUnit.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
@@ -50,23 +59,34 @@ import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.junit.Assume.*;
 
 @Slf4j
-@RunWith(Arquillian.class)
-@SuppressWarnings("CdiInjectionPointsInspection")
+@RunWith(OrderedJUnitRunner.class)
 public class DeployerIT {
     private static final String WILDFLY_VERSION = "10.1.0.Final";
     private static final boolean USE_ARTIFACTORY_MOCK = true;
 
-    private static final String CONFIG_DIR = System.getProperty("jboss.server.config.dir");
-    public static final Supplier<Path> ROOT_BUNDLE_PATH = () -> Paths.get(CONFIG_DIR).resolve(ROOT_BUNDLE);
+    private static final String DEPLOYER_WAR = "deployer.war";
+    private static final Path LOCAL_REPOSITORY = Paths.get(System.getProperty("user.home")).resolve(".m2/repository");
+    private static final Path WILDFLY_ZIP = LOCAL_REPOSITORY
+            .resolve("org/wildfly/wildfly-dist").resolve(WILDFLY_VERSION)
+            .resolve("wildfly-dist-" + WILDFLY_VERSION + ".zip");
+    private static final Path CONTAINER_HOME = Paths.get(System.getProperty("user.dir")).resolve("target/container");
+    private static final Path DEPLOYMENTS = CONTAINER_HOME.resolve("standalone/deployments");
+    private static final Path FAILED_MARKER = DEPLOYMENTS.resolve(DEPLOYER_WAR + ".failed");
+    private static final Path DEPLOYED_MARKER = DEPLOYMENTS.resolve(DEPLOYER_WAR + ".deployed");
+    private static final Path CONFIG_DIR = CONTAINER_HOME.resolve("standalone/configuration");
+    public static final Path JBOSS_CONFIG = CONFIG_DIR.resolve("standalone.xml");
+    private static final Supplier<Path> ROOT_BUNDLE_PATH = () -> CONFIG_DIR.resolve(ROOT_BUNDLE);
 
-    private static final DeploymentName DEPLOYER_IT = new DeploymentName("deployer-it.war");
+    private static final URI BASE_URI = URI.create("http://localhost:8080/deployer");
+
+    private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
+
     private static final String PLAN_JOLOKIA_WITH_VERSION_VAR = ""
             + "deployables:\n"
             + "  jolokia:\n"
             + "    group-id: org.jolokia\n"
             + "    artifact-id: jolokia-war\n"
             + "    version: ${jolokia.version}\n";
-    private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
     private static final String POSTGRESQL = ""
             + "deployables:\n"
             + "  postgresql:\n"
@@ -85,124 +105,207 @@ public class DeployerIT {
             + "      initial: 1\n"
             + "      max: 10\n";
 
-    private static Condition<DeploymentResource> deployment(String name) {
-        return deployment(new DeploymentName(name));
+    private static final Client HTTP = ClientBuilder.newClient();
+
+    @BeforeClass
+    public static void startup() {
+        startArtifactoryMock();
+        downloadContainer();
+        writeDeployerConfig();
+        setupJBossConfig();
+        startContainer();
+        deployDeployer();
+        readJBossConfig(); // after startup & deploy, so the container did format and order the file
     }
 
-    private static Condition<DeploymentResource> deployment(DeploymentName name) {
-        return new Condition<>(resource -> resource.name().equals(name), "deployment with name '" + name + "'");
+    @AfterClass
+    public static void shutdown() {
+        log.info("\n================================================================== shutdown");
+        try {
+            execute(Operations.createOperation("shutdown", new ModelNode().setEmptyList()));
+        } catch (RuntimeException e) {
+            containerProcess.destroyForcibly();
+        }
+        log.info("\n================================================================== shutdown done");
     }
 
-    private static Condition<DeploymentResource> checksum(Checksum checksum) {
-        return new Condition<>(deployment -> deployment.checksum().equals(checksum),
-                "deployment with checksum '" + checksum + "'");
-    }
-
-    @org.jboss.arquillian.container.test.api.Deployment
-    public static WebArchive createDeployment() {
-        return new WebArchiveBuilder(DEPLOYER_IT.getValue())
-                .with(DeployerBoundary.class.getPackage())
-                .with(TestLoggerRule.class, FileMemento.class, LoggerMemento.class, SystemPropertiesRule.class)
-                .with(ModelNodeTestTools.class, TestData.class, ArtifactoryMock.class)
-                .library("org.assertj", "assertj-core")
-                .print()
-                .build();
-    }
-
-    static {
-        if (runningOnClient()) {
-            Path configFile = Paths
-                    .get(System.getProperty("user.dir"))
-                    .resolve("target/server/wildfly-dist_" + WILDFLY_VERSION + "/wildfly-" + WILDFLY_VERSION)
-                    .resolve("standalone/configuration")
-                    .resolve(DEPLOYER_CONFIG_YAML);
-            write(configFile, ""
-                    + "vars:\n"
-                    + "  config-var: 1.3.2\n"
-                    + "pin:\n"
-                    + "  deployables: [deployer-it]\n"
-                    + "  log-handlers: [CONSOLE, FILE]\n"
-                    + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, com.github.t1.deployer]\n"
-                    + "  data-sources: [ExampleDS]\n"
-                    + "manage: [all]\n"
-                    + "triggers: [post]\n"
-            );
-
-            if (USE_ARTIFACTORY_MOCK)
-                try {
-                    // TODO can we instead deploy this? or use DropwizardClientRule?
-                    new ArtifactoryMockLauncher().noConsole().run("server");
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+    @SneakyThrows(IOException.class) private static ModelNode execute(ModelNode request) {
+        try (ModelControllerClient client = createModelControllerClient(URI.create("http-remoting://localhost:9990"))) {
+            ModelNode result = client.execute(request);
+            assert isSuccessfulOutcome(result);
+            return result.get(RESULT);
         }
     }
 
     @SneakyThrows(IOException.class)
-    private static void write(Path path, String contents) {
-        log.info("write to {}:\n{}", path, contents);
-        Files.write(path, contents.getBytes());
+    private static void downloadContainer() {
+        if (exists(CONTAINER_HOME))
+            return;
+        log.info("\n================================================================== download container");
+        download();
+
+        log.info("\n================================================================== unpack container");
+        unzip(WILDFLY_ZIP, CONTAINER_HOME.getParent());
+        move(CONTAINER_HOME.getParent().resolve("wildfly-" + WILDFLY_VERSION), CONTAINER_HOME);
     }
 
-    private static boolean runningOnClient() { return CONFIG_DIR == null; }
+    @SneakyThrows(InterruptedException.class)
+    private static void download() throws IOException {
+        int exitCode = new ProcessBuilder("mvn",
+                "dependency:get",
+                "-D" + "transitive=false",
+                "-D" + "groupId=org.wildfly",
+                "-D" + "artifactId=wildfly-dist",
+                "-D" + "packaging=zip",
+                "-D" + "version=" + WILDFLY_VERSION)
+                .inheritIO()
+                .start()
+                .waitFor();
+        if (exitCode != 0)
+            throw new IllegalStateException("mvn didn't return normally but returned " + exitCode);
+    }
 
+    public static void unzip(Path zip, Path target) throws IOException {
+        Instant start = Instant.now();
 
-    @Rule
-    public LoggerMemento loggerMemento = new LoggerMemento()
-            .with("org.apache.http.headers", DEBUG)
-            // .with("org.apache.http.wire", DEBUG)
-            // .with("com.github.t1.rest", DEBUG)
-            // .with("com.github.t1.rest.ResponseConverter", INFO)
-            .with("com.github.t1.deployer", DEBUG);
-    @Rule public TestLoggerRule logger = new TestLoggerRule();
-    private static FileMemento jbossConfig;
-    private static boolean first = true;
-
-    @ArquillianResource URI baseUri;
-
-    @Inject Container container;
-    @Inject ModelControllerClient client;
-
-    @Before
-    public void setup() throws Exception {
-        if (first && !runningOnClient()) {
-            first = false;
-
-            System.setProperty(CLI_DEBUG, "true");
-            System.setProperty(IGNORE_SERVER_RELOAD, "true");
-
-            //noinspection resource
-            jbossConfig = new FileMemento(System.getProperty("jboss.server.config.dir") + "/standalone.xml").setup();
-            jbossConfig.setOrig(jbossConfig.getOrig().replaceFirst(""
-                    + "        <deployment name=\"" + DEPLOYER_IT + "\" runtime-name=\"" + DEPLOYER_IT + "\">\n"
-                    + "            <content sha1=\"[0-9a-f]{40}\"/>\n"
-                    + "        </deployment>\n", ""));
-            // restore after JBoss is down
-            jbossConfig.restoreOnShutdown().after(100, MILLISECONDS); // hell won't freeze over if this is too fast
-
-            container.startBatch();
-            container.builderFor(console, new LogHandlerName("CONSOLE")).get().updateLevel(ALL);
-            container.builderFor(LoggerCategory.of("com.github.t1.deployer")).level(DEBUG).get().add();
-            container.commitBatch();
-
-            log.info("deployables: {}", container.allDeployments());
-            assertThat(theDeployments()).isEmpty();
+        try (ZipInputStream zipStream = new ZipInputStream(Files.newInputStream(zip))) {
+            for (ZipEntry zipEntry = zipStream.getNextEntry(); zipEntry != null; zipEntry = zipStream.getNextEntry()) {
+                Path path = target.resolve(zipEntry.getName());
+                if (zipEntry.isDirectory()) {
+                    createDirectories(path);
+                } else {
+                    copy(zipStream, path);
+                    setLastModifiedTime(path, zipEntry.getLastModifiedTime());
+                    if (path.toString().endsWith(".sh"))
+                        setPosixFilePermissions(path, PosixFilePermissions.fromString("rwxr-xr-x"));
+                }
+                zipStream.closeEntry();
+            }
         }
+
+        log.debug("unzip done after {} ms", start.until(Instant.now(), MILLIS));
     }
+
+    private static void writeDeployerConfig() {
+        writeFile(CONFIG_DIR.resolve(DEPLOYER_CONFIG_YAML), ""
+                + "vars:\n"
+                + "  config-var: 1.3.2\n"
+                + "pin:\n"
+                + "  deployables: [deployer]\n"
+                + "  log-handlers: [CONSOLE, FILE]\n"
+                + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, com.github.t1.deployer, "
+                + "org.apache.http.headers, org.apache.http.wire, "
+                + "com.github.t1.rest, com.github.t1.rest.ResponseConverter]\n"
+                + "  data-sources: [ExampleDS]\n"
+                + "manage: [all]\n"
+                + "triggers: [post]\n"
+        );
+    }
+
+    private static void startArtifactoryMock() {
+        if (USE_ARTIFACTORY_MOCK)
+            try {
+                // TODO can we instead deploy this? or use DropwizardClientRule?
+                new ArtifactoryMockLauncher().noConsole().run("server");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+
+    private static void setupJBossConfig() {
+        Xml xml = Xml.load(JBOSS_CONFIG.toUri());
+        XmlElement logging = xml.getXPathElement("/server/profile/subsystem[1]");
+        logging.getXPathElement("console-handler/level")
+               .setAttribute("name", "DEBUG");
+        setLogger(logging, "org.apache.http.headers", DEBUG);
+        // setLogger(logging, "org.apache.http.wire", DEBUG);
+        // setLogger(logging, "com.github.t1.rest", DEBUG);
+        // setLogger(logging, "com.github.t1.rest.ResponseConverter", INFO);
+        setLogger(logging, "com.github.t1.deployer", DEBUG);
+        setSystemProperty(xml, CLI_DEBUG, "true");
+        setSystemProperty(xml, IGNORE_SERVER_RELOAD, "true");
+        xml.save();
+    }
+
+    private static void setLogger(XmlElement logging, String category, LogLevel level) {
+        if (logging.find("logger[@category='" + category + "']").isEmpty())
+            logging.addElement("logger").setAttribute("category", category)
+                   .addElement("level").setAttribute("name", level.name());
+    }
+
+    private static void setSystemProperty(Xml xml, String name, String value) {
+        if (xml.find("/server/system-properties/property[@name='" + name + "']").isEmpty())
+            xml.getOrCreateElement("system-properties", before("management"))
+               .addElement("property").setAttribute("name", name).setAttribute("value", value);
+    }
+
+    @SneakyThrows({ IOException.class, InterruptedException.class })
+    private static void startContainer() {
+        log.info("\n================================================================== start container in "
+                + CONTAINER_HOME);
+        containerProcess = new ProcessBuilder(CONTAINER_HOME.resolve("bin/standalone.sh").toString())
+                .directory(CONTAINER_HOME.toFile())
+                .redirectErrorStream(true).inheritIO()
+                .start();
+        Thread.sleep(1000);
+        if (!containerProcess.isAlive())
+            throw new IllegalStateException("container not started");
+        log.info("container started");
+    }
+
+    @SneakyThrows({ IOException.class, InterruptedException.class })
+    private static void deployDeployer() {
+        log.info("\n================================================================== deploy deployer");
+        InputStream deployment = deployment().as(ZipExporter.class).exportAsInputStream();
+        copy(deployment, DEPLOYMENTS.resolve(DEPLOYER_WAR), REPLACE_EXISTING);
+        Instant start = Instant.now();
+        Instant timeout = start.plus(1, MINUTES);
+        while (!exists(DEPLOYED_MARKER)) {
+            if (Instant.now().isAfter(timeout))
+                throw new IllegalStateException("timeout deploy");
+            if (exists(FAILED_MARKER))
+                throw new IllegalStateException("failed to deploy: " + readFile(FAILED_MARKER));
+            Thread.sleep(100);
+        }
+        log.info("\n================================================================== deployed deployer after {} ms",
+                start.until(Instant.now(), MILLIS));
+        Thread.sleep(5000);
+        assertThat(theDeployments()).isEmpty();
+    }
+
+    private static WebArchive deployment() {
+        return new WebArchiveBuilder(DEPLOYER_WAR)
+                .with(DeployerBoundary.class.getPackage())
+                .library("com.github.t1", "problem-detail")
+                .print()
+                .build();
+    }
+
+    private static void readJBossConfig() {
+        //noinspection resource
+        jbossConfig = new FileMemento(JBOSS_CONFIG).setup();
+        jbossConfig.restoreOnShutdown().after(100, TimeUnit.MILLISECONDS); // hell won't freeze over if this is too fast
+    }
+
+
+    @Rule public TestLoggerRule logger = new TestLoggerRule();
+
+    private static FileMemento jbossConfig;
+    private static Process containerProcess;
+
 
     public List<Audit> post(String expectedStatus) {
         return post(expectedStatus, null, OK).readEntity(Audits.class).getAudits();
     }
 
-    @SneakyThrows(IOException.class)
     public Response post(String plan, Entity<?> entity, Status expectedStatus) {
         //noinspection resource
         try (FileMemento memento = new FileMemento(ROOT_BUNDLE_PATH).setup()) {
             memento.write(plan);
 
-            Response response = ClientBuilder
-                    .newClient()
-                    .target(baseUri)
+            Response response = HTTP
+                    .target(BASE_URI)
                     .request(APPLICATION_JSON_TYPE)
                     .buildPost(entity)
                     .invoke();
@@ -215,25 +318,19 @@ public class DeployerIT {
         }
     }
 
-
-    private Stream<DeploymentResource> theDeployments() {
-        return container.allDeployments().filter(deployment -> !DEPLOYER_IT.equals(deployment.name()));
-    }
-
-    protected Condition<DeploymentResource> deployment(@SuppressWarnings("SameParameterValue") String name,
-            Checksum checksum) {
-        return allOf(deployment(name), checksum(checksum));
-    }
-
-    @SneakyThrows(IOException.class) private ModelNode execute(ModelNode request) {
-        ModelNode result = client.execute(request);
-        assert isSuccessfulOutcome(result);
-        return result.get(RESULT);
+    private static Map<String, Checksum> theDeployments() {
+        ModelNode response = execute(readAllDeploymentsRequest());
+        Map<String, Checksum> map = new LinkedHashMap<>();
+        response.asList()
+                .stream()
+                .map(node -> node.get("result"))
+                .filter(node -> !node.get("name").asString().equals("deployer.war"))
+                .forEach(node -> map.put(node.get("name").asString(), Checksum.of(hash(node))));
+        return map;
     }
 
 
     @Test
-    @InSequence(value = 100)
     public void shouldFailToDeployWebArchiveWithUnknownVersion() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -250,7 +347,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 150)
     public void shouldFailToDeployWebArchiveWithIncorrectChecksum() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -268,7 +364,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 200)
     public void shouldDeployWebArchiveWithCorrectChecksum() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -280,8 +375,8 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_131_CHECKSUM));
-        assertThat(audits).containsExactly(
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_131_CHECKSUM));
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
                                .change("artifact-id", null, "jolokia-war")
@@ -292,7 +387,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 300)
     public void shouldNotUpdateWebArchiveWithSameVersion() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -303,12 +397,11 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_131_CHECKSUM));
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_131_CHECKSUM));
         assertThat(audits).isEmpty();
     }
 
     @Test
-    @InSequence(value = 350)
     public void shouldFailToUpdateWebArchiveWithWrongChecksum() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -320,13 +413,12 @@ public class DeployerIT {
 
         String detail = post(plan, null, BAD_REQUEST).readEntity(String.class);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_131_CHECKSUM));
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_131_CHECKSUM));
         assertThat(detail).contains("Repository checksum [" + JOLOKIA_132_CHECKSUM + "] "
                 + "does not match planned checksum [" + UNKNOWN_CHECKSUM + "]");
     }
 
     @Test
-    @InSequence(value = 400)
     public void shouldUpdateWebArchiveWithConfiguredVariablePlusAddLogger() throws Exception {
         String plan = PLAN_JOLOKIA_WITH_VERSION_VAR
                 .replace("${jolokia.version}", "${config-var}")
@@ -336,8 +428,8 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_132_CHECKSUM));
-        assertThat(audits).containsExactly(
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_132_CHECKSUM));
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("checksum", JOLOKIA_131_CHECKSUM, JOLOKIA_132_CHECKSUM)
                                .change("version", "1.3.1", "1.3.2")
@@ -349,7 +441,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 500)
     public void shouldUpdateWebArchiveWithPostParameterAndRemoveLogger() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -361,8 +452,8 @@ public class DeployerIT {
         Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
         Audits audits = post(plan, entity, OK).readEntity(Audits.class);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM));
-        assertThat(audits.getAudits()).containsExactly(
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_133_CHECKSUM));
+        assertThat(audits.getAudits()).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("checksum", JOLOKIA_132_CHECKSUM, JOLOKIA_133_CHECKSUM)
                                .change("version", "1.3.2", "1.3.3")
@@ -374,60 +465,54 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 600)
     public void shouldFailToOverwriteVariableWithPostParameter() throws Exception {
         String plan = PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}");
 
         Entity<String> entity = Entity.json("{\"config-var\":\"1.3.3\"}");
         String detail = post(plan, entity, BAD_REQUEST).readEntity(String.class);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM));
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_133_CHECKSUM));
         assertThat(detail).contains("Variable named [config-var] already set. It's not allowed to overwrite.");
     }
 
     @Test
     @Ignore("sending */* behaves different from sending no Content-Type header at all... but how should we do that?")
-    @InSequence(value = 800)
     public void shouldNotAcceptPostWildcardWithBody() throws Exception {
         Entity<String> entity = Entity.entity("non-empty", WILDCARD_TYPE);
         String detail = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, BAD_REQUEST).readEntity(String.class);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM));
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_133_CHECKSUM));
         assertThat(detail).contains("Please specify a `Content-Type` header when sending a body.");
     }
 
     @Test
-    @InSequence(value = 810)
     public void shouldAcceptJsonBody() throws Exception {
         Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM));
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_133_CHECKSUM));
         assertThat(audits).isEmpty();
     }
 
     @Test
-    @InSequence(value = 820)
     public void shouldAcceptYamlBody() throws Exception {
         Entity<String> entity = Entity.entity("jolokia.version: 1.3.3\n", APPLICATION_YAML_TYPE);
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM));
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_133_CHECKSUM));
         assertThat(audits).isEmpty();
     }
 
     @Test
-    @InSequence(value = 830)
     public void shouldAcceptFormBody() throws Exception {
         Entity<Form> entity = Entity.form(new Form("jolokia.version", "1.3.3"));
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM));
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_133_CHECKSUM));
         assertThat(audits).isEmpty();
     }
 
     @Test
-    @InSequence(value = 900)
     public void shouldUndeployWebArchive() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -440,7 +525,7 @@ public class DeployerIT {
         List<Audit> audits = post(plan);
 
         assertThat(theDeployments()).isEmpty();
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", "org.jolokia", null)
                                .change("artifact-id", "jolokia-war", null)
@@ -451,7 +536,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 910)
     public void shouldDeployTwoWebArchives() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -466,10 +550,10 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments())
-                .haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM))
-                .haveExactly(1, deployment("mockserver.war", MOCKSERVER_3_10_3_CHECKSUM));
-        assertThat(audits).containsExactly(
+        assertThat(theDeployments()).containsOnly(
+                entry("jolokia.war", JOLOKIA_133_CHECKSUM),
+                entry("mockserver.war", MOCKSERVER_3_10_3_CHECKSUM));
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
                                .change("artifact-id", null, "jolokia-war")
@@ -487,7 +571,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 920)
     public void shouldUpdateTwoWebArchives() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -502,10 +585,10 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments())
-                .haveExactly(1, deployment("jolokia.war", JOLOKIA_134_CHECKSUM))
-                .haveExactly(1, deployment("mockserver.war", MOCKSERVER_3_10_4_CHECKSUM));
-        assertThat(audits).containsExactly(
+        assertThat(theDeployments()).containsOnly(
+                entry("jolokia.war", JOLOKIA_134_CHECKSUM),
+                entry("mockserver.war", MOCKSERVER_3_10_4_CHECKSUM));
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("checksum", JOLOKIA_133_CHECKSUM, JOLOKIA_134_CHECKSUM)
                                .change("version", "1.3.3", "1.3.4")
@@ -517,12 +600,11 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 930)
     public void shouldUndeployTwoWebArchives() throws Exception {
         List<Audit> audits = post("{}");
 
         assertThat(theDeployments()).isEmpty();
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", "org.jolokia", null)
                                .change("artifact-id", "jolokia-war", null)
@@ -540,7 +622,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 950)
     public void shouldDeploySnapshotWebArchive() throws Exception {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
@@ -553,8 +634,8 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_134_SNAPSHOT_CHECKSUM));
-        assertThat(audits).containsExactly(
+        assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_134_SNAPSHOT_CHECKSUM));
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
                                .change("artifact-id", null, "jolokia-war")
@@ -565,7 +646,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 960)
     public void shouldUndeploySnapshotWebArchive() throws Exception {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
@@ -580,7 +660,7 @@ public class DeployerIT {
         List<Audit> audits = post(plan);
 
         assertThat(theDeployments()).isEmpty();
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", "org.jolokia", null)
                                .change("artifact-id", "jolokia-war", null)
@@ -591,12 +671,11 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 1000)
     public void shouldDeployJdbcDriver() throws Exception {
         List<Audit> audits = post(POSTGRESQL);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
-        assertThat(audits).containsExactly(
+        assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
+        assertThat(audits).containsOnly(
                 DeployableAudit.builder().name("postgresql")
                                .change("group-id", null, "org.postgresql")
                                .change("artifact-id", null, "postgresql")
@@ -607,7 +686,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = 2000)
     public void shouldDeployDataSource() throws Exception {
         String plan = ""
                 + POSTGRESQL
@@ -617,7 +695,7 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
                                .change("uri", null, "jdbc:h2:mem:test")
                                .change("jndi-name", null, "java:/datasources/TestDS")
@@ -640,12 +718,11 @@ public class DeployerIT {
                 .has(property("min-pool-size", "0"))
                 .has(property("password", "secret"))
                 .has(property("user-name", "joe"));
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
     @Test
-    @InSequence(value = 2050)
-    @Ignore("required reload")
+    @Ignore("requires reload")
     public void shouldChangeDataSourceMaxAge10() throws Exception {
         String plan = ""
                 + POSTGRESQL
@@ -656,7 +733,7 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
                                // TODO .change("xa", null, true)
                                .change("pool:max-age", "5 min", "10 min")
@@ -672,11 +749,10 @@ public class DeployerIT {
                 .has(property("min-pool-size", "0"))
                 .has(property("password", "secret"))
                 .has(property("user-name", "joe"));
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
     @Test
-    @InSequence(value = 2100)
     public void shouldDeployXaDataSource() throws Exception {
         String plan = ""
                 + POSTGRESQL
@@ -697,7 +773,7 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 DataSourceAudit.builder().name(new DataSourceName("barDS"))
                                .change("uri", null, "jdbc:postgresql://my-db.server.lan:5432/bar")
                                .change("jndi-name", null, "java:/datasources/barDS")
@@ -725,15 +801,14 @@ public class DeployerIT {
                         + "\"PortNumber\" => {\"value\" => \"5432\"},"
                         + "\"DatabaseName\" => {\"value\" => \"bar\"}"
                         + "}"));
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
     @Test
-    @InSequence(value = 2200)
     public void shouldUndeployAllDataSources() throws Exception {
         List<Audit> audits = post(POSTGRESQL);
 
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 DataSourceAudit.builder().name(new DataSourceName("barDS")) // sorted!
                                .change("uri", "jdbc:postgresql://my-db.server.lan:5432/bar", null)
                                .change("jndi-name", "java:/datasources/barDS", null)
@@ -758,11 +833,10 @@ public class DeployerIT {
                                .change("pool:max", "10", null)
                                .change("pool:max-age", "5 min", null) // TODO "10 min", null)
                                .removed());
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
     @Test
-    @InSequence(value = 3000)
     public void shouldDeployLogHandlerAndLogger() throws Exception {
         String plan = ""
                 + POSTGRESQL
@@ -775,7 +849,7 @@ public class DeployerIT {
 
         List<Audit> audits = post(plan);
 
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 LogHandlerAudit.builder()
                                .type(periodicRotatingFile)
                                .name(new LogHandlerName("FOO"))
@@ -804,18 +878,17 @@ public class DeployerIT {
                 .has(property("handlers", "[\"FOO\"]"))
                 .has(property("level", "DEBUG"))
                 .has(property("use-parent-handlers", "false"));
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
     @Test
-    @InSequence(value = 3100)
     public void shouldUndeployLogHandler() throws Exception {
         String plan = ""
                 + POSTGRESQL;
 
         List<Audit> audits = post(plan);
 
-        assertThat(audits).containsExactly(
+        assertThat(audits).containsOnly(
                 LogHandlerAudit.builder()
                                .type(periodicRotatingFile)
                                .name(new LogHandlerName("FOO"))
@@ -828,11 +901,10 @@ public class DeployerIT {
                            .change("use-parent-handlers", false, null)
                            .change("handlers", "[FOO]", null)
                            .removed());
-        assertThat(theDeployments()).haveExactly(1, deployment("postgresql"));
+        assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
     @Test
-    @InSequence(value = 10000)
     public void shouldDeploySecondDeployableWithOnlyOnePostParameter() throws Exception {
         String plan = ""
                 + "deployables:\n"
@@ -848,8 +920,10 @@ public class DeployerIT {
         Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
         Audits audits = post(plan, entity, OK).readEntity(Audits.class);
 
-        assertThat(theDeployments()).haveExactly(1, deployment("jolokia.war", JOLOKIA_133_CHECKSUM));
-        assertThat(audits.getAudits()).containsExactly(
+        assertThat(theDeployments()).containsOnly(
+                entry("jolokia.war", JOLOKIA_133_CHECKSUM),
+                entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
+        assertThat(audits.getAudits()).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
                                .change("artifact-id", null, "jolokia-war")
@@ -860,7 +934,6 @@ public class DeployerIT {
     }
 
     @Test
-    @InSequence(value = Integer.MAX_VALUE)
     public void shouldCleanUp() throws Exception {
         String plan = "---\n";
 
@@ -882,24 +955,7 @@ public class DeployerIT {
                                .change("type", "jar", null)
                                .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
                                .removed());
-        assertThat(jbossConfig
-                .read()
-                .replace(consoleHandler(ALL), consoleHandler(INFO))
-                .replace(""
-                                + "            <logger category=\"com.github.t1.deployer\">\n"
-                                + "                <level name=\"DEBUG\"/>\n"
-                                + "            </logger>\n"
-                        , "")
-                .replaceAll(""
-                                + "    <deployments>\n"
-                                + "        <deployment name=\"" + DEPLOYER_IT + "\" runtime-name=\"" + DEPLOYER_IT + "\">\n"
-                                + "            <content sha1=\"[0-9a-z]{40}\"/>\n"
-                                + "        </deployment>\n"
-                                + "    </deployments>\n"
-                        , ""
-                                + "    <deployments>\n"
-                                + "    </deployments>\n")
-        ).isEqualTo(jbossConfig.getOrig());
+        assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
     }
 
     private String consoleHandler(LogLevel level) {

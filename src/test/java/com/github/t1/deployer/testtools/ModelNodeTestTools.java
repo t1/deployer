@@ -18,6 +18,8 @@ public class ModelNodeTestTools {
 
     public static ModelNode readDeploymentRequest(String name) { return readResourceRequest(null, "deployment", name); }
 
+    public static ModelNode readAllDeploymentsRequest() { return readResourceRequest(null, "deployment", "*"); }
+
     public static ModelNode readDatasourceRequest(String name, boolean xa) {
         return readResourceRequest("datasources", dataSource(xa), name);
     }

@@ -16,7 +16,7 @@ import static com.github.t1.log.LogLevel.*;
 @Slf4j
 @Logged(level = DEBUG)
 @ApplicationScoped
-public class ContainerProducer implements Serializable {
+public class ModelControllerClientProducer implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final String SOCKET_BINDING_PREFIX = "management-";
@@ -90,7 +90,7 @@ public class ContainerProducer implements Serializable {
         }
     }
 
-    private ModelControllerClient createModelControllerClient(URI uri) throws UnknownHostException {
+    public static ModelControllerClient createModelControllerClient(URI uri) throws UnknownHostException {
         String host = uri.getHost();
         int port = uri.getPort();
         log.debug("create ModelControllerClient {}://{}:{}", uri.getScheme(), host, port);

@@ -22,7 +22,7 @@ public class Container {
     @SneakyThrows(InterruptedException.class)
     public static void waitForMBean() {
         for (int i = 0; i < 10; i++) {
-            ObjectName objectName = ContainerProducer.findManagementInterface();
+            ObjectName objectName = ModelControllerClientProducer.findManagementInterface();
             if (objectName != null)
                 return;
             log.debug("waiting for MBean server");
@@ -36,6 +36,8 @@ public class Container {
     public void waitForBoot() { batch.waitForBoot(); }
 
     public void shutdown() { batch.shutdown(); }
+
+    public void reload() { batch.reload(); }
 
     public static Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
 

@@ -95,7 +95,7 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
 
     private static Checksum readHash(ModelNode node) { return Checksum.of(hash(node)); }
 
-    private static byte[] hash(ModelNode cliDeployment) {
+    public static byte[] hash(ModelNode cliDeployment) {
         try {
             return cliDeployment.get("content").get(0).get("hash").asBytes();
         } catch (RuntimeException e) {

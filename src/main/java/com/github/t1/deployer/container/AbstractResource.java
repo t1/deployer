@@ -37,7 +37,6 @@ public abstract class AbstractResource<T extends AbstractResource<T>> {
     }
 
     protected void read(ModelNode address) {
-        log.debug("isDeployed: {}", address);
         ModelNode readResource = createReadResourceOperation(address, true);
         ModelNode response = batch.executeRaw(readResource);
         if (response == null)
