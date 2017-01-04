@@ -61,12 +61,19 @@ class Batch {
         log.info("boot done");
     }
 
+    public void reload() {
+        executeEmptyOperation("reload");
+    }
+
     public void shutdown() {
-        ModelNode reload = Operations.createOperation("shutdown", new ModelNode().setEmptyList());
+        executeEmptyOperation("shutdown");
+    }
 
-        ModelNode result = executeRaw(reload);
-
-        log.info("shutdown -> {}", result);
+    private void executeEmptyOperation(String operation) {
+        log.info(operation);
+        ModelNode shutdown = Operations.createOperation(operation, new ModelNode().setEmptyList());
+        ModelNode result = executeRaw(shutdown);
+        log.info(operation + " -> {}", result.get(OUTCOME));
     }
 
 
@@ -146,7 +153,7 @@ class Batch {
     }
 
     public void fail(ModelNode result) {
-        String detail = "outcome " + result.get("outcome")
+        String detail = "outcome " + result.get(OUTCOME)
                 + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : "");
         throw badRequest(detail);
     }

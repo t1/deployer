@@ -24,12 +24,12 @@ import javax.ws.rs.client.*;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 import java.io.*;
-import java.net.URI;
+import java.net.*;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Supplier;
 import java.util.zip.*;
 
@@ -78,6 +78,7 @@ public class DeployerIT {
     private static final Supplier<Path> ROOT_BUNDLE_PATH = () -> CONFIG_DIR.resolve(ROOT_BUNDLE);
 
     private static final URI BASE_URI = URI.create("http://localhost:8080/deployer");
+    private static final URI CLI_URI = URI.create("http-remoting://localhost:9990");
 
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
@@ -129,12 +130,44 @@ public class DeployerIT {
         log.info("\n================================================================== shutdown done");
     }
 
-    @SneakyThrows(IOException.class) private static ModelNode execute(ModelNode request) {
-        try (ModelControllerClient client = createModelControllerClient(URI.create("http-remoting://localhost:9990"))) {
-            ModelNode result = client.execute(request);
-            assert isSuccessfulOutcome(result);
-            return result.get(RESULT);
+    private static ModelNode execute(ModelNode request) {
+        return retryConnect("connect to cli", () -> {
+            try (ModelControllerClient client = createModelControllerClient(CLI_URI)) {
+                ModelNode result = client.execute(request);
+                if (isSuccessfulOutcome(result))
+                    return result.get(RESULT);
+                log.debug("non-successful outcome while connecting to cli: {}", result.get(OUTCOME));
+                return null;
+            }
+        });
+    }
+
+
+    @SneakyThrows(InterruptedException.class)
+    private static <T> T retryConnect(String description, Callable<T> body) {
+        Instant start = Instant.now();
+        for (int i = 0; i < 30; i++) {
+            log.debug("try to {}: {}", description, i);
+            try {
+                T result = body.call();
+                if (result != null)
+                    return result;
+            } catch (Exception e) {
+                if (!isConnectException(e))
+                    throw new RuntimeException(e);
+                log.debug("IOException in: {}", description);
+            }
+            Thread.sleep(1000);
         }
+        throw new RuntimeException(
+                "container didn't start within " + start.until(Instant.now(), MILLIS) + " ms for " + description);
+    }
+
+    private static boolean isConnectException(Exception e) {
+        return e.getCause() instanceof ConnectException
+                && (e.getCause().getMessage()
+                     .contains("WFLYPRT0053: Could not connect to " + CLI_URI + ". The connection failed")
+                            || e.getCause().getMessage().contains("Connection refused (Connection refused)"));
     }
 
     @SneakyThrows(IOException.class)
@@ -224,7 +257,7 @@ public class DeployerIT {
         // setLogger(logging, "com.github.t1.rest.ResponseConverter", INFO);
         setLogger(logging, "com.github.t1.deployer", DEBUG);
         setSystemProperty(xml, CLI_DEBUG, "true");
-        setSystemProperty(xml, IGNORE_SERVER_RELOAD, "true");
+        // setSystemProperty(xml, IGNORE_SERVER_RELOAD, "true");
         xml.save();
     }
 
@@ -300,22 +333,23 @@ public class DeployerIT {
     }
 
     public Response post(String plan, Entity<?> entity, Status expectedStatus) {
-        //noinspection resource
-        try (FileMemento memento = new FileMemento(ROOT_BUNDLE_PATH).setup()) {
-            memento.write(plan);
+        return retryConnect("post request", () -> {
+            try (FileMemento memento = new FileMemento(ROOT_BUNDLE_PATH).setup()) {
+                memento.write(plan);
 
-            Response response = HTTP
-                    .target(BASE_URI)
-                    .request(APPLICATION_JSON_TYPE)
-                    .buildPost(entity)
-                    .invoke();
-            assertThat(response.getStatusInfo())
-                    .as("failed: %s", new Object() {
-                        @Override public String toString() { return response.readEntity(String.class); }
-                    })
-                    .isEqualTo(expectedStatus);
-            return response;
-        }
+                Response response = HTTP
+                        .target(BASE_URI)
+                        .request(APPLICATION_JSON_TYPE)
+                        .buildPost(entity)
+                        .invoke();
+                assertThat(response.getStatusInfo())
+                        .as("failed: %s", new Object() {
+                            @Override public String toString() { return response.readEntity(String.class); }
+                        })
+                        .isEqualTo(expectedStatus);
+                return response;
+            }
+        });
     }
 
     private static Map<String, Checksum> theDeployments() {
@@ -722,7 +756,6 @@ public class DeployerIT {
     }
 
     @Test
-    @Ignore("requires reload")
     public void shouldChangeDataSourceMaxAge10() throws Exception {
         String plan = ""
                 + POSTGRESQL
@@ -758,7 +791,7 @@ public class DeployerIT {
                 + POSTGRESQL
                 + "data-sources:\n"
                 + FOO_DATASOURCE
-                + "      max-age: 5 min\n" // TODO 10 min\n"
+                + "      max-age: 10 min\n"
                 // TODO + "    xa: true\n"
                 + "  barDS:\n"
                 + "    xa: true\n"
@@ -831,7 +864,7 @@ public class DeployerIT {
                                .change("pool:min", "0", null)
                                .change("pool:initial", "1", null)
                                .change("pool:max", "10", null)
-                               .change("pool:max-age", "5 min", null) // TODO "10 min", null)
+                               .change("pool:max-age", "10 min", null)
                                .removed());
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }

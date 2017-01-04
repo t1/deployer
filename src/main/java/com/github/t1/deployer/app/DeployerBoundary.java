@@ -69,11 +69,17 @@ public class DeployerBoundary {
 
         apply(post, mapVariableNames(form));
 
+        if (reloadRequired())
+            container.reload();
+
         return Response
-                .status((audits.getProcessState() == running || Boolean.getBoolean(IGNORE_SERVER_RELOAD))
-                        ? OK : INTERNAL_SERVER_ERROR)
+                .status(OK)
                 .entity(new AuditsResponse(audits.getAudits(), audits.getProcessState()))
                 .build();
+    }
+
+    private boolean reloadRequired() {
+        return audits.getProcessState() != running && !Boolean.getBoolean(IGNORE_SERVER_RELOAD);
     }
 
     private Map<VariableName, String> mapVariableNames(Map<String, String> form) {
