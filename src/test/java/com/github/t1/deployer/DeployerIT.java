@@ -30,7 +30,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.zip.*;
 
 import static com.github.t1.deployer.TestData.*;
@@ -43,6 +43,7 @@ import static com.github.t1.deployer.container.ModelControllerClientProducer.*;
 import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.Password.*;
+import static com.github.t1.deployer.model.ProcessState.*;
 import static com.github.t1.deployer.testtools.ModelNodeTestTools.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
@@ -54,6 +55,7 @@ import static java.time.temporal.ChronoUnit.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.hibernate.validator.internal.util.CollectionHelper.*;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.junit.Assume.*;
@@ -139,19 +141,20 @@ public class DeployerIT {
                 log.debug("non-successful outcome while connecting to cli: {}", result.get(OUTCOME));
                 return null;
             }
-        });
+        }, Objects::nonNull);
     }
 
 
     @SneakyThrows(InterruptedException.class)
-    private static <T> T retryConnect(String description, Callable<T> body) {
+    private static <T> T retryConnect(String description, Callable<T> body, Predicate<T> finished) {
         Instant start = Instant.now();
         for (int i = 0; i < 30; i++) {
             log.debug("try to {}: {}", description, i);
             try {
                 T result = body.call();
-                if (result != null)
+                if (finished.test(result))
                     return result;
+                log.debug("failed test {} for {}", i, description);
             } catch (Exception e) {
                 if (!isConnectException(e))
                     throw new RuntimeException(e);
@@ -342,14 +345,14 @@ public class DeployerIT {
                         .request(APPLICATION_JSON_TYPE)
                         .buildPost(entity)
                         .invoke();
-                assertThat(response.getStatusInfo())
+                assertThat(response.getStatus())
                         .as("failed: %s", new Object() {
                             @Override public String toString() { return response.readEntity(String.class); }
                         })
-                        .isEqualTo(expectedStatus);
+                        .isIn(asSet(expectedStatus.getStatusCode(), NOT_FOUND.getStatusCode()));
                 return response;
             }
-        });
+        }, response -> response.getStatusInfo().equals(expectedStatus));
     }
 
     private static Map<String, Checksum> theDeployments() {
@@ -407,10 +410,11 @@ public class DeployerIT {
                 + "    version: 1.3.1\n"
                 + "    checksum: 52709cbc859e208dc8e540eb5c7047c316d9653f";
 
-        List<Audit> audits = post(plan);
+        Response response = post(plan, null, OK);
 
+        assertThat(response.getHeaderString(PROCESS_STATE_HEADER)).isEqualTo(running.name());
         assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_131_CHECKSUM));
-        assertThat(audits).containsOnly(
+        assertThat(response.readEntity(Audits.class).getAudits()).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
                                .change("artifact-id", null, "jolokia-war")
@@ -509,7 +513,7 @@ public class DeployerIT {
         assertThat(detail).contains("Variable named [config-var] already set. It's not allowed to overwrite.");
     }
 
-    @Test
+    // @Test
     @Ignore("sending */* behaves different from sending no Content-Type header at all... but how should we do that?")
     public void shouldNotAcceptPostWildcardWithBody() throws Exception {
         Entity<String> entity = Entity.entity("non-empty", WILDCARD_TYPE);
@@ -756,7 +760,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldChangeDataSourceMaxAge10() throws Exception {
+    public void shouldChangeDataSourceMaxAgeTo10() throws Exception {
         String plan = ""
                 + POSTGRESQL
                 + "data-sources:\n"
@@ -764,9 +768,10 @@ public class DeployerIT {
                 + "      max-age: 600 seconds\n";
         // TODO + "    xa: true\n"
 
-        List<Audit> audits = post(plan);
+        Response response = post(plan, null, OK);
 
-        assertThat(audits).containsOnly(
+        assertThat(response.getHeaderString(PROCESS_STATE_HEADER)).isEqualTo(reloadRequired.name());
+        assertThat(response.readEntity(Audits.class).getAudits()).containsOnly(
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
                                // TODO .change("xa", null, true)
                                .change("pool:max-age", "5 min", "10 min")
@@ -989,10 +994,5 @@ public class DeployerIT {
                                .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
                                .removed());
         assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
-    }
-
-    private String consoleHandler(LogLevel level) {
-        return "<console-handler name=\"CONSOLE\">\n"
-                + "                <level name=\"" + level + "\"/>";
     }
 }
