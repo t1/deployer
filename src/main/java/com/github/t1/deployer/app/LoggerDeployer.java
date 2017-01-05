@@ -71,9 +71,9 @@ class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder,
             audit.change("handlers", resource.handlers(), null);
     }
 
-    @Override protected void cleanupRemove(LoggerResource resource) {
+    @Override protected void cleanup(LoggerResource resource) {
         if (resource.isNotRoot())
-            super.cleanupRemove(resource);
+            super.cleanup(resource);
     }
 
     @Override public void read(PlanBuilder builder, LoggerResource logger) {

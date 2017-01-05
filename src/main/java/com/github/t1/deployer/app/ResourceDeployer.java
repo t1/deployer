@@ -157,7 +157,8 @@ abstract class ResourceDeployer<
         auditRemove(resource, audit);
     }
 
-    @Override protected void cleanupRemove(RESOURCE resource) {
+    @Override protected void cleanup(RESOURCE resource) {
+        log.info("cleanup remaining {}", resource);
         AUDIT audit = auditBuilder(resource);
         auditRemove(resource, audit);
         audits.add(audit.removed());

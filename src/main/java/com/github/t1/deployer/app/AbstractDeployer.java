@@ -58,9 +58,7 @@ abstract class AbstractDeployer<
         resourcesIn(plan).forEach(this::apply);
 
         if (isManaged())
-            remaining.stream()
-                     .peek(resource -> log.info("cleanup remaining {}", resource))
-                     .forEach(this::cleanupRemove);
+            remaining.forEach(this::cleanup);
     }
 
     protected abstract Stream<PLAN> resourcesIn(Plan plan);
@@ -121,7 +119,7 @@ abstract class AbstractDeployer<
 
     protected abstract void auditRegularRemove(RESOURCE resource, PLAN plan, AUDIT audit);
 
-    protected abstract void cleanupRemove(RESOURCE resource);
+    protected abstract void cleanup(RESOURCE resource);
 
     public boolean isManaged() {
         return managedResourceNames.equals(singletonList("all")) || managedResourceNames.contains(getType());

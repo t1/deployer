@@ -121,7 +121,8 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
         audit.change("checksum", artifact.getChecksum(), null);
     }
 
-    @Override protected void cleanupRemove(DeploymentResource resource) {
+    @Override protected void cleanup(DeploymentResource resource) {
+        log.info("cleanup remaining {}", resource);
         DeployableAuditBuilder audit = auditBuilder(resource);
         auditRemove(audit, repository.lookupByChecksum(resource.checksum()));
         audit.change("checksum", resource.checksum(), null);
