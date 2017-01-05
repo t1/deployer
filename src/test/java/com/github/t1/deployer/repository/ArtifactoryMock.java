@@ -269,11 +269,11 @@ public class ArtifactoryMock {
             @HeaderParam("Authorization") String authorization,
             @QueryParam("sha1") Checksum checksum) {
         checkAuthorization(authorization);
-        log.info("search by checksum: {}", checksum);
+        log.debug("search by checksum: {}", checksum);
         if (checksum == null)
             throw new RuntimeException("Required query parameter 'sha1' is missing.");
         String results = searchResultsFor(checksum);
-        log.info("found {}", results);
+        log.debug("found {}", results);
         return "{\"results\": [" + results + "]}";
     }
 
@@ -304,7 +304,7 @@ public class ArtifactoryMock {
         } else if (FAKES) {
             DeploymentName name = fakeNameFor(checksum);
             Version version = fakeVersionFor(checksum);
-            log.info("fake search result for {}: {}@{}", checksum, name, version);
+            log.debug("fake search result for {}: {}@{}", checksum, name, version);
             return fileSearchResult(name, version);
         } else {
             return "";
@@ -391,7 +391,7 @@ public class ArtifactoryMock {
     public Response fileOrFolderInfo(@HeaderParam("Authorization") String authorization,
             @PathParam("repoKey") String repoKey, @PathParam("path") String path) throws IOException {
         checkAuthorization(authorization);
-        log.info("get file/folder info for {} in {}", path, repoKey);
+        log.debug("get file/folder info for {} in {}", path, repoKey);
         String info = "{\n"
                 + "   \"repo\" : \"" + repoKey + "\",\n"
                 + "   \"path\" : \"/" + path + "\",\n"
@@ -410,7 +410,7 @@ public class ArtifactoryMock {
 
     private String info(java.nio.file.Path path, boolean snapshot) throws IOException {
         if (FOO.getValue().equals(path.getName(0).toString())) {
-            log.info("foo info {}", path);
+            log.debug("foo info {}", path);
             if (path.getNameCount() == 1)
                 return folderInfo(path, snapshot);
             if (path.getNameCount() == 2) {
@@ -421,17 +421,17 @@ public class ArtifactoryMock {
                 return closeChildrenBuilder(out);
             }
             Version version = versionFrom(path);
-            log.info("foo info for {}", version);
+            log.debug("foo info for {}", version);
             return fileInfo(12345L, fakeChecksumFor(FOO, version), Checksum.fromString("1234567890abcdef"));
         }
         java.nio.file.Path resolved = MAVEN_REPOSITORY.resolve(path);
-        log.info("info from {}", resolved);
+        log.debug("info from {}", resolved);
         if (Files.isDirectory(resolved))
             return folderInfo(path, snapshot);
         else if (Files.isRegularFile(resolved))
             return fileInfo(resolved);
         if (FAKES) {
-            log.info("fake file info for: {}", path);
+            log.debug("fake file info for: {}", path);
             Checksum checksum = fakeChecksumFor(new DeploymentName(path.getFileName().toString()));
             return fileInfo(12345, checksum, checksum);
         }
@@ -450,7 +450,7 @@ public class ArtifactoryMock {
     private String folderInfo(java.nio.file.Path path, boolean snapshot) throws IOException {
         final StringBuilder out = childrenBuilder();
         if (isIndexed(path)) {
-            log.info("indexed folder info {}", path);
+            log.debug("indexed folder info {}", path);
             Files.walkFileTree(MAVEN_REPOSITORY.resolve(path), EnumSet.noneOf(FileVisitOption.class), 1,
                     new SimpleFileVisitor<java.nio.file.Path>() {
                         @Override
@@ -470,7 +470,7 @@ public class ArtifactoryMock {
                         }
                     });
         } else if (FAKES) {
-            log.info("fake folder info {}", path);
+            log.debug("fake folder info {}", path);
             for (Version version : fakeVersionsFor(new DeploymentName(path.toString()))) {
                 out.append(folderChild(version.toString()));
             }
@@ -541,7 +541,7 @@ public class ArtifactoryMock {
         long size = Files.size(path);
         Checksum sha1 = Checksum.sha1(path);
         Checksum md5 = Checksum.md5(path);
-        log.info("file info {}: size={}, sha1={}, md5={}", path, size, sha1, md5);
+        log.debug("file info {}: size={}, sha1={}, md5={}", path, size, sha1, md5);
         return fileInfo(size, sha1, md5);
     }
 
@@ -578,7 +578,7 @@ public class ArtifactoryMock {
             if (!Files.isRegularFile(repoPath))
                 throw notFound("not found " + repoPath);
         }
-        log.info("return repository file stream: {}", repoPath);
+        log.debug("return repository file stream: {}", repoPath);
         return Files.newInputStream(repoPath);
     }
 
@@ -594,7 +594,7 @@ public class ArtifactoryMock {
         java.nio.file.Path path = Paths.get(pathString);
         if (isIndexed(path)) {
             java.nio.file.Path repoPath = MAVEN_REPOSITORY.resolve(path);
-            log.info("return repository file stream: {}", repoPath);
+            log.debug("return repository file stream: {}", repoPath);
             return Files.newInputStream(repoPath);
         }
         int n = path.getNameCount();
