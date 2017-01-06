@@ -87,7 +87,7 @@ public class DeployerIT {
         startArtifactoryMock();
         writeDeployerConfig();
         container.deploy(deployer_war());
-        startConfig = readConfig(); // after startup & deploy, so the container did format and order the file
+        startConfig = container.readConfig(); // after startup & deploy, so the container did format and order the file
     }
 
     private static Xml startConfig;
@@ -125,8 +125,6 @@ public class DeployerIT {
                 .print()
                 .build();
     }
-
-    private static Xml readConfig() { return Xml.load(container.configFile().toUri()); }
 
 
     private static final Client HTTP = ClientBuilder.newClient().register(LoggingFeature.class);
@@ -805,6 +803,6 @@ public class DeployerIT {
                                .change("type", "jar", null)
                                .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
                                .removed());
-        assertThat(readConfig().toXmlString()).isEqualTo(startConfig.toXmlString());
+        assertThat(container.readConfig().toXmlString()).isEqualTo(startConfig.toXmlString());
     }
 }
