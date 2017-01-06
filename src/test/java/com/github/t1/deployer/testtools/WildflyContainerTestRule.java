@@ -1,7 +1,6 @@
 package com.github.t1.deployer.testtools;
 
 import com.github.t1.log.LogLevel;
-import com.github.t1.testtools.FileMemento;
 import com.github.t1.xml.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 import java.util.zip.*;
 
@@ -40,7 +39,6 @@ public class WildflyContainerTestRule extends ExternalResource {
     private final XmlElement logging;
 
     private Process containerProcess;
-    private FileMemento jbossConfig;
 
 
     public WildflyContainerTestRule(String version) {
@@ -63,20 +61,6 @@ public class WildflyContainerTestRule extends ExternalResource {
     public Path configFile() { return configDir().resolve("standalone.xml"); }
 
     public URI baseUri() { return baseUri; }
-
-    public Xml config() { return Xml.load(configMemento().getPath().toUri()); }
-
-    public Xml origConfig() { return Xml.fromString(configMemento().getOrig()); }
-
-    private FileMemento configMemento() {
-        if (jbossConfig == null) {
-            //noinspection resource
-            jbossConfig = new FileMemento(configFile()).setup();
-            jbossConfig.restoreOnShutdown()
-                       .after(100, TimeUnit.MILLISECONDS); // hell won't freeze over if this is too fast
-        }
-        return jbossConfig;
-    }
 
     public WildflyContainerTestRule withLogger(String category, LogLevel level) {
         if (logging.find("logger[@category='" + category + "']").isEmpty())

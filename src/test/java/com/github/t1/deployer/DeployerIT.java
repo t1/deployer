@@ -7,6 +7,7 @@ import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
 import com.github.t1.deployer.testtools.WildflyContainerTestRule;
 import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.*;
+import com.github.t1.xml.Xml;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.dmr.ModelNode;
@@ -72,13 +73,25 @@ public class DeployerIT {
             + "      initial: 1\n"
             + "      max: 10\n";
 
+    @ClassRule public static WildflyContainerTestRule container =
+            new WildflyContainerTestRule("10.1.0.Final")
+                    .withLogger("org.apache.http.headers", DEBUG)
+                    // .withLogger("org.apache.http.wire", DEBUG)
+                    // .withLogger("com.github.t1.rest", DEBUG)
+                    // .withLogger("com.github.t1.rest.ResponseConverter", INFO)
+                    .withLogger("com.github.t1.deployer", DEBUG)
+                    // .withSystemProperty(IGNORE_SERVER_RELOAD, "true")
+                    .withSystemProperty(CLI_DEBUG, "true");
+
     @BeforeClass
     public static void startup() {
         startArtifactoryMock();
         writeDeployerConfig();
         container.deploy(deployer_war());
-        container.config(); // after startup & deploy, so the container did format and order the file
+        startConfig = readConfig(); // after startup & deploy, so the container did format and order the file
     }
+
+    private static Xml startConfig;
 
     private static void startArtifactoryMock() {
         if (USE_ARTIFACTORY_MOCK)
@@ -106,7 +119,6 @@ public class DeployerIT {
         );
     }
 
-
     private static WebArchive deployer_war() {
         return new WebArchiveBuilder(DEPLOYER_WAR)
                 .with(DeployerBoundary.class.getPackage())
@@ -115,18 +127,10 @@ public class DeployerIT {
                 .build();
     }
 
+    private static Xml readConfig() { return Xml.load(container.configFile().toUri()); }
+
 
     private static final Client HTTP = ClientBuilder.newClient().register(LoggingFeature.class);
-
-    @ClassRule public static WildflyContainerTestRule container =
-            new WildflyContainerTestRule("10.1.0.Final")
-                    .withLogger("org.apache.http.headers", DEBUG)
-                    // .withLogger("org.apache.http.wire", DEBUG)
-                    // .withLogger("com.github.t1.rest", DEBUG)
-                    // .withLogger("com.github.t1.rest.ResponseConverter", INFO)
-                    .withLogger("com.github.t1.deployer", DEBUG)
-                    // .withSystemProperty(IGNORE_SERVER_RELOAD, "true")
-                    .withSystemProperty(CLI_DEBUG, "true");
 
     @Rule public TestLoggerRule logger = new TestLoggerRule();
     @Rule public LoggerMemento loggerMemento = new LoggerMemento()
@@ -802,6 +806,6 @@ public class DeployerIT {
                                .change("type", "jar", null)
                                .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
                                .removed());
-        assertThat(container.config().toXmlString()).isEqualTo(container.origConfig().toXmlString());
+        assertThat(readConfig().toXmlString()).isEqualTo(startConfig.toXmlString());
     }
 }
