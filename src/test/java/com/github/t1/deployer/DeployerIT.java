@@ -2,21 +2,14 @@ package com.github.t1.deployer;
 
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.*;
-import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
-import com.github.t1.log.LogLevel;
+import com.github.t1.deployer.testtools.WildflyContainerTestRule;
 import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.*;
-import com.github.t1.xml.Xml;
-import com.github.t1.xml.*;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.logging.LoggingFeature;
-import org.jboss.as.controller.client.ModelControllerClient;
-import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
-import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -24,15 +17,8 @@ import org.junit.runner.RunWith;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
-import java.io.*;
-import java.net.*;
-import java.nio.file.*;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.time.Instant;
+import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.*;
-import java.util.zip.*;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.ConfigProducer.*;
@@ -40,7 +26,6 @@ import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.Container.*;
 import static com.github.t1.deployer.container.DeploymentResource.*;
 import static com.github.t1.deployer.container.LogHandlerResource.*;
-import static com.github.t1.deployer.container.ModelControllerClientProducer.*;
 import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.Password.*;
@@ -49,40 +34,18 @@ import static com.github.t1.deployer.testtools.ModelNodeTestTools.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
 import static com.github.t1.testtools.FileMemento.*;
-import static com.github.t1.xml.Xml.*;
-import static java.nio.file.Files.*;
-import static java.nio.file.StandardCopyOption.*;
-import static java.time.temporal.ChronoUnit.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.hibernate.validator.internal.util.CollectionHelper.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
-import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.junit.Assume.*;
 
 @Slf4j
 @RunWith(OrderedJUnitRunner.class)
 public class DeployerIT {
-    private static final String WILDFLY_VERSION = "10.1.0.Final";
     private static final boolean USE_ARTIFACTORY_MOCK = true;
 
     private static final String DEPLOYER_WAR = "deployer.war";
-    private static final Path LOCAL_REPOSITORY = Paths.get(System.getProperty("user.home")).resolve(".m2/repository");
-    private static final Path WILDFLY_ZIP = LOCAL_REPOSITORY
-            .resolve("org/wildfly/wildfly-dist").resolve(WILDFLY_VERSION)
-            .resolve("wildfly-dist-" + WILDFLY_VERSION + ".zip");
-    private static final Path CONTAINER_HOME = Paths.get(System.getProperty("user.dir")).resolve("target/container");
-    private static final Path DEPLOYMENTS = CONTAINER_HOME.resolve("standalone/deployments");
-    private static final Path FAILED_MARKER = DEPLOYMENTS.resolve(DEPLOYER_WAR + ".failed");
-    private static final Path DEPLOYED_MARKER = DEPLOYMENTS.resolve(DEPLOYER_WAR + ".deployed");
-    private static final Path CONFIG_DIR = CONTAINER_HOME.resolve("standalone/configuration");
-    public static final Path JBOSS_CONFIG = CONFIG_DIR.resolve("standalone.xml");
-    private static final Supplier<Path> ROOT_BUNDLE_PATH = () -> CONFIG_DIR.resolve(ROOT_BUNDLE);
-
-    private static final URI BASE_URI = URI.create("http://localhost:8080/deployer");
-    private static final URI CLI_URI = URI.create("http-remoting://localhost:9990");
-
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
     private static final String PLAN_JOLOKIA_WITH_VERSION_VAR = ""
@@ -112,117 +75,23 @@ public class DeployerIT {
     @BeforeClass
     public static void startup() {
         startArtifactoryMock();
-        downloadContainer();
         writeDeployerConfig();
-        setupJBossConfig();
-        startContainer();
-        deployDeployer();
-        readJBossConfig(); // after startup & deploy, so the container did format and order the file
+        container.deploy(deployer_war());
+        container.config(); // after startup & deploy, so the container did format and order the file
     }
 
-    @AfterClass
-    public static void shutdown() {
-        log.info("\n================================================================== shutdown");
-        try {
-            execute(Operations.createOperation("shutdown", new ModelNode().setEmptyList()));
-        } catch (RuntimeException e) {
-            containerProcess.destroyForcibly();
-        }
-        log.info("\n================================================================== shutdown done");
-    }
-
-    private static ModelNode execute(ModelNode request) {
-        return retryConnect("connect to cli", () -> {
-            try (ModelControllerClient client = createModelControllerClient(CLI_URI)) {
-                ModelNode result = client.execute(request);
-                if (isSuccessfulOutcome(result))
-                    return result.get(RESULT);
-                log.debug("non-successful outcome while connecting to cli: {}", result.get(OUTCOME));
-                return null;
-            }
-        }, Objects::nonNull);
-    }
-
-
-    @SneakyThrows(InterruptedException.class)
-    private static <T> T retryConnect(String description, Callable<T> body, Predicate<T> finished) {
-        Instant start = Instant.now();
-        for (int i = 0; i < 30; i++) {
-            log.debug("try to {}: {}", description, i);
+    private static void startArtifactoryMock() {
+        if (USE_ARTIFACTORY_MOCK)
             try {
-                T result = body.call();
-                if (finished.test(result))
-                    return result;
-                log.debug("failed test {} for {}", i, description);
+                // TODO can we instead deploy this? or use DropwizardClientRule?
+                new ArtifactoryMockLauncher().noConsole().run("server");
             } catch (Exception e) {
-                if (!isConnectException(e))
-                    throw new RuntimeException(e);
-                log.debug("IOException in {}: {}", description, e.getMessage());
+                throw new RuntimeException(e);
             }
-            Thread.sleep(1000);
-        }
-        throw new RuntimeException(
-                "container didn't start within " + start.until(Instant.now(), MILLIS) + " ms for " + description);
-    }
-
-    private static boolean isConnectException(Exception e) {
-        return e.getCause() instanceof ConnectException
-                && (e.getCause().getMessage()
-                     .contains("WFLYPRT0053: Could not connect to " + CLI_URI + ". The connection failed")
-                            || e.getCause().getMessage().contains("Connection refused (Connection refused)"));
-    }
-
-    @SneakyThrows(IOException.class)
-    private static void downloadContainer() {
-        if (exists(CONTAINER_HOME))
-            return;
-        log.info("\n================================================================== download container");
-        download();
-
-        log.info("\n================================================================== unpack container");
-        unzip(WILDFLY_ZIP, CONTAINER_HOME.getParent());
-        move(CONTAINER_HOME.getParent().resolve("wildfly-" + WILDFLY_VERSION), CONTAINER_HOME);
-    }
-
-    @SneakyThrows(InterruptedException.class)
-    private static void download() throws IOException {
-        int exitCode = new ProcessBuilder("mvn",
-                "dependency:get",
-                "-D" + "transitive=false",
-                "-D" + "groupId=org.wildfly",
-                "-D" + "artifactId=wildfly-dist",
-                "-D" + "packaging=zip",
-                "-D" + "version=" + WILDFLY_VERSION)
-                .inheritIO()
-                .start()
-                .waitFor();
-        if (exitCode != 0)
-            throw new IllegalStateException("mvn didn't return normally but returned " + exitCode);
-    }
-
-    public static void unzip(Path zip, Path target) throws IOException {
-        Instant start = Instant.now();
-
-        try (ZipInputStream zipStream = new ZipInputStream(Files.newInputStream(zip))) {
-            for (ZipEntry zipEntry = zipStream.getNextEntry(); zipEntry != null; zipEntry = zipStream.getNextEntry()) {
-                Path path = target.resolve(zipEntry.getName());
-                if (zipEntry.isDirectory()) {
-                    createDirectories(path);
-                } else {
-                    copy(zipStream, path);
-                    setLastModifiedTime(path, zipEntry.getLastModifiedTime());
-                    if (path.toString().endsWith(".sh"))
-                        setPosixFilePermissions(path, PosixFilePermissions.fromString("rwxr-xr-x"));
-                }
-                zipStream.closeEntry();
-            }
-        }
-
-        log.debug("unzip done after {} ms", start.until(Instant.now(), MILLIS));
     }
 
     private static void writeDeployerConfig() {
-        writeFile(CONFIG_DIR.resolve(DEPLOYER_CONFIG_YAML), ""
+        writeFile(container.configDir().resolve(DEPLOYER_CONFIG_YAML), ""
                 + "vars:\n"
                 + "  config-var: 1.3.2\n"
                 + "pin:\n"
@@ -237,79 +106,8 @@ public class DeployerIT {
         );
     }
 
-    private static void startArtifactoryMock() {
-        if (USE_ARTIFACTORY_MOCK)
-            try {
-                // TODO can we instead deploy this? or use DropwizardClientRule?
-                new ArtifactoryMockLauncher().noConsole().run("server");
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-    }
 
-
-    private static void setupJBossConfig() {
-        Xml xml = Xml.load(JBOSS_CONFIG.toUri());
-        XmlElement logging = xml.getXPathElement("/server/profile/subsystem[1]");
-        logging.getXPathElement("console-handler/level")
-               .setAttribute("name", "DEBUG");
-        setLogger(logging, "org.apache.http.headers", DEBUG);
-        // setLogger(logging, "org.apache.http.wire", DEBUG);
-        // setLogger(logging, "com.github.t1.rest", DEBUG);
-        // setLogger(logging, "com.github.t1.rest.ResponseConverter", INFO);
-        setLogger(logging, "com.github.t1.deployer", DEBUG);
-        setSystemProperty(xml, CLI_DEBUG, "true");
-        // setSystemProperty(xml, IGNORE_SERVER_RELOAD, "true");
-        xml.save();
-    }
-
-    private static void setLogger(XmlElement logging, String category, LogLevel level) {
-        if (logging.find("logger[@category='" + category + "']").isEmpty())
-            logging.addElement("logger").setAttribute("category", category)
-                   .addElement("level").setAttribute("name", level.name());
-    }
-
-    private static void setSystemProperty(Xml xml, String name, String value) {
-        if (xml.find("/server/system-properties/property[@name='" + name + "']").isEmpty())
-            xml.getOrCreateElement("system-properties", before("management"))
-               .addElement("property").setAttribute("name", name).setAttribute("value", value);
-    }
-
-    @SneakyThrows({ IOException.class, InterruptedException.class })
-    private static void startContainer() {
-        log.info("\n================================================================== start container in "
-                + CONTAINER_HOME);
-        containerProcess = new ProcessBuilder(CONTAINER_HOME.resolve("bin/standalone.sh").toString())
-                .directory(CONTAINER_HOME.toFile())
-                .redirectErrorStream(true).inheritIO()
-                .start();
-        Thread.sleep(1000);
-        if (!containerProcess.isAlive())
-            throw new IllegalStateException("container not started");
-        log.info("container started");
-    }
-
-    @SneakyThrows({ IOException.class, InterruptedException.class })
-    private static void deployDeployer() {
-        log.info("\n================================================================== deploy deployer");
-        InputStream deployment = deployment().as(ZipExporter.class).exportAsInputStream();
-        copy(deployment, DEPLOYMENTS.resolve(DEPLOYER_WAR), REPLACE_EXISTING);
-        Instant start = Instant.now();
-        Instant timeout = start.plus(1, MINUTES);
-        while (!exists(DEPLOYED_MARKER)) {
-            if (Instant.now().isAfter(timeout))
-                throw new IllegalStateException("timeout deploy");
-            if (exists(FAILED_MARKER))
-                throw new IllegalStateException("failed to deploy: " + readFile(FAILED_MARKER));
-            Thread.sleep(100);
-        }
-        log.info("\n================================================================== deployed deployer after {} ms",
-                start.until(Instant.now(), MILLIS));
-        Thread.sleep(5000);
-        assertThat(theDeployments()).isEmpty();
-    }
-
-    private static WebArchive deployment() {
+    private static WebArchive deployer_war() {
         return new WebArchiveBuilder(DEPLOYER_WAR)
                 .with(DeployerBoundary.class.getPackage())
                 .library("com.github.t1", "problem-detail")
@@ -317,14 +115,18 @@ public class DeployerIT {
                 .build();
     }
 
-    private static void readJBossConfig() {
-        //noinspection resource
-        jbossConfig = new FileMemento(JBOSS_CONFIG).setup();
-        jbossConfig.restoreOnShutdown().after(100, TimeUnit.MILLISECONDS); // hell won't freeze over if this is too fast
-    }
-
 
     private static final Client HTTP = ClientBuilder.newClient().register(LoggingFeature.class);
+
+    @ClassRule public static WildflyContainerTestRule container =
+            new WildflyContainerTestRule("10.1.0.Final")
+                    .withLogger("org.apache.http.headers", DEBUG)
+                    // .withLogger("org.apache.http.wire", DEBUG)
+                    // .withLogger("com.github.t1.rest", DEBUG)
+                    // .withLogger("com.github.t1.rest.ResponseConverter", INFO)
+                    .withLogger("com.github.t1.deployer", DEBUG)
+                    // .withSystemProperty(IGNORE_SERVER_RELOAD, "true")
+                    .withSystemProperty(CLI_DEBUG, "true");
 
     @Rule public TestLoggerRule logger = new TestLoggerRule();
     @Rule public LoggerMemento loggerMemento = new LoggerMemento()
@@ -335,21 +137,18 @@ public class DeployerIT {
             .with("com.github.t1.deployer", DEBUG)
             .with(LoggingFeature.DEFAULT_LOGGER_NAME, DEBUG);
 
-    private static FileMemento jbossConfig;
-    private static Process containerProcess;
-
 
     public List<Audit> post(String expectedStatus) {
         return post(expectedStatus, null, OK).readEntity(Audits.class).getAudits();
     }
 
     public Response post(String plan, Entity<?> entity, Status expectedStatus) {
-        return retryConnect("post request", () -> {
-            try (FileMemento memento = new FileMemento(ROOT_BUNDLE_PATH).setup()) {
+        return container.retryConnect("post request", () -> {
+            try (FileMemento memento = new FileMemento(this::rootBundlePath).setup()) {
                 memento.write(plan);
 
                 Response response = HTTP
-                        .target(BASE_URI)
+                        .target(container.baseUri().resolve("deployer"))
                         .request(APPLICATION_JSON_TYPE)
                         .buildPost(entity)
                         .invoke();
@@ -363,8 +162,10 @@ public class DeployerIT {
         }, response -> response.getStatusInfo().equals(expectedStatus));
     }
 
+    private Path rootBundlePath() { return container.configDir().resolve(ROOT_BUNDLE);}
+
     private static Map<String, Checksum> theDeployments() {
-        ModelNode response = execute(readAllDeploymentsRequest());
+        ModelNode response = container.execute(readAllDeploymentsRequest());
         Map<String, Checksum> map = new LinkedHashMap<>();
         response.asList()
                 .stream()
@@ -753,7 +554,7 @@ public class DeployerIT {
                                .change("pool:max", null, "10")
                                .change("pool:max-age", null, "5 min")
                                .added());
-        assertThat(definedPropertiesOf(execute(readDatasourceRequest("foo", false))))
+        assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("foo", false))))
                 .has(property("connection-url", "jdbc:h2:mem:test"))
                 .has(property("driver-name", "h2"))
                 .has(property("enabled", "true"))
@@ -784,7 +585,7 @@ public class DeployerIT {
                                // TODO .change("xa", null, true)
                                .change("pool:max-age", "5 min", "10 min")
                                .changed());
-        assertThat(definedPropertiesOf(execute(readDatasourceRequest("foo", false))))
+        assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("foo", false))))
                 .has(property("connection-url", "jdbc:h2:mem:test"))
                 .has(property("driver-name", "h2"))
                 .has(property("enabled", "true"))
@@ -832,7 +633,7 @@ public class DeployerIT {
                                .change("pool:max", null, "10")
                                .change("pool:max-age", null, "5 min")
                                .added());
-        assertThat(definedPropertiesOf(execute(readDatasourceRequest("barDS", true))))
+        assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("barDS", true))))
                 .has(property("driver-name", "postgresql"))
                 .has(property("enabled", "true"))
                 .has(property("idle-timeout-minutes", "5"))
@@ -908,7 +709,7 @@ public class DeployerIT {
                            .change("use-parent-handlers", null, false)
                            .change("handlers", null, "[FOO]")
                            .added());
-        assertThat(definedPropertiesOf(execute(readLogHandlerRequest(periodicRotatingFile, "FOO"))))
+        assertThat(definedPropertiesOf(container.execute(readLogHandlerRequest(periodicRotatingFile, "FOO"))))
                 .has(property("append", "true"))
                 .has(property("autoflush", "true"))
                 .has(property("enabled", "true"))
@@ -919,7 +720,7 @@ public class DeployerIT {
                 .has(property("level", "INFO"))
                 .has(property("name", "FOO"))
                 .has(property("suffix", DEFAULT_SUFFIX));
-        assertThat(definedPropertiesOf(execute(readLoggerRequest("foo"))))
+        assertThat(definedPropertiesOf(container.execute(readLoggerRequest("foo"))))
                 .has(property("category", "foo"))
                 .has(property("handlers", "[\"FOO\"]"))
                 .has(property("level", "DEBUG"))
@@ -1001,6 +802,6 @@ public class DeployerIT {
                                .change("type", "jar", null)
                                .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
                                .removed());
-        assertThat(jbossConfig.read()).isEqualTo(jbossConfig.getOrig());
+        assertThat(container.config().toXmlString()).isEqualTo(container.origConfig().toXmlString());
     }
 }

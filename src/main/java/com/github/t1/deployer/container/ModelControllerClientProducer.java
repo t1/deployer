@@ -90,7 +90,7 @@ public class ModelControllerClientProducer implements Serializable {
         }
     }
 
-    public static ModelControllerClient createModelControllerClient(URI uri) throws UnknownHostException {
+    private static ModelControllerClient createModelControllerClient(URI uri) throws UnknownHostException {
         String host = uri.getHost();
         int port = uri.getPort();
         log.debug("create ModelControllerClient {}://{}:{}", uri.getScheme(), host, port);
