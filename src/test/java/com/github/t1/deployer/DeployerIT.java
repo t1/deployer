@@ -4,7 +4,6 @@ import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
-import com.github.t1.deployer.testtools.WildflyContainerTestRule;
 import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.*;
 import com.github.t1.xml.Xml;
