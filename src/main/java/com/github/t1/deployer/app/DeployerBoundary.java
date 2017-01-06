@@ -37,7 +37,6 @@ import static javax.ws.rs.core.Response.Status.*;
 @Logged(level = INFO)
 @Slf4j
 public class DeployerBoundary {
-    public static final String PROCESS_STATE_HEADER = "X-Process-State";
     public static final String IGNORE_SERVER_RELOAD = DeployerBoundary.class + "#IGNORE_SERVER_RELOAD";
     public static final String ROOT_BUNDLE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
@@ -70,13 +69,14 @@ public class DeployerBoundary {
 
         apply(post, mapVariableNames(form));
 
-        if (reloadRequired())
+        if (reloadRequired()) {
+            container.suspend();
             container.reload();
+        }
 
         return Response
                 .status(OK)
                 .entity(new AuditsResponse(audits.getAudits(), audits.getProcessState()))
-                .header(PROCESS_STATE_HEADER, audits.getProcessState())
                 .build();
     }
 

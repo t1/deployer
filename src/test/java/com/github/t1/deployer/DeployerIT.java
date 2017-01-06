@@ -12,6 +12,7 @@ import com.github.t1.xml.Xml;
 import com.github.t1.xml.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
@@ -108,8 +109,6 @@ public class DeployerIT {
             + "      initial: 1\n"
             + "      max: 10\n";
 
-    private static final Client HTTP = ClientBuilder.newClient();
-
     @BeforeClass
     public static void startup() {
         startArtifactoryMock();
@@ -158,7 +157,7 @@ public class DeployerIT {
             } catch (Exception e) {
                 if (!isConnectException(e))
                     throw new RuntimeException(e);
-                log.debug("IOException in: {}", description);
+                log.debug("IOException in {}: {}", description, e.getMessage());
             }
             Thread.sleep(1000);
         }
@@ -325,7 +324,16 @@ public class DeployerIT {
     }
 
 
+    private static final Client HTTP = ClientBuilder.newClient().register(LoggingFeature.class);
+
     @Rule public TestLoggerRule logger = new TestLoggerRule();
+    @Rule public LoggerMemento loggerMemento = new LoggerMemento()
+            .with("org.apache.http.headers", DEBUG)
+            // .with("org.apache.http.wire", DEBUG)
+            // .with("com.github.t1.rest", DEBUG)
+            // .with("com.github.t1.rest.ResponseConverter", INFO)
+            .with("com.github.t1.deployer", DEBUG)
+            .with(LoggingFeature.DEFAULT_LOGGER_NAME, DEBUG);
 
     private static FileMemento jbossConfig;
     private static Process containerProcess;
@@ -410,11 +418,11 @@ public class DeployerIT {
                 + "    version: 1.3.1\n"
                 + "    checksum: 52709cbc859e208dc8e540eb5c7047c316d9653f";
 
-        Response response = post(plan, null, OK);
+        Audits audits = post(plan, null, OK).readEntity(Audits.class);
 
-        assertThat(response.getHeaderString(PROCESS_STATE_HEADER)).isEqualTo(running.name());
+        assertThat(audits.getProcessState()).isEqualTo(running);
         assertThat(theDeployments()).containsOnly(entry("jolokia.war", JOLOKIA_131_CHECKSUM));
-        assertThat(response.readEntity(Audits.class).getAudits()).containsOnly(
+        assertThat(audits.getAudits()).containsOnly(
                 DeployableAudit.builder().name("jolokia")
                                .change("group-id", null, "org.jolokia")
                                .change("artifact-id", null, "jolokia-war")
@@ -768,10 +776,10 @@ public class DeployerIT {
                 + "      max-age: 600 seconds\n";
         // TODO + "    xa: true\n"
 
-        Response response = post(plan, null, OK);
+        Audits audits = post(plan, null, OK).readEntity(Audits.class);
 
-        assertThat(response.getHeaderString(PROCESS_STATE_HEADER)).isEqualTo(reloadRequired.name());
-        assertThat(response.readEntity(Audits.class).getAudits()).containsOnly(
+        assertThat(audits.getProcessState()).isEqualTo(reloadRequired);
+        assertThat(audits.getAudits()).containsOnly(
                 DataSourceAudit.builder().name(new DataSourceName("foo"))
                                // TODO .change("xa", null, true)
                                .change("pool:max-age", "5 min", "10 min")

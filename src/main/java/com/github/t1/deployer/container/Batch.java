@@ -61,6 +61,10 @@ class Batch {
         log.info("boot done");
     }
 
+    public void suspend() {
+        executeEmptyOperation("suspend");
+    }
+
     public void reload() {
         executeEmptyOperation("reload");
     }
@@ -73,7 +77,8 @@ class Batch {
         log.info(operation);
         ModelNode shutdown = Operations.createOperation(operation, new ModelNode().setEmptyList());
         ModelNode result = executeRaw(shutdown);
-        log.info(operation + " -> {}", result.get(OUTCOME));
+        if (!isSuccessfulOutcome(result))
+            log.error("{} -> {}", operation, result);
     }
 
 
