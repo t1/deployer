@@ -203,7 +203,7 @@
         <!-- test scope -->
         <dependency>
             <groupId>com.github.t1</groupId>
-            <artifactId>make</artifactId>
+            <artifactId>xml</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
