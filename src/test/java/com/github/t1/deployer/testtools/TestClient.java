@@ -3,7 +3,7 @@ package com.github.t1.deployer.testtools;
 import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
-import com.github.t1.deployer.model.Plan;
+import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
 import com.github.t1.testtools.FileMemento;
 import org.junit.*;
@@ -91,7 +91,7 @@ public class TestClient {
 
     @Test
     public void shouldGetEffectivePlan() throws Exception {
-        Plan plan = deployer().GET(Plan.class);
+        Plan plan = Plan.with(new Expressions(), "test", () -> deployer().GET(Plan.class));
 
         System.out.println("------------------\n" + plan + "------------------");
     }

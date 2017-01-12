@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.function.*;
 import java.util.stream.Stream;
 
@@ -52,15 +53,21 @@ public final class Plan {
 
     static Expressions expressions = null;
 
-    synchronized public static Plan load(Expressions expressions, Reader reader, String sourceMessage) {
-        Plan.expressions = expressions;
-        try {
+    public static Plan load(Expressions expressions, Reader reader, String sourceMessage) {
+        return Plan.with(expressions, sourceMessage, () -> {
             Plan plan = YAML.readValue(reader, Plan.class);
             if (plan == null)
                 plan = EMPTY_PLAN;
             log.debug("plan loaded from {}:\n{}", sourceMessage, plan);
             return plan;
-        } catch (IOException e) {
+        });
+    }
+
+    public synchronized static Plan with(Expressions expressions, String sourceMessage, Callable<Plan> callable) {
+        Plan.expressions = expressions;
+        try {
+            return callable.call();
+        } catch (Exception e) {
             throw new PlanLoadingException("exception while loading plan from " + sourceMessage, e);
         } finally {
             Plan.expressions = null;
