@@ -1334,6 +1334,16 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
+    public void shouldFailToDeployDefaultRootBundleWithoutConfigFile() throws Exception {
+        boundary.useDefaultConfig = true;
+
+        Throwable thrown = catchThrowable(() -> boundary.apply(post, ImmutableMap.of(VERSION, "1.2")));
+
+        assertThat(thrown).hasMessageContaining(
+                "applying the default root bundle is only allowed when there is a configuration file");
+    }
+
+    @Test
     public void shouldDeployDefaultRootBundle() throws Exception {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), hostName())

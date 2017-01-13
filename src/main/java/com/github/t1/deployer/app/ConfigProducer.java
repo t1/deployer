@@ -127,4 +127,6 @@ public class ConfigProducer {
 
     @Produces @Config("variables")
     public Map<VariableName, String> variables() { return config.getVariables(); }
+
+    @Produces @Config("use.default.config") public boolean useDefaultConfig() { return config == DEFAULT_CONFIG; }
 }

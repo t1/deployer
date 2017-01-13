@@ -120,6 +120,7 @@ public class DeployerBoundary {
     @Inject @Config("root-bundle") RootBundleConfig rootBundle;
     @Inject @Config("key-store") KeyStoreConfig keyStore;
     @Inject @Config("triggers") EnumSet<Trigger> triggers;
+    @Inject @Config("use.default.config") boolean useDefaultConfig;
 
     @Inject Audits audits;
     @Inject Instance<Deployer> deployers;
@@ -135,6 +136,10 @@ public class DeployerBoundary {
                     Path root = getRootBundlePath();
                     if (isRegularFile(root)) {
                         applying.apply(root);
+                    } else if (useDefaultConfig) {
+                        throw new RuntimeException("For security reasons, applying the default root bundle "
+                                + "is only allowed when there is a configuration file. "
+                                + "See https://github.com/t1/deployer/issues/61");
                     } else {
                         applying.applyDefaultRoot();
                     }
