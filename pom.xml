@@ -199,6 +199,11 @@
             <artifactId>jcommander</artifactId>
             <version>1.48</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.t1</groupId>
+            <artifactId>metrics-ee</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
 
         <!-- test scope -->
         <dependency>
