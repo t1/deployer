@@ -121,6 +121,7 @@ public class DeployerIT {
     private static WebArchive deployer_war() {
         return new WebArchiveBuilder(DEPLOYER_WAR)
                 .with(DeployerBoundary.class.getPackage())
+                .withBeansXml()
                 .library("com.github.t1", "problem-detail")
                 .print()
                 .build();
