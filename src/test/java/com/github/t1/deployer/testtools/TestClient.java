@@ -13,7 +13,9 @@ import java.nio.file.*;
 import java.util.List;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
+import static com.github.t1.metrics.MetricsYamlMessageBodyWriter.*;
 import static com.github.t1.rest.RestContext.*;
+import static com.github.t1.rest.UriTemplate.CommonScheme.*;
 import static org.assertj.core.api.Assertions.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -22,6 +24,8 @@ public class TestClient {
     private static final Path JBOSS_CONFIG = Paths.get(System.getProperty("user.home"),
             "Tools/JBoss/current/standalone/configuration");
     private static final DeployableAuditBuilder JOLOKIA = DeployableAudit.builder().name("jolokia");
+
+    private static final UriTemplate.NonQuery BASE_URI = http.host("localhost").port("8080").path("deployer");
 
     public List<Audit> run(String plan) throws IOException {
         //noinspection resource
@@ -37,7 +41,7 @@ public class TestClient {
 
 
     public static RestResource deployer() {
-        return REST.createResource(UriTemplate.fromString("http://localhost:8080/deployer"));
+        return REST.createResource(BASE_URI);
     }
 
     @Test
@@ -94,5 +98,16 @@ public class TestClient {
         Plan plan = Plan.with(new Expressions(), "test", () -> deployer().GET(Plan.class));
 
         System.out.println("------------------\n" + plan + "------------------");
+    }
+
+    @Test
+    public void shouldGetMetrics() throws Exception {
+        @SuppressWarnings("deprecation")
+        String metrics = REST.createResource(BASE_URI.path("-metrics"))
+                             .accept(String.class, APPLICATION_YAML_TYPE)
+                             .GET();
+
+        System.out.println("------------------\n" + metrics + "------------------");
+        Thread.sleep(100); // wait for all system out
     }
 }
