@@ -13,7 +13,6 @@ import java.nio.file.*;
 import java.util.List;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
-import static com.github.t1.metrics.MetricsYamlMessageBodyWriter.*;
 import static com.github.t1.rest.RestContext.*;
 import static com.github.t1.rest.UriTemplate.CommonScheme.*;
 import static org.assertj.core.api.Assertions.*;
@@ -98,16 +97,5 @@ public class TestClient {
         Plan plan = Plan.with(new Expressions(), "test", () -> deployer().GET(Plan.class));
 
         System.out.println("------------------\n" + plan + "------------------");
-    }
-
-    @Test
-    public void shouldGetMetrics() throws Exception {
-        @SuppressWarnings("deprecation")
-        String metrics = REST.createResource(BASE_URI.path("-metrics"))
-                             .accept(String.class, APPLICATION_YAML_TYPE)
-                             .GET();
-
-        System.out.println("------------------\n" + metrics + "------------------");
-        Thread.sleep(100); // wait for all system out
     }
 }
