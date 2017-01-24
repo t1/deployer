@@ -134,7 +134,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>test-tools</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
+            <version>1.5.0</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -198,11 +198,6 @@
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.48</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.t1</groupId>
-            <artifactId>metrics-ee</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- test scope -->
