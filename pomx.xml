@@ -6,11 +6,12 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.7.5</jackson.version>
+        <jackson.version>2.8.6</jackson.version>
     </properties>
 
     <profile>com.github.t1:profile-javaee:7.0.0-SNAPSHOT</profile>
     <profile>com.github.t1:profile-t1:1.0.0-SNAPSHOT</profile>
+    <profile>com.github.t1:profile-arquillian:1.1.12-SNAPSHOT</profile>
 
     <prerequisites>
         <maven>3.0</maven>
@@ -48,13 +49,6 @@
         </plugins>
     </build>
 
-    <dependencyManagement>
-        <dependencies>
-            <pom>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-bom:2.2.4</pom>
-            <pom>org.jboss.arquillian:arquillian-bom:1.1.11.Final</pom>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <provided>
             <jar>com.github.t1:test-tools:1.5.0</jar>
@@ -62,23 +56,22 @@
 
         <compile>
             <jar>org.wildfly.core:wildfly-controller-client:2.2.0.Final</jar>
-            <jar>org.wildfly.plugins:wildfly-plugin-core:1.1.0.Alpha11</jar>
+            <jar>org.wildfly.plugins:wildfly-plugin-core:1.1.0.Final</jar>
+            <jar>org.jboss.as:jboss-as-console-dmr:2.9.2.Final</jar>
             <jar>com.github.t1:rest-client:1.0.12</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.1.5</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
-            <jar>com.google.guava:guava:19.0</jar>
-            <jar>com.beust:jcommander:1.48</jar>
+            <jar>com.google.guava:guava:21.0</jar>
+            <jar>com.beust:jcommander:1.65</jar>
         </compile>
 
         <test>
             <jar>com.github.t1:xml:0.0.2</jar>
-            <jar>ch.qos.logback:logback-classic:1.1.7</jar>
-            <jar>org.jboss.arquillian.junit:arquillian-junit-container</jar>
-            <jar>org.arquillian.container:arquillian-container-chameleon:1.0.0.Alpha7</jar>
-            <jar>io.dropwizard:dropwizard-testing:1.0.2</jar>
-            <jar>org.jboss.aesh:aesh:0.66.11</jar>
+            <jar>ch.qos.logback:logback-classic:1.2.1</jar>
+            <jar>io.dropwizard:dropwizard-testing:1.0.6</jar>
+            <jar>org.jboss.aesh:aesh:0.66.14</jar>
         </test>
     </dependencies>
 </project>

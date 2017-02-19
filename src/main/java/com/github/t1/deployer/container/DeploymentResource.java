@@ -16,11 +16,6 @@ import static java.lang.Boolean.*;
 import static java.util.Comparator.*;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.CONTENT;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.INPUT_STREAM_INDEX;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
 
 @Slf4j
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")
@@ -113,7 +108,7 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
     public void redeploy() {
         checkDeployed();
         assert deployed == TRUE;
-        addDeployOperation(FULL_REPLACE_DEPLOYMENT, new ModelNode().setEmptyList());
+        addDeployOperation("full-replace-deployment", new ModelNode().setEmptyList());
     }
 
     private void addDeployOperation(String operationName, ModelNode address) {
