@@ -17,7 +17,7 @@ import static javax.ws.rs.core.Response.Status.*;
 @RequiredArgsConstructor
 class MavenCentralRepository extends Repository {
     @Data
-    private static class MavenCentralSearchResult {
+    public static class MavenCentralSearchResult {
         MavenCentralSearchResponse response;
     }
 

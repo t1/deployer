@@ -92,7 +92,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>rest-client</artifactId>
-            <version>1.0.12</version>
+            <version>1.0.13-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -147,7 +147,7 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -265,6 +265,13 @@
                     <name>user.dir</name>
                 </property>
             </activation>
+            <properties>
+                <com.github.t1.profile-t1.version>1.0.0-SNAPSHOT</com.github.t1.profile-t1.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
             <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
@@ -284,7 +291,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.14</version>
+            <version>1.16.12</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -303,7 +310,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.7.9</version>
+            <version>2.7.10</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -313,9 +320,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-            <properties>
-                <com.github.t1.profile-t1.version>1.0.0-SNAPSHOT</com.github.t1.profile-t1.version>
-            </properties>
         </profile>
         <profile>
             <id>com.github.t1:profile-arquillian</id>
