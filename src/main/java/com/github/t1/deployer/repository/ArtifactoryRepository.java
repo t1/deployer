@@ -123,13 +123,13 @@ class ArtifactoryRepository extends Repository {
     @lombok.Data
     @lombok.NoArgsConstructor
     @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
-    private static class ChecksumSearchResult {
+    public static class ChecksumSearchResult {
         List<ChecksumSearchResultItem> results;
     }
 
     @lombok.Data
     @lombok.NoArgsConstructor
-    private static class ChecksumSearchResultItem {
+    public static class ChecksumSearchResultItem {
         URI uri;
         URI downloadUri;
     }
@@ -137,7 +137,7 @@ class ArtifactoryRepository extends Repository {
     @lombok.Data
     @lombok.NoArgsConstructor
     @VendorType("org.jfrog.artifactory.storage.FileInfo")
-    private static class FileInfo {
+    public static class FileInfo {
         boolean folder;
         URI uri, downloadUri;
         Map<String, Checksum> checksums;
@@ -150,7 +150,7 @@ class ArtifactoryRepository extends Repository {
     @lombok.Data
     @lombok.NoArgsConstructor
     @VendorType("org.jfrog.artifactory.storage.FolderInfo")
-    private static class FolderInfo {
+    public static class FolderInfo {
         List<FileInfo> children;
         URI uri;
 
