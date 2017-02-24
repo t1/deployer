@@ -58,7 +58,7 @@
             <jar>org.wildfly.core:wildfly-controller-client:2.2.0.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:1.1.0.Final</jar>
             <jar>org.jboss.as:jboss-as-console-dmr:2.9.2.Final</jar>
-            <jar>com.github.t1:rest-client:1.0.13-SNAPSHOT</jar>
+            <jar>com.github.t1:rest-client:1.0.13</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.1.5</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
