@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
 import lombok.experimental.Wither;
 
-import java.nio.file.Path;
-
 import static lombok.AccessLevel.*;
 
 @Value
@@ -16,7 +14,7 @@ import static lombok.AccessLevel.*;
 @JsonNaming(KebabCaseStrategy.class)
 @Wither
 public class KeyStoreConfig {
-    private final Path path;
+    private final String path;
     private final String type;
     private final String pass;
     private final String alias;

@@ -92,7 +92,7 @@ public class CipherFacade {
     private KeyStoreConfig config() {
         return KeyStoreConfig
                 .builder()
-                .path(Paths.get(keystore))
+                .path(keystore)
                 .type(storetype)
                 .pass(storepass)
                 .alias(alias)
@@ -143,7 +143,7 @@ public class CipherFacade {
     private static Path getKeyStorePath(KeyStoreConfig keyStore) {
         if (keyStore == null)
             throw new RuntimeException("no key-store configured to decrypt expression");
-        return keyStore.getPath();
+        return Paths.get(keyStore.getPath());
     }
 
     private static char[] getKeyPass(KeyStoreConfig keyStore) {

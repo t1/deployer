@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.net.InetAddress;
-import java.nio.file.Paths;
 
 import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.Trigger.*;
@@ -23,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 public class BundleDeployerTest extends AbstractDeployerTests {
     private static final KeyStoreConfig KEYSTORE = KeyStoreConfig
             .builder()
-            .path(Paths.get("src/test/resources/test.keystore"))
+            .path("src/test/resources/test.keystore")
             .type("jceks")
             .pass("changeit")
             .build();
@@ -369,7 +368,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KeyStoreConfig
                 .builder()
-                .path(Paths.get("src/test/resources/jks.keystore"))
+                .path("src/test/resources/jks.keystore")
                 .pass("changeit")
                 .alias("keypair")
                 .build());
@@ -530,7 +529,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KeyStoreConfig
                 .builder()
-                .path(Paths.get("src/test/resources/jks.keystore"))
+                .path("src/test/resources/jks.keystore")
                 .pass("changeit")
                 .alias("keypair")
                 .build());
