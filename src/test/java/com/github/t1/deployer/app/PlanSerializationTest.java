@@ -9,9 +9,9 @@ import java.io.StringReader;
 import java.net.URI;
 import java.time.Duration;
 
-import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;

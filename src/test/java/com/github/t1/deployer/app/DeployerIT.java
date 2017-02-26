@@ -1,6 +1,5 @@
-package com.github.t1.deployer;
+package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.*;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
@@ -20,7 +19,6 @@ import javax.ws.rs.core.Response.Status;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.container.Container.*;
@@ -31,6 +29,7 @@ import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.Password.*;
 import static com.github.t1.deployer.model.ProcessState.*;
 import static com.github.t1.deployer.testtools.ModelNodeTestTools.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.log.LogLevel.*;
 import static com.github.t1.rest.fallback.YamlMessageBodyReader.*;
 import static com.github.t1.testtools.FileMemento.*;

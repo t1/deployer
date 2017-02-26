@@ -8,9 +8,9 @@ import java.io.*;
 import java.net.*;
 import java.util.List;
 
-import static com.github.t1.deployer.TestData.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.RepositoryProducer.*;
+import static com.github.t1.deployer.testtools.TestData.*;
 import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assume.*;
