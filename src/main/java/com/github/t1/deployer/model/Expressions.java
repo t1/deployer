@@ -295,6 +295,7 @@ public class Expressions {
     private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");
 
     private class FunctionResolver extends Resolver {
+        private final CipherFacade cipher = new CipherFacade();
         private final String functionName;
         private final List<Supplier<String>> params;
 
@@ -354,10 +355,10 @@ public class Expressions {
             return (text.length() == 0) ? "" : (Character.toUpperCase(text.charAt(0)) + text.substring(1));
         }
 
-        private String decrypt(String text) { return CipherFacade.decrypt(text, keyStore); }
+        private String decrypt(String text) { return cipher.decrypt(text, keyStore); }
 
         private String decrypt(String text, String alias) {
-            return CipherFacade.decrypt(text, keyStore.withAlias(alias));
+            return cipher.decrypt(text, keyStore.withAlias(alias));
         }
 
         private String regex(String text, String pattern) {

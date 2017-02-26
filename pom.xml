@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0">
     <!-- WARNING: Do Not Modify This File! -->
     <!-- Generated from pomx.xml -->
     <modelVersion>4.0.0</modelVersion>
@@ -119,12 +119,6 @@
             <version>21.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-            <version>1.65</version>
-            <scope>compile</scope>
-        </dependency>
 
         <dependency>
             <groupId>com.github.t1</groupId>
@@ -148,6 +142,12 @@
             <groupId>org.jboss.aesh</groupId>
             <artifactId>aesh</artifactId>
             <version>0.66.14</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>1.65</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

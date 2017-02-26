@@ -27,7 +27,9 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             .pass("changeit")
             .build();
 
-    private String encrypt(String plain) throws Exception { return CipherFacade.encrypt(plain, boundary.keyStore); }
+    private final CipherFacade cipher = new CipherFacade();
+
+    private String encrypt(String plain) throws Exception { return cipher.encrypt(plain, boundary.keyStore); }
 
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
@@ -339,7 +341,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KEYSTORE);
 
-        String secret = CipherFacade.encrypt(foo.getVersion().getValue(), boundary.keyStore.withAlias("keypair"));
+        String secret = cipher.encrypt(foo.getVersion().getValue(), boundary.keyStore.withAlias("keypair"));
         Audits audits = deploy(""
                 + "deployables:\n"
                 + "  foo:\n"

@@ -1,15 +1,15 @@
-package com.github.t1.deployer.app;
+package com.github.t1.deployer.testtools;
 
-import com.github.t1.deployer.tools.CipherFacade;
 import com.github.t1.testtools.SystemOutCaptorRule;
 import org.junit.*;
 
 import java.net.UnknownHostException;
 
+import static com.github.t1.deployer.testtools.CipherFacadeMain.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assume.*;
 
-public class CipherFacadeTest {
+public class CipherFacadeMainTest {
     private static final String PLAIN_TEXT = "foo";
     @SuppressWarnings("SpellCheckingInspection") private static final String PUBLIC_CIPHER_TEXT
             = "7780CE2D448C1631BECC020B72E6022BFA38E37D4EEB6FAB3891949C0FF591BE2C64761AE03ED294D1E0D"
@@ -24,7 +24,7 @@ public class CipherFacadeTest {
 
     @Test
     public void shouldEncryptPublic() throws Exception {
-        CipherFacade.main("--keystore", "src/test/resources/test.keystore",
+        main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
                 PLAIN_TEXT);
@@ -35,7 +35,7 @@ public class CipherFacadeTest {
 
     @Test
     public void shouldEncryptCert() throws Exception {
-        CipherFacade.main("--keystore", "src/test/resources/cert.keystore",
+        main("--keystore", "src/test/resources/cert.keystore",
                 "--storetype", "jceks",
                 "--alias", "cert",
                 PLAIN_TEXT);
@@ -46,7 +46,7 @@ public class CipherFacadeTest {
 
     @Test
     public void shouldDecryptPublic() throws Exception {
-        CipherFacade.main("--keystore", "src/test/resources/test.keystore",
+        main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
                 "--decrypt", PUBLIC_CIPHER_TEXT);
@@ -56,7 +56,7 @@ public class CipherFacadeTest {
 
     @Test
     public void shouldEncryptPrivate() throws Exception {
-        CipherFacade.main("--keystore", "src/test/resources/test.keystore",
+        main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
                 PLAIN_TEXT);
@@ -66,7 +66,7 @@ public class CipherFacadeTest {
 
     @Test
     public void shouldDecryptPrivate() throws Exception {
-        CipherFacade.main("--keystore", "src/test/resources/test.keystore",
+        main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
                 "--decrypt", PRIVATE_CIPHER_TEXT);
@@ -77,7 +77,7 @@ public class CipherFacadeTest {
     @Test
     public void shouldEncryptPublicToUri() throws Exception {
         Throwable e = catchThrowable(() -> {
-            CipherFacade.main("--uri", "https://www.github.com", PLAIN_TEXT);
+            main("--uri", "https://www.github.com", PLAIN_TEXT);
 
             // the cipher text is not reproducible :-(
             assertThat(out.out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());

@@ -2,7 +2,6 @@
         com.github.t1.problem.ProblemDetail.class,
         com.github.t1.rest.fallback.ConverterTools.class,
 
-        com.beust.jcommander.JCommander.class,
         com.fasterxml.jackson.annotation.JsonProperty.class,
         com.fasterxml.jackson.core.JsonParser.class,
         com.fasterxml.jackson.databind.ObjectMapper.class,

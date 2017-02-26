@@ -63,7 +63,6 @@
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
             <jar>com.google.guava:guava:21.0</jar>
-            <jar>com.beust:jcommander:1.65</jar>
         </compile>
 
         <test>
@@ -71,6 +70,7 @@
             <jar>ch.qos.logback:logback-classic:1.2.1</jar>
             <jar>io.dropwizard:dropwizard-testing:1.0.6</jar>
             <jar>org.jboss.aesh:aesh:0.66.14</jar>
+            <jar>com.beust:jcommander:1.65</jar>
         </test>
     </dependencies>
 </project>
