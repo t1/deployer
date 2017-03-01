@@ -394,7 +394,21 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    group-id: org.foo\n"
                 + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n"));
 
-        assertThat(thrown).hasMessageContaining("no key-store configured to decrypt expression");
+        assertThat(thrown).hasMessageContaining("no key-store configured");
+    }
+
+    @Test
+    public void shouldFailToDeployWebArchiveWithEncryptedVariableButWithoutPath() throws Exception {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        givenConfiguredKeyStore(KeyStoreConfig.builder().type("jceks").pass("changeit").build().withAlias("keypair"));
+
+        Throwable thrown = catchThrowable(() -> deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n"));
+
+        assertThat(thrown).hasMessageContaining("no key-store path configured");
     }
 
 

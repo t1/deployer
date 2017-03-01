@@ -71,6 +71,7 @@
             <jar>io.dropwizard:dropwizard-testing:1.0.6</jar>
             <jar>org.jboss.aesh:aesh:0.66.14</jar>
             <jar>com.beust:jcommander:1.65</jar>
+            <jar>org.apache.httpcomponents:fluent-hc:4.5.2</jar>
         </test>
     </dependencies>
 </project>

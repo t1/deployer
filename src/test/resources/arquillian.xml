@@ -8,7 +8,7 @@
             <!--<property name="chameleonTarget">wildfly:10.0.0.Final:embedded</property>-->
             <!--<property name="modulePath">target/server/wildfly-dist_10.0.0.Final/wildfly-10.0.0.Final/modules/</property>-->
             <property name="chameleonTarget">wildfly:10.1.0.Final:managed</property>
-            <property name="serverConfig">standalone.xml</property>
+            <!--<property name="serverConfig">standalone.xml</property>-->
             <!--careful! DeployerIT undeploys everything <property name="allowConnectingToRunningServer">true</property>-->
         </configuration>
     </container>

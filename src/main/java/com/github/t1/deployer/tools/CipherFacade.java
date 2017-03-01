@@ -60,7 +60,9 @@ public class CipherFacade {
 
     private Path getKeyStorePath(KeyStoreConfig keyStore) {
         if (keyStore == null)
-            throw new RuntimeException("no key-store configured to decrypt expression");
+            throw new RuntimeException("no key-store configured");
+        if (keyStore.getPath() == null)
+            throw new RuntimeException("no key-store path configured");
         return Paths.get(keyStore.getPath());
     }
 
