@@ -1,4 +1,4 @@
-# The Deployer [![Join the chat at https://gitter.im/t1/deployer](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/t1/deployer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Download](https://api.bintray.com/packages/t1/javaee-helpers/deployer/images/download.svg)](https://bintray.com/t1/javaee-helpers/deployer/_latestVersion)
+# The Deployer [![Join the chat at https://gitter.im/t1/deployer](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/t1/deployer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Download](https://api.bintray.com/packages/t1/javaee-helpers/deployer/images/download.svg)](https://bintray.com/t1/javaee-helpers/deployer/_latestVersion) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.github.t1%3Adeployer)](https://sonarqube.com/dashboard/index/com.github.t1%3Adeployer)
 
 Simple [Infrastructure As Code](http://martinfowler.com/bliki/InfrastructureAsCode.html) solution
 for Java EE containers (currently only JBoss 7+) pulling from a maven repository
