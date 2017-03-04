@@ -201,7 +201,7 @@ class Batch {
     public void rollbackBatch() {
         if (this.batch == null)
             throw new IllegalStateException("no batch " + id + " started");
-        log.debug("--------- rollback batch " + id);
+        log.debug("--------- rollback batch {}", id);
         this.batch = null;
     }
 
@@ -267,7 +267,7 @@ class Batch {
 
     private static TypeEnum type(ModelNode node) {
         ModelNode address = node.get(ADDRESS);
-        if (address.asPropertyList().size() == 0)
+        if (address.asPropertyList().isEmpty())
             return UNKNOWN;
         switch (address.asPropertyList().get(0).getName()) {
         case "deployment":

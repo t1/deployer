@@ -9,7 +9,7 @@ import javax.annotation.*;
 import javax.ejb.*;
 import javax.inject.Inject;
 import java.nio.file.Path;
-import java.util.EnumSet;
+import java.util.Set;
 
 import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.log.LogLevel.*;
@@ -21,7 +21,7 @@ import static java.util.Collections.*;
 @Logged(level = INFO)
 public class RootFileWatcher {
     @Inject DeployerBoundary deployer;
-    @Inject @Config("triggers") EnumSet<Trigger> triggers;
+    @Inject @Config("triggers") Set<Trigger> triggers;
 
     private FileWatcher fileWatcher;
 

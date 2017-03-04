@@ -119,7 +119,7 @@ public class DeployerBoundary {
     @Inject @Config("variables") Map<VariableName, String> configuredVariables;
     @Inject @Config("root-bundle") RootBundleConfig rootBundle;
     @Inject @Config("key-store") KeyStoreConfig keyStore;
-    @Inject @Config("triggers") EnumSet<Trigger> triggers;
+    @Inject @Config("triggers") Set<Trigger> triggers;
     @Inject @Config("use.default.config") boolean useDefaultConfig;
 
     @Inject Audits audits;

@@ -122,7 +122,7 @@ public class ConfigProducer {
     public Map<String, List<String>> pinned() { return nvl(config.getPinned(), emptyMap()); }
 
     @Produces @Config("triggers")
-    public EnumSet<Trigger> triggers() { return config.getTriggers(); }
+    public Set<Trigger> triggers() { return config.getTriggers(); }
 
 
     @Produces @Config("variables")

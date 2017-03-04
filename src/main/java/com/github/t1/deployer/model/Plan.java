@@ -63,7 +63,7 @@ public final class Plan {
         });
     }
 
-    public synchronized static Plan with(Expressions expressions, String sourceMessage, Callable<Plan> callable) {
+    public static synchronized Plan with(Expressions expressions, String sourceMessage, Callable<Plan> callable) {
         Plan.expressions = expressions;
         try {
             return callable.call();
