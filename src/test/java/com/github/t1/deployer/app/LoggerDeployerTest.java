@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import static com.github.t1.deployer.model.LogHandlerType.*;
 import static com.github.t1.deployer.model.LoggerCategory.*;
+import static com.github.t1.deployer.testtools.ModelNodeTestTools.*;
 import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -372,7 +373,6 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
                 .level(DEBUG)
                 .handler("FOO")
-                .useParentHandlers(false)
                 .deployed();
 
         Audits audits = deploy(""
@@ -381,7 +381,26 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
                 + "    level: DEBUG\n"
                 + "    handlers: [FOO,BAR]\n");
 
-        logger.verifyAddedHandler(audits, "BAR");
+
+        assertThat(captureOperations())
+                .haveExactly(1, step(toModelNode(""
+                        + "{\n"
+                        + logger.loggerAddress()
+                        + "    'operation' => 'write-attribute',\n"
+                        + "    'name' => 'use-parent-handlers',\n"
+                        + "    'value' => false\n"
+                        + "}")))
+                .haveExactly(1, step(toModelNode(""
+                        + "{\n"
+                        + logger.loggerAddress()
+                        + "    'operation' => 'add-handler',\n"
+                        + "    'name' => 'BAR'\n"
+                        + "}")));
+        assertThat(audits.getAudits()).contains(
+                LoggerAudit.of(logger.getCategory())
+                           .change("use-parent-handlers", true, false)
+                           .change("handlers", null, "[BAR]")
+                           .changed());
     }
 
 
@@ -391,7 +410,6 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
                 .level(DEBUG)
                 .handler("FOO")
                 .handler("BAR")
-                .useParentHandlers(false)
                 .deployed();
 
         Audits audits = deploy(""
@@ -400,7 +418,25 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
                 + "    level: DEBUG\n"
                 + "    handlers: [FOO]\n");
 
-        logger.verifyRemovedHandler(audits, "BAR");
+        assertThat(captureOperations())
+                .haveExactly(1, step(toModelNode(""
+                        + "{\n"
+                        + logger.loggerAddress()
+                        + "    'operation' => 'write-attribute',\n"
+                        + "    'name' => 'use-parent-handlers',\n"
+                        + "    'value' => false\n"
+                        + "}")))
+                .haveExactly(1, step(toModelNode(""
+                        + "{\n"
+                        + logger.loggerAddress()
+                        + "    'operation' => 'remove-handler',\n"
+                        + "    'name' => 'BAR'\n"
+                        + "}")));
+        assertThat(audits.getAudits()).contains(
+                LoggerAudit.of(logger.getCategory())
+                           .change("use-parent-handlers", true, false)
+                           .change("handlers", "[BAR]", null)
+                           .changed());
     }
 
 

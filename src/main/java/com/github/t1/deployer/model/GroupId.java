@@ -13,9 +13,9 @@ import static lombok.AccessLevel.*;
 @NoArgsConstructor(access = PRIVATE, force = true)
 @JsonSerialize(using = ToStringSerializer.class)
 public class GroupId {
-    public static GroupId of(String value) { return (value == null) ? null : new GroupId(value);}
-
     @NonNull String value;
+
+    public static GroupId of(String value) { return (value == null) ? null : new GroupId(value);}
 
     @JsonCreator public GroupId(@NonNull String value) { this.value = value; }
 

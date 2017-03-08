@@ -211,6 +211,7 @@ class Batch {
             throw new IllegalStateException("no batch " + id + " started");
         log.debug("--------- commit batch {}", id);
         Operation operation = batch.build();
+        logCli("------------------------------\n{}\n------------------------------", operation.getOperation());
         assert operation.getOperation().has(STEPS);
         ProcessState processState;
         if (operation.getOperation().get(STEPS).has(0)) {
@@ -253,7 +254,15 @@ class Batch {
     @SuppressWarnings("unused")
     @RequiredArgsConstructor
     private enum OperationEnum {
-        ADD(1), WRITE_ATTRIBUTE(1), MAP_PUT(1), MAP_REMOVE(1), FULL_REPLACE_DEPLOYMENT(1), UNDEPLOY(-1), REMOVE(-1);
+        ADD(1),
+        ADD_HANDLER(1),
+        WRITE_ATTRIBUTE(1),
+        MAP_PUT(1),
+        MAP_REMOVE(1),
+        FULL_REPLACE_DEPLOYMENT(1),
+        UNDEPLOY(-1),
+        REMOVE(-1),
+        REMOVE_HANDLER(-1);
 
         @Getter @Accessors(fluent = true)
         private final int factor;

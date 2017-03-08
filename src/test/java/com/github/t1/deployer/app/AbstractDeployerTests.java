@@ -34,6 +34,7 @@ import java.util.function.*;
 
 import static com.github.t1.deployer.app.DeployerBoundary.*;
 import static com.github.t1.deployer.app.Trigger.*;
+import static com.github.t1.deployer.container.Container.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.model.LogHandlerPlan.*;
 import static com.github.t1.deployer.model.LogHandlerType.*;
@@ -65,7 +66,7 @@ public abstract class AbstractDeployerTests {
 
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
             .given("jboss.server.config.dir", tempDir)
-            .given("com.github.t1.deployer.container.CLI#DEBUG", "true");
+            .given(CLI_DEBUG, "true");
     @Rule @SuppressWarnings("resource")
     public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
 
@@ -641,7 +642,7 @@ public abstract class AbstractDeployerTests {
 
         public String loggerAddress() { return address("logging", "logger", category); }
 
-        private ModelNode loggerAddressNode() {
+        protected ModelNode loggerAddressNode() {
             return createAddress("subsystem", "logging", "logger", category.getValue());
         }
 
