@@ -59,6 +59,8 @@ import static org.mockito.Mockito.eq;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public abstract class AbstractDeployerTests {
 
+    private static final Version UNKNOWN = new Version("unknown");
+
     @SneakyThrows(IOException.class)
     private static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
 
@@ -79,10 +81,10 @@ public abstract class AbstractDeployerTests {
 
     @InjectMocks DeployerBoundary boundary;
 
-    @Spy private LogHandlerDeployer logHandlerDeployer;
-    @Spy private LoggerDeployer loggerDeployer;
-    @Spy private DataSourceDeployer dataSourceDeployer;
-    @Spy private ArtifactDeployer artifactDeployer;
+    @Spy LogHandlerDeployer logHandlerDeployer;
+    @Spy LoggerDeployer loggerDeployer;
+    @Spy DataSourceDeployer dataSourceDeployer;
+    @Spy ArtifactDeployer artifactDeployer;
     @Mock Instance<Deployer> deployers;
 
     @Mock Repository repository;
@@ -299,6 +301,10 @@ public abstract class AbstractDeployerTests {
     }
 
 
+    public ArtifactFixtureBuilder.ArtifactFixture givenUnknownArtifact(String name) {
+        return givenArtifact(name, "org." + name, name).version(UNKNOWN);
+    }
+
     public ArtifactFixtureBuilder givenArtifact(String name) { return givenArtifact(name, "org." + name, name); }
 
     public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name) {
@@ -380,9 +386,11 @@ public abstract class AbstractDeployerTests {
             public ArtifactFixture(Version version) {
                 this.version = version;
 
-                when(repository.resolveArtifact(groupId(), artifactId(), version, type, classifier()))
-                        .then(i -> artifact());
-                versions.computeIfAbsent(versionsKey(groupId(), artifactId()), k -> new ArrayList<>()).add(version);
+                if (!version.equals(UNKNOWN)) {
+                    when(repository.resolveArtifact(groupId(), artifactId(), version, type, classifier()))
+                            .then(i -> artifact());
+                    versions.computeIfAbsent(versionsKey(groupId(), artifactId()), k -> new ArrayList<>()).add(version);
+                }
                 checksum(fakeChecksumFor(deploymentName(), version));
             }
 

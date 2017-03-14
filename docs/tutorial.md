@@ -308,7 +308,9 @@ Easy: Just don't. The default `version` (i.e. the effective `version` for an dep
 which resolves to the version currently installed.
 In this way you can use it to update one deployable, while all others remain the same.
 This works even if you reference a variable that is not defined.
-Note that this does not work for bundles, as they are not actually deployed in the container, so there's not CURRENT version for them.
+Note that this does not work for bundles, as they are not actually deployed in the container, so there's not `CURRENT` version for them.
+If the checksum of an artifact is unknown in your repository, this resolution does not work and updating the `CURRENT` artifact is skipped.
+To put your container into a defined state, you should `manage` the versions of _all_ artifacts, so anything unknown is either updated or removed.
 
 The dollar-curlies syntax is used for variables and variable expressions.
 You can use variables for many things, but passing in versions is probably the most common use case.

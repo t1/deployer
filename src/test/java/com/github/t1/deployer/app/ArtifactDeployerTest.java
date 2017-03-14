@@ -189,6 +189,20 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
 
 
     @Test
+    public void shouldSkipDeployWebArchiveWithoutVersion() {
+        givenUnknownArtifact("foo").deployed();
+
+        Audits audits = deploy(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: CURRENT\n");
+
+        assertThat(audits.getAudits()).isEmpty();
+    }
+
+
+    @Test
     public void shouldNotDeployWebArchiveWithoutVersion() {
         givenArtifact("foo").version("1.3.2").deployed();
 

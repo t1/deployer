@@ -50,6 +50,11 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     @Override
     protected void update(DeploymentResource resource, DeployablePlan plan, DeployableAuditBuilder audit) {
         Artifact old = repository.lookupByChecksum(resource.checksum());
+        if (plan.getVersion().matches("CURRENT") && old.getVersion().matches("unknown")) {
+            log.warn("skip update of [{}] to CURRENT: unknown checksum", plan.getName());
+            return;
+        }
+
         Artifact artifact = lookupDeployedArtifact(plan, old);
         checkChecksums(plan, artifact);
 
