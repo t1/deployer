@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns="urn:xsd:maven:pomx:5.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="urn:xsd:maven:pomx:5.0.0 https://raw.githubusercontent.com/t1/pomx/master/src/main/resources/schemas/pomx-5.0.0.xsd">
-    <war>com.github.t1:deployer:2.9.3-SNAPSHOT</war>
+    <war>com.github.t1:deployer:2.10.0-SNAPSHOT</war>
     <name>Deployer</name>
     <description>Deploys web archives to a JBoss web container</description>
 
@@ -13,9 +13,6 @@
     <profile>com.github.t1:profile-t1:1.0.0-SNAPSHOT</profile>
     <profile>com.github.t1:profile-arquillian:1.1.12-SNAPSHOT</profile>
 
-    <prerequisites>
-        <maven>3.0</maven>
-    </prerequisites>
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
@@ -66,6 +63,7 @@
         </compile>
 
         <test>
+            <jar>org.jdom:jdom2:2.0.6</jar>
             <jar>com.github.t1:xml:0.0.5</jar>
             <jar>ch.qos.logback:logback-classic:1.2.1</jar>
             <jar>io.dropwizard:dropwizard-testing:1.0.6</jar>
