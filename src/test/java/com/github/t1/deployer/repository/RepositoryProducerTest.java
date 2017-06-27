@@ -6,11 +6,16 @@ import org.junit.Test;
 import java.net.*;
 
 import static com.github.t1.deployer.repository.RepositoryProducer.*;
+import static com.github.t1.rest.RestContext.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class RepositoryProducerTest {
     private static final URI DUMMY_URI = URI.create("http://example.nowhere");
     private final RestClientMocker mocker = new RestClientMocker();
+
+    public static Repository createMavenCentralRepository() {
+        return new MavenCentralRepository(REST.register("repository", URI.create("https://search.maven.org")));
+    }
 
     public RepositoryProducer createRepositoryProducer() {
         RepositoryProducer producer = new RepositoryProducer();

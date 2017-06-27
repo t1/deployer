@@ -2,7 +2,6 @@ package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.rest.*;
-import com.github.t1.rest.RestContext;
 import com.github.t1.testtools.*;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 import org.junit.*;
@@ -20,7 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assume.*;
 
 public class ArtifactoryRepositoryIT {
-    private static boolean TEST_WITH_REAL_ARTIFACTORY = false;
+    private static final boolean TEST_WITH_REAL_ARTIFACTORY = false;
     private static final String SNAPSHOTS = TEST_WITH_REAL_ARTIFACTORY ? "snapshots-virtual" : "snapshots";
     private static final String RELEASES = TEST_WITH_REAL_ARTIFACTORY ? "releases-virtual" : "releases";
     private static final ArtifactoryMock ARTIFACTORY_MOCK = TEST_WITH_REAL_ARTIFACTORY ? null : new ArtifactoryMock();

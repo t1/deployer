@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ejb.*;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.*;
@@ -50,6 +51,7 @@ public class DeployerBoundary {
 
     public Path getRootBundlePath() { return Container.getConfigDir().resolve(ROOT_BUNDLE); }
 
+
     @GET
     public Plan getEffectivePlan() {
         PlanBuilder builder = Plan.builder();
@@ -57,12 +59,6 @@ public class DeployerBoundary {
         return builder.build();
     }
 
-    /** see {@link Audits} */
-    @Value
-    public static class AuditsResponse {
-        List<Audit> audits;
-        ProcessState processState;
-    }
 
     @POST
     public Response post(Map<String, String> form) {
@@ -90,6 +86,24 @@ public class DeployerBoundary {
                 : form.entrySet().stream()
                       .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
     }
+
+    /** see {@link Audits} */
+    @Value
+    public static class AuditsResponse {
+        List<Audit> audits;
+        ProcessState processState;
+    }
+
+
+    @GET
+    @javax.ws.rs.Path("/repository/versions")
+    public List<Version> getVersions(
+            @QueryParam("groupId") @NotNull GroupId groupId,
+            @QueryParam("artifactId") @NotNull ArtifactId artifactId,
+            @QueryParam("snapshots") @DefaultValue("false") boolean snapshots) {
+        return repository.listVersions(groupId, artifactId, snapshots);
+    }
+
 
     @Asynchronous
     public void applyAsync(Trigger trigger) {
