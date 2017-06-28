@@ -99,9 +99,8 @@ public class DeployerBoundary {
     @javax.ws.rs.Path("/repository/versions")
     public List<Version> getVersions(
             @QueryParam("groupId") @NotNull GroupId groupId,
-            @QueryParam("artifactId") @NotNull ArtifactId artifactId,
-            @QueryParam("snapshots") @DefaultValue("false") boolean snapshots) {
-        return repository.listVersions(groupId, artifactId, snapshots);
+            @QueryParam("artifactId") @NotNull ArtifactId artifactId) {
+        return repository.listVersions(groupId, artifactId, false);
     }
 
 

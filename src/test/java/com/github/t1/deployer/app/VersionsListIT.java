@@ -21,14 +21,14 @@ public class VersionsListIT {
 
     @Test
     public void shouldFetchJolokia() throws Exception {
-        List<Version> versions = boundary.getVersions(GROUP_ID, ARTIFACT_ID, false);
+        List<Version> versions = boundary.getVersions(GROUP_ID, ARTIFACT_ID);
 
         assertThat(versions).contains(new Version("1.3.6"), new Version("1.2.0"), new Version("1.0.0"));
     }
 
     @Test
     public void shouldFetchUnknown() throws Exception {
-        List<Version> versions = boundary.getVersions(GROUP_ID, new ArtifactId("foo"), false);
+        List<Version> versions = boundary.getVersions(GROUP_ID, new ArtifactId("foo"));
 
         assertThat(versions).isEmpty();
     }
