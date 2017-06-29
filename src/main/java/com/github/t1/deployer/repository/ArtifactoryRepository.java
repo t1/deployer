@@ -218,6 +218,7 @@ class ArtifactoryRepository extends Repository {
                 .stream()
                 .filter(FileInfo::isFolder)
                 .map(this::toVersion)
+                .sorted()
                 .collect(toList());
         log.debug("found versions: {}", versions);
         return versions;

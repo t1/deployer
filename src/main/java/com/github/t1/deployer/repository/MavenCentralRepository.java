@@ -118,6 +118,7 @@ class MavenCentralRepository extends Repository {
                 .docs
                 .stream()
                 .map(doc -> new Version(doc.v))
+                .sorted()
                 .collect(toList());
     }
 
