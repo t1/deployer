@@ -52,11 +52,11 @@
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:2.2.0.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:2.2.1.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:1.1.0.Final</jar>
             <jar>com.github.t1:rest-client:1.0.13</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
-            <jar>com.github.t1:logging-interceptor:3.1.5</jar>
+            <jar>com.github.t1:logging-interceptor:3.2.2</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
             <jar>com.google.guava:guava:21.0</jar>
@@ -65,11 +65,11 @@
         <test>
             <jar>org.jdom:jdom2:2.0.6</jar>
             <jar>com.github.t1:xml:0.0.5</jar>
-            <jar>ch.qos.logback:logback-classic:1.2.1</jar>
-            <jar>io.dropwizard:dropwizard-testing:1.0.6</jar>
-            <jar>org.jboss.aesh:aesh:0.66.14</jar>
-            <jar>com.beust:jcommander:1.65</jar>
-            <jar>org.apache.httpcomponents:fluent-hc:4.5.2</jar>
+            <jar>ch.qos.logback:logback-classic:1.2.3</jar>
+            <jar>io.dropwizard:dropwizard-testing:1.1.2</jar>
+            <jar>org.jboss.aesh:aesh:0.66.19</jar>
+            <jar>com.beust:jcommander:1.72</jar>
+            <jar>org.apache.httpcomponents:fluent-hc:4.5.3</jar>
         </test>
     </dependencies>
 </project>

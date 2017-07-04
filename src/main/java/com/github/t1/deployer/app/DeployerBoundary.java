@@ -8,7 +8,6 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.Logged;
 import com.github.t1.problem.*;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.*;
@@ -16,7 +15,6 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.Path;
@@ -61,7 +59,7 @@ public class DeployerBoundary {
 
 
     @POST
-    public Response post(Map<String, String> form) {
+    public AuditsResponse post(Map<String, String> form) {
 
         apply(post, mapVariableNames(form));
 
@@ -70,10 +68,7 @@ public class DeployerBoundary {
             container.reload();
         }
 
-        return Response
-                .status(OK)
-                .entity(new AuditsResponse(audits.getAudits(), audits.getProcessState()))
-                .build();
+        return new AuditsResponse(audits.getAudits(), audits.getProcessState());
     }
 
     private boolean reloadRequired() {
@@ -85,13 +80,6 @@ public class DeployerBoundary {
                 ? emptyMap()
                 : form.entrySet().stream()
                       .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
-    }
-
-    /** see {@link Audits} */
-    @Value
-    public static class AuditsResponse {
-        List<Audit> audits;
-        ProcessState processState;
     }
 
 
