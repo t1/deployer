@@ -1,6 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-m2=/Users/rdohna/.m2/repository
+cd "$(dirname "$0")/../../../../../../../.."
+
+m2=~/.m2/repository
 
 java -cp target/test-classes:target/classes:\
 ${m2}/com/github/t1/test-tools/1.5.0/test-tools-1.5.0.jar:\
