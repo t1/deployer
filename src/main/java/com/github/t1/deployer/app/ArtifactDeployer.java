@@ -2,8 +2,8 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
+import com.github.t1.deployer.app.Audits.Warning;
 import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.container.DeploymentResource;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.deployer.repository.Repository;
@@ -21,6 +21,8 @@ import static com.github.t1.problem.WebException.*;
 
 @Slf4j
 class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {
+    private static final String CURRENT = "CURRENT";
+
     @Inject Container container;
     @Inject Repository repository;
 
@@ -50,7 +52,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     @Override
     protected void update(DeploymentResource resource, DeployablePlan plan, DeployableAuditBuilder audit) {
         Artifact old = repository.lookupByChecksum(resource.checksum());
-        if (plan.getVersion().matches("CURRENT") && old.getVersion().matches("unknown")) {
+        if (plan.getVersion().matches(CURRENT) && old.getVersion().matches("unknown")) {
             log.warn("skip update of [{}] to CURRENT: unknown checksum", plan.getName());
             return;
         }
@@ -87,6 +89,10 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
 
     @Override
     protected Supplier<DeploymentResource> buildResource(DeployablePlan plan, DeployableAuditBuilder audit) {
+        if (plan.getVersion().matches(CURRENT)) {
+            audits.add(new Warning("skip deploying " + plan.getName() + " in version " + CURRENT));
+            return () -> null;
+        }
         Artifact artifact = lookupArtifact(plan, plan.getVersion());
         if (artifact == null)
             throw badRequest("artifact not found: " + plan);
@@ -102,7 +108,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
 
     private Artifact lookupDeployedArtifact(DeployablePlan plan, Artifact old) {
         Version version = plan.getVersion();
-        if (version.matches("CURRENT"))
+        if (version.matches(CURRENT))
             version = old.getVersion();
         Artifact artifact = lookupArtifact(plan, version);
         if (artifact == null)

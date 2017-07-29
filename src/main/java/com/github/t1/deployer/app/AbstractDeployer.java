@@ -78,8 +78,10 @@ abstract class AbstractDeployer<
                 auditChange(plan, audit);
             } else {
                 resource = buildResource(plan, audit).get();
-                resource.add();
-                audits.add(audit.added());
+                if (resource != null) {
+                    resource.add();
+                    audits.add(audit.added());
+                }
             }
             return;
         case undeployed:

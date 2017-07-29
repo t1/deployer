@@ -1,12 +1,14 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
+import com.github.t1.deployer.app.Audits.Warning;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import static com.github.t1.deployer.app.Trigger.*;
+import static com.github.t1.deployer.model.ProcessState.running;
 import static org.assertj.core.api.Assertions.*;
 
 public class ArtifactDeployerTest extends AbstractDeployerTests {
@@ -173,18 +175,18 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldFailToDeployWebArchiveWithoutVersion() {
+    public void shouldSkipDeployingWebArchiveWithoutVersion() {
         givenArtifact("foo").version("1.3.2");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Audits audits = deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
-                + "    state: deployed\n"));
+                + "    state: deployed\n");
 
-        assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("artifact not found: deployment:foo:deployed:org.foo:foo:CURRENT:war");
+        assertThat(audits.getAudits()).isEmpty();
+        assertThat(audits.getProcessState()).isEqualTo(running);
+        assertThat(audits.getWarnings()).containsExactly(new Warning("skip deploying foo in version CURRENT"));
     }
 
 

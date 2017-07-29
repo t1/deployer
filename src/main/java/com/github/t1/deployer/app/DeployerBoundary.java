@@ -68,7 +68,7 @@ public class DeployerBoundary {
             container.reload();
         }
 
-        return new AuditsResponse(audits.getAudits(), audits.getProcessState());
+        return new AuditsResponse(audits.getAudits(), audits.getWarnings(), audits.getProcessState());
     }
 
     private boolean reloadRequired() {

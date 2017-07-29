@@ -9,6 +9,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
 import static com.github.t1.deployer.model.Plan.*;
 import static com.github.t1.deployer.model.ProcessState.*;
@@ -16,7 +18,10 @@ import static com.github.t1.log.LogLevel.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class AuditsSerializationTest {
-    private static final ObjectMapper JSON = new ObjectMapper().setPropertyNamingStrategy(KEBAB_CASE);
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .setSerializationInclusion(NON_EMPTY) //
+            .configure(FAIL_ON_UNKNOWN_PROPERTIES, false) //
+            .setPropertyNamingStrategy(KEBAB_CASE);
 
     public Audit deserialize(String json) throws IOException {
         return JSON.readValue(json.replace('\'', '\"'), Audit.class);

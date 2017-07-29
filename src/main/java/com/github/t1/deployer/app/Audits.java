@@ -27,10 +27,19 @@ import static java.util.stream.Collectors.*;
 public class Audits {
     private final List<Audit> audits = new ArrayList<>();
     private ProcessState processState;
+    private List<Warning> warnings;
 
     @Logged(level = DEBUG, returnFormat = "")
     public Audits add(Audit audit) {
         this.audits.add(audit);
+        return this;
+    }
+
+    @Logged(level = WARN, returnFormat = "")
+    public Audits add(Warning warning) {
+        if (this.warnings == null)
+            this.warnings = new ArrayList<>();
+        this.warnings.add(warning);
         return this;
     }
 
@@ -42,4 +51,9 @@ public class Audits {
 
     @SneakyThrows(IOException.class)
     public String toYaml() { return YAML.writeValueAsString(this); }
+
+    @Value
+    public static class Warning {
+        String text;
+    }
 }
