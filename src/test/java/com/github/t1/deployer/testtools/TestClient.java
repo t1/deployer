@@ -28,7 +28,7 @@ public class TestClient {
 
     public List<Audit> run(String plan) throws IOException {
         //noinspection resource
-        try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_BUNDLE)).setup()) {
+        try (FileMemento memento = new FileMemento(JBOSS_CONFIG.resolve(ROOT_BUNDLE_CONFIG_FILE)).setup()) {
             memento.write(plan);
             return postUpdate().getAudits();
         }

@@ -37,7 +37,7 @@ public class DeployablePlan extends AbstractArtifactPlan {
         this.error = error;
     }
 
-    public static DeployablePlan fromJson(DeploymentName name, JsonNode node) {
+    static DeployablePlan fromJson(DeploymentName name, JsonNode node) {
         if (node.isNull())
             throw new Plan.PlanLoadingException("incomplete deployables plan '" + name + "'");
         DeployablePlanBuilder builder = builder().name(name);

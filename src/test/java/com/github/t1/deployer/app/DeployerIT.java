@@ -163,7 +163,7 @@ public class DeployerIT {
         }, response -> response.getStatusInfo().equals(expectedStatus));
     }
 
-    private Path rootBundlePath() { return container.configDir().resolve(ROOT_BUNDLE);}
+    private Path rootBundlePath() { return container.configDir().resolve(ROOT_BUNDLE_CONFIG_FILE); }
 
     private static Map<String, Checksum> theDeployments() {
         ModelNode response = container.execute(readAllDeploymentsRequest());

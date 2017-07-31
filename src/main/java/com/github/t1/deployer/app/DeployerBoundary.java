@@ -37,7 +37,7 @@ import static javax.ws.rs.core.Response.Status.*;
 @Slf4j
 public class DeployerBoundary {
     public static final String IGNORE_SERVER_RELOAD = DeployerBoundary.class + "#IGNORE_SERVER_RELOAD";
-    public static final String ROOT_BUNDLE = "deployer.root.bundle";
+    public static final String ROOT_BUNDLE_CONFIG_FILE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
             + "bundles:\n"
             + "  ${regex(root-bundle:artifact-id or hostName(), «(.*?)\\d*»)}:\n"
@@ -47,7 +47,7 @@ public class DeployerBoundary {
     private static final VariableName NAME = new VariableName("name");
     private static final Object CONTAINER_LOCK = new Object();
 
-    public Path getRootBundlePath() { return Container.getConfigDir().resolve(ROOT_BUNDLE); }
+    public Path getRootBundlePath() { return Container.getConfigDir().resolve(ROOT_BUNDLE_CONFIG_FILE); }
 
 
     @GET
@@ -89,6 +89,21 @@ public class DeployerBoundary {
             @QueryParam("groupId") @NotNull GroupId groupId,
             @QueryParam("artifactId") @NotNull ArtifactId artifactId) {
         return repository.listVersions(groupId, artifactId, false);
+    }
+
+    @GET
+    @javax.ws.rs.Path("/bundles")
+    public BundleTree getBundles() {
+        Expressions expressions = new Expressions() {
+            @Override public String resolve(String line, String alternative) {
+                if (alternative == null && line.startsWith("${") && line.endsWith("}"))
+                    return line;
+                return super.resolve(line, alternative);
+            }
+        };
+        Reader reader = hasRootBundleConfigFile() ? reader(getRootBundlePath()) : new StringReader(DEFAULT_ROOT_BUNDLE);
+        Plan plan = Plan.load(expressions, reader, "get root bundle");
+        return BundleTree.from(plan);
     }
 
 
@@ -134,15 +149,17 @@ public class DeployerBoundary {
 
                 try {
                     container.startBatch();
-                    Path root = getRootBundlePath();
-                    if (isRegularFile(root)) {
-                        applying.apply(root);
+                    if (hasRootBundleConfigFile()) {
+                        Path plan = getRootBundlePath();
+                        log.info("load plan from: {}", plan);
+                        applying.apply(reader(plan), plan.toString());
                     } else if (useDefaultConfig) {
                         throw new RuntimeException("For security reasons, applying the default root bundle "
                                 + "is only allowed when there is a configuration file. "
                                 + "See https://github.com/t1/deployer/issues/61");
                     } else {
-                        applying.applyDefaultRoot();
+                        log.info("load default root plan");
+                        applying.apply(new StringReader(DEFAULT_ROOT_BUNDLE), "default root bundle");
                     }
                 } catch (RuntimeException e) {
                     container.rollbackBatch();
@@ -158,6 +175,16 @@ public class DeployerBoundary {
         }
     }
 
+    private boolean hasRootBundleConfigFile() { return isRegularFile(getRootBundlePath()); }
+
+    private BufferedReader reader(Path plan) {
+        try {
+            return Files.newBufferedReader(plan);
+        } catch (IOException e) {
+            throw new RuntimeException("can't read plan [" + plan + "]", e);
+        }
+    }
+
 
     private class Applying {
         private Expressions expressions = new Expressions()
@@ -168,24 +195,6 @@ public class DeployerBoundary {
         private Applying withVariables(Map<VariableName, String> variables) {
             this.expressions = this.expressions.withAllNew(variables);
             return this;
-        }
-
-        private void apply(Path plan) {
-            apply(reader(plan), plan.toString());
-        }
-
-        private BufferedReader reader(Path plan) {
-            log.info("load plan from: {}", plan);
-            try {
-                return Files.newBufferedReader(plan);
-            } catch (IOException e) {
-                throw new RuntimeException("can't read plan [" + plan + "]", e);
-            }
-        }
-
-        private void applyDefaultRoot() {
-            log.info("load default root plan");
-            apply(new StringReader(DEFAULT_ROOT_BUNDLE), "default root bundle");
         }
 
         private void apply(Reader reader, String sourceMessage) {
@@ -215,7 +224,7 @@ public class DeployerBoundary {
         }
 
         private void applyBundle(BundlePlan bundle) {
-            for (Map.Entry<String, Map<VariableName, String>> instance : bundle.getInstances().entrySet()) {
+            bundle.actualInstances().forEach(instance -> {
                 Expressions pop = this.expressions;
                 try {
                     if (instance.getKey() != null)
@@ -229,7 +238,7 @@ public class DeployerBoundary {
                 } finally {
                     this.expressions = pop;
                 }
-            }
+            });
         }
     }
 }

@@ -62,7 +62,7 @@ public abstract class AbstractDeployerTests {
     private static final Version UNKNOWN = new Version("unknown");
 
     @SneakyThrows(IOException.class)
-    private static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
+    public static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
 
     private final Path tempDir = tempDir();
 
@@ -70,7 +70,7 @@ public abstract class AbstractDeployerTests {
             .given("jboss.server.config.dir", tempDir)
             .given(CLI_DEBUG, "true");
     @Rule @SuppressWarnings("resource")
-    public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE));
+    public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE));
 
     Audits deploy(String plan) {
         rootBundle.write(plan);

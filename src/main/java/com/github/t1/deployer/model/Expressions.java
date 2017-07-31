@@ -54,7 +54,7 @@ public class Expressions {
         return (split.length == 2) ? split[1] : null;
     }
 
-    private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
+    static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
     private static final Pattern VARIABLE_VALUE = Pattern.compile("[- ._a-zA-Z0-9?*:|\\\\{}()\\[\\]]{1,256}");
 
     private final ImmutableMap<VariableName, String> variables;
@@ -109,10 +109,10 @@ public class Expressions {
     public boolean contains(VariableName name) { return variables.containsKey(name); }
 
     public abstract static class Resolver {
-        protected boolean match;
+        boolean match;
         @Getter protected String value;
 
-        protected void setNoMatch() { set(Optional.empty()); }
+        void setNoMatch() { set(Optional.empty()); }
 
         @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
         protected void set(Optional<String> value) { set(value.isPresent(), value.orElse(null)); }
@@ -126,15 +126,15 @@ public class Expressions {
 
         @Override public String toString() { return getClass().getSimpleName() + ":" + value; }
 
-        public boolean matches() { return match; }
+        boolean matches() { return match; }
 
-        public String getOrElseThrow(Supplier<? extends RuntimeException> thrower) {
+        String getOrElseThrow(Supplier<? extends RuntimeException> thrower) {
             if (match)
                 return value;
             throw thrower.get();
         }
 
-        public String getValueOrNull() { return match ? value : null; }
+        String getValueOrNull() { return match ? value : null; }
     }
 
     private static final List<Class<? extends Resolver>> RESOLVERS = asList(
@@ -147,7 +147,7 @@ public class Expressions {
             RootBundleResolver.class);
 
     private class OrResolver extends Resolver {
-        public OrResolver(CharSequence expression) {
+        OrResolver(CharSequence expression) {
             for (String subExpression : split(expression, " or ")) {
                 log.trace("try to resolve variable expression [{}]", subExpression);
                 for (Class<? extends Resolver> resolverType : RESOLVERS) {
@@ -161,7 +161,7 @@ public class Expressions {
             setNoMatch();
         }
 
-        public Resolver create(Class<? extends Resolver> type, String subExpression) {
+        private Resolver create(Class<? extends Resolver> type, String subExpression) {
             try {
                 return type.getConstructor(Expressions.class, String.class)
                            .newInstance(Expressions.this, subExpression);
@@ -445,7 +445,7 @@ public class Expressions {
 
         @Getter private final String expression;
 
-        protected UnresolvedVariableException(String expression) {
+        private UnresolvedVariableException(String expression) {
             super("unresolved variable expression: " + expression);
             this.expression = expression;
         }
