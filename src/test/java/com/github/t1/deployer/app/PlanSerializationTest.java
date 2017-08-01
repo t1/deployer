@@ -2,6 +2,7 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.DataSourcePlan.PoolPlan;
+import com.github.t1.deployer.model.Expressions.*;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
@@ -29,7 +30,7 @@ public class PlanSerializationTest {
 
     static {
         when(expressions.resolve(anyString(), any())).then(invocation -> invocation.getArgument(0));
-        when(expressions.resolver(any(CharSequence.class))).then(i -> new Expressions.Resolver() {});
+        when(expressions.resolver()).then(i -> (Resolver) expression -> Match.PROCEED);
     }
 
 

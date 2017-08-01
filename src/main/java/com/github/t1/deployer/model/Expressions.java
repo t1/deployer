@@ -5,19 +5,20 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.github.t1.deployer.tools.*;
 import com.github.t1.problem.*;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.*;
 import lombok.*;
+import lombok.experimental.Wither;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.*;
 import java.util.function.*;
 import java.util.regex.*;
 
+import static com.github.t1.deployer.model.Expressions.Match.Mode.*;
 import static com.github.t1.problem.WebException.*;
-import static java.util.Arrays.*;
+import static java.util.Collections.*;
 import static java.util.Locale.*;
 import static java.util.stream.Collectors.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -25,24 +26,27 @@ import static lombok.AccessLevel.*;
 
 @Slf4j
 @RequiredArgsConstructor
+@Wither
 public class Expressions {
     private static final Pattern NAME_TOKEN = Pattern.compile("[-._a-zA-Z0-9]{1,256}");
 
     @Value
     @NoArgsConstructor(access = PRIVATE, force = true)
     @JsonSerialize(using = ToStringSerializer.class)
-    public static class VariableName {
-        private static String checked(String value) {
+    public static class VariableName implements Comparable<VariableName> {
+        @NonNull String value;
+
+        @JsonCreator public VariableName(@NonNull String value) { this.value = check(value); }
+
+        private static String check(String value) {
             if (!NAME_TOKEN.matcher(value).matches())
                 throw new IllegalArgumentException("invalid variable name [" + value + "]");
             return value;
         }
 
-        @NonNull String value;
-
-        @JsonCreator public VariableName(@NonNull String value) { this.value = checked(value); }
-
         @Override public String toString() { return value; }
+
+        @Override public int compareTo(@NotNull VariableName that) { return this.value.compareTo(that.value); }
     }
 
     @SneakyThrows(UnknownHostException.class)
@@ -54,14 +58,15 @@ public class Expressions {
         return (split.length == 2) ? split[1] : null;
     }
 
-    static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)\\}");
+    private static final Pattern VAR = Pattern.compile("\\$\\{([^}]*)}");
     private static final Pattern VARIABLE_VALUE = Pattern.compile("[- ._a-zA-Z0-9?*:|\\\\{}()\\[\\]]{1,256}");
 
     private final ImmutableMap<VariableName, String> variables;
-    private final RootBundleConfig rootBundle;
+    private final RootBundleConfig rootBundleConfig;
     private final KeyStoreConfig keyStore;
+    private final Resolver finalResolver;
 
-    public Expressions() { this(ImmutableMap.copyOf(systemProperties()), null, null); }
+    public Expressions() { this(ImmutableMap.copyOf(systemProperties()), null, null, null); }
 
     private static Map<VariableName, String> systemProperties() {
         return System.getProperties().stringPropertyNames().stream()
@@ -69,9 +74,37 @@ public class Expressions {
                      .collect(toMap(VariableName::new, System::getProperty));
     }
 
+    public Expressions with(VariableName name, String value) { return withAllNew(singletonMap(name, value)); }
+
+    public Expressions withAllNew(Map<VariableName, String> variables) { return withAll(variables, true); }
+
+    public Expressions withAllReplacing(Map<VariableName, String> variables) { return withAll(variables, false); }
+
+    private Expressions withAll(Map<VariableName, String> variables, boolean checkNotDefined) {
+        if (variables == null || variables.isEmpty())
+            return this;
+        Map<VariableName, String> builder = new LinkedHashMap<>();
+        builder.putAll(this.variables);
+        for (Map.Entry<VariableName, String> entry : variables.entrySet()) {
+            VariableName name = entry.getKey();
+            if (checkNotDefined)
+                checkNotDefined(name);
+            builder.put(name, entry.getValue());
+        }
+        return withVariables(ImmutableMap.copyOf(builder));
+    }
+
+    private void checkNotDefined(VariableName name) {
+        if (this.variables.containsKey(name))
+            throw badRequest("Variable named [" + name + "] already set. It's not allowed to overwrite.");
+    }
+
+
+    public boolean contains(VariableName name) { return variables.containsKey(name); }
+
 
     /**
-     * Replaces all variables (starting with `${` and ending with `}` - may be escaped with a second `$`,
+     * Replaces all expressions starting with `${` and ending with `}` - may be escaped with a second `$`,
      * i.e. `$${a}` will be replaced by `${a}`.
      */
     public String resolve(String line, String alternative) {
@@ -87,16 +120,13 @@ public class Expressions {
                 // +1 to skip the var-$ as we already copied the escape-$
                 out.append(line.substring(matcher.start() + 1, matcher.end()));
             } else {
-                String expression = matcher.group(1);
-                if (alternative != null)
-                    expression += " or " + alternative;
-                Resolver resolver = resolver(expression);
-                if (!resolver.matches())
-                    throw new UnresolvedVariableException(expression);
-                if (resolver.getValue() == null)
+                String expression = groupOneOr(matcher, alternative);
+                Match match = resolver().match(expression);
+                String value = match.orElseThrow(() -> new UnresolvedVariableException(expression));
+                if (value == null)
                     hasNullValue = true;
                 else
-                    out.append(resolver.getValue());
+                    out.append(value);
             }
             tail = matcher.end();
         }
@@ -104,107 +134,107 @@ public class Expressions {
         return (hasNullValue && out.length() == 0) ? null : out.toString();
     }
 
-    public Resolver resolver(CharSequence expression) { return new OrResolver(expression); }
-
-    public boolean contains(VariableName name) { return variables.containsKey(name); }
-
-    public abstract static class Resolver {
-        boolean match;
-        @Getter protected String value;
-
-        void setNoMatch() { set(Optional.empty()); }
-
-        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-        protected void set(Optional<String> value) { set(value.isPresent(), value.orElse(null)); }
-
-        protected void set(boolean match, Supplier<String> value) { set(match, match ? value.get() : null); }
-
-        protected void set(boolean match, String value) {
-            this.match = match;
-            this.value = value;
-        }
-
-        @Override public String toString() { return getClass().getSimpleName() + ":" + value; }
-
-        boolean matches() { return match; }
-
-        String getOrElseThrow(Supplier<? extends RuntimeException> thrower) {
-            if (match)
-                return value;
-            throw thrower.get();
-        }
-
-        String getValueOrNull() { return match ? value : null; }
+    private String groupOneOr(Matcher matcher, String alternative) {
+        String expression = matcher.group(1);
+        if (alternative != null)
+            expression += " or " + alternative;
+        return expression;
     }
 
-    private static final List<Class<? extends Resolver>> RESOLVERS = asList(
-            NullResolver.class,
-            BooleanResolver.class,
-            SwitchResolver.class,
-            LiteralResolver.class,
-            FunctionResolver.class,
-            VariableResolver.class,
-            RootBundleResolver.class);
+    public Resolver resolver() {
+        ImmutableList.Builder<Resolver> resolvers = ImmutableList.builder();
+        resolvers.add(new NullResolver());
+        resolvers.add(new BooleanResolver());
+        resolvers.add(new SwitchResolver());
+        resolvers.add(new LiteralResolver());
+        resolvers.add(new FunctionResolver());
+        resolvers.add(new RootBundleResolver());
+        resolvers.add(new VariableResolver());
+        if (finalResolver != null)
+            resolvers.add(finalResolver);
+        return new OrResolver(resolvers.build());
+    }
 
-    private class OrResolver extends Resolver {
-        OrResolver(CharSequence expression) {
+    public interface Resolver {
+        Match match(String expression);
+    }
+
+    /** Like <code>Optional&lt;String&gt;</code>, but may contain <code>null</code> */
+    @Value
+    public static class Match {
+        public enum Mode {matches, proceed, stop}
+
+        public static final Match PROCEED = new Match(proceed, null);
+        public static final Match STOP = new Match(stop, null);
+
+        public static Match of(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> optional) {
+            return optional.map(Match::of).orElse(Match.PROCEED);
+        }
+
+        public static Match of(String value) { return new Match(matches, value); }
+
+        Mode mode;
+        String value;
+
+        String orElseThrow(Supplier<? extends RuntimeException> supplier) {
+            if (mode == matches)
+                return value;
+            throw supplier.get();
+        }
+
+        String getValueOrNull() { return (mode == matches) ? value : null; }
+    }
+
+    @RequiredArgsConstructor
+    private static class OrResolver implements Resolver {
+        private final ImmutableList<Resolver> resolvers;
+
+        @Override public Match match(String expression) {
             for (String subExpression : split(expression, " or ")) {
                 log.trace("try to resolve variable expression [{}]", subExpression);
-                for (Class<? extends Resolver> resolverType : RESOLVERS) {
-                    Resolver resolver = create(resolverType, subExpression);
-                    if (resolver.matches()) {
-                        set(true, resolver.getValue());
-                        return;
+                resolvers: for (Resolver resolver : resolvers) {
+                    Match match = resolver.match(subExpression);
+                    switch (match.mode) {
+                    case matches:
+                        return match;
+                    case stop:
+                        break resolvers;
+                    case proceed:
+                        //noinspection UnnecessaryContinue
+                        continue resolvers;
                     }
                 }
             }
-            setNoMatch();
-        }
-
-        private Resolver create(Class<? extends Resolver> type, String subExpression) {
-            try {
-                return type.getConstructor(Expressions.class, String.class)
-                           .newInstance(Expressions.this, subExpression);
-            } catch (InvocationTargetException e) {
-                //noinspection ChainOfInstanceofChecks
-                if (e.getCause() instanceof Error)
-                    throw (Error) e.getCause();
-                if (e.getCause() instanceof RuntimeException)
-                    throw (RuntimeException) e.getCause();
-                throw new RuntimeException(
-                        "can't create " + type.getName() + " for expression [" + subExpression + "]", e);
-            } catch (ReflectiveOperationException e) {
-                throw new RuntimeException(
-                        "can't create " + type.getName() + " for expression [" + subExpression + "]", e);
-            }
+            return Match.PROCEED;
         }
     }
 
 
-    private class NullResolver extends Resolver {
-        public NullResolver(String expression) {
-            this.match = "null".equals(expression);
-            this.value = null;
+    private static class NullResolver implements Resolver {
+        @Override public Match match(String expression) {
+            return "null".equals(expression) ? Match.of((String) null) : Match.PROCEED;
         }
     }
 
 
-    private class BooleanResolver extends Resolver {
-        public BooleanResolver(String expression) {
-            set("true".equals(expression) || "false".equals(expression), expression);
+    private static class BooleanResolver implements Resolver {
+        @Override public Match match(String expression) {
+            return ("true".equals(expression) || "false".equals(expression)) ? Match.of(expression) : Match.PROCEED;
         }
     }
 
 
-    private class SwitchResolver extends Resolver {
-        public SwitchResolver(String expression) {
-            set(expression.startsWith("switch"), () -> doSwitch(expression.substring(6)));
+    private class SwitchResolver implements Resolver {
+        @Override public Match match(String expression) {
+            if (!expression.startsWith("switch"))
+                return Match.PROCEED;
+            return Match.of(doSwitch(expression.substring(6)));
         }
 
         private String doSwitch(String expression) {
             String head = findBrackets("()", expression)
                     .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch statement"));
-            String value = resolver(head).getOrElseThrow(() ->
+            String value = resolver().match(head).orElseThrow(() ->
                     new IllegalArgumentException("no variable defined in switch header: '" + head + "'"));
             String body = expression.substring(head.length() + 2, expression.length());
             int i = body.indexOf(" " + value + ":");
@@ -240,28 +270,27 @@ public class Expressions {
     }
 
 
-    private class LiteralResolver extends Resolver {
-        public LiteralResolver(String expression) { set(findBrackets("«»", expression)); }
+    private static class LiteralResolver implements Resolver {
+        @Override public Match match(String expression) {
+            return Match.of(findBrackets("«»", expression));
+        }
     }
 
 
-    private class VariableResolver extends Resolver {
-        public VariableResolver(String expression) {
+    private class VariableResolver implements Resolver {
+        @Override public Match match(String expression) {
             Matcher matcher = NAME_TOKEN.matcher(expression);
-            this.match = matcher.matches();
-            if (match) {
-                VariableName variableName = new VariableName(matcher.group());
-                if (variables.containsKey(variableName)) {
-                    log.trace("did resolve [{}]", variableName);
-                    this.value = resolve(variables.get(variableName), "null");
-                    if (value != null && !VARIABLE_VALUE.matcher(value).matches())
-                        throw badRequest("invalid character in variable value for [" + variableName + "]");
-                } else {
-                    log.trace("undefined variable [{}]", expression);
-                    setNoMatch();
-                }
+            if (!matcher.matches())
+                return Match.PROCEED;
+            VariableName variableName = new VariableName(matcher.group());
+            if (variables.containsKey(variableName)) {
+                String value = resolve(variables.get(variableName), "null");
+                if (value != null && !VARIABLE_VALUE.matcher(value).matches())
+                    throw badRequest("invalid character in variable value for [" + variableName + "]");
+                return Match.of(value);
             } else {
-                setNoMatch();
+                log.trace("undefined variable [{}]", expression);
+                return Match.PROCEED;
             }
         }
     }
@@ -274,104 +303,108 @@ public class Expressions {
             "classifier", c -> (c.getClassifier() == null) ? null : c.getClassifier().getValue(),
             "version", c -> (c.getVersion() == null) ? null : c.getVersion().getValue());
 
-    private class RootBundleResolver extends Resolver {
-        public RootBundleResolver(String expression) {
-            if (expression.startsWith(ROOT_BUNDLE)
-                    && BUNDLE.containsKey(fieldName(expression))
-                    && rootBundle != null)
-                set(Optional.ofNullable(resolve(fieldName(expression))));
-            else
-                setNoMatch();
+    private class RootBundleResolver implements Resolver {
+        @Override public Match match(String expression) {
+            if (!expression.startsWith(ROOT_BUNDLE))
+                return Match.PROCEED;
+            String fieldName = expression.substring(ROOT_BUNDLE.length());
+            if (!BUNDLE.containsKey(fieldName))
+                throw new IllegalArgumentException("undefined root-bundle expression: [" + expression + "]");
+            if (rootBundleConfig == null)
+                return Match.STOP;
+            String subExpression = BUNDLE.get(fieldName).apply(rootBundleConfig);
+            if (subExpression == null)
+                return Match.STOP;
+            return Match.of(Expressions.this.resolve(subExpression, null));
         }
 
-        private String fieldName(String expression) { return expression.substring(ROOT_BUNDLE.length()); }
-
-        private String resolve(String fieldName) {
-            String subExpression = BUNDLE.get(fieldName).apply(rootBundle);
-            return (subExpression == null) ? null : Expressions.this.resolve(subExpression, null);
-        }
     }
 
     private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");
 
-    private class FunctionResolver extends Resolver {
+    private class FunctionResolver implements Resolver {
         private final CipherFacade cipher = new CipherFacade();
-        private final String functionName;
-        private final List<Supplier<String>> params;
 
-        public FunctionResolver(String expression) {
+        @Override public Match match(String expression) {
             Matcher matcher = FUNCTION.matcher(expression);
-            this.match = matcher.matches(); // will be overwritten when function doesn't resolve. see #fail()
-            this.functionName = match ? matcher.group("name") : null;
-            this.params = match ? params(matcher.group("body")) : null;
-            this.value = match ? resolve() : null;
+            if (!matcher.matches())
+                return Match.PROCEED;
+            return new FunctionMatch(matcher.group("name"), params(matcher.group("body"))).match();
+        }
+
+        @Value
+        private class FunctionMatch {
+            private final String functionName;
+            private final List<Supplier<String>> params;
+
+            private Match match() {
+                log.trace("found function name [{}] with {} params", functionName, params.size());
+                switch (functionName + "#" + params.size()) {
+                case "hostName#0":
+                    return Match.of(hostName());
+                case "domainName#0":
+                    return Match.of(domainName());
+                case "toUpperCase#1":
+                    return apply1(s -> s.toUpperCase(US));
+                case "toLowerCase#1":
+                    return apply1(s -> s.toLowerCase(US));
+                case "toInitCap#1":
+                    return apply1(this::toInitCap);
+                case "decrypt#1":
+                    return apply1(this::decrypt);
+                case "decrypt#2":
+                    return apply2(this::decrypt);
+                case "regex#2":
+                    return applyRegex();
+                default:
+                    throw badRequest("undefined function [" + functionName + "] with " + params.size() + " params");
+                }
+            }
+
+            private Match apply1(Function<String, String> function) {
+                return Match.of(param(0).map(function));
+            }
+
+            private Match apply2(BiFunction<String, String, String> function) {
+                Optional<String> param0 = param(0);
+                Optional<String> param1 = param(1);
+                return (param0.isPresent() && param1.isPresent())
+                        ? Match.of(function.apply(param0.get(), param1.get()))
+                        : Match.PROCEED;
+            }
+
+            private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
+
+            private String toInitCap(String text) {
+                return (text.length() == 0) ? "" : (Character.toUpperCase(text.charAt(0)) + text.substring(1));
+            }
+
+            private String decrypt(String text) { return cipher.decrypt(text, keyStore); }
+
+            private String decrypt(String text, String alias) {
+                return cipher.decrypt(text, keyStore.withAlias(alias));
+            }
+
+            private Match applyRegex() {
+                Optional<String> text = param(0);
+                Optional<Pattern> pattern = param(1).map(Pattern::compile);
+                if (!text.isPresent() || !pattern.isPresent())
+                    return Match.PROCEED;
+                Matcher matcher = pattern.get().matcher(text.get());
+                return matcher.matches() ? Match.of(matcher.group(1)) : Match.PROCEED;
+            }
         }
 
         private List<Supplier<String>> params(CharSequence body) {
             return split(body, ",")
                     .stream()
                     .map(String::trim)
-                    .map(expression -> (Supplier<String>) () -> new OrResolver(expression).getValue())
+                    .map(expression -> (Supplier<String>) () -> resolver().match(expression).getValue())
                     .collect(toList());
-        }
-
-        private String resolve() {
-            log.trace("found function name [{}] with {} params", functionName, params.size());
-            switch (functionName + "#" + params.size()) {
-            case "hostName#0":
-                return hostName();
-            case "domainName#0":
-                return domainName();
-            case "toUpperCase#1":
-                return apply1(s -> s.toUpperCase(US));
-            case "toLowerCase#1":
-                return apply1(s -> s.toLowerCase(US));
-            case "toInitCap#1":
-                return apply1(this::toInitCap);
-            case "decrypt#1":
-                return apply1(this::decrypt);
-            case "decrypt#2":
-                return apply2(this::decrypt);
-            case "regex#2":
-                return apply2(this::regex);
-            default:
-                throw badRequest("undefined function [" + functionName + "] with " + params.size() + " params");
-            }
-        }
-
-        private String apply1(Function<String, String> function) {
-            return param(0).map(function).orElseGet(this::fail);
-        }
-
-        private String apply2(BiFunction<String, String, String> function) {
-            Optional<String> param0 = param(0);
-            Optional<String> param1 = param(1);
-            return param0.isPresent() && param1.isPresent() ? function.apply(param0.get(), param1.get()) : fail();
-        }
-
-        private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
-
-        private String toInitCap(String text) {
-            return (text.length() == 0) ? "" : (Character.toUpperCase(text.charAt(0)) + text.substring(1));
-        }
-
-        private String decrypt(String text) { return cipher.decrypt(text, keyStore); }
-
-        private String decrypt(String text, String alias) {
-            return cipher.decrypt(text, keyStore.withAlias(alias));
-        }
-
-        private String regex(String text, String pattern) {
-            Matcher matcher = Pattern.compile(pattern).matcher(text);
-            return matcher.matches() ? matcher.group(1) : fail();
-        }
-
-        private String fail() {
-            setNoMatch();
-            return null;
         }
     }
 
+    /** Like String#split, but considering round braces */
     private static List<String> split(CharSequence expression, String pattern) {
         List<String> list = new ArrayList<>();
         String current = "";
@@ -395,48 +428,6 @@ public class Expressions {
             offset = string.indexOf(c, offset + 1);
         } while (offset >= 0);
         return n;
-    }
-
-    public Expressions withRootBundle(RootBundleConfig rootBundle) {
-        return new Expressions(this.variables, rootBundle, this.keyStore);
-    }
-
-    public Expressions withKeyStore(KeyStoreConfig keyStore) {
-        return new Expressions(this.variables, this.rootBundle, keyStore);
-    }
-
-    public Expressions with(VariableName name, String value) {
-        checkNotDefined(name);
-        return new Expressions(
-                ImmutableMap.<VariableName, String>builder().putAll(this.variables).put(name, value).build(),
-                this.rootBundle,
-                this.keyStore);
-    }
-
-    public Expressions withAllNew(Map<VariableName, String> variables) {
-        return withAll(variables, true);
-    }
-
-    public Expressions withAllReplacing(Map<VariableName, String> variables) {
-        return withAll(variables, false);
-    }
-
-    private Expressions withAll(Map<VariableName, String> variables, boolean checkNotDefined) {
-        if (variables == null || variables.isEmpty())
-            return this;
-        Map<VariableName, String> builder = new LinkedHashMap<>(this.variables);
-        for (Map.Entry<VariableName, String> entry : variables.entrySet()) {
-            VariableName name = entry.getKey();
-            if (checkNotDefined)
-                checkNotDefined(name);
-            builder.put(name, entry.getValue());
-        }
-        return new Expressions(ImmutableMap.copyOf(builder), this.rootBundle, this.keyStore);
-    }
-
-    private void checkNotDefined(VariableName name) {
-        if (this.variables.containsKey(name))
-            throw badRequest("Variable named [" + name + "] already set. It's not allowed to overwrite.");
     }
 
     @ReturnStatus(BAD_REQUEST)

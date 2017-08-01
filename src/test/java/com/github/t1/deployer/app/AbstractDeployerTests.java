@@ -7,8 +7,6 @@ import com.github.t1.deployer.container.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.model.DataSourcePlan.*;
 import com.github.t1.deployer.model.Expressions.VariableName;
-import com.github.t1.deployer.model.LogHandlerPlan;
-import com.github.t1.deployer.model.LogHandlerType;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.LogLevel;
@@ -25,7 +23,6 @@ import org.mockito.verification.VerificationMode;
 
 import javax.enterprise.inject.Instance;
 import java.io.*;
-import java.lang.Boolean;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.ArrayList;
@@ -49,11 +46,9 @@ import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
 import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import static org.jboss.as.controller.client.helpers.Operations.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.eq;
 
 @SuppressWarnings("SameParameterValue")
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -263,7 +258,7 @@ public abstract class AbstractDeployerTests {
         op.get(NAME).set(name);
         if (v != null)
             set.apply(op.get(VALUE), v);
-        assertThat(captureOperations()).haveExactly(1, step(op));
+        assertThat(capturedOperations()).describedAs(capturedOperationsDescription()).haveExactly(1, step(op));
     }
 
     private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
@@ -281,12 +276,10 @@ public abstract class AbstractDeployerTests {
 
     @SneakyThrows(IOException.class)
     public void givenConfiguredRootBundle(String key, String value) {
-        boundary.rootBundle = YAML.readValue(key + ": " + value, RootBundleConfig.class);
+        boundary.rootBundleConfig = YAML.readValue(key + ": " + value, RootBundleConfig.class);
     }
 
-    public void givenConfiguredKeyStore(KeyStoreConfig keyStoreConfig) {
-        boundary.keyStore = keyStoreConfig;
-    }
+    public void givenConfiguredKeyStore(KeyStoreConfig keyStoreConfig) { boundary.keyStore = keyStoreConfig; }
 
     public void givenConfiguredVariable(String name, String value) {
         this.configuredVariables.put(new VariableName(name), value);
@@ -491,7 +484,8 @@ public abstract class AbstractDeployerTests {
                         + "    'enabled' => true,\n"
                         + "    'content' => [('input-stream-index' => 0)]\n"
                         + "}");
-                assertThat(captureOperations()).haveExactly(1, step(request));
+                assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                                .haveExactly(1, step(request));
 
                 assertThat(audits.getAudits()).contains(addedAudit());
             }
@@ -525,7 +519,8 @@ public abstract class AbstractDeployerTests {
                         + "    'content' => [('input-stream-index' => 0)],\n"
                         + "    'enabled' => true\n"
                         + "}");
-                assertThat(captureOperations()).haveExactly(1, step(request));
+                assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                                .haveExactly(1, step(request));
             }
 
             public void verifyRemoved(Audits audits) {
@@ -544,9 +539,9 @@ public abstract class AbstractDeployerTests {
                         + "    'operation' => 'remove',\n"
                         + "    'address' => [('deployment' => '" + fullName() + "')]\n"
                         + "}\n");
-                assertThat(captureOperations())
-                        .haveExactly(1, step(undeploy))
-                        .haveExactly(1, step(remove));
+                assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                                .haveExactly(1, step(undeploy))
+                                                .haveExactly(1, step(remove));
             }
 
             public Audit removedAudit() {
@@ -576,8 +571,13 @@ public abstract class AbstractDeployerTests {
 
     private List<Operation> operations;
 
+    private String capturedOperationsDescription() {
+        return "operations: " + capturedOperations().stream().map(Operation::getOperation)
+                                                    .map(ModelNode::toString).collect(joining("\n"));
+    }
+
     @SneakyThrows(IOException.class) @SuppressWarnings("resource")
-    public List<Operation> captureOperations() {
+    public List<Operation> capturedOperations() {
         if (operations == null) {
             ArgumentCaptor<Operation> captor = ArgumentCaptor.forClass(Operation.class);
             verify(cli, atLeastOnce()).execute(captor.capture(), any(OperationMessageHandler.class));
@@ -586,7 +586,7 @@ public abstract class AbstractDeployerTests {
         return operations;
     }
 
-    public List<ModelNode> steps() { return captureOperations().get(0).getOperation().get(STEPS).asList(); }
+    public List<ModelNode> steps() { return capturedOperations().get(0).getOperation().get(STEPS).asList(); }
 
 
     public LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
@@ -670,7 +670,8 @@ public abstract class AbstractDeployerTests {
                     + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
                     + "    'use-parent-handlers' => " + useParentHandlers + "\n"
                     + "}");
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
 
             AuditBuilder audit = LoggerAudit
                     .of(getCategory())
@@ -697,7 +698,8 @@ public abstract class AbstractDeployerTests {
                     + loggerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}");
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
 
             AuditBuilder audit = LoggerAudit.of(getCategory());
             if (level != null)
@@ -723,7 +725,8 @@ public abstract class AbstractDeployerTests {
                     + "    'operation' => 'add-handler',\n"
                     + "    'name' => '" + name + "'\n"
                     + "}");
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("handlers", null, "[" + name + "]").changed());
         }
@@ -735,7 +738,8 @@ public abstract class AbstractDeployerTests {
                     + "    'operation' => 'remove-handler',\n"
                     + "    'name' => '" + name + "'\n"
                     + "}");
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
             assertThat(audits.getAudits()).contains(
                     LoggerAudit.of(getCategory()).change("handlers", "[" + name + "]", null).changed());
         }
@@ -908,7 +912,8 @@ public abstract class AbstractDeployerTests {
             request.get("key").set(key);
             request.get("value").set(value);
 
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
         }
 
         public void verifyRemoveProperty(String key) {
@@ -916,7 +921,8 @@ public abstract class AbstractDeployerTests {
             request.get("name").set("property");
             request.get("key").set(key);
 
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
         }
 
         public void verifyAdded(Audits audits) {
@@ -941,7 +947,8 @@ public abstract class AbstractDeployerTests {
                                         .collect(joining(",\n        "))
                             + "\n    ]\n")
                     + "\n}");
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
 
             expectedAudit.change("level", null, (level == null) ? ALL : level);
             if (format != null)
@@ -968,7 +975,8 @@ public abstract class AbstractDeployerTests {
                     + logHandlerAddress()
                     + "    'operation' => 'remove'\n"
                     + "}");
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
 
             if (this.level != null)
                 expectedAudit.change("level", this.level, null);
@@ -1171,13 +1179,15 @@ public abstract class AbstractDeployerTests {
                     + "}");
 
             if (xa) {
-                assertThat(captureOperations())
-                        .haveExactly(1, step(addRequest))
-                        .haveExactly(1, step(addXaDataSourceProperty("ServerName", jdbcHost())))
-                        .haveExactly(1, step(addXaDataSourceProperty("PortNumber", jdbcPort())))
-                        .haveExactly(1, step(addXaDataSourceProperty("DatabaseName", jdbcDbName())));
+                assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                                .haveExactly(1, step(addRequest))
+                                                .haveExactly(1, step(addXaDataSourceProperty("ServerName", jdbcHost())))
+                                                .haveExactly(1, step(addXaDataSourceProperty("PortNumber", jdbcPort())))
+                                                .haveExactly(1,
+                                                        step(addXaDataSourceProperty("DatabaseName", jdbcDbName())));
             } else {
-                assertThat(captureOperations()).haveExactly(1, step(addRequest));
+                assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                                .haveExactly(1, step(addRequest));
             }
         }
 
@@ -1320,7 +1330,8 @@ public abstract class AbstractDeployerTests {
                     + "    'operation' => 'remove',\n"
                     + dataSourceAddress().substring(0, dataSourceAddress().length() - 1)
                     + "}");
-            assertThat(captureOperations()).haveExactly(1, step(request));
+            assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
+                                            .haveExactly(1, step(request));
         }
 
         public DataSourcePlan asPlan() {

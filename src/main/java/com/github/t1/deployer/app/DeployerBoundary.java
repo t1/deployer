@@ -92,18 +92,24 @@ public class DeployerBoundary {
     }
 
     @GET
-    @javax.ws.rs.Path("/bundles")
-    public BundleTree getBundles() {
-        Expressions expressions = new Expressions() {
-            @Override public String resolve(String line, String alternative) {
-                if (alternative == null && line.startsWith("${") && line.endsWith("}"))
-                    return line;
-                return super.resolve(line, alternative);
-            }
-        };
+    @javax.ws.rs.Path("/variables")
+    public Set<VariableName> getVariables() {
+        String plan = readPlan();
+        return scanVariableNames(plan);
+    }
+
+    private String readPlan() {
         Reader reader = hasRootBundleConfigFile() ? reader(getRootBundlePath()) : new StringReader(DEFAULT_ROOT_BUNDLE);
-        Plan plan = Plan.load(expressions, reader, "get root bundle");
-        return BundleTree.from(plan);
+        return new Scanner(reader).useDelimiter("\\A").next();
+    }
+
+    private Set<VariableName> scanVariableNames(String plan) {
+        Set<VariableName> result = new TreeSet<>();
+        new Expressions().withFinalResolver(expression -> {
+            result.add(new VariableName(expression));
+            return Match.of(expression);
+        }).resolve(plan, null);
+        return result;
     }
 
 
@@ -123,7 +129,7 @@ public class DeployerBoundary {
             throw e;
         }
 
-        if (rootBundle != null && rootBundle.getShutdownAfterBoot() == TRUE)
+        if (rootBundleConfig != null && rootBundleConfig.getShutdownAfterBoot() == TRUE)
             container.shutdown();
     }
 
@@ -133,7 +139,7 @@ public class DeployerBoundary {
     @Inject Repository repository;
 
     @Inject @Config("variables") Map<VariableName, String> configuredVariables;
-    @Inject @Config("root-bundle") RootBundleConfig rootBundle;
+    @Inject @Config("root-bundle") RootBundleConfig rootBundleConfig;
     @Inject @Config("key-store") KeyStoreConfig keyStore;
     @Inject @Config("triggers") Set<Trigger> triggers;
     @Inject @Config("use.default.config") boolean useDefaultConfig;
@@ -189,7 +195,7 @@ public class DeployerBoundary {
     private class Applying {
         private Expressions expressions = new Expressions()
                 .withAllNew(configuredVariables)
-                .withRootBundle(rootBundle)
+                .withRootBundleConfig(rootBundleConfig)
                 .withKeyStore(keyStore);
 
         private Applying withVariables(Map<VariableName, String> variables) {

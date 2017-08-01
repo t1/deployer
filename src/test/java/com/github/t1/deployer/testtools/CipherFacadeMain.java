@@ -17,8 +17,9 @@ import static com.github.t1.deployer.tools.CipherFacade.*;
 public class CipherFacadeMain {
     public static void main(String... args) { System.out.println(new CipherFacadeMain(args).run()); }
 
-    public CipherFacadeMain(String[] args) {
-        JCommander cli = new JCommander(this, args);
+    private CipherFacadeMain(String[] args) {
+        JCommander cli = new JCommander(this);
+        cli.parse(args);
         if (help) {
             cli.usage();
             System.exit(1);
@@ -37,7 +38,7 @@ public class CipherFacadeMain {
     @Parameter(names = "--storepass", description = "The password required to open the keystore")
     private String storepass = DEFAULT_PASS;
     @Parameter(names = "--alias", description = "The 'name' of the key in the keystore")
-    private String alias = "secretkey";
+    private String alias = "secret" + "key";
     @Parameter(names = "--decrypt", description = "Decrypt instead of encrypt")
     private boolean decrypt = false;
     @Parameter(names = "--uri",

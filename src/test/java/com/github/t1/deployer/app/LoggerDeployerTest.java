@@ -382,7 +382,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
                 + "    handlers: [FOO,BAR]\n");
 
 
-        assertThat(captureOperations())
+        assertThat(capturedOperations())
                 .haveExactly(1, step(toModelNode(""
                         + "{\n"
                         + logger.loggerAddress()
@@ -418,7 +418,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
                 + "    level: DEBUG\n"
                 + "    handlers: [FOO]\n");
 
-        assertThat(captureOperations())
+        assertThat(capturedOperations())
                 .haveExactly(1, step(toModelNode(""
                         + "{\n"
                         + logger.loggerAddress()

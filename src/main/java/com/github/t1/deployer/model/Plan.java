@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -41,19 +42,19 @@ public final class Plan {
             .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             .findAndRegisterModules();
 
-    public static class PlanLoadingException extends RuntimeException {
+    static class PlanLoadingException extends RuntimeException {
         private static final long serialVersionUID = -1L;
 
-        public PlanLoadingException(String message) { super(message); }
+        PlanLoadingException(String message) { super(message); }
 
-        public PlanLoadingException(String message, Throwable cause) { super(message, cause); }
+        private PlanLoadingException(String message, Throwable cause) { super(message, cause); }
     }
 
     private static final Plan EMPTY_PLAN = Plan.builder().build();
 
     static Expressions expressions = null;
 
-    public static Plan load(Expressions expressions, Reader reader, String sourceMessage) {
+    public static Plan load(@NotNull Expressions expressions, Reader reader, String sourceMessage) {
         return Plan.with(expressions, sourceMessage, () -> {
             Plan plan = YAML.readValue(reader, Plan.class);
             if (plan == null)
@@ -64,6 +65,7 @@ public final class Plan {
     }
 
     public static synchronized Plan with(Expressions expressions, String sourceMessage, Callable<Plan> callable) {
+        assert Plan.expressions == null : "can not reenter Plan#load";
         Plan.expressions = expressions;
         try {
             return callable.call();
@@ -84,7 +86,7 @@ public final class Plan {
         return builder.build();
     }
 
-    public static <K, V> void readAll(JsonNode jsonNode, Function<String, K> toKey, BiFunction<K, JsonNode, V> toPlan,
+    private static <K, V> void readAll(JsonNode jsonNode, Function<String, K> toKey, BiFunction<K, JsonNode, V> toPlan,
             Consumer<V> consumer) {
         if (jsonNode != null)
             jsonNode.fieldNames().forEachRemaining(
@@ -158,7 +160,7 @@ public final class Plan {
                 ? expressions.resolve(node.get(fieldName).asText(), alternativeExpression)
                 : null;
         if (value == null && alternativeExpression != null)
-            value = expressions.resolver(alternativeExpression).getValueOrNull();
+            value = expressions.resolver().match(alternativeExpression).getValueOrNull();
         setter.accept((value == null) ? null : convert.apply(value));
     }
 
