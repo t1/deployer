@@ -20,6 +20,8 @@ import java.nio.file.*;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.model.ProcessState.*;
@@ -99,16 +101,37 @@ public class DeployerBoundary {
     }
 
     private String readPlan() {
-        Reader reader = hasRootBundleConfigFile() ? reader(getRootBundlePath()) : new StringReader(DEFAULT_ROOT_BUNDLE);
+        Reader reader = hasRootBundleConfigFile() ? reader(getRootBundlePath()) : rootBundleReader();
         return new Scanner(reader).useDelimiter("\\A").next();
+    }
+
+    private Reader rootBundleReader() {
+        AtomicBoolean hasUnresolvedVariables = new AtomicBoolean(false);
+        Expressions expressions = expressions().withFinalResolver(expression -> {
+            log.debug("unresolved variable in default root bundle: {}", expression);
+            hasUnresolvedVariables.set(true);
+            return Match.of(expression);
+        });
+        Plan defaultRootBundle = Plan.load(expressions, new StringReader(DEFAULT_ROOT_BUNDLE), "root bundle");
+        if (hasUnresolvedVariables.get())
+            return new StringReader(DEFAULT_ROOT_BUNDLE);
+        Map<BundleName, BundlePlan> bundles = defaultRootBundle.getBundles();
+        assert bundles.size() == 1 : "expected default root bundle to have exactly one bundle";
+        BundlePlan bundle = bundles.values().iterator().next();
+        Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
+                bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
+        if (artifact == null)
+            throw badRequest("root bundle not found: " + bundle);
+        return artifact.getReader();
     }
 
     private Set<VariableName> scanVariableNames(String plan) {
         Set<VariableName> result = new TreeSet<>();
-        new Expressions().withFinalResolver(expression -> {
+        Expressions expressions = new Expressions().withFinalResolver(expression -> {
             result.add(new VariableName(expression));
             return Match.of(expression);
-        }).resolve(plan, null);
+        });
+        Stream.of(plan.split("\n")).forEach(line -> expressions.resolve(line, null));
         return result;
     }
 
@@ -147,25 +170,31 @@ public class DeployerBoundary {
     @Inject Audits audits;
     @Inject Instance<Deployer> deployers;
 
+    private Expressions expressions() {
+        return new Expressions()
+                .withAllNew(configuredVariables)
+                .withRootBundleConfig(rootBundleConfig)
+                .withKeyStore(keyStore);
+    }
 
     public void apply(Trigger trigger, Map<VariableName, String> variables) {
         synchronized (CONTAINER_LOCK) {
             if (triggers.contains(trigger)) {
-                Applying applying = new Applying().withVariables(variables);
+                Execution execution = new Execution().withVariables(variables);
 
                 try {
                     container.startBatch();
                     if (hasRootBundleConfigFile()) {
                         Path plan = getRootBundlePath();
                         log.info("load plan from: {}", plan);
-                        applying.apply(reader(plan), plan.toString());
+                        execution.apply(reader(plan), plan.toString());
                     } else if (useDefaultConfig) {
                         throw new RuntimeException("For security reasons, applying the default root bundle "
                                 + "is only allowed when there is a configuration file. "
                                 + "See https://github.com/t1/deployer/issues/61");
                     } else {
                         log.info("load default root plan");
-                        applying.apply(new StringReader(DEFAULT_ROOT_BUNDLE), "default root bundle");
+                        execution.apply(new StringReader(DEFAULT_ROOT_BUNDLE), "default root bundle");
                     }
                 } catch (RuntimeException e) {
                     container.rollbackBatch();
@@ -192,13 +221,10 @@ public class DeployerBoundary {
     }
 
 
-    private class Applying {
-        private Expressions expressions = new Expressions()
-                .withAllNew(configuredVariables)
-                .withRootBundleConfig(rootBundleConfig)
-                .withKeyStore(keyStore);
+    private class Execution {
+        private Expressions expressions = expressions();
 
-        private Applying withVariables(Map<VariableName, String> variables) {
+        private Execution withVariables(Map<VariableName, String> variables) {
             this.expressions = this.expressions.withAllNew(variables);
             return this;
         }
