@@ -29,6 +29,7 @@ public class PlanSerializationTest {
     private static Expressions expressions = mock(Expressions.class);
 
     static {
+        when(expressions.resolve(anyString())).then(invocation -> invocation.getArgument(0));
         when(expressions.resolve(anyString(), any())).then(invocation -> invocation.getArgument(0));
         when(expressions.resolver()).then(i -> (Resolver) expression -> Match.PROCEED);
     }

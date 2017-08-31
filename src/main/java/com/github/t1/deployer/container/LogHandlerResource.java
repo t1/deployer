@@ -1,6 +1,5 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.LogHandlerName;
 import com.github.t1.deployer.model.*;
 import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
@@ -231,7 +230,10 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
     }
 
     private ImmutableMap.Builder<String, String> propertiesBuilder() {
-        return ImmutableMap.<String, String>builder().putAll(this.properties);
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder();
+        if (this.properties != null)
+            builder.putAll(this.properties);
+        return builder;
     }
 
 

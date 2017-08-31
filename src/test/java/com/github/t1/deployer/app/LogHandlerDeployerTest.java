@@ -605,7 +605,47 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldAddCustomHandler() {
+    public void shouldAddCustomHandlerWithoutProperties() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .class_("org.foo.MyHandler");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n");
+
+        fixture.verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldFailToAddCustomHandlerWithoutModule() {
+        Throwable throwable = catchThrowable(() -> deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    class: org.foo.MyHandler\n"));
+
+        assertThat(throwable).hasStackTraceContaining(
+                "log-handler [FOO] is of type [custom], so it requires a 'module'");
+    }
+
+    @Test
+    public void shouldFailToAddCustomHandlerWithoutClass() {
+        Throwable throwable = catchThrowable(() -> deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"));
+
+        assertThat(throwable).hasStackTraceContaining(
+                "log-handler [FOO] is of type [custom], so it requires a 'class'");
+    }
+
+    @Test
+    public void shouldAddCustomHandlerWithProperties() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
                 .module("org.foo")
                 .class_("org.foo.MyHandler")
@@ -627,6 +667,61 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
                 + "      foos: bars\n");
 
         fixture.verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldAddCustomLogHandlerWithFile() {
+        LogHandlerFixture logHandler = givenLogHandler(custom, "CUSTOM")
+                .module("foo")
+                .class_("bar")
+                .file("baz");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  CUSTOM:\n"
+                + "    type: custom\n"
+                + "    module: foo\n"
+                + "    class: bar\n"
+                + "    file: baz\n"
+        );
+
+        logHandler.verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldAddCustomLogHandlerWithSuffix() {
+        LogHandlerFixture logHandler = givenLogHandler(custom, "CUSTOM")
+                .module("foo")
+                .class_("bar")
+                .file("baz");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  CUSTOM:\n"
+                + "    type: custom\n"
+                + "    module: foo\n"
+                + "    class: bar\n"
+                + "    file: baz\n"
+        );
+
+        logHandler.verifyAdded(audits);
+    }
+
+    @Test
+    public void shouldAddCustomHandlerWithEscapedAndUnescapedVariablesInAttributes() {
+        givenConfiguredVariable("module", "bar");
+        LogHandlerFixture logHandler = givenLogHandler(custom, "FOO")
+                .module("bar")
+                .class_("${class}");
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: ${module}\n"
+                + "    class: $${class}\n");
+
+        logHandler.verifyAdded(audits);
     }
 
     @Test
@@ -682,7 +777,28 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldAddCustomHandlerProperty() {
+    public void shouldAddFirstCustomHandlerProperty() {
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .level(ALL)
+                .module("org.foo")
+                .class_("org.foo.MyHandler")
+                .deployed();
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    properties:\n"
+                + "      foo: bar\n");
+
+        fixture.verifyPutProperty("foo", "bar");
+        fixture.expectChange("property:foo", null, "bar").verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldAddThirdCustomHandlerProperty() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
                 .module("org.foo")
                 .class_("org.foo.MyHandler")
@@ -707,6 +823,35 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
 
         fixture.verifyPutProperty("bax", "bbb");
         fixture.expectChange("property:bax", null, "bbb").verifyChanged(audits);
+    }
+
+    @Test
+    public void shouldAddCustomHandlerPropertyWithExpression() {
+        givenConfiguredVariable("bars", "bar");
+        givenConfiguredVariable("var", "val");
+        LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
+                .module("org.foo")
+                .level(ALL)
+                .class_("org.foo.MyHandler")
+                .property("foo", "1")
+                .deployed();
+
+        Audits audits = deploy(""
+                + "log-handlers:\n"
+                + "  FOO:\n"
+                + "    type: custom\n"
+                + "    module: org.foo\n"
+                + "    class: org.foo.MyHandler\n"
+                + "    properties:\n"
+                + "      foo: 1\n"
+                + "      ${bars}: ${var}\n"
+                + "      $${baz}: $${none}\n");
+
+        fixture.verifyPutProperty("bar", "val");
+        fixture.verifyPutProperty("${baz}", "${none}");
+        fixture.expectChange("property:bar", null, "val")
+               .expectChange("property:${baz}", null, "${none}")
+               .verifyChanged(audits);
     }
 
     @Test

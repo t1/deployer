@@ -932,10 +932,12 @@ public abstract class AbstractDeployerTests {
                     + ",\n    'level' => '" + ((level == null) ? "ALL" : level) + "'"
                     + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
                     + ((format == null) ? "" : ",\n    'formatter' => '" + format + "'")
-                    + ((type != periodicRotatingFile) ? "" : ",\n    'file' => {\n"
+                    + (hasFile()
+                               ? ",\n    'file' => {\n"
                     + "        'path' => '" + ((file == null) ? name.getValue().toLowerCase() + ".log" : file) + "',\n"
                     + "        'relative-to' => 'jboss.server.log.dir'\n"
-                    + "    }")
+                    + "    }"
+                               : "")
                     + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
                     + ((encoding == null) ? "" : ",\n    'encoding' => '" + encoding + "'")
                     + ((module == null) ? "" : ",\n    'module' => '" + module + "'")
@@ -957,7 +959,7 @@ public abstract class AbstractDeployerTests {
                 expectedAudit.change("formatter", null, formatter);
             if (encoding != null)
                 expectedAudit.change("encoding", null, encoding);
-            if (type == periodicRotatingFile)
+            if (hasFile())
                 expectedAudit.change("file", null, (file == null) ? name.getValue().toLowerCase() + ".log" : file);
             if (suffix != null)
                 expectedAudit.change("suffix", null, suffix);
@@ -968,6 +970,10 @@ public abstract class AbstractDeployerTests {
             if (properties != null)
                 properties.forEach((key, value) -> expectedAudit.change("property:" + key, null, value));
             assertThat(audits.getAudits()).contains(expectedAudit.added());
+        }
+
+        private boolean hasFile() {
+            return type == periodicRotatingFile || (type == custom && file != null);
         }
 
         public void verifyRemoved(Audits audits) {

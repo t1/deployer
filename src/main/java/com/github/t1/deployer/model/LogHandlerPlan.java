@@ -65,19 +65,27 @@ public final class LogHandlerPlan implements AbstractPlan {
         case periodicRotatingFile:
             apply(node, "file", builder::file, identity(),
                     "«" + (builder.name.getValue().toLowerCase() + ".log") + "»");
-            apply(node, "suffix", builder::suffix, identity(),
-                    "default.log-file-suffix or «" + DEFAULT_SUFFIX + "»");
+            applySuffix(node, builder, true);
             return;
         case custom:
+            apply(node, "file", builder::file, identity(), null);
+            applySuffix(node, builder, false);
             apply(node, "module", builder::module, identity());
             apply(node, "class", builder::class_, identity());
             if (node.has("properties") && !node.get("properties").isNull())
-                node.get("properties").fieldNames().forEachRemaining(fieldName
-                        -> builder.property(fieldName, node.get("properties").get(fieldName).asText()));
+                node.get("properties").fieldNames().forEachRemaining(fieldName ->
+                        builder.property(
+                                expressions.resolve(fieldName),
+                                expressions.resolve(node.get("properties").get(fieldName).asText())));
             return;
         }
         throw new PlanLoadingException("unhandled log-handler type [" + builder.type + "]"
                 + " in [" + builder.name + "]");
+    }
+
+    private static void applySuffix(JsonNode node, LogHandlerPlanBuilder builder, boolean defaultSuffix) {
+        apply(node, "suffix", builder::suffix, identity(),
+                "default.log-file-suffix" + (defaultSuffix ? " or «" + DEFAULT_SUFFIX + "»" : ""));
     }
 
     /* make builder fields visible */ public static class LogHandlerPlanBuilder {}

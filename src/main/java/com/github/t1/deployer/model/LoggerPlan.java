@@ -49,7 +49,7 @@ public final class LoggerPlan implements Plan.AbstractPlan {
         } else if (node.has("handlers")) {
             Iterator<JsonNode> handlers = node.get("handlers").elements();
             while (handlers.hasNext())
-                builder.handler(Plan.expressions.resolve(handlers.next().textValue(), null));
+                builder.handler(Plan.expressions.resolve(handlers.next().textValue()));
         }
     }
 

@@ -131,7 +131,7 @@ public class DeployerBoundary {
             result.add(new VariableName(expression));
             return Match.of(expression);
         });
-        Stream.of(plan.split("\n")).forEach(line -> expressions.resolve(line, null));
+        Stream.of(plan.split("\n")).forEach(expressions::resolve);
         return result;
     }
 

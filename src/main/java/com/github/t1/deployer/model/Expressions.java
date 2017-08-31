@@ -107,6 +107,8 @@ public class Expressions {
      * Replaces all expressions starting with `${` and ending with `}` - may be escaped with a second `$`,
      * i.e. `$${a}` will be replaced by `${a}`.
      */
+    public String resolve(String line) { return resolve(line, null); }
+
     public String resolve(String line, String alternative) {
         StringBuilder out = new StringBuilder();
         if (line.contains("#"))
@@ -192,7 +194,8 @@ public class Expressions {
         @Override public Match match(String expression) {
             for (String subExpression : split(expression, " or ")) {
                 log.trace("try to resolve variable expression [{}]", subExpression);
-                resolvers: for (Resolver resolver : resolvers) {
+                resolvers:
+                for (Resolver resolver : resolvers) {
                     Match match = resolver.match(subExpression);
                     switch (match.mode) {
                     case matches:
@@ -315,7 +318,7 @@ public class Expressions {
             String subExpression = BUNDLE.get(fieldName).apply(rootBundleConfig);
             if (subExpression == null)
                 return Match.STOP;
-            return Match.of(Expressions.this.resolve(subExpression, null));
+            return Match.of(Expressions.this.resolve(subExpression));
         }
 
     }
