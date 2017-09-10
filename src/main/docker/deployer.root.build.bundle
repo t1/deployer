@@ -8,7 +8,9 @@ loggers:
   com.github.t1.deployer:
     handlers: [DEPLOYER,CONSOLE]
 deployables:
-  jolokia:
-    group-id: org.jolokia
-    artifact-id: jolokia-war
-    version: LATEST
+#  jolokia:
+#    group-id: org.jolokia
+#    artifact-id: jolokia-war
+#    version: LATEST
+#  ping:
+#    version: UNSTABLE

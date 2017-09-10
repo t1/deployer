@@ -1,0 +1,18 @@
+log-handlers:
+  CONSOLE:
+    type: console
+    level: ALL
+    formatter: COLOR-PATTERN
+  DEPLOYER:
+loggers:
+  com.github.t1.deployer:
+    handlers: [DEPLOYER,CONSOLE]
+deployables:
+#  jolokia:
+#    group-id: org.jolokia
+#    artifact-id: jolokia-war
+#    version: ${jolokia.version}
+#    state: ${jolokia.state or «deployed»}
+#  ping:
+#    version: ${ping.version}
+#    state: ${ping.state or «deployed»}

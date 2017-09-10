@@ -1,5 +1,6 @@
 vars:
   default.log-encoding: UTF-8
+  default.group-id: com.github.t1
 root-bundle:
   shutdown-after-boot: true
 triggers: [startup]
