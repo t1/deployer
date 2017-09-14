@@ -1,5 +1,5 @@
 FROM jboss/wildfly
-MAINTAINER https://github.com/t1
+LABEL maintainer=https://github.com/t1 license=Apache-2.0 name= build-date= vendor=
 
 COPY target/deployer.war ${JBOSS_HOME}/standalone/deployments/
 COPY deployer.config.build.yaml ${JBOSS_HOME}/standalone/configuration/deployer.config.yaml
