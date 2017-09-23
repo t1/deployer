@@ -16,7 +16,7 @@ public class ArtifactoryMockIndexBuilder {
     }
 
     @SneakyThrows(IOException.class)
-    public void run() {
+    void run() {
         System.out.println("build local maven repository checksum index");
         INDEX.clear();
         BuildChecksumsFileVisitor visitor = new BuildChecksumsFileVisitor(MAVEN_REPOSITORY);

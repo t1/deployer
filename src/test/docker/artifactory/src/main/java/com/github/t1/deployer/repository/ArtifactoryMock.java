@@ -1,0 +1,1 @@
+../../../../../../../../../../java/com/github/t1/deployer/repository/ArtifactoryMock.java

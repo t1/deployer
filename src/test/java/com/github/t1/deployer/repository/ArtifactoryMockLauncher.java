@@ -15,7 +15,10 @@ import org.jboss.aesh.console.command.registry.*;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 import static ch.qos.logback.classic.Level.*;
+import static java.util.Arrays.*;
 
 /**
  * If you don't have a real Artifactory Pro available, launch this, which will start a more or less working mock of
@@ -24,9 +27,8 @@ import static ch.qos.logback.classic.Level.*;
  */
 public class ArtifactoryMockLauncher extends Application<Configuration> {
     public static void main(String... args) throws Exception {
-        if (args.length == 0)
-            args = new String[] { "server" };
-        new ArtifactoryMockLauncher().run(args);
+        ArtifactoryMockLauncher launcher = new ArtifactoryMockLauncher(args);
+        launcher.run("server");
     }
 
     private static class DummyHealthCheck extends HealthCheck {
@@ -36,14 +38,11 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
         }
     }
 
-    protected Server jettyServer;
+    private final List<String> commands;
 
-    private boolean console = true;
+    private Server jettyServer;
 
-    public ArtifactoryMockLauncher noConsole() {
-        console = false;
-        return this;
-    }
+    public ArtifactoryMockLauncher(String... args) { this.commands = asList(args); }
 
     @Override
     public void run(Configuration configuration, Environment environment) {
@@ -62,15 +61,24 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
         setLogLevel("com.github.t1.rest", DEBUG);
         setLogLevel("com.github.t1.deployer", DEBUG);
 
-        if (console)
+        if (commands.contains("cli"))
             environment.lifecycle().addServerLifecycleListener(server -> {
                 jettyServer = server;
                 startConsole();
+            });
+        if (commands.contains("index"))
+            environment.lifecycle().addServerLifecycleListener(server -> {
+                jettyServer = server;
+                rebuildIndex();
             });
     }
 
     private void setLogLevel(String loggerName, Level level) {
         ((Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
+    }
+
+    private void rebuildIndex() {
+        new ArtifactoryMockIndexBuilder().run();
     }
 
     private void startConsole() {
@@ -96,7 +104,8 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            invocation.stop();
+            if (invocation != null)
+                invocation.stop();
             return CommandResult.SUCCESS;
         }
     }
@@ -105,8 +114,7 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
     public class IndexCommand implements Command<CommandInvocation> {
         @Override
         public CommandResult execute(CommandInvocation invocation) {
-            new ArtifactoryMockIndexBuilder().run();
-            ArtifactoryMock.INDEX.clear();
+            rebuildIndex();
             return CommandResult.SUCCESS;
         }
     }

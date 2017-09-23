@@ -3,7 +3,6 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.model.*;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
-import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.*;
 import com.github.t1.xml.Xml;
 import lombok.extern.slf4j.Slf4j;
@@ -95,7 +94,7 @@ public class DeployerIT {
         if (USE_ARTIFACTORY_MOCK)
             try {
                 // TODO can we instead deploy this? or use DropwizardClientRule?
-                new ArtifactoryMockLauncher().noConsole().run("server");
+                ArtifactoryMockLauncher.main();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

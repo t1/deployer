@@ -71,7 +71,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <contextDirectory>src/main/docker</contextDirectory>
                     <repository>deployer/wildfly</repository>
                     <tag>${project.version}</tag>
                 </configuration>

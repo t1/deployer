@@ -178,4 +178,4 @@ ${m2}/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.0.M1/org.eclipse.sisu.inject-
 ${m2}/org/arquillian/spacelift/arquillian-spacelift/1.0.0.Alpha9/arquillian-spacelift-1.0.0.Alpha9.jar:\
 ${m2}/org/arquillian/spacelift/arquillian-spacelift-api/1.0.0.Alpha9/arquillian-spacelift-api-1.0.0.Alpha9.jar:\
 ${m2}/org/apache/commons/commons-compress/1.8.1/commons-compress-1.8.1.jar \
-com.github.t1.deployer.repository.ArtifactoryMockLauncher
+com.github.t1.deployer.repository.ArtifactoryMockLauncher $*
