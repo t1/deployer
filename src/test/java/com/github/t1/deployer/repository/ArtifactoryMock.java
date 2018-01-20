@@ -14,7 +14,6 @@ import javax.ws.rs.core.*;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.format.*;
@@ -23,7 +22,9 @@ import java.util.*;
 import static com.github.t1.deployer.model.ArtifactType.*;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
 import static com.github.t1.problem.WebException.*;
+import static java.lang.Boolean.TRUE;
 import static java.lang.ProcessBuilder.Redirect.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.*;
 import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.*;
@@ -33,10 +34,11 @@ import static javax.ws.rs.core.Response.Status.*;
  * @see ArtifactoryMockLauncher
  * @see ArtifactoryMockIndexBuilder
  */
+@SuppressWarnings("Duplicates")
 @Slf4j
 @Path("/")
 public class ArtifactoryMock {
-    @SuppressWarnings("SpellCheckingInspection") public static final DateTimeFormatter TIMESTAMP
+    @SuppressWarnings("SpellCheckingInspection") private static final DateTimeFormatter TIMESTAMP
             = new DateTimeFormatterBuilder().appendPattern("yyyyMMddHHmmss").toFormatter();
     private static final String BASIC_FOO_BAR_AUTHORIZATION = "Basic Zm9vOmJhcg==";
     private static final String MAVEN_METADATA_XML = "maven-metadata.xml";
@@ -50,11 +52,9 @@ public class ArtifactoryMock {
         return MediaType.valueOf("application/vnd.org.jfrog.artifactory.storage." + type + "+json");
     }
 
-    static final Charset UTF_8 = Charset.forName("UTF-8");
-
     private static final java.nio.file.Path MAVEN_HOME = Paths.get(System.getProperty("user.home"), ".m2");
     static final java.nio.file.Path MAVEN_REPOSITORY = MAVEN_HOME.resolve("repository");
-    static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
+    private static final java.nio.file.Path MAVEN_INDEX_FILE = MAVEN_HOME.resolve("checksum.index");
 
     static final BiMap<Checksum, java.nio.file.Path> INDEX = HashBiMap.create();
 
@@ -80,34 +80,34 @@ public class ArtifactoryMock {
 
     @SneakyThrows(IOException.class)
     private static void createDummyMetaData(GroupId groupId, ArtifactId artifactId, Version version,
-            java.nio.file.Path path) {
+                                            java.nio.file.Path path) {
         log.debug("create dummy meta-data {}:{}:{} in {}", groupId, artifactId, version, path);
         String lastUpdate = TIMESTAMP.format(Files.getLastModifiedTime(path).toInstant().atOffset(UTC));
         Files.write(path.getParent().resolve("maven-metadata-local.xml"),
                 ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                         + "<metadata modelVersion=\"1.1.0\">\n"
-                         + "  <groupId>" + groupId + "</groupId>\n"
-                         + "  <artifactId>" + artifactId + "</artifactId>\n"
-                         + "  <version>" + version + "</version>\n"
-                         + "  <versioning>\n"
-                         + "    <snapshot>\n"
-                         + "      <localCopy>true</localCopy>\n"
-                         + "    </snapshot>\n"
-                         + "    <lastUpdated>" + lastUpdate + "</lastUpdated>\n"
-                         + "    <snapshotVersions>\n"
-                         + "      <snapshotVersion>\n"
-                         + "        <extension>war</extension>\n"
-                         + "        <value>" + version + "</value>\n"
-                         + "        <updated>" + lastUpdate + "</updated>\n"
-                         + "      </snapshotVersion>\n"
-                         + "      <snapshotVersion>\n"
-                         + "        <extension>pom</extension>\n"
-                         + "        <value>" + version + "</value>\n"
-                         + "        <updated>" + lastUpdate + "</updated>\n"
-                         + "      </snapshotVersion>\n"
-                         + "    </snapshotVersions>\n"
-                         + "  </versioning>\n"
-                         + "</metadata>\n"
+                        + "<metadata modelVersion=\"1.1.0\">\n"
+                        + "  <groupId>" + groupId + "</groupId>\n"
+                        + "  <artifactId>" + artifactId + "</artifactId>\n"
+                        + "  <version>" + version + "</version>\n"
+                        + "  <versioning>\n"
+                        + "    <snapshot>\n"
+                        + "      <localCopy>true</localCopy>\n"
+                        + "    </snapshot>\n"
+                        + "    <lastUpdated>" + lastUpdate + "</lastUpdated>\n"
+                        + "    <snapshotVersions>\n"
+                        + "      <snapshotVersion>\n"
+                        + "        <extension>war</extension>\n"
+                        + "        <value>" + version + "</value>\n"
+                        + "        <updated>" + lastUpdate + "</updated>\n"
+                        + "      </snapshotVersion>\n"
+                        + "      <snapshotVersion>\n"
+                        + "        <extension>pom</extension>\n"
+                        + "        <value>" + version + "</value>\n"
+                        + "        <updated>" + lastUpdate + "</updated>\n"
+                        + "      </snapshotVersion>\n"
+                        + "    </snapshotVersions>\n"
+                        + "  </versioning>\n"
+                        + "</metadata>\n"
                 ).getBytes());
     }
 
@@ -122,16 +122,16 @@ public class ArtifactoryMock {
     }
 
     private static java.nio.file.Path toPath(GroupId groupId, ArtifactId artifactId, ArtifactType type,
-            Version version) {
+                                             Version version) {
         return groupId.asPath().resolve(artifactId.getValue()).resolve(version.getValue())
-                      .resolve(artifactId + "-" + version + "." + type);
+                .resolve(artifactId + "-" + version + "." + type);
     }
 
-    @SneakyThrows({ IOException.class, InterruptedException.class })
+    @SneakyThrows({IOException.class, InterruptedException.class})
     private static void download(GroupId groupId, ArtifactId artifactId, ArtifactType type, Version version) {
         log.debug("download {}:{}:{}:{}", groupId, artifactId, type, version);
         File out = Paths.get("target/download-" + groupId + ":" + artifactId + ":" + type + ":" + version + ".out")
-                        .toFile();
+                .toFile();
         Process process = new ProcessBuilder(
                 "mvn",
                 "dependency:get",
@@ -152,43 +152,46 @@ public class ArtifactoryMock {
         writeIndex();
     }
 
-    static BiMap<Checksum, java.nio.file.Path> index() {
+    private static BiMap<Checksum, java.nio.file.Path> index() {
         if (INDEX.isEmpty())
-            readIndex();
+            if (Files.isReadable(MAVEN_INDEX_FILE))
+                readIndex();
+            else log.warn("index file not readable: {}", MAVEN_INDEX_FILE);
         return INDEX;
     }
 
     @SneakyThrows(IOException.class)
     private static void readIndex() {
-        if (Files.isReadable(MAVEN_INDEX_FILE))
-            try (BufferedReader reader = Files.newBufferedReader(MAVEN_INDEX_FILE, UTF_8)) {
-                while (true) {
-                    String line = reader.readLine();
-                    if (line == null)
-                        break;
-                    int index = line.indexOf(":");
-                    if (index != 40)
-                        throw new IllegalStateException("unexpected line in index file");
-                    Checksum checksum = Checksum.ofHexString(line.substring(0, index));
-                    java.nio.file.Path path = Paths.get(line.substring(index + 1));
-                    INDEX.put(checksum, path);
-                }
+        log.debug("read index from {}", MAVEN_INDEX_FILE);
+        try (BufferedReader reader = Files.newBufferedReader(MAVEN_INDEX_FILE, UTF_8)) {
+            while (true) {
+                String line = reader.readLine();
+                if (line == null)
+                    break;
+                int index = line.indexOf(":");
+                if (index != 40)
+                    throw new IllegalStateException("unexpected line in index file");
+                Checksum checksum = Checksum.ofHexString(line.substring(0, index));
+                java.nio.file.Path path = Paths.get(line.substring(index + 1));
+                INDEX.put(checksum, path);
             }
+        }
+        log.debug("index read with {} entries", INDEX.size());
     }
 
     @SneakyThrows(IOException.class)
     static void writeIndex() {
         try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
             INDEX.entrySet().stream()
-                 .sorted(Comparator.comparing(Map.Entry::getValue))
-                 .forEach(entry -> write(writer, entry));
+                    .sorted(Comparator.comparing(Map.Entry::getValue))
+                    .forEach(entry -> write(writer, entry));
         }
     }
 
     private static void write(BufferedWriter writer, Map.Entry<Checksum, java.nio.file.Path> entry) {
         try {
             writer.append(entry.getKey().hexString()).append(":")
-                  .append(entry.getValue().toString()).append("\n");
+                    .append(entry.getValue().toString()).append("\n");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -201,12 +204,12 @@ public class ArtifactoryMock {
     static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("3333333333333333333333333333333333333333");
 
     public static final DeploymentName FOO = new DeploymentName("foo");
-    public static final DeploymentName BAR = new DeploymentName("bar");
+    private static final DeploymentName BAR = new DeploymentName("bar");
 
     private static final Version NEWEST_FOO_VERSION = new Version("1.3.10");
     static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
 
-    static final List<Version> FOO_VERSIONS = asList(
+    private static final List<Version> FOO_VERSIONS = asList(
             NEWEST_FOO_VERSION,
             new Version("1.3.12"),
             new Version("1.3.2"),
@@ -262,6 +265,25 @@ public class ArtifactoryMock {
     @Setter
     private boolean requireAuthorization = false;
 
+    private static int lives = 5;
+
+    @GET
+    @Path("/liveness")
+    public Response getLiveness(@QueryParam("kill") Boolean kill) {
+        if (kill == TRUE)
+            lives--;
+        return Response.status(lives > 0 ? OK : BAD_GATEWAY)
+                .type(APPLICATION_JSON_TYPE)
+                .entity("{" +
+                        "\"status\":\"ok\"," +
+                        "\"lives\":\"" + lives + "\"" +
+                        "}\n").build();
+    }
+
+    @POST
+    @Path("/refresh")
+    public void postRefresh() { INDEX.clear(); }
+
     @GET
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
@@ -311,11 +333,11 @@ public class ArtifactoryMock {
         }
     }
 
-    public static Checksum fakeChecksumFor(DeploymentName name) {
+    static Checksum fakeChecksumFor(DeploymentName name) {
         return fakeChecksumFor(name, fakeVersionFor(name));
     }
 
-    public static Version fakeVersionFor(DeploymentName name) {
+    private static Version fakeVersionFor(DeploymentName name) {
         if (FOO.equals(name)) {
             return CURRENT_FOO_VERSION;
         } else if (BAR.equals(name)) {
@@ -344,9 +366,9 @@ public class ArtifactoryMock {
 
     private static java.nio.file.Path fakePathFor(DeploymentName name, Version version) {
         return REPO_NAME.resolve(fakeGroupId(name).replace(".", "/"))
-                        .resolve(fakeArtifactId(name))
-                        .resolve(version.toString())
-                        .resolve(name + "-" + version + ".war");
+                .resolve(fakeArtifactId(name))
+                .resolve(version.toString())
+                .resolve(name + "-" + version + ".war");
     }
 
     private static String fakeGroupId(DeploymentName name) { return "org." + name; }
@@ -389,7 +411,7 @@ public class ArtifactoryMock {
     @GET
     @Path("/api/storage/{repoKey}/{path:.*}")
     public Response fileOrFolderInfo(@HeaderParam("Authorization") String authorization,
-            @PathParam("repoKey") String repoKey, @PathParam("path") String path) throws IOException {
+                                     @PathParam("repoKey") String repoKey, @PathParam("path") String path) throws IOException {
         checkAuthorization(authorization);
         log.debug("get file/folder info for {} in {}", path, repoKey);
         String info = "{\n"
@@ -497,7 +519,7 @@ public class ArtifactoryMock {
         return false;
     }
 
-    public static List<Version> fakeVersionsFor(DeploymentName name) {
+    private static List<Version> fakeVersionsFor(DeploymentName name) {
         if (name.equals(FOO)) {
             return FOO_VERSIONS;
         } else if (name.equals(BAR)) {
