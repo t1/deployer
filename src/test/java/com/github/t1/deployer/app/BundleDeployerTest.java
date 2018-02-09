@@ -29,7 +29,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
     private final CipherFacade cipher = new CipherFacade();
 
-    private String encrypt(String plain) throws Exception { return cipher.encrypt(plain, boundary.keyStore); }
+    private String encrypt(String plain) { return cipher.encrypt(plain, boundary.keyStore); }
 
     private static final Checksum UNKNOWN_CHECKSUM = Checksum.ofHexString("9999999999999999999999999999999999999999");
 
@@ -171,7 +171,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldFailToResolveHostNameFunctionWithParameter() throws Exception {
+    public void shouldFailToResolveHostNameFunctionWithParameter() {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
@@ -199,7 +199,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToResolveDomainNameFunctionWithParameter() throws Exception {
+    public void shouldFailToResolveDomainNameFunctionWithParameter() {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
@@ -213,7 +213,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithStringLiteral() throws Exception {
+    public void shouldDeployWebArchiveWithStringLiteral() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -227,7 +227,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithStringLiteralContainingSingleQuotes() throws Exception {
+    public void shouldDeployWebArchiveWithStringLiteralContainingSingleQuotes() {
         ArtifactFixture foo = givenArtifact("foo").groupId("foo'bar'baz").version("1.3.2");
 
         Audits audits = deploy(""
@@ -240,7 +240,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithStringLiteralContainingDoubleQuotes() throws Exception {
+    public void shouldDeployWebArchiveWithStringLiteralContainingDoubleQuotes() {
         ArtifactFixture foo = givenArtifact("foo").groupId("foo\"bar\"baz").version("1.3.2");
 
         Audits audits = deploy(""
@@ -253,7 +253,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithStringLiteralContainingGuillemetQuotes() throws Exception {
+    public void shouldDeployWebArchiveWithStringLiteralContainingGuillemetQuotes() {
         ArtifactFixture foo = givenArtifact("foo").groupId("foo«bar»baz").version("1.3.2");
 
         Audits audits = deploy(""
@@ -267,7 +267,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithOrParam() throws Exception {
+    public void shouldDeployWebArchiveWithOrParam() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -281,7 +281,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithRegexSuffix() throws Exception {
+    public void shouldDeployWebArchiveWithRegexSuffix() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -295,7 +295,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithRegexPrefix() throws Exception {
+    public void shouldDeployWebArchiveWithRegexPrefix() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Audits audits = deploy(""
@@ -308,7 +308,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithRegexVariable() throws Exception {
+    public void shouldDeployWebArchiveWithRegexVariable() {
         givenConfiguredVariable("my-regex", "(?:qa\\.)(.*?)");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -323,7 +323,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithPublicKeyEncryptedVersion() throws Exception {
+    public void shouldDeployWebArchiveWithPublicKeyEncryptedVersion() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KEYSTORE.withAlias("keypair"));
 
@@ -337,7 +337,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithPublicKeyEncryptedVersionUsingAliasParameter() throws Exception {
+    public void shouldDeployWebArchiveWithPublicKeyEncryptedVersionUsingAliasParameter() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KEYSTORE);
 
@@ -352,7 +352,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithSecretKeyEncryptedVersion() throws Exception {
+    public void shouldDeployWebArchiveWithSecretKeyEncryptedVersion() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KEYSTORE.withAlias("secretkey"));
 
@@ -366,7 +366,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithEncryptedVersionUsingDefaultKeystoreType() throws Exception {
+    public void shouldDeployWebArchiveWithEncryptedVersionUsingDefaultKeystoreType() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KeyStoreConfig
                 .builder()
@@ -385,7 +385,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToDeployWebArchiveWithEncryptedVariableButWithoutKeystoreConfig() throws Exception {
+    public void shouldFailToDeployWebArchiveWithEncryptedVariableButWithoutKeystoreConfig() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         Throwable thrown = catchThrowable(() -> deploy(""
@@ -398,7 +398,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToDeployWebArchiveWithEncryptedVariableButWithoutPath() throws Exception {
+    public void shouldFailToDeployWebArchiveWithEncryptedVariableButWithoutPath() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KeyStoreConfig.builder().type("jceks").pass("changeit").build().withAlias("keypair"));
 
@@ -413,7 +413,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithFirstSwitch() throws Exception {
+    public void shouldDeployWebArchiveWithFirstSwitch() {
         givenConfiguredVariable("bar", "A");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.1");
 
@@ -431,7 +431,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithMiddleSwitch() throws Exception {
+    public void shouldDeployWebArchiveWithMiddleSwitch() {
         givenConfiguredVariable("bar", "B");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -449,7 +449,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithLastSwitch() throws Exception {
+    public void shouldDeployWebArchiveWithLastSwitch() {
         givenConfiguredVariable("bar", "C");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.3");
 
@@ -467,7 +467,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToDeployWebArchiveWithSwitchWithoutHead() throws Exception {
+    public void shouldFailToDeployWebArchiveWithSwitchWithoutHead() {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
@@ -484,7 +484,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToDeployWebArchiveWithSwitchWithUnsetVariable() throws Exception {
+    public void shouldFailToDeployWebArchiveWithSwitchWithUnsetVariable() {
         Throwable thrown = catchThrowable(() -> deploy(""
                 + "deployables:\n"
                 + "  foo:\n"
@@ -501,7 +501,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCase() throws Exception {
+    public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCase() {
         givenConfiguredVariable("bar", "B");
 
         Throwable thrown = catchThrowable(() -> deploy(""
@@ -520,7 +520,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCaseButSomethingWithAPrefix() throws Exception {
+    public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCaseButSomethingWithAPrefix() {
         givenConfiguredVariable("bar", "B");
 
         Throwable thrown = catchThrowable(() -> deploy(""
@@ -540,7 +540,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeployWebArchiveWithEncryptedVersionUsingSwitch() throws Exception {
+    public void shouldDeployWebArchiveWithEncryptedVersionUsingSwitch() {
         givenConfiguredVariable("stage", "QA");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KeyStoreConfig
@@ -810,7 +810,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 .version("1.3.2").deployed()
                 .and()
                 .version("1.3.3");
-        ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war")
+        ArtifactFixture mockServer = givenArtifact("mockserver", "org.mock-server", "mockserver-war")
                 .version("3.10.4");
 
         Audits audits = deploy(""
@@ -824,7 +824,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    version: 3.10.4\n");
 
         // #after(): jolokia not undeployed
-        mockserver.verifyDeployed(audits);
+        mockServer.verifyDeployed(audits);
     }
 
 
@@ -1349,7 +1349,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldFailToDeployDefaultRootBundleWithoutConfigFile() throws Exception {
+    public void shouldFailToDeployDefaultRootBundleWithoutConfigFile() {
         boundary.useDefaultConfig = true;
 
         Throwable thrown = catchThrowable(() -> boundary.apply(post, ImmutableMap.of(VERSION, "1.2")));
@@ -1359,7 +1359,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployDefaultRootBundle() throws Exception {
+    public void shouldDeployDefaultRootBundle() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), hostName())
                 .version("1.2")
@@ -1375,7 +1375,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithDefaultGroupId() throws Exception {
+    public void shouldDeployDefaultRootBundleWithDefaultGroupId() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenConfiguredVariable("default.group-id", "mygroup");
         givenArtifact(bundle, "dummy", "mygroup", hostName())
@@ -1392,7 +1392,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleArtifactId() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleArtifactId() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), "foo")
                 .version("1.2")
@@ -1409,7 +1409,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleArtifactIdExpression() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleArtifactIdExpression() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), hostName())
                 .version("1.2")
@@ -1426,7 +1426,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleGroupId() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleGroupId() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", "my.other.group", hostName())
                 .version("1.2")
@@ -1443,7 +1443,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleClassifier() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleClassifier() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), hostName())
                 .classifier("my.classifier")
@@ -1461,7 +1461,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleVersion() throws Exception {
+    public void shouldDeployDefaultRootBundleWithConfiguredRootBundleVersion() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), hostName())
                 .version("1.2")
@@ -1478,7 +1478,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldFailToDeployDefaultRootBundleWithoutConfiguredRootBundle() throws Exception {
+    public void shouldFailToDeployDefaultRootBundleWithoutConfiguredRootBundle() {
         givenArtifact("jolokia").version("1.3.2");
         givenArtifact(bundle, "dummy", domainName(), hostName())
                 .version("1.2")
@@ -1495,7 +1495,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldDeploySchemaBundleWithPassedParam() throws Exception {
+    public void shouldDeploySchemaBundleWithPassedParam() {
         givenConfiguredVariable("default.group-id", "artifact-deployer-test");
         LogHandlerFixture logHandler = givenLogHandler(periodicRotatingFile, "JOLOKIA");
         LoggerFixture logger = givenLogger("org.jolokia.jolokia")

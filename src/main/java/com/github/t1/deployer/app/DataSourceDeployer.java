@@ -22,8 +22,8 @@ class DataSourceDeployer extends
         property("jndi-name", String.class);
         property("driver", String.class);
         property("xa", Boolean.class);
-        property("user-name", String.class).confidential(true);
-        property("password", String.class).confidential(true);
+        property("user-name", String.class).confidential();
+        property("password", String.class).confidential();
         this.<Integer>property("pool:min")
                 .resource(DataSourceResource::minPoolSize)
                 .plan(plan -> (plan.getPool() == null) ? null : plan.getPool().getMin())

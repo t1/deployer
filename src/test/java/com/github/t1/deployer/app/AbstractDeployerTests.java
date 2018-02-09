@@ -76,16 +76,16 @@ public abstract class AbstractDeployerTests {
 
     @InjectMocks DeployerBoundary boundary;
 
-    @Spy LogHandlerDeployer logHandlerDeployer;
-    @Spy LoggerDeployer loggerDeployer;
-    @Spy DataSourceDeployer dataSourceDeployer;
-    @Spy ArtifactDeployer artifactDeployer;
-    @Mock Instance<Deployer> deployers;
+    @Spy private LogHandlerDeployer logHandlerDeployer;
+    @Spy private LoggerDeployer loggerDeployer;
+    @Spy private DataSourceDeployer dataSourceDeployer;
+    @Spy private ArtifactDeployer artifactDeployer;
+    @Mock private Instance<Deployer> deployers;
 
-    @Mock Repository repository;
+    @Mock private Repository repository;
 
-    @SuppressWarnings("resource") ModelControllerClient cli = mock(ModelControllerClient.class);
-    @Spy Container container = JBossCliTestClient.buildContainer(cli);
+    @SuppressWarnings("resource") private ModelControllerClient cli = mock(ModelControllerClient.class);
+    @Spy private Container container = JBossCliTestClient.buildContainer(cli);
 
     private final Map<VariableName, String> configuredVariables = new HashMap<>();
     private final List<String> managedResourceNames = new ArrayList<>();
@@ -163,7 +163,7 @@ public abstract class AbstractDeployerTests {
     public class OngoingCli {
         private final ModelNode request;
 
-        public void then(Supplier<ModelNode> supplier) {
+        void then(Supplier<ModelNode> supplier) {
             thenRaw(() -> success(supplier.get()));
         }
 
@@ -286,7 +286,7 @@ public abstract class AbstractDeployerTests {
     }
 
 
-    protected void givenManaged(String... resourceName) { this.managedResourceNames.addAll(asList(resourceName)); }
+    void givenManaged(String... resourceName) { this.managedResourceNames.addAll(asList(resourceName)); }
 
 
     private void givenPinned(String type, String name) {
@@ -332,7 +332,7 @@ public abstract class AbstractDeployerTests {
         private String classifier;
         private ArtifactFixture deployed;
 
-        public ArtifactFixtureBuilder(ArtifactType type, String name) {
+        ArtifactFixtureBuilder(ArtifactType type, String name) {
             this.type = type;
             this.name = name;
 
@@ -348,23 +348,23 @@ public abstract class AbstractDeployerTests {
             return this;
         }
 
-        public GroupId groupId() { return new GroupId(groupId); }
+        GroupId groupId() { return new GroupId(groupId); }
 
-        public ArtifactFixtureBuilder artifactId(String artifactId) {
+        ArtifactFixtureBuilder artifactId(String artifactId) {
             this.artifactId = artifactId;
             return this;
         }
 
-        public ArtifactId artifactId() { return new ArtifactId(artifactId); }
+        ArtifactId artifactId() { return new ArtifactId(artifactId); }
 
         public ArtifactFixtureBuilder classifier(String classifier) {
             this.classifier = classifier;
             return this;
         }
 
-        public Classifier classifier() { return (classifier == null) ? null : new Classifier(classifier); }
+        Classifier classifier() { return (classifier == null) ? null : new Classifier(classifier); }
 
-        public DeploymentName deploymentName() { return new DeploymentName((name == null) ? artifactId : name); }
+        DeploymentName deploymentName() { return new DeploymentName((name == null) ? artifactId : name); }
 
         public ArtifactFixture version(String version) { return version(new Version(version)); }
 
@@ -376,7 +376,7 @@ public abstract class AbstractDeployerTests {
             @Getter private Checksum checksum;
             private String contents;
 
-            public ArtifactFixture(Version version) {
+            ArtifactFixture(Version version) {
                 this.version = version;
 
                 if (!version.equals(UNKNOWN)) {
@@ -387,7 +387,7 @@ public abstract class AbstractDeployerTests {
                 checksum(fakeChecksumFor(deploymentName(), version));
             }
 
-            public String deployedNode() {
+            String deployedNode() {
                 return ""
                         + "'outcome' => 'success',\n"
                         + "'result' => {\n"
@@ -422,7 +422,7 @@ public abstract class AbstractDeployerTests {
 
             public ArtifactFixture version(String version) { return ArtifactFixtureBuilder.this.version(version); }
 
-            public DeploymentName deploymentName() { return ArtifactFixtureBuilder.this.deploymentName(); }
+            DeploymentName deploymentName() { return ArtifactFixtureBuilder.this.deploymentName(); }
 
             public ArtifactFixture checksum(Checksum checksum) {
                 this.checksum = checksum;
@@ -448,7 +448,7 @@ public abstract class AbstractDeployerTests {
 
             private String deploymentAddress() { return address(null, "deployment", name); }
 
-            public InputStream inputStream() {
+            InputStream inputStream() {
                 return (contents == null)
                         ? inputStreamFor(deploymentName(), version)
                         : new StringInputStream(contents);
@@ -470,9 +470,9 @@ public abstract class AbstractDeployerTests {
 
             public ArtifactId artifactId() { return ArtifactFixtureBuilder.this.artifactId(); }
 
-            public Classifier classifier() { return ArtifactFixtureBuilder.this.classifier(); }
+            Classifier classifier() { return ArtifactFixtureBuilder.this.classifier(); }
 
-            public DeployableAuditBuilder artifactAudit() { return DeployableAudit.builder().name(deploymentName()); }
+            DeployableAuditBuilder artifactAudit() { return DeployableAudit.builder().name(deploymentName()); }
 
 
             public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
@@ -599,7 +599,7 @@ public abstract class AbstractDeployerTests {
         private Boolean useParentHandlers = true;
         private boolean deployed;
 
-        public LoggerFixture(@NonNull String category) {
+        LoggerFixture(@NonNull String category) {
             this.category = LoggerCategory.of(category);
 
             whenCli(readLoggerRequest(category)).thenRaw(() -> deployed
@@ -607,7 +607,7 @@ public abstract class AbstractDeployerTests {
                     : notDeployedNode("logging", "logger", category));
         }
 
-        public String deployedNode() {
+        String deployedNode() {
             return ""
                     + "'outcome' => 'success',\n"
                     + "'result' => {\n"
@@ -650,7 +650,7 @@ public abstract class AbstractDeployerTests {
 
         public String loggerAddress() { return address("logging", "logger", category); }
 
-        protected ModelNode loggerAddressNode() {
+        ModelNode loggerAddressNode() {
             return createAddress("subsystem", "logging", "logger", category.getValue());
         }
 
@@ -682,7 +682,7 @@ public abstract class AbstractDeployerTests {
             assertThat(audits.getAudits()).contains(audit.added());
         }
 
-        public List<LogHandlerName> handlerNames() {
+        List<LogHandlerName> handlerNames() {
             return handlers.stream().map(LogHandlerName::new).collect(toList());
         }
 
@@ -776,7 +776,7 @@ public abstract class AbstractDeployerTests {
         private Map<String, String> properties;
         private boolean deployed;
 
-        public LogHandlerFixture(LogHandlerType type, String name) {
+        LogHandlerFixture(LogHandlerType type, String name) {
             this.type = type;
             this.name = new LogHandlerName(name);
             this.expectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
@@ -787,7 +787,7 @@ public abstract class AbstractDeployerTests {
                     : notDeployedNode("logging", type.getHandlerTypeName(), name));
         }
 
-        public String deployedNode() {
+        String deployedNode() {
             return ""
                     + "'outcome' => 'success',\n"
                     + "'result' => {\n"
@@ -1043,7 +1043,7 @@ public abstract class AbstractDeployerTests {
         private Integer maxPoolSize;
         private Age maxAge;
 
-        public DataSourceFixture(@NonNull String name) {
+        DataSourceFixture(@NonNull String name) {
             this.name = new DataSourceName(name);
             this.uri = "jdbc:h2:mem:" + name;
             this.jndiName = "java:/datasources/" + name;
@@ -1057,7 +1057,7 @@ public abstract class AbstractDeployerTests {
                     : notDeployedNode("datasources", dataSource(xa), name));
         }
 
-        public String deployedNode() {
+        String deployedNode() {
             return ""
                     + "'outcome' => 'success',\n"
                     + "'result' => {\n"
@@ -1156,9 +1156,9 @@ public abstract class AbstractDeployerTests {
             return this;
         }
 
-        public String dataSourceAddress() { return address("datasources", dataSource(xa), name); }
+        String dataSourceAddress() { return address("datasources", dataSource(xa), name); }
 
-        public ModelNode dataSourceAddressNode() {
+        ModelNode dataSourceAddressNode() {
             return createAddress("subsystem", "datasources", dataSource(xa), name.getValue());
         }
 

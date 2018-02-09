@@ -5,8 +5,8 @@ import com.github.t1.testtools.WebArchiveBuilder;
 import com.google.common.collect.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
 
 import javax.ws.rs.*;
 import javax.ws.rs.Path;
@@ -75,7 +75,7 @@ public class ArtifactoryMock {
         log.debug("create dummy war {} in {}", name, path);
         WebArchive webArchive = new WebArchiveBuilder(name).with(String.class).print().build();
         Files.createDirectories(path.getParent());
-        new ZipExporterImpl(webArchive).exportTo(Files.newOutputStream(path));
+        webArchive.as(ZipExporter.class).exportTo(path.toFile());
     }
 
     @SneakyThrows(IOException.class)
@@ -269,9 +269,9 @@ public class ArtifactoryMock {
 
     @GET
     @Path("/liveness")
-    public Response getLiveness(@QueryParam("kill") Boolean kill) {
-        if (kill == TRUE)
-            lives--;
+    public Response getLiveness(@QueryParam("kill") Integer kills) {
+        if (kills != null)
+            lives -= kills;
         return Response.status(lives > 0 ? OK : BAD_GATEWAY)
                 .type(APPLICATION_JSON_TYPE)
                 .entity("{" +

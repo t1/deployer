@@ -81,7 +81,7 @@ public class DeployerBoundary {
         return (form == null)
                 ? emptyMap()
                 : form.entrySet().stream()
-                      .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
+                .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
     }
 
 

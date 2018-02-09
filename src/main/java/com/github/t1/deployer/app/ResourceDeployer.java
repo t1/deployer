@@ -1,18 +1,24 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.AuditBuilder;
-import com.github.t1.deployer.container.*;
+import com.github.t1.deployer.container.AbstractResource;
+import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.Plan.AbstractPlan;
-import lombok.*;
-import lombok.experimental.Accessors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.function.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-import static com.github.t1.deployer.model.Password.*;
+import static com.github.t1.deployer.model.Password.CONCEALED;
 
 @Slf4j
 abstract class ResourceDeployer<
@@ -22,8 +28,6 @@ abstract class ResourceDeployer<
         AUDIT extends AuditBuilder>
         extends AbstractDeployer<PLAN, RESOURCE, AUDIT> {
 
-    @Data
-    @Accessors(fluent = true, chain = true)
     class Property<TYPE> {
         private final String name;
         private Function<RESOURCE, TYPE> resource;
@@ -32,7 +36,9 @@ abstract class ResourceDeployer<
         private BiConsumer<RESOURCE, TYPE> write;
         private boolean confidential = false;
 
-        protected void update(RESOURCE resource, PLAN plan, AUDIT audit) {
+        Property(String name) { this.name = name; }
+
+        void update(RESOURCE resource, PLAN plan, AUDIT audit) {
             TYPE before = from(resource);
             TYPE after = from(plan);
             if (!Objects.equals(before, after)) {
@@ -41,7 +47,7 @@ abstract class ResourceDeployer<
             }
         }
 
-        protected String conceal(Object value) {
+        String conceal(Object value) {
             return (value == null) ? null : confidential ? CONCEALED : value.toString();
         }
 
@@ -56,6 +62,86 @@ abstract class ResourceDeployer<
         }
 
         private void write(RESOURCE resource, PLAN plan) { this.write.accept(resource, from(plan)); }
+
+        public String name() {return this.name;}
+
+        public Function<RESOURCE, TYPE> resource() {return this.resource;}
+
+        public Function<PLAN, TYPE> plan() {return this.plan;}
+
+        BiFunction<BUILDER, TYPE, BUILDER> addTo() {return this.addTo;}
+
+        public BiConsumer<RESOURCE, TYPE> write() {return this.write;}
+
+        public Property<TYPE> resource(Function<RESOURCE, TYPE> resource) {
+            this.resource = resource;
+            return this;
+        }
+
+        public Property<TYPE> plan(Function<PLAN, TYPE> plan) {
+            this.plan = plan;
+            return this;
+        }
+
+        Property<TYPE> addTo(BiFunction<BUILDER, TYPE, BUILDER> addTo) {
+            this.addTo = addTo;
+            return this;
+        }
+
+        public Property<TYPE> write(BiConsumer<RESOURCE, TYPE> write) {
+            this.write = write;
+            return this;
+        }
+
+        @SuppressWarnings("UnusedReturnValue") Property<TYPE> confidential() {
+            this.confidential = true;
+            return this;
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (!(o instanceof ResourceDeployer.Property)) return false;
+            final Property other = (Property) o;
+            if (!other.canEqual((Object) this)) return false;
+            final Object this$name = this.name();
+            final Object other$name = other.name();
+            if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+            final Object this$resource = this.resource();
+            final Object other$resource = other.resource();
+            if (this$resource == null ? other$resource != null : !this$resource.equals(other$resource)) return false;
+            final Object this$plan = this.plan();
+            final Object other$plan = other.plan();
+            if (this$plan == null ? other$plan != null : !this$plan.equals(other$plan)) return false;
+            final Object this$addTo = this.addTo();
+            final Object other$addTo = other.addTo();
+            if (this$addTo == null ? other$addTo != null : !this$addTo.equals(other$addTo)) return false;
+            final Object this$write = this.write();
+            final Object other$write = other.write();
+            if (this$write == null ? other$write != null : !this$write.equals(other$write)) return false;
+            if (this.confidential != other.confidential) return false;
+            return true;
+        }
+
+        public int hashCode() {
+            final int PRIME = 59;
+            int result = 1;
+            final Object $name = this.name();
+            result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+            final Object $resource = this.resource();
+            result = result * PRIME + ($resource == null ? 43 : $resource.hashCode());
+            final Object $plan = this.plan();
+            result = result * PRIME + ($plan == null ? 43 : $plan.hashCode());
+            final Object $addTo = this.addTo();
+            result = result * PRIME + ($addTo == null ? 43 : $addTo.hashCode());
+            final Object $write = this.write();
+            result = result * PRIME + ($write == null ? 43 : $write.hashCode());
+            result = result * PRIME + (this.confidential ? 79 : 97);
+            return result;
+        }
+
+        boolean canEqual(Object other) {return other instanceof ResourceDeployer.Property;}
+
+        public String toString() {return "ResourceDeployer.Property(name=" + this.name() + ", resource=" + this.resource() + ", plan=" + this.plan() + ", addTo=" + this.addTo() + ", write=" + this.write() + ", confidential=" + this.confidential + ")";}
     }
 
     @Inject Container container;
@@ -65,7 +151,7 @@ abstract class ResourceDeployer<
 
     @SneakyThrows(ReflectiveOperationException.class)
     protected <TYPE> Property<TYPE> property(String name, Class<TYPE> type, Class<RESOURCE> resource,
-            Class<PLAN> plan) {
+                                             Class<PLAN> plan) {
         @SuppressWarnings("unchecked")
         Class<BUILDER> resourceBuilder = (Class<BUILDER>) Class.forName(
                 resource.getName() + "$" + resource.getSimpleName() + "Builder");
@@ -125,7 +211,7 @@ abstract class ResourceDeployer<
 
     @SneakyThrows(NoSuchMethodException.class)
     private static <T, R> Method method(Class<T> methodContainer, String name, Class<R> returnType,
-            Class<?>... paramTypes) {
+                                        Class<?>... paramTypes) {
         Method method = methodContainer.getMethod(name, paramTypes);
         assert method.getReturnType().equals(returnType)
                 : "expected return type " + returnType + " but found " + method.getReturnType()

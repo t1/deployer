@@ -10,6 +10,7 @@ import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
@@ -17,19 +18,20 @@ import static com.github.t1.deployer.app.ConfigProducer.*;
 import static com.github.t1.deployer.app.Trigger.*;
 import static com.github.t1.deployer.repository.RepositoryType.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
-public class ConfigSerializationTest {
+public class ConfigTest {
     private static final URI DUMMY_URI = URI.create("https://my-artifactory.example.org:9000/artifactory");
     private static final Password SECRET = new Password(UUID.randomUUID().toString());
 
-    @Rule public TemporaryFolder folder = new TemporaryFolder();
+    @Rule public TemporaryFolder tmp = new TemporaryFolder();
     @Rule public final SystemPropertiesRule systemProperties = new SystemPropertiesRule();
     @SuppressWarnings("resource") @Rule public final FileMemento configFile = new FileMemento(() -> {
-        systemProperties.given("jboss.server.config.dir", folder.getRoot());
-        return Paths.get(folder.getRoot().getPath(), DEPLOYER_CONFIG_YAML);
+        systemProperties.given("jboss.server.config.dir", tmp.getRoot());
+        return Paths.get(tmp.getRoot().getPath(), DEPLOYER_CONFIG_YAML);
     });
 
-    public ConfigProducer loadConfig() {
+    private ConfigProducer loadConfig() {
         ConfigProducer configProducer = new ConfigProducer();
         configProducer.container = new Container();
         configProducer.initConfig();
@@ -37,7 +39,7 @@ public class ConfigSerializationTest {
     }
 
     private static void assertRepository(ConfigProducer producer, RepositoryType repositoryType, URI uri,
-            String username, Password password) {
+                                         String username, Password password) {
         assertThat(producer.repositoryType()).isEqualTo(repositoryType);
         assertThat(producer.repositoryUri()).isEqualTo(uri);
         assertThat(producer.repositoryUsername()).isEqualTo(username);
@@ -46,7 +48,7 @@ public class ConfigSerializationTest {
 
 
     @Test
-    public void shouldConfigureDefaultRepositoryWithoutConfigFile() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithoutConfigFile() {
         // given no file
 
         ConfigProducer producer = loadConfig();
@@ -55,7 +57,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldConfigureDefaultRepositoryWithEmptyConfigFile() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithEmptyConfigFile() {
         configFile.write("---\n");
 
         ConfigProducer producer = loadConfig();
@@ -64,7 +66,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldConfigureDefaultRepositoryWithConfigFileWithoutRepositoryEntry() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithConfigFileWithoutRepositoryEntry() {
         configFile.write(""
                 + "#comment\n"
                 + "other: true\n");
@@ -75,7 +77,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldConfigureDefaultRepositoryWithConfigFileWithEmptyRepositoryEntry() throws Exception {
+    public void shouldConfigureDefaultRepositoryWithConfigFileWithEmptyRepositoryEntry() {
         configFile.write(""
                 + "repository:\n");
 
@@ -85,7 +87,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithTypeArtifactory() throws Exception {
+    public void shouldLoadConfigFileWithTypeArtifactory() {
         configFile.write(""
                 + "repository:\n"
                 + "  type: artifactory\n");
@@ -96,7 +98,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithUri() throws Exception {
+    public void shouldLoadConfigFileWithUri() {
         configFile.write(""
                 + "repository:\n"
                 + "  uri: " + DUMMY_URI + "\n");
@@ -107,7 +109,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithTypeAndUri() throws Exception {
+    public void shouldLoadConfigFileWithTypeAndUri() {
         configFile.write(""
                 + "repository:\n"
                 + "  type: artifactory\n"
@@ -119,7 +121,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithTypeAndUriAndCredentials() throws Exception {
+    public void shouldLoadConfigFileWithTypeAndUriAndCredentials() {
         configFile.write(""
                 + "repository:\n"
                 + "  type: artifactory\n"
@@ -134,7 +136,7 @@ public class ConfigSerializationTest {
 
 
     @Test
-    public void shouldLoadConfigFileWithVariable() throws Exception {
+    public void shouldLoadConfigFileWithVariable() {
         configFile.write(""
                 + "vars:\n"
                 + "  foo: bar\n");
@@ -145,16 +147,16 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldFailToLoadConfigFileWithVariableNameContainingColon() throws Exception {
+    public void shouldFailToLoadConfigFileWithVariableNameContainingColon() {
         shouldFailToLoadConfigFileWithVariableName("foo:bar");
     }
 
     @Test
-    public void shouldFailToLoadConfigFileWithVariableNameContainingSpace() throws Exception {
+    public void shouldFailToLoadConfigFileWithVariableNameContainingSpace() {
         shouldFailToLoadConfigFileWithVariableName("foo bar");
     }
 
-    private void shouldFailToLoadConfigFileWithVariableName(String variableName) throws Exception {
+    private void shouldFailToLoadConfigFileWithVariableName(String variableName) {
         configFile.write(""
                 + "vars:\n"
                 + "  foo: bar\n"
@@ -167,7 +169,7 @@ public class ConfigSerializationTest {
 
 
     @Test
-    public void shouldLoadConfigFileWithDefaultGroupId() throws Exception {
+    public void shouldLoadConfigFileWithDefaultGroupId() {
         configFile.write(""
                 + "vars:\n"
                 + "  default.group-id: foo\n");
@@ -179,7 +181,7 @@ public class ConfigSerializationTest {
 
 
     @Test
-    public void shouldLoadConfigFileWithManagedDeployables() throws Exception {
+    public void shouldLoadConfigFileWithManagedDeployables() {
         configFile.write(""
                 + "manage:\n"
                 + "- deployables\n");
@@ -191,7 +193,7 @@ public class ConfigSerializationTest {
 
 
     @Test
-    public void shouldLoadConfigFileWithRootBundleGroupId() throws Exception {
+    public void shouldLoadConfigFileWithRootBundleGroupId() {
         configFile.write(""
                 + "root-bundle:\n"
                 + "  group-id: foo\n");
@@ -202,7 +204,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithRootBundleArtifactId() throws Exception {
+    public void shouldLoadConfigFileWithRootBundleArtifactId() {
         configFile.write(""
                 + "root-bundle:\n"
                 + "  artifact-id: foo\n");
@@ -213,7 +215,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithRootBundleClassifier() throws Exception {
+    public void shouldLoadConfigFileWithRootBundleClassifier() {
         configFile.write(""
                 + "root-bundle:\n"
                 + "  classifier: raw\n");
@@ -224,7 +226,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithRootBundleVersion() throws Exception {
+    public void shouldLoadConfigFileWithRootBundleVersion() {
         configFile.write(""
                 + "root-bundle:\n"
                 + "  version: 1.0\n");
@@ -235,7 +237,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithOnePinnedDeployable() throws Exception {
+    public void shouldLoadConfigFileWithOnePinnedDeployable() {
         configFile.write(""
                 + "pin:\n"
                 + "  deployables: [foo]\n");
@@ -246,7 +248,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithTwoPinnedDeployable() throws Exception {
+    public void shouldLoadConfigFileWithTwoPinnedDeployable() {
         configFile.write(""
                 + "pin:\n"
                 + "  deployables: [foo, bar]\n");
@@ -258,7 +260,7 @@ public class ConfigSerializationTest {
 
 
     @Test
-    public void shouldLoadConfigFileWithKeyStore() throws Exception {
+    public void shouldLoadConfigFileWithKeyStore() {
         configFile.write(""
                 + "key-store:\n"
                 + "  path: foo\n"
@@ -275,7 +277,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithoutKeyStore() throws Exception {
+    public void shouldLoadConfigFileWithoutKeyStore() {
         configFile.write("");
 
         ConfigProducer producer = loadConfig();
@@ -284,7 +286,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithEmptyKeyStore() throws Exception {
+    public void shouldLoadConfigFileWithEmptyKeyStore() {
         configFile.write(""
                 + "key-store:");
 
@@ -294,7 +296,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithEmptyKeyStorePath() throws Exception {
+    public void shouldLoadConfigFileWithEmptyKeyStorePath() {
         configFile.write(""
                 + "key-store:\n"
                 + "  path:");
@@ -305,7 +307,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithOneTrigger() throws Exception {
+    public void shouldLoadConfigFileWithOneTrigger() {
         configFile.write(""
                 + "triggers: [startup]");
 
@@ -315,7 +317,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithTwoTriggers() throws Exception {
+    public void shouldLoadConfigFileWithTwoTriggers() {
         configFile.write(""
                 + "triggers: [startup, post]");
 
@@ -325,7 +327,7 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithThreeTriggers() throws Exception {
+    public void shouldLoadConfigFileWithThreeTriggers() {
         configFile.write(""
                 + "triggers: [startup, post, fileChange]");
 
@@ -335,11 +337,47 @@ public class ConfigSerializationTest {
     }
 
     @Test
-    public void shouldLoadConfigFileWithAllTriggersDefaultToAll() throws Exception {
+    public void shouldLoadConfigFileWithAllTriggersDefaultToAll() {
         configFile.write("");
 
         ConfigProducer producer = loadConfig();
 
         assertThat(producer.triggers()).containsExactly(startup, post, fileChange);
+    }
+
+    @Test
+    public void shouldFailToGetConfigDirWithoutConfiguredJbossConfigDir() {
+        systemProperties.given("jboss.server.config.dir", null);
+
+        Throwable throwable = catchThrowable(Container::getConfigDir);
+
+        assertThat(throwable).hasMessage("no config dir configured");
+    }
+
+    @Test
+    public void shouldGetConfigDirFromJbossConfigDir() {
+        Path configDir = Container.getConfigDir();
+
+        assertThat(configDir).hasToString(System.getProperty("jboss.server.config.dir"));
+    }
+
+    @Test
+    public void shouldGetConfigDirFromSystemProperty() {
+        systemProperties.given("deployer.config.dir", "foobar");
+
+        Path configDir = Container.getConfigDir();
+
+        assertThat(configDir).hasToString("foobar");
+    }
+
+    @Test
+    public void shouldGetConfigDirFromEnvironmentVariable() {
+        assumeThat(System.getenv("DEPLOYER_CONFIG_DIR"))
+                .describedAs("set env var 'DEPLOYER_CONFIG_DIR' to 'foo' in run config for this test, but not for others!")
+                .isEqualTo("foo");
+
+        Path configDir = Container.getConfigDir();
+
+        assertThat(configDir).hasToString("foo");
     }
 }
