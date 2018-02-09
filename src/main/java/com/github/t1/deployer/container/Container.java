@@ -5,6 +5,7 @@ import com.github.t1.deployer.container.DeploymentResource.DeploymentResourceBui
 import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.*;
+import com.google.common.collect.ImmutableMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,6 +13,10 @@ import javax.inject.Inject;
 import javax.management.ObjectName;
 import java.nio.file.*;
 import java.time.Duration;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -42,7 +47,17 @@ public class Container {
 
     public void reload() { batch.reload(); }
 
-    public static Path getConfigDir() { return Paths.get(System.getProperty("jboss.server.config.dir")); }
+    public static Path getConfigDir() {
+        return Stream.of(
+                System.getenv("DEPLOYER_CONFIG_DIR"),
+                System.getProperty("deployer.config.dir"),
+                System.getProperty("jboss.server.config.dir")
+        ).filter(Objects::nonNull)
+                .peek(s -> log.debug("found config dir {}", s))
+                .findFirst()
+                .map(Paths::get)
+                .orElseThrow(() -> new RuntimeException("no config dir configured"));
+    }
 
     public LogHandlerResourceBuilder builderFor(LogHandlerType type, LogHandlerName name) {
         return LogHandlerResource.builder(type, name, batch);
