@@ -43,9 +43,7 @@ public class GetVariablesTest {
     Repository repository = mock(Repository.class);
 
     @Before
-    public void setUp() throws Exception {
-        boundary.repository = repository;
-    }
+    public void setUp() { boundary.repository = repository; }
 
     private static String toJson(Object object) throws IOException {
         StringWriter out = new StringWriter();
@@ -55,7 +53,7 @@ public class GetVariablesTest {
 
 
     @Test
-    public void shouldGetDefaultRootBundleWhenUnresolvedVersion() throws Exception {
+    public void shouldGetDefaultRootBundleWhenUnresolvedVersion() {
         Set<VariableName> variables = boundary.getVariables();
 
         assertThat(variables).containsExactly(
@@ -64,7 +62,7 @@ public class GetVariablesTest {
     }
 
     @Test
-    public void shouldGetConfiguredRootBundle() throws Exception {
+    public void shouldGetConfiguredRootBundle() {
         boundary.rootBundleConfig = RootBundleConfig
                 .builder()
                 .groupId(DUMMY_GROUP_ID)
@@ -107,7 +105,7 @@ public class GetVariablesTest {
     }
 
     @Test
-    public void shouldGetVariablesFromRootBundleFile() throws Exception {
+    public void shouldGetVariablesFromRootBundleFile() {
         rootBundleConfigFile.write(""
                 + "bundles:\n"
                 + "  app:\n"
