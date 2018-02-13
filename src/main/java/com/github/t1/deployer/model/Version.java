@@ -20,8 +20,9 @@ public class Version implements Comparable<Version> {
     @XmlValue
     private final String value;
 
-    @JsonCreator
-    public Version(@NonNull String value) { this.value = value; }
+    @JsonCreator public Version(@NonNull String value) { this.value = value; }
+
+    @JsonCreator public Version(@NonNull Double value) { this(value.toString()); }
 
     /** this is called when YAML deserializes a version '1' */
     @SuppressWarnings("unused") public Version(int value) { this.value = Integer.toString(value); }

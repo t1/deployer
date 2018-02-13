@@ -6,25 +6,37 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.google.common.collect.ImmutableMap;
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
-import static java.util.Collections.*;
-import static java.util.stream.Collectors.*;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.joining;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Builder
 @JsonNaming(KebabCaseStrategy.class)
 public class BundlePlan extends AbstractArtifactPlan {
     @NonNull @JsonIgnore private final BundleName name;
-    @NonNull @Singular private final Map<String, Map<VariableName, String>> instances;
+    @NonNull private final Map<String, Map<VariableName, String>> instances;
+
+    public static BundlePlanBuilder builder() { return new BundlePlanBuilder(); }
 
     @Override public String getId() { return name.getValue(); }
 
     public static class BundlePlanBuilder extends AbstractArtifactPlanBuilder<BundlePlanBuilder> {
+        private BundleName name;
+        private ArrayList<String> instances$key;
+        private ArrayList<Map<VariableName, String>> instances$value;
+
         @Override public BundlePlan build() {
             AbstractArtifactPlan a = super.build();
             Map<String, Map<VariableName, String>> instances = buildInstances(instances$key, instances$value);
@@ -40,6 +52,21 @@ public class BundlePlan extends AbstractArtifactPlan {
             for (int i = 0; i < keys.size(); i++)
                 instances.put(keys.get(i), list.get(i));
             return instances;
+        }
+
+        public BundlePlanBuilder name(BundleName name) {
+            this.name = name;
+            return this;
+        }
+
+        public BundlePlanBuilder instance(String instanceKey, Map<VariableName, String> instanceValue) {
+            if (this.instances$key == null) {
+                this.instances$key = new ArrayList<>();
+                this.instances$value = new ArrayList<>();
+            }
+            this.instances$key.add(instanceKey);
+            this.instances$value.add(instanceValue);
+            return this;
         }
     }
 

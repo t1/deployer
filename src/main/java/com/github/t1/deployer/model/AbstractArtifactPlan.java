@@ -27,6 +27,15 @@ class AbstractArtifactPlan implements Plan.AbstractPlan {
 
     @SuppressWarnings("unchecked")
     public static class AbstractArtifactPlanBuilder<T extends AbstractArtifactPlanBuilder> {
+        private DeploymentState state;
+        private GroupId groupId;
+        private ArtifactId artifactId;
+        private Version version;
+        private Classifier classifier;
+        private Checksum checksum;
+
+        AbstractArtifactPlanBuilder() {}
+
         public T state(DeploymentState state) {
             this.state = state;
             return (T) this;
@@ -56,6 +65,12 @@ class AbstractArtifactPlan implements Plan.AbstractPlan {
             this.checksum = checksum;
             return (T) this;
         }
+
+        public AbstractArtifactPlan build() {
+            return new AbstractArtifactPlan(state, groupId, artifactId, version, classifier, checksum);
+        }
+
+        public String toString() {return "AbstractArtifactPlan.AbstractArtifactPlanBuilder(state=" + this.state + ", groupId=" + this.groupId + ", artifactId=" + this.artifactId + ", version=" + this.version + ", classifier=" + this.classifier + ", checksum=" + this.checksum + ")";}
     }
 
     public static void fromJson(JsonNode node, AbstractArtifactPlanBuilder builder,

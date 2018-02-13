@@ -1,6 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.github.t1.deployer.app.Audit.*;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
@@ -80,7 +81,8 @@ public class AuditsSerializationTest {
         String json = "{'type':'xxx','operation':'add'}";
 
         assertThatThrownBy(() -> deserialize(json))
-                .hasMessageContaining("Could not resolve type id 'xxx' into a subtype");
+                .isInstanceOf(InvalidTypeIdException.class)
+                .hasMessageContaining("Could not resolve type id 'xxx'");
     }
 
 
