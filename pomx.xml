@@ -11,7 +11,6 @@
 
     <profile>com.github.t1:profile-javaee:7.0.0-SNAPSHOT</profile>
     <profile>com.github.t1:profile-t1:1.0.0-SNAPSHOT</profile>
-    <profile>com.github.t1:profile-arquillian:1.1.15-SNAPSHOT</profile>
 
     <build>
         <finalName>${project.artifactId}</finalName>
@@ -116,6 +115,9 @@
             <jar>org.jboss.aesh:aesh:0.66.19</jar>
             <jar>com.beust:jcommander:1.72</jar>
             <jar>org.apache.httpcomponents:fluent-hc:4.5.5</jar>
+            <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-spi:3.1.2</jar>
+            <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-impl-maven:2.2.6</jar>
+            <jar>org.jboss.shrinkwrap:shrinkwrap-impl-base:1.2.6</jar>
         </test>
     </dependencies>
 </project>
