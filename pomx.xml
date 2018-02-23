@@ -93,7 +93,7 @@
 
     <dependencies>
         <provided>
-            <jar>com.github.t1:test-tools:1.6.0-SNAPSHOT</jar>
+            <jar>com.github.t1:test-tools:1.6.1</jar>
         </provided>
 
         <compile>
