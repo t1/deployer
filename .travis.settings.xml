@@ -6,14 +6,24 @@
             <id>bintray</id>
             <repositories>
                 <repository>
-                    <id>bintray</id>
+                    <id>bintray-t1-javaee-helpers</id>
                     <name>bintray</name>
-                    <url>http://jcenter.bintray.com</url>
+                    <url>https://dl.bintray.com/t1/javaee-helpers</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
                 </repository>
             </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>bintray-t1-javaee-helpers</id>
+                    <name>bintray-plugins</name>
+                    <url>https://dl.bintray.com/t1/javaee-helpers</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
         </profile>
     </profiles>
     <activeProfiles>
