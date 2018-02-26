@@ -247,7 +247,7 @@
     </licenses>
     <repositories>
         <repository>
-            <id>central</id>
+            <id>bintray</id>
             <name>bintray</name>
             <url>http://jcenter.bintray.com</url>
         </repository>
