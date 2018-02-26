@@ -7,6 +7,7 @@
 
     <properties>
         <jackson.version>2.9.4</jackson.version>
+        <jqassistant.version>1.3.0</jqassistant.version>
     </properties>
 
     <profile>com.github.t1:profile-javaee:7.0.0-SNAPSHOT</profile>
@@ -41,20 +42,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin id="com.buschmais.jqassistant:jqassistant-maven-plugin:1.3.0">
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>scan</goal>
-                            <goal>analyze</goal>
-                        </goals>
-                        <configuration>
-                            <warnOnSeverity>MINOR</warnOnSeverity>
-                            <failOnSeverity>MAJOR</failOnSeverity>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin id="org.apache.maven.plugins:maven-release-plugin:2.5.3"/>
             <plugin id="com.spotify:dockerfile-maven-plugin:1.3.7">
                 <executions>
@@ -73,23 +60,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>com.buschmais.jqassistant</groupId>
-                <artifactId>jqassistant-maven-plugin</artifactId>
-                <version>1.3.0</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>report</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
 
     <dependencies>
         <provided>
@@ -120,4 +90,47 @@
             <jar>org.jboss.shrinkwrap:shrinkwrap-impl-base:1.2.6</jar>
         </test>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>jqassistant</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.buschmais.jqassistant</groupId>
+                        <artifactId>jqassistant-maven-plugin</artifactId>
+                        <version>${jqassistant.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>scan</goal>
+                                    <goal>analyze</goal>
+                                </goals>
+                                <configuration>
+                                    <warnOnSeverity>MINOR</warnOnSeverity>
+                                    <failOnSeverity>MAJOR</failOnSeverity>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <reporting>
+                <plugins>
+                    <plugin>
+                        <groupId>com.buschmais.jqassistant</groupId>
+                        <artifactId>jqassistant-maven-plugin</artifactId>
+                        <version>${jqassistant.version}</version>
+                        <reportSets>
+                            <reportSet>
+                                <reports>
+                                    <report>report</report>
+                                </reports>
+                            </reportSet>
+                        </reportSets>
+                    </plugin>
+                </plugins>
+            </reporting>
+        </profile>
+    </profiles>
 </project>
