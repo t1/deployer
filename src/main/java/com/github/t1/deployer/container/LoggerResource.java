@@ -57,7 +57,7 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
     @NonNull @Getter private final LoggerCategory category;
 
     @Singular
-    private List<LogHandlerName> handlers = new ArrayList<>();
+    private List<LogHandlerName> handlers;
     private Boolean useParentHandlers;
     private LogLevel level;
 
