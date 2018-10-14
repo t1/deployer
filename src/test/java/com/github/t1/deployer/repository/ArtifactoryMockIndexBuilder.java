@@ -1,9 +1,18 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.Checksum;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
+import java.time.Instant;
 
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 
@@ -28,7 +37,7 @@ public class ArtifactoryMockIndexBuilder {
     }
 
     @RequiredArgsConstructor
-    private final class BuildChecksumsFileVisitor extends SimpleFileVisitor<java.nio.file.Path> {
+    private final class BuildChecksumsFileVisitor extends SimpleFileVisitor<Path> {
         private final java.nio.file.Path root;
         @Getter
         private int count = 0;

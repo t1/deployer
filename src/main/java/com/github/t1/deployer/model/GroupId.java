@@ -3,6 +3,12 @@ package com.github.t1.deployer.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static lombok.AccessLevel.*;
 
