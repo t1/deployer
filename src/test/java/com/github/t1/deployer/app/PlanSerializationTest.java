@@ -1,8 +1,24 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Age;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.BundleName;
+import com.github.t1.deployer.model.BundlePlan;
+import com.github.t1.deployer.model.DataSourceName;
+import com.github.t1.deployer.model.DataSourcePlan;
 import com.github.t1.deployer.model.DataSourcePlan.PoolPlan;
-import com.github.t1.deployer.model.Expressions.*;
+import com.github.t1.deployer.model.DeployablePlan;
+import com.github.t1.deployer.model.DeploymentName;
+import com.github.t1.deployer.model.Expressions;
+import com.github.t1.deployer.model.Expressions.Match;
+import com.github.t1.deployer.model.Expressions.Resolver;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.LogHandlerName;
+import com.github.t1.deployer.model.LogHandlerPlan;
+import com.github.t1.deployer.model.LoggerCategory;
+import com.github.t1.deployer.model.LoggerPlan;
+import com.github.t1.deployer.model.Plan;
+import com.github.t1.deployer.model.Version;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
@@ -10,12 +26,18 @@ import java.io.StringReader;
 import java.net.URI;
 import java.time.Duration;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.deployer.testtools.TestData.*;
-import static com.github.t1.log.LogLevel.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static com.github.t1.deployer.model.ArtifactType.war;
+import static com.github.t1.deployer.model.LogHandlerType.custom;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.deployer.testtools.TestData.VERSION;
+import static com.github.t1.log.LogLevel.INFO;
+import static com.github.t1.log.LogLevel.TRACE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PlanSerializationTest {
     private static final DeployablePlan FOO = DeployablePlan

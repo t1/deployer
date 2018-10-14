@@ -3,17 +3,22 @@ package com.github.t1.deployer.tools;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.core.*;
-import javax.ws.rs.ext.*;
-import java.io.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyReader;
+import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Map;
 
-import static com.github.t1.deployer.tools.StringUtils.*;
-import static com.github.t1.problem.WebException.*;
-import static java.util.Collections.*;
-import static javax.ws.rs.core.MediaType.*;
+import static com.github.t1.deployer.tools.StringUtils.typeString;
+import static com.github.t1.problem.WebException.badRequest;
+import static java.util.Collections.emptyMap;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static javax.ws.rs.core.MediaType.WILDCARD;
+import static javax.ws.rs.core.MediaType.WILDCARD_TYPE;
 
 @Slf4j
 @Provider

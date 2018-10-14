@@ -1,9 +1,10 @@
 package com.github.t1.deployer.tools;
 
-import java.lang.reflect.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.joining;
 
 public class StringUtils {
     public static String typeString(Type type) {

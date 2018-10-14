@@ -2,19 +2,23 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.AuditBuilder;
 import com.github.t1.deployer.container.AbstractResource;
-import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Plan.*;
+import com.github.t1.deployer.model.Config;
+import com.github.t1.deployer.model.Plan;
+import com.github.t1.deployer.model.Plan.AbstractPlan;
+import com.github.t1.deployer.model.Plan.PlanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.github.t1.problem.WebException.*;
-import static java.util.Collections.*;
-import static java.util.stream.Collectors.*;
+import static com.github.t1.problem.WebException.badRequest;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @RequiredArgsConstructor

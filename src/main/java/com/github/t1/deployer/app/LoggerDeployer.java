@@ -4,15 +4,20 @@ import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.container.LoggerResource;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.LogHandlerName;
+import com.github.t1.deployer.model.LoggerPlan;
+import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
-import java.util.stream.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
 
 @Slf4j
 class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder, LoggerResource, LoggerAuditBuilder> {

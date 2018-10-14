@@ -1,19 +1,23 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
+import com.github.t1.deployer.model.Config;
+import com.github.t1.deployer.model.Password;
+import com.github.t1.rest.Credentials;
 import com.github.t1.rest.RestContext;
+import com.github.t1.rest.RestResource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.HttpHostConnectException;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import java.net.*;
+import java.net.URI;
+import java.net.UnknownHostException;
 
-import static com.github.t1.deployer.repository.RepositoryType.*;
-import static com.github.t1.deployer.tools.Tools.*;
-import static com.github.t1.rest.RestContext.*;
+import static com.github.t1.deployer.repository.RepositoryType.artifactory;
+import static com.github.t1.deployer.repository.RepositoryType.mavenCentral;
+import static com.github.t1.deployer.tools.Tools.nvl;
+import static com.github.t1.rest.RestContext.REST;
 
 @Slf4j
 @ApplicationScoped

@@ -4,11 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NonNull;
 
-import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.model.Plan.*;
-import static lombok.AccessLevel.*;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
+import static com.github.t1.deployer.model.DeploymentState.undeployed;
+import static com.github.t1.deployer.model.Plan.apply;
+import static lombok.AccessLevel.MODULE;
 
 @Data
 @Builder

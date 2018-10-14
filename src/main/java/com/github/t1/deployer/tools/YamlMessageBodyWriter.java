@@ -6,17 +6,21 @@ import com.github.t1.rest.fallback.ConverterTools;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.*;
-import javax.ws.rs.ext.*;
-import java.io.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
-import static com.fasterxml.jackson.databind.DeserializationFeature.*;
-import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
-import static com.github.t1.deployer.tools.StringUtils.*;
-import static javax.ws.rs.core.MediaType.*;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.MINIMIZE_QUOTES;
+import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER;
+import static com.github.t1.deployer.tools.StringUtils.typeString;
+import static javax.ws.rs.core.MediaType.WILDCARD;
 
 @Provider
 @Produces(WILDCARD)

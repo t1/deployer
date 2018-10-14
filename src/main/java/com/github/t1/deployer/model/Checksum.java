@@ -2,12 +2,8 @@ package com.github.t1.deployer.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import lombok.*;
 
-import javax.xml.bind.annotation.*;
 import java.io.IOException;
-import java.nio.file.*;
-import java.security.*;
 
 import static javax.xml.bind.DatatypeConverter.*;
 import static lombok.AccessLevel.*;

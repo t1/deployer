@@ -1,17 +1,31 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
-import lombok.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.ArtifactType;
+import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.Classifier;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Version;
+import com.github.t1.rest.EntityResponse;
+import com.github.t1.rest.RestContext;
+import com.github.t1.rest.RestResource;
+import com.github.t1.rest.UriTemplate;
+import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 
-import static com.github.t1.problem.WebException.*;
-import static java.util.stream.Collectors.*;
-import static javax.ws.rs.core.Response.Status.*;
+import static com.github.t1.problem.WebException.builderFor;
+import static com.github.t1.problem.WebException.notFound;
+import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
 
 @Slf4j
 @RequiredArgsConstructor

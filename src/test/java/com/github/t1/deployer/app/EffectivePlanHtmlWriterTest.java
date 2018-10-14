@@ -1,18 +1,34 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.DataSourceName;
+import com.github.t1.deployer.model.DataSourcePlan;
+import com.github.t1.deployer.model.DeployablePlan;
+import com.github.t1.deployer.model.DeploymentName;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.LogHandlerName;
+import com.github.t1.deployer.model.LogHandlerPlan;
+import com.github.t1.deployer.model.LoggerCategory;
+import com.github.t1.deployer.model.LoggerPlan;
+import com.github.t1.deployer.model.Plan;
+import com.github.t1.deployer.model.Version;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.nio.file.Paths;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.model.Expressions.*;
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.log.LogLevel.*;
-import static javax.ws.rs.core.MediaType.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.model.ArtifactType.jar;
+import static com.github.t1.deployer.model.ArtifactType.war;
+import static com.github.t1.deployer.model.Expressions.hostName;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.log.LogLevel.ALL;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static com.github.t1.log.LogLevel.INFO;
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.contentOf;
 
 public class EffectivePlanHtmlWriterTest {
     private static final Plan PLAN = Plan

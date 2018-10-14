@@ -1,11 +1,14 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.Password;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.Value;
 
 import java.net.URI;
 
-import static lombok.AccessLevel.*;
+import static lombok.AccessLevel.PRIVATE;
 
 @Value
 @Builder

@@ -5,14 +5,24 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Cipher;
 import java.io.IOException;
-import java.nio.file.*;
-import java.security.*;
-import java.security.KeyStore.*;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStore.Entry;
+import java.security.KeyStore.PasswordProtection;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStore.SecretKeyEntry;
 import java.util.function.Function;
 
-import static java.nio.charset.StandardCharsets.*;
-import static javax.crypto.Cipher.*;
-import static javax.xml.bind.DatatypeConverter.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.crypto.Cipher.DECRYPT_MODE;
+import static javax.crypto.Cipher.ENCRYPT_MODE;
+import static javax.xml.bind.DatatypeConverter.parseHexBinary;
+import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 public class CipherFacade {
     public static final String DEFAULT_PASS = "changeit";

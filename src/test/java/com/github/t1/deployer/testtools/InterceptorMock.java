@@ -1,16 +1,26 @@
 package com.github.t1.deployer.testtools;
 
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.*;
+import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.Stubber;
 
-import javax.interceptor.*;
+import javax.interceptor.AroundInvoke;
+import javax.interceptor.Interceptor;
+import javax.interceptor.InterceptorBinding;
+import javax.interceptor.InvocationContext;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 
-import static java.util.Collections.*;
-import static org.mockito.Mockito.*;
-import static org.mockito.internal.util.MockUtil.*;
+import static java.util.Collections.emptyMap;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.internal.util.MockUtil.getMockSettings;
 
 /** Adds an {@link Interceptor} around a target object by using Mockito. */
 public class InterceptorMock<T> {

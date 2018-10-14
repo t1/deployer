@@ -4,11 +4,15 @@ import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.deployer.model.LoggerCategory.*;
-import static com.github.t1.deployer.testtools.ModelNodeTestTools.*;
-import static com.github.t1.log.LogLevel.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.deployer.model.LoggerCategory.ROOT;
+import static com.github.t1.deployer.testtools.ModelNodeTestTools.step;
+import static com.github.t1.deployer.testtools.ModelNodeTestTools.toModelNode;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static com.github.t1.log.LogLevel.INFO;
+import static com.github.t1.log.LogLevel.WARN;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class LoggerDeployerTest extends AbstractDeployerTests {
     @Test

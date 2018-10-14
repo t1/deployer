@@ -3,11 +3,12 @@ package com.github.t1.deployer.repository;
 import com.github.t1.rest.RestClientMocker;
 import org.junit.Test;
 
-import java.net.*;
+import java.net.URI;
+import java.net.UnknownHostException;
 
-import static com.github.t1.deployer.repository.RepositoryProducer.*;
-import static com.github.t1.rest.RestContext.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.repository.RepositoryProducer.DEFAULT_ARTIFACTORY_URI;
+import static com.github.t1.rest.RestContext.REST;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RepositoryProducerTest {
     private static final URI DUMMY_URI = URI.create("http://example.nowhere");

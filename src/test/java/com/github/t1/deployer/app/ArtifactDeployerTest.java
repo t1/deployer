@@ -7,9 +7,10 @@ import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
-import static com.github.t1.deployer.app.Trigger.*;
+import static com.github.t1.deployer.app.Trigger.post;
 import static com.github.t1.deployer.model.ProcessState.running;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class ArtifactDeployerTest extends AbstractDeployerTests {
     @Test

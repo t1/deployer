@@ -1,24 +1,33 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.LogHandlerName;
 import com.github.t1.deployer.model.LoggerCategory;
 import com.github.t1.log.LogLevel;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Singular;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
-import java.lang.Boolean;
-import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.model.LoggerCategory.*;
-import static com.github.t1.log.LogLevel.*;
-import static java.lang.Boolean.*;
-import static java.util.Collections.*;
-import static java.util.Comparator.*;
-import static java.util.stream.Collectors.*;
-import static org.jboss.as.controller.client.helpers.Operations.*;
+import static com.github.t1.deployer.model.LoggerCategory.ROOT;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static com.github.t1.log.LogLevel.ERROR;
+import static com.github.t1.log.LogLevel.INFO;
+import static com.github.t1.log.LogLevel.OFF;
+import static com.github.t1.log.LogLevel.TRACE;
+import static com.github.t1.log.LogLevel.WARN;
+import static java.lang.Boolean.TRUE;
+import static java.util.Collections.emptyList;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
+import static org.jboss.as.controller.client.helpers.Operations.createAddOperation;
+import static org.jboss.as.controller.client.helpers.Operations.createAddress;
+import static org.jboss.as.controller.client.helpers.Operations.createOperation;
 
 @Slf4j
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")

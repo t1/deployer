@@ -1,10 +1,16 @@
 package com.github.t1.deployer.testtools;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Expressions.VariableName;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Version;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static com.github.t1.deployer.model.ArtifactType.jar;
+import static com.github.t1.deployer.model.ArtifactType.pom;
+import static com.github.t1.deployer.model.ArtifactType.war;
+import static com.github.t1.deployer.repository.ArtifactoryMock.checksumFor;
+import static com.github.t1.deployer.repository.ArtifactoryMock.dummyWar;
 
 public class TestData {
     public static final VariableName VERSION = new VariableName("version");

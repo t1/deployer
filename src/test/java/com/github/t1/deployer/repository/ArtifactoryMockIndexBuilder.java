@@ -1,12 +1,9 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.Checksum;
-import lombok.*;
 
 import java.io.IOException;
-import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.*;
 
 import static com.github.t1.deployer.repository.ArtifactoryMock.*;
 

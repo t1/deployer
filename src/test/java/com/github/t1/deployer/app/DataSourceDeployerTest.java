@@ -4,9 +4,12 @@ import com.github.t1.deployer.model.Age;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
-import static com.github.t1.deployer.model.ProcessState.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+import static com.github.t1.deployer.model.ProcessState.reloadRequired;
+import static com.github.t1.deployer.model.ProcessState.restartRequired;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RESTART_REQUIRED;
 
 public class DataSourceDeployerTest extends AbstractDeployerTests {
     @Test

@@ -1,22 +1,44 @@
 package com.github.t1.deployer.app;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.github.t1.deployer.model.*;
-import lombok.*;
+import com.github.t1.deployer.model.DataSourceName;
+import com.github.t1.deployer.model.DeploymentName;
+import com.github.t1.deployer.model.LogHandlerName;
+import com.github.t1.deployer.model.LogHandlerType;
+import com.github.t1.deployer.model.LoggerCategory;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.Value;
 import lombok.experimental.Accessors;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.*;
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.*;
-import static com.github.t1.deployer.app.Audit.Operation.*;
-import static com.github.t1.deployer.tools.Tools.*;
-import static lombok.AccessLevel.*;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY;
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
+import static com.github.t1.deployer.app.Audit.Operation.add;
+import static com.github.t1.deployer.app.Audit.Operation.change;
+import static com.github.t1.deployer.app.Audit.Operation.remove;
+import static com.github.t1.deployer.tools.Tools.toStringOrNull;
+import static lombok.AccessLevel.PRIVATE;
+import static lombok.AccessLevel.PROTECTED;
 
 @Data
 @Accessors(fluent = true, chain = true)

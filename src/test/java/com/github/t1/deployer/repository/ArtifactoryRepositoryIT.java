@@ -1,22 +1,41 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
-import com.github.t1.testtools.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Version;
+import com.github.t1.rest.Credentials;
+import com.github.t1.rest.RestContext;
+import com.github.t1.testtools.LoggerMemento;
+import com.github.t1.testtools.TestLoggerRule;
 import io.dropwizard.testing.junit.DropwizardClientRule;
-import org.junit.*;
-import org.junit.rules.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.TestRule;
 
 import java.net.URI;
 import java.util.List;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.repository.ArtifactoryMock.*;
-import static com.github.t1.deployer.testtools.TestData.*;
-import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.rest.RestContext.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assume.*;
+import static com.github.t1.deployer.model.ArtifactType.war;
+import static com.github.t1.deployer.repository.ArtifactoryMock.AMBIGUOUS_CHECKSUM;
+import static com.github.t1.deployer.repository.ArtifactoryMock.CURRENT_FOO_VERSION;
+import static com.github.t1.deployer.repository.ArtifactoryMock.FAILING_CHECKSUM;
+import static com.github.t1.deployer.repository.ArtifactoryMock.FOO;
+import static com.github.t1.deployer.repository.ArtifactoryMock.UNKNOWN_CHECKSUM;
+import static com.github.t1.deployer.repository.ArtifactoryMock.fakeChecksumFor;
+import static com.github.t1.deployer.testtools.TestData.JOLOKIA_133_CHECKSUM;
+import static com.github.t1.deployer.testtools.TestData.JOLOKIA_134_CHECKSUM;
+import static com.github.t1.deployer.testtools.TestData.JOLOKIA_134_SNAPSHOT_CHECKSUM;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static com.github.t1.rest.RestContext.REST;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.Assume.assumeNotNull;
 
 public class ArtifactoryRepositoryIT {
     private static final boolean TEST_WITH_REAL_ARTIFACTORY = false;

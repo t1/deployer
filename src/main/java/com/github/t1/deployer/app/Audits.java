@@ -2,19 +2,26 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.model.ProcessState;
-import com.github.t1.log.*;
-import lombok.*;
+import com.github.t1.log.JsonLogDetail;
+import com.github.t1.log.Logged;
+import lombok.Data;
+import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.RequestScoped;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import static com.github.t1.deployer.model.Plan.*;
-import static com.github.t1.log.LogLevel.*;
-import static java.util.stream.Collectors.*;
+import static com.github.t1.deployer.model.Plan.YAML;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static com.github.t1.log.LogLevel.INFO;
+import static com.github.t1.log.LogLevel.WARN;
+import static java.util.stream.Collectors.joining;
 
 /**
  * Collector of {@link Audit}s per request. Can't be returned directly from JAX-RS, as the serialisation by Jackson

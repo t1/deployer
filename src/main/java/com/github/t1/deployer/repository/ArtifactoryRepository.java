@@ -1,22 +1,40 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
-import lombok.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.ArtifactType;
+import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.Classifier;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Version;
+import com.github.t1.rest.EntityResponse;
+import com.github.t1.rest.RestContext;
+import com.github.t1.rest.RestRequest;
+import com.github.t1.rest.UnexpectedStatusException;
+import com.github.t1.rest.UriTemplate;
+import com.github.t1.rest.VendorType;
+import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response.Status;
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
-import static com.github.t1.problem.WebException.*;
-import static java.util.Collections.*;
-import static java.util.stream.Collectors.*;
-import static javax.ws.rs.core.Response.Status.*;
-import static javax.xml.bind.annotation.XmlAccessType.*;
+import static com.github.t1.problem.WebException.notFound;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.Response.Status.OK;
+import static javax.xml.bind.annotation.XmlAccessType.FIELD;
 
 @Slf4j
 @RequiredArgsConstructor

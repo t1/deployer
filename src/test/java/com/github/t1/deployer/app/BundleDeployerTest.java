@@ -2,22 +2,28 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.Checksum;
-import com.github.t1.deployer.model.Expressions.*;
-import com.github.t1.deployer.tools.*;
+import com.github.t1.deployer.model.Expressions.UnresolvedVariableException;
+import com.github.t1.deployer.model.Expressions.VariableName;
+import com.github.t1.deployer.tools.CipherFacade;
+import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.net.InetAddress;
 
-import static com.github.t1.deployer.app.Trigger.*;
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.model.Expressions.*;
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.deployer.testtools.TestData.*;
-import static com.github.t1.log.LogLevel.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.app.Trigger.post;
+import static com.github.t1.deployer.model.ArtifactType.bundle;
+import static com.github.t1.deployer.model.ArtifactType.ear;
+import static com.github.t1.deployer.model.ArtifactType.jar;
+import static com.github.t1.deployer.model.Expressions.domainName;
+import static com.github.t1.deployer.model.Expressions.hostName;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.deployer.testtools.TestData.VERSION;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static java.util.Collections.emptyMap;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class BundleDeployerTest extends AbstractDeployerTests {
     private static final KeyStoreConfig KEYSTORE = KeyStoreConfig

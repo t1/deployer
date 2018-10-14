@@ -1,24 +1,29 @@
 package com.github.t1.deployer.repository;
 
-import ch.qos.logback.classic.*;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.codahale.metrics.health.HealthCheck;
-import io.dropwizard.*;
+import io.dropwizard.Application;
+import io.dropwizard.Configuration;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.Server;
 import org.jboss.aesh.cl.CommandDefinition;
-import org.jboss.aesh.console.*;
-import org.jboss.aesh.console.command.*;
+import org.jboss.aesh.console.AeshConsoleBuilder;
+import org.jboss.aesh.console.Prompt;
+import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
-import org.jboss.aesh.console.command.registry.*;
+import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
+import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static ch.qos.logback.classic.Level.*;
-import static java.util.Arrays.*;
+import static ch.qos.logback.classic.Level.DEBUG;
+import static java.util.Arrays.asList;
 
 /**
  * If you don't have a real Artifactory Pro available, launch this, which will start a more or less working mock of

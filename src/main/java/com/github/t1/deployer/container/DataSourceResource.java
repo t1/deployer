@@ -1,26 +1,28 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Age;
 import com.github.t1.deployer.model.DataSourceName;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
 
-import java.lang.Boolean;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.model.DataSourceName.*;
-import static java.lang.Boolean.*;
-import static java.util.Arrays.*;
-import static java.util.Comparator.*;
-import static java.util.stream.Collectors.*;
-import static org.jboss.as.controller.client.helpers.Operations.*;
+import static com.github.t1.deployer.model.DataSourceName.ALL;
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+import static java.util.Arrays.asList;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
+import static org.jboss.as.controller.client.helpers.Operations.createAddOperation;
 
 /** @see javax.annotation.sql.DataSourceDefinition */
 @Slf4j

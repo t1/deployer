@@ -1,17 +1,29 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.DataSourcePlan;
+import com.github.t1.deployer.model.DeployablePlan;
+import com.github.t1.deployer.model.LogHandlerPlan;
+import com.github.t1.deployer.model.LoggerCategory;
+import com.github.t1.deployer.model.LoggerPlan;
+import com.github.t1.deployer.model.Plan;
 import com.github.t1.log.LogLevel;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.log.LogLevel.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
+import static com.github.t1.deployer.model.LogHandlerType.custom;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.log.LogLevel.ALL;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static com.github.t1.log.LogLevel.ERROR;
+import static com.github.t1.log.LogLevel.INFO;
+import static com.github.t1.log.LogLevel.OFF;
+import static com.github.t1.log.LogLevel.TRACE;
+import static com.github.t1.log.LogLevel.WARN;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReadEffectivePlanTest extends AbstractDeployerTests {
     private static final LoggerPlan ROOT = LoggerPlan

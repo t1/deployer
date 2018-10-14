@@ -1,12 +1,15 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.model.*;
-import org.junit.*;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Version;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
-import static com.github.t1.deployer.repository.RepositoryProducerTest.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.repository.RepositoryProducerTest.createMavenCentralRepository;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class VersionsListIT {
     private static final GroupId GROUP_ID = GroupId.of("org.jolokia");

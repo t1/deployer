@@ -3,9 +3,14 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audits.Warning;
-import com.github.t1.deployer.container.*;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.container.Container;
+import com.github.t1.deployer.container.DeploymentResource;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.DeployablePlan;
+import com.github.t1.deployer.model.DeploymentName;
+import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Plan.PlanBuilder;
+import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,10 +19,10 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.container.DeploymentResource.*;
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.problem.WebException.*;
+import static com.github.t1.deployer.container.DeploymentResource.WAR_SUFFIX;
+import static com.github.t1.deployer.model.ArtifactType.war;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
+import static com.github.t1.problem.WebException.badRequest;
 
 @Slf4j
 class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {

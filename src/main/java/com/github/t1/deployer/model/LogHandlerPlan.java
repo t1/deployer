@@ -1,19 +1,28 @@
 package com.github.t1.deployer.model;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.log.LogLevel;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NonNull;
+import lombok.Singular;
 
 import java.util.Map;
 
-import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.deployer.model.Plan.*;
-import static java.util.function.Function.*;
-import static lombok.AccessLevel.*;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
+import static com.github.t1.deployer.model.LogHandlerType.custom;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.deployer.model.Plan.AbstractPlan;
+import static com.github.t1.deployer.model.Plan.PlanLoadingException;
+import static com.github.t1.deployer.model.Plan.apply;
+import static com.github.t1.deployer.model.Plan.expressions;
+import static java.util.function.Function.identity;
+import static lombok.AccessLevel.PRIVATE;
 
 @Data
 @Builder

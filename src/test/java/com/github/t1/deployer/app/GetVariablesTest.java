@@ -1,26 +1,35 @@
 package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.RootBundleConfig;
+import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.ArtifactoryMock.StringInputStream;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.testtools.*;
-import org.junit.*;
+import com.github.t1.testtools.FileMemento;
+import com.github.t1.testtools.SystemPropertiesRule;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.Set;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
-import static com.fasterxml.jackson.databind.DeserializationFeature.*;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
-import static com.github.t1.deployer.app.DeployerBoundary.*;
-import static com.github.t1.deployer.container.Container.*;
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.model.Expressions.*;
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategy.KEBAB_CASE;
+import static com.github.t1.deployer.app.DeployerBoundary.ROOT_BUNDLE_CONFIG_FILE;
+import static com.github.t1.deployer.container.Container.CLI_DEBUG;
+import static com.github.t1.deployer.model.ArtifactType.bundle;
+import static com.github.t1.deployer.model.Expressions.VariableName;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class GetVariablesTest {
     private static final ObjectMapper JSON = new ObjectMapper()

@@ -1,37 +1,61 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.Container;
-import com.github.t1.deployer.model.*;
-import com.github.t1.deployer.model.Expressions.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.ArtifactType;
+import com.github.t1.deployer.model.BundleName;
+import com.github.t1.deployer.model.BundlePlan;
+import com.github.t1.deployer.model.Config;
+import com.github.t1.deployer.model.Expressions;
+import com.github.t1.deployer.model.Expressions.Match;
+import com.github.t1.deployer.model.Expressions.UnresolvedVariableException;
+import com.github.t1.deployer.model.Expressions.VariableName;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Plan.PlanBuilder;
+import com.github.t1.deployer.model.ProcessState;
+import com.github.t1.deployer.model.RootBundleConfig;
+import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.Logged;
-import com.github.t1.problem.*;
+import com.github.t1.problem.WebApplicationApplicationException;
+import com.github.t1.problem.WebException;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.ejb.*;
+import javax.ejb.Asynchronous;
+import javax.ejb.Stateless;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import java.io.*;
-import java.nio.file.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.QueryParam;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.app.Trigger.*;
-import static com.github.t1.deployer.model.ProcessState.*;
-import static com.github.t1.log.LogLevel.*;
-import static com.github.t1.problem.WebException.*;
-import static java.lang.Boolean.*;
-import static java.nio.file.Files.*;
-import static java.util.Collections.*;
-import static java.util.stream.Collectors.*;
-import static javax.ws.rs.core.Response.Status.*;
+import static com.github.t1.deployer.app.Trigger.post;
+import static com.github.t1.deployer.model.ProcessState.running;
+import static com.github.t1.log.LogLevel.INFO;
+import static com.github.t1.problem.WebException.badRequest;
+import static java.lang.Boolean.TRUE;
+import static java.nio.file.Files.isRegularFile;
+import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toMap;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 @javax.ws.rs.Path("/")
 @Stateless

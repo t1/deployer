@@ -4,15 +4,17 @@ import com.github.t1.deployer.app.Audit.DataSourceAudit;
 import com.github.t1.deployer.app.Audit.DataSourceAudit.DataSourceAuditBuilder;
 import com.github.t1.deployer.container.DataSourceResource;
 import com.github.t1.deployer.container.DataSourceResource.DataSourceResourceBuilder;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Age;
+import com.github.t1.deployer.model.DataSourcePlan;
 import com.github.t1.deployer.model.DataSourcePlan.PoolPlan;
+import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Plan.PlanBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.model.DeploymentState.*;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
 
 @Slf4j
 class DataSourceDeployer extends

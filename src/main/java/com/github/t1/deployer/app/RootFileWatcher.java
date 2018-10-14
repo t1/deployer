@@ -5,15 +5,18 @@ import com.github.t1.deployer.tools.FileWatcher;
 import com.github.t1.log.Logged;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.*;
-import javax.ejb.*;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Set;
 
-import static com.github.t1.deployer.app.Trigger.*;
-import static com.github.t1.log.LogLevel.*;
-import static java.util.Collections.*;
+import static com.github.t1.deployer.app.Trigger.fileChange;
+import static com.github.t1.deployer.app.Trigger.startup;
+import static com.github.t1.log.LogLevel.INFO;
+import static java.util.Collections.emptyMap;
 
 @Slf4j
 @Singleton

@@ -5,20 +5,28 @@ import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.deployer.model.Plan;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.*;
-import javax.ws.rs.ext.*;
-import java.io.*;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.math.*;
-import java.util.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
-import static com.github.t1.deployer.model.Expressions.*;
-import static java.util.Collections.*;
-import static javax.ws.rs.core.MediaType.*;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.github.t1.deployer.model.Expressions.hostName;
+import static java.util.Collections.singleton;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 
 @Provider
 @Produces(TEXT_HTML)

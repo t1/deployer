@@ -4,9 +4,10 @@ import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 
 import java.math.BigInteger;
-import java.security.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
-import static java.nio.charset.StandardCharsets.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Log
 public class UserHashTool {

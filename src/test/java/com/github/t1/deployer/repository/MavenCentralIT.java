@@ -1,19 +1,34 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.ArtifactType;
+import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Version;
 import com.github.t1.rest.RestContext;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.repository.RepositoryProducer.*;
-import static com.github.t1.deployer.testtools.TestData.*;
-import static com.github.t1.rest.RestContext.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assume.*;
+import static com.github.t1.deployer.model.ArtifactType.pom;
+import static com.github.t1.deployer.model.ArtifactType.war;
+import static com.github.t1.deployer.repository.RepositoryProducer.DEFAULT_MAVEN_CENTRAL_URI;
+import static com.github.t1.deployer.repository.RepositoryProducer.REST_ALIAS;
+import static com.github.t1.deployer.testtools.TestData.JOLOKIA_133_CHECKSUM;
+import static com.github.t1.deployer.testtools.TestData.JOLOKIA_133_POM_CHECKSUM;
+import static com.github.t1.deployer.testtools.TestData.JOLOKIA_WAR;
+import static com.github.t1.deployer.testtools.TestData.ORG_JOLOKIA;
+import static com.github.t1.deployer.testtools.TestData.VERSION_1_3_3;
+import static com.github.t1.rest.RestContext.REST;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.Assume.assumeNoException;
 
 public class MavenCentralIT {
     private final RestContext rest = REST.register(REST_ALIAS, DEFAULT_MAVEN_CENTRAL_URI);

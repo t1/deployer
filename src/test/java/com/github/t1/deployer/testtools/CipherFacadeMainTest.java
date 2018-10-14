@@ -1,13 +1,15 @@
 package com.github.t1.deployer.testtools;
 
 import com.github.t1.testtools.SystemOutCaptorRule;
-import org.junit.*;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 
-import static com.github.t1.deployer.testtools.CipherFacadeMain.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assume.*;
+import static com.github.t1.deployer.testtools.CipherFacadeMain.main;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.Assume.assumeNoException;
 
 public class CipherFacadeMainTest {
     private static final String PLAIN_TEXT = "foo";

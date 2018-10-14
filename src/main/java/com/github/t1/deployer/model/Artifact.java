@@ -1,12 +1,17 @@
 package com.github.t1.deployer.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.function.Supplier;
 
-import static java.nio.charset.StandardCharsets.*;
-import static lombok.AccessLevel.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static lombok.AccessLevel.PRIVATE;
 
 @Builder
 @Getter

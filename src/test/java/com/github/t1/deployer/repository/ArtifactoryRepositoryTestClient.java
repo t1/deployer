@@ -1,11 +1,12 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.rest.RestContext;
 import io.dropwizard.testing.junit.DropwizardClientRule;
 import lombok.SneakyThrows;
 
-import static com.github.t1.rest.RestContext.*;
+import static com.github.t1.rest.RestContext.REST;
 
 public class ArtifactoryRepositoryTestClient {
     private static final Checksum CHECKSUM = Checksum.ofHexString("CC99BBEC4AF60E0A39AE4CA4312001B29287580C");

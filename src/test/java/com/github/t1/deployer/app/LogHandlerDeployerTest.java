@@ -3,10 +3,14 @@ package com.github.t1.deployer.app;
 import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.Test;
 
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.deployer.tools.Tools.*;
-import static com.github.t1.log.LogLevel.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.model.LogHandlerType.console;
+import static com.github.t1.deployer.model.LogHandlerType.custom;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.deployer.tools.Tools.toStringOrNull;
+import static com.github.t1.log.LogLevel.ALL;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class LogHandlerDeployerTest extends AbstractDeployerTests {
     @Test

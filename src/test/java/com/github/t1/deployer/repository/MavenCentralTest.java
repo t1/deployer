@@ -1,13 +1,16 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
-import com.github.t1.rest.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.Checksum;
+import com.github.t1.rest.RestClientMocker;
+import com.github.t1.rest.RestContext;
 import org.junit.Test;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.deployer.repository.RepositoryProducer.*;
-import static javax.ws.rs.core.MediaType.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.model.ArtifactType.war;
+import static com.github.t1.deployer.repository.RepositoryProducer.DEFAULT_MAVEN_CENTRAL_URI;
+import static com.github.t1.deployer.repository.RepositoryProducer.REST_ALIAS;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenCentralTest {
     private final RestClientMocker mock = new RestClientMocker()

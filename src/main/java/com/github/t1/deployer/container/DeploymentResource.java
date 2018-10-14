@@ -1,8 +1,10 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.DeploymentName;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
@@ -11,11 +13,17 @@ import java.io.InputStream;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.model.DeploymentName.*;
-import static java.lang.Boolean.*;
-import static java.util.Comparator.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
-import static org.jboss.as.controller.client.helpers.Operations.*;
+import static com.github.t1.deployer.model.DeploymentName.ALL;
+import static java.lang.Boolean.TRUE;
+import static java.util.Comparator.comparing;
+import static org.jboss.as.controller.client.helpers.ClientConstants.ADD;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTENT;
+import static org.jboss.as.controller.client.helpers.ClientConstants.DEPLOYMENT_UNDEPLOY_OPERATION;
+import static org.jboss.as.controller.client.helpers.ClientConstants.INPUT_STREAM_INDEX;
+import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
+import static org.jboss.as.controller.client.helpers.Operations.createAddress;
+import static org.jboss.as.controller.client.helpers.Operations.createOperation;
+import static org.jboss.as.controller.client.helpers.Operations.createRemoveOperation;
 
 @Slf4j
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")

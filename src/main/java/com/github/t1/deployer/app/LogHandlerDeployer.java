@@ -4,16 +4,19 @@ import com.github.t1.deployer.app.Audit.LogHandlerAudit;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.container.LogHandlerResource;
 import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.LogHandlerPlan;
+import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.model.DeploymentState.*;
-import static java.util.Collections.*;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
+import static java.util.Collections.emptySet;
 
 @Slf4j
 class LogHandlerDeployer extends

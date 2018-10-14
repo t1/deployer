@@ -5,13 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.*;
-import javax.management.*;
-import java.io.*;
+import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Produces;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.io.IOException;
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
-import java.net.*;
+import java.net.URI;
+import java.net.UnknownHostException;
 
-import static com.github.t1.log.LogLevel.*;
+import static com.github.t1.log.LogLevel.DEBUG;
 
 @Slf4j
 @Logged(level = DEBUG)

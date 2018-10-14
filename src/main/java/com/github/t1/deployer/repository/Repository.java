@@ -1,13 +1,21 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.ArtifactType;
+import com.github.t1.deployer.model.Checksum;
+import com.github.t1.deployer.model.Classifier;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Version;
 import com.github.t1.log.Logged;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
-import static com.github.t1.deployer.model.ArtifactType.*;
-import static com.github.t1.problem.WebException.*;
+import static com.github.t1.deployer.model.ArtifactType.unknown;
+import static com.github.t1.problem.WebException.badRequest;
 
 /** Stores artifacts, e.g. Maven Central or Artifactory */
 @Slf4j

@@ -4,14 +4,17 @@ import com.github.t1.rest.fallback.ConverterTools;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.core.*;
-import javax.ws.rs.ext.*;
-import java.io.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyReader;
+import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import static com.github.t1.deployer.tools.StringUtils.*;
-import static javax.ws.rs.core.MediaType.*;
+import static com.github.t1.deployer.tools.StringUtils.typeString;
+import static javax.ws.rs.core.MediaType.WILDCARD;
 
 @Slf4j
 @Provider

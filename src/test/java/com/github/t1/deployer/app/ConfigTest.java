@@ -1,12 +1,18 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.container.Container;
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.ArtifactId;
+import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.Expressions.VariableName;
+import com.github.t1.deployer.model.GroupId;
+import com.github.t1.deployer.model.Password;
+import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.deployer.tools.KeyStoreConfig;
-import com.github.t1.testtools.*;
-import org.junit.*;
+import com.github.t1.testtools.FileMemento;
+import com.github.t1.testtools.SystemPropertiesRule;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.net.URI;
@@ -14,10 +20,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import static com.github.t1.deployer.app.ConfigProducer.*;
-import static com.github.t1.deployer.app.Trigger.*;
-import static com.github.t1.deployer.repository.RepositoryType.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.app.ConfigProducer.DEPLOYER_CONFIG_YAML;
+import static com.github.t1.deployer.app.Trigger.fileChange;
+import static com.github.t1.deployer.app.Trigger.post;
+import static com.github.t1.deployer.app.Trigger.startup;
+import static com.github.t1.deployer.repository.RepositoryType.artifactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 public class ConfigTest {

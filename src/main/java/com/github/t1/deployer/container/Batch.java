@@ -1,30 +1,58 @@
 package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.ProcessState;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.as.controller.client.*;
+import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.Operation;
+import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import static com.github.t1.deployer.container.Batch.TypeEnum.*;
+import static com.github.t1.deployer.container.Batch.TypeEnum.DATA_SOURCE;
+import static com.github.t1.deployer.container.Batch.TypeEnum.DEPLOYABLE;
 import static com.github.t1.deployer.container.Batch.TypeEnum.LOGGER;
-import static com.github.t1.deployer.container.Container.*;
-import static com.github.t1.deployer.model.ProcessState.*;
-import static com.github.t1.problem.WebException.*;
-import static java.util.Locale.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
-import static org.jboss.as.controller.client.helpers.Operations.*;
-import static org.wildfly.plugin.core.ServerHelper.*;
+import static com.github.t1.deployer.container.Batch.TypeEnum.LOG_HANDLER;
+import static com.github.t1.deployer.container.Batch.TypeEnum.UNKNOWN;
+import static com.github.t1.deployer.container.Container.CLI_DEBUG;
+import static com.github.t1.deployer.model.ProcessState.reloadRequired;
+import static com.github.t1.deployer.model.ProcessState.restartRequired;
+import static com.github.t1.deployer.model.ProcessState.running;
+import static com.github.t1.problem.WebException.badRequest;
+import static java.util.Locale.US;
+import static org.jboss.as.controller.client.helpers.ClientConstants.ADDRESS;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RESTART_REQUIRED;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RUNNING;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_STARTING;
+import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_STOPPING;
+import static org.jboss.as.controller.client.helpers.ClientConstants.FAILURE_DESCRIPTION;
+import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OP;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OUTCOME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.RESPONSE_HEADERS;
+import static org.jboss.as.controller.client.helpers.ClientConstants.STEPS;
+import static org.jboss.as.controller.client.helpers.ClientConstants.VALUE;
+import static org.jboss.as.controller.client.helpers.ClientConstants.WRITE_ATTRIBUTE_OPERATION;
+import static org.jboss.as.controller.client.helpers.Operations.CompositeOperationBuilder;
+import static org.jboss.as.controller.client.helpers.Operations.createOperation;
+import static org.jboss.as.controller.client.helpers.Operations.createReadResourceOperation;
+import static org.jboss.as.controller.client.helpers.Operations.isSuccessfulOutcome;
+import static org.wildfly.plugin.core.ServerHelper.waitForStandalone;
 
 @Slf4j
 @RequestScoped

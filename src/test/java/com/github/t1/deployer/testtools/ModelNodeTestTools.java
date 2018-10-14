@@ -3,11 +3,17 @@ package com.github.t1.deployer.testtools;
 import com.github.t1.deployer.model.LogHandlerType;
 import org.assertj.core.api.Condition;
 import org.jboss.as.controller.client.Operation;
-import org.jboss.dmr.*;
+import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 
 import java.util.stream.Collector;
 
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+import static org.jboss.as.controller.client.helpers.ClientConstants.COMPOSITE;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OP;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OUTCOME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
+import static org.jboss.as.controller.client.helpers.ClientConstants.STEPS;
+import static org.jboss.as.controller.client.helpers.ClientConstants.SUCCESS;
 
 public class ModelNodeTestTools {
     public static ModelNode readLoggerRequest(String name) { return readResourceRequest("logging", "logger", name); }

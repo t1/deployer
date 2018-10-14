@@ -1,16 +1,20 @@
 package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.Age;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
 import java.io.InputStream;
 import java.util.Optional;
 
-import static com.github.t1.deployer.container.Batch.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
-import static org.jboss.as.controller.client.helpers.Operations.*;
+import static com.github.t1.deployer.container.Batch.isNotFoundMessage;
+import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
+import static org.jboss.as.controller.client.helpers.Operations.createReadResourceOperation;
+import static org.jboss.as.controller.client.helpers.Operations.createRemoveOperation;
+import static org.jboss.as.controller.client.helpers.Operations.getFailureDescription;
+import static org.jboss.as.controller.client.helpers.Operations.isSuccessfulOutcome;
 
 /**
  * Resources represent the configured state of the JavaEE container. They are responsible to add,

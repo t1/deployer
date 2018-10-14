@@ -2,8 +2,9 @@ package com.github.t1.deployer.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.github.t1.deployer.app.Audit.*;
+import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
+import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.model.LoggerCategory;
 import org.junit.Test;
@@ -12,11 +13,13 @@ import java.io.IOException;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.*;
-import static com.github.t1.deployer.model.Plan.*;
-import static com.github.t1.deployer.model.ProcessState.*;
-import static com.github.t1.log.LogLevel.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategy.KEBAB_CASE;
+import static com.github.t1.deployer.model.Plan.YAML;
+import static com.github.t1.deployer.model.ProcessState.reloadRequired;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static com.github.t1.log.LogLevel.INFO;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AuditsSerializationTest {
     private static final ObjectMapper JSON = new ObjectMapper()

@@ -6,15 +6,20 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.deployer.model.DataSourcePlan.PoolPlan.PoolPlanBuilder;
 import com.github.t1.deployer.tools.Tools;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NonNull;
 
 import java.net.URI;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static com.github.t1.deployer.model.DeploymentState.*;
-import static com.github.t1.deployer.model.Plan.*;
-import static java.util.function.Function.*;
-import static lombok.AccessLevel.*;
+import static com.github.t1.deployer.model.DeploymentState.deployed;
+import static com.github.t1.deployer.model.DeploymentState.undeployed;
+import static com.github.t1.deployer.model.Plan.apply;
+import static java.util.function.Function.identity;
+import static lombok.AccessLevel.PRIVATE;
 
 @Data
 @Builder

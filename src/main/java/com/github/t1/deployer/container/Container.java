@@ -4,19 +4,21 @@ import com.github.t1.deployer.container.DataSourceResource.DataSourceResourceBui
 import com.github.t1.deployer.container.DeploymentResource.DeploymentResourceBuilder;
 import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
 import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
-import com.github.t1.deployer.model.*;
-import com.google.common.collect.ImmutableMap;
+import com.github.t1.deployer.model.DataSourceName;
+import com.github.t1.deployer.model.DeploymentName;
+import com.github.t1.deployer.model.LogHandlerName;
+import com.github.t1.deployer.model.LogHandlerType;
+import com.github.t1.deployer.model.LoggerCategory;
+import com.github.t1.deployer.model.ProcessState;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.management.ObjectName;
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Slf4j

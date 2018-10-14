@@ -1,17 +1,22 @@
 package com.github.t1.deployer.testtools;
 
-import com.beust.jcommander.*;
-import com.github.t1.deployer.tools.*;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.github.t1.deployer.tools.CipherFacade;
+import com.github.t1.deployer.tools.KeyStoreConfig;
 import lombok.SneakyThrows;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.URI;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.List;
 
-import static com.github.t1.deployer.tools.CipherFacade.*;
+import static com.github.t1.deployer.tools.CipherFacade.DEFAULT_PASS;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CipherFacadeMain {

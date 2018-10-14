@@ -1,23 +1,30 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.LogHandlerName;
+import com.github.t1.deployer.model.LogHandlerType;
 import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.helpers.Operations;
 import org.jboss.dmr.ModelNode;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.container.LoggerResource.*;
-import static com.github.t1.deployer.model.LogHandlerName.*;
-import static java.util.Comparator.*;
-import static java.util.stream.Collectors.*;
-import static org.jboss.as.controller.client.helpers.Operations.*;
+import static com.github.t1.deployer.container.LoggerResource.mapLogLevel;
+import static com.github.t1.deployer.model.LogHandlerName.ALL;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
+import static org.jboss.as.controller.client.helpers.Operations.createAddOperation;
 
 @Slf4j
 @Builder(builderMethodName = "do_not_call", buildMethodName = "get")

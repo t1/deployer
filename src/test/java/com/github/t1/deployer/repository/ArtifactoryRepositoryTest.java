@@ -1,17 +1,20 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.*;
+import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryRepository.MavenMetadata.Versioning.SnapshotVersion;
 import org.junit.Test;
 
 import javax.xml.bind.JAXB;
 import java.io.StringReader;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import static com.github.t1.deployer.repository.ArtifactoryRepository.*;
-import static com.github.t1.deployer.repository.RepositoryProducer.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.github.t1.deployer.repository.ArtifactoryRepository.MavenMetadata;
+import static com.github.t1.deployer.repository.ArtifactoryRepository.artifactFromArtifactoryUri;
+import static com.github.t1.deployer.repository.RepositoryProducer.DEFAULT_ARTIFACTORY_URI;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ArtifactoryRepositoryTest {
     private static final Path PATH = Paths.get("/artifactory/api/storage/releases-virtual/"

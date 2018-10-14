@@ -2,10 +2,11 @@ package com.github.t1.deployer.app;
 
 import org.junit.Test;
 
-import static com.github.t1.deployer.model.LogHandlerType.*;
-import static com.github.t1.log.LogLevel.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
+import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
+import static com.github.t1.log.LogLevel.ALL;
+import static com.github.t1.log.LogLevel.DEBUG;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.as.controller.client.helpers.ClientConstants.ADDRESS;
 
 public class BatchSortingTest extends AbstractDeployerTests {
     @Test
