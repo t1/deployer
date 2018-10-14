@@ -14,7 +14,7 @@ import static java.util.concurrent.TimeUnit.*;
 @Slf4j
 public class FileWatcher extends Thread {
     private static final int POLL_TIMEOUT = 100;
-    private static final WatchEvent.Kind[] EVENT_KINDS = { ENTRY_MODIFY, ENTRY_CREATE };
+    private static final WatchEvent.Kind[] EVENT_KINDS = {ENTRY_MODIFY, ENTRY_CREATE};
 
     private final Path filePath;
     private final Runnable runnable;
@@ -46,8 +46,12 @@ public class FileWatcher extends Thread {
                 }
                 Thread.yield();
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             log.error("stop watching {} due to {} {}", filePath, e.getClass().getSimpleName(), e.getMessage());
+            throw new RuntimeException("while watching " + filePath, e);
+        } catch (InterruptedException e) {
+            log.error("interrupted while watching {} due to {} {}", filePath, e.getClass().getSimpleName(), e.getMessage());
+            Thread.currentThread().interrupt();
             throw new RuntimeException("while watching " + filePath, e);
         }
         log.info("stop watching {}", filePath);

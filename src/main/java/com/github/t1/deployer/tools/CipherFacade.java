@@ -31,7 +31,7 @@ public class CipherFacade {
         return new String(cipher(DECRYPT_MODE, parseHexBinary(text), key), UTF_8);
     }
 
-    @SneakyThrows({ GeneralSecurityException.class, IOException.class })
+    @SneakyThrows({GeneralSecurityException.class, IOException.class})
     private Key loadKey(KeyStoreConfig config, Function<PrivateKeyEntry, Key> privateKeyExtractor) {
         KeyStore store = loadKeyStore(config);
 
@@ -41,13 +41,15 @@ public class CipherFacade {
         if (entry == null)
             throw new IllegalArgumentException("no key [" + config.getAlias() + "] in " + getKeyStorePath(config));
         return (entry instanceof PrivateKeyEntry)
-                ? privateKeyExtractor.apply((PrivateKeyEntry) entry)
-                : ((SecretKeyEntry) entry).getSecretKey();
+            ? privateKeyExtractor.apply((PrivateKeyEntry) entry)
+            : ((SecretKeyEntry) entry).getSecretKey();
     }
 
     @NotNull private KeyStore loadKeyStore(KeyStoreConfig config) throws GeneralSecurityException, IOException {
         KeyStore store = KeyStore.getInstance(getKeystoreType(config));
-        store.load(Files.newInputStream(getKeyStorePath(config)), getKeyPass(config));
+        try (InputStream inputStream = Files.newInputStream(getKeyStorePath(config))) {
+            store.load(inputStream, getKeyPass(config));
+        }
         return store;
     }
 

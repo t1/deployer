@@ -41,11 +41,11 @@ public class DeployerBoundary {
     public static final String IGNORE_SERVER_RELOAD = DeployerBoundary.class + "#IGNORE_SERVER_RELOAD";
     public static final String ROOT_BUNDLE_CONFIG_FILE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
-            + "bundles:\n"
-            + "  ${regex(root-bundle:artifact-id or hostName(), «(.*?)\\d*»)}:\n"
-            + "    group-id: ${root-bundle:group-id or default.group-id or domainName()}\n"
-            + "    classifier: ${root-bundle:classifier or null}\n"
-            + "    version: ${root-bundle:version or version}\n";
+        + "bundles:\n"
+        + "  ${regex(root-bundle:artifact-id or hostName(), «(.*?)\\d*»)}:\n"
+        + "    group-id: ${root-bundle:group-id or default.group-id or domainName()}\n"
+        + "    classifier: ${root-bundle:classifier or null}\n"
+        + "    version: ${root-bundle:version or version}\n";
     private static final VariableName NAME = new VariableName("name");
     private static final Object CONTAINER_LOCK = new Object();
 
@@ -79,17 +79,17 @@ public class DeployerBoundary {
 
     private Map<VariableName, String> mapVariableNames(Map<String, String> form) {
         return (form == null)
-                ? emptyMap()
-                : form.entrySet().stream()
-                .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
+            ? emptyMap()
+            : form.entrySet().stream()
+            .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
     }
 
 
     @GET
     @javax.ws.rs.Path("/repository/versions")
     public List<Version> getVersions(
-            @QueryParam("groupId") @NotNull GroupId groupId,
-            @QueryParam("artifactId") @NotNull ArtifactId artifactId) {
+        @QueryParam("groupId") @NotNull GroupId groupId,
+        @QueryParam("artifactId") @NotNull ArtifactId artifactId) {
         return repository.listVersions(groupId, artifactId, false);
     }
 
@@ -102,7 +102,9 @@ public class DeployerBoundary {
 
     private String readPlan() {
         Reader reader = hasRootBundleConfigFile() ? reader(getRootBundlePath()) : rootBundleReader();
-        return new Scanner(reader).useDelimiter("\\A").next();
+        try (Scanner scanner = new Scanner(reader)) {
+            return scanner.useDelimiter("\\A").next();
+        }
     }
 
     private Reader rootBundleReader() {
@@ -119,7 +121,7 @@ public class DeployerBoundary {
         assert bundles.size() == 1 : "expected default root bundle to have exactly one bundle";
         BundlePlan bundle = bundles.values().iterator().next();
         Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
-                bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
+            bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
         if (artifact == null)
             throw badRequest("root bundle not found: " + bundle);
         return artifact.getReader();
@@ -148,7 +150,7 @@ public class DeployerBoundary {
             for (Throwable cause = e; cause != null; cause = cause.getCause())
                 if (cause instanceof UnresolvedVariableException)
                     log.info("skip async run for unresolved variable: {}",
-                            ((UnresolvedVariableException) cause).getExpression());
+                        ((UnresolvedVariableException) cause).getExpression());
             throw e;
         }
 
@@ -172,9 +174,9 @@ public class DeployerBoundary {
 
     private Expressions expressions() {
         return new Expressions()
-                .withAllNew(configuredVariables)
-                .withRootBundleConfig(rootBundleConfig)
-                .withKeyStore(keyStore);
+            .withAllNew(configuredVariables)
+            .withRootBundleConfig(rootBundleConfig)
+            .withKeyStore(keyStore);
     }
 
     public void apply(Trigger trigger, Map<VariableName, String> variables) {
@@ -190,8 +192,8 @@ public class DeployerBoundary {
                         execution.apply(reader(plan), plan.toString());
                     } else if (useDefaultConfig) {
                         throw new RuntimeException("For security reasons, applying the default root bundle "
-                                + "is only allowed when there is a configuration file. "
-                                + "See https://github.com/t1/deployer/issues/61");
+                            + "is only allowed when there is a configuration file. "
+                            + "See https://github.com/t1/deployer/issues/61");
                     } else {
                         log.info("load default root plan");
                         execution.apply(new StringReader(DEFAULT_ROOT_BUNDLE), "default root bundle");
@@ -242,10 +244,10 @@ public class DeployerBoundary {
                     if (cause.getMessage() != null && !cause.getMessage().isEmpty())
                         failureMessage += ": " + cause.getMessage();
                 throw WebException
-                        .builderFor(BAD_REQUEST)
-                        .causedBy(e)
-                        .detail(failureMessage)
-                        .build();
+                    .builderFor(BAD_REQUEST)
+                    .causedBy(e)
+                    .detail(failureMessage)
+                    .build();
             }
         }
 
@@ -263,7 +265,7 @@ public class DeployerBoundary {
                         this.expressions = this.expressions.with(NAME, instance.getKey());
                     this.expressions = this.expressions.withAllReplacing(instance.getValue());
                     Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
-                            bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
+                        bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
                     if (artifact == null)
                         throw badRequest("bundle not found: " + bundle);
                     apply(artifact.getReader(), artifact.toString());
