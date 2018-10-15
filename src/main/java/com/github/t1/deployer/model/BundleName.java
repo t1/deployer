@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlValue;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static lombok.AccessLevel.PRIVATE;
 
 @Value
@@ -22,7 +23,7 @@ public class BundleName implements Comparable<BundleName> {
     @XmlValue
     String value;
 
-    @JsonCreator public BundleName(String value) { this.value = value; }
+    @JsonCreator(mode = DELEGATING) public BundleName(@NotNull String value) { this.value = value; }
 
     @Override public String toString() { return value; }
 

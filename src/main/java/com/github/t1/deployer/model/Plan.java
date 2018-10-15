@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.MINIMIZE_QUOTES;
@@ -89,7 +90,7 @@ public final class Plan {
         }
     }
 
-    @JsonCreator public static Plan fromJson(JsonNode json) {
+    @JsonCreator(mode = DELEGATING) public static Plan fromJson(JsonNode json) {
         PlanBuilder builder = builder();
         readAll(json.get("log-handlers"), LogHandlerName::new, LogHandlerPlan::fromJson, builder::logHandler);
         readAll(json.get("loggers"), LoggerCategory::of, LoggerPlan::fromJson, builder::logger);

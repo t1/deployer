@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static lombok.AccessLevel.PRIVATE;
 
 /** A human readable {@link Duration} */
@@ -19,7 +21,7 @@ import static lombok.AccessLevel.PRIVATE;
 public class Age {
     public static Age ofMinutes(int minutes) { return new Age(Duration.ofMinutes(minutes)); }
 
-    @JsonCreator public Age(String string) { this.duration = parseDuration(string); }
+    @JsonCreator(mode = DELEGATING) public Age(@NotNull String string) { this.duration = parseDuration(string); }
 
     private static final long SECONDS_PER_MINUTE = 60;
     private static final long NANOS_PER_MILLI = 1_000_000L;

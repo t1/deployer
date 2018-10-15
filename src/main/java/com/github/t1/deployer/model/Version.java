@@ -13,6 +13,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlValue;
 import java.util.Comparator;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static lombok.AccessLevel.PRIVATE;
 
 @Value
@@ -24,9 +25,9 @@ public class Version implements Comparable<Version> {
     @XmlValue
     private final String value;
 
-    @JsonCreator public Version(@NonNull String value) { this.value = value; }
+    @JsonCreator(mode = DELEGATING) public Version(@NonNull String value) { this.value = value; }
 
-    @JsonCreator public Version(@NonNull Double value) { this(value.toString()); }
+    @JsonCreator(mode = DELEGATING) public Version(@NonNull Double value) { this(value.toString()); }
 
     /** this is called when YAML deserializes a version '1' */
     @SuppressWarnings("unused") public Version(int value) { this.value = Integer.toString(value); }

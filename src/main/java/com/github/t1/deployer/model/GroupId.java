@@ -10,6 +10,7 @@ import lombok.Value;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static lombok.AccessLevel.*;
 
 @Value
@@ -20,7 +21,7 @@ public class GroupId {
 
     public static GroupId of(String value) { return (value == null) ? null : new GroupId(value);}
 
-    @JsonCreator public GroupId(@NonNull String value) { this.value = value; }
+    @JsonCreator(mode = DELEGATING) public GroupId(@NonNull String value) { this.value = value; }
 
     @Override public String toString() { return value; }
 

@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
+
 @RequiredArgsConstructor
 @JsonSerialize(using = ToStringSerializer.class)
 public enum LogHandlerType {
@@ -26,7 +28,7 @@ public enum LogHandlerType {
         throw new IllegalArgumentException("No type name [" + typeName + "]");
     }
 
-    @NotNull @JsonCreator public static LogHandlerType valueOfTypeName(String typeName) {
+    @NotNull @JsonCreator(mode = DELEGATING) public static LogHandlerType valueOfTypeName(String typeName) {
         for (LogHandlerType type : LogHandlerType.values())
             if (type.typeName.equals(typeName))
                 return type;

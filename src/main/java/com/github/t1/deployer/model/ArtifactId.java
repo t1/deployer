@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static lombok.AccessLevel.PRIVATE;
 
 @Value
@@ -15,7 +16,7 @@ import static lombok.AccessLevel.PRIVATE;
 public class ArtifactId {
     @NonNull String value;
 
-    @JsonCreator public ArtifactId(@NonNull String value) { this.value = value; }
+    @JsonCreator(mode = DELEGATING) public ArtifactId(@NonNull String value) { this.value = value; }
 
     @Override public String toString() { return value; }
 }

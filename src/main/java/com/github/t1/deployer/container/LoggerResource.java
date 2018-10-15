@@ -10,7 +10,9 @@ import lombok.Singular;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -66,11 +68,11 @@ public final class LoggerResource extends AbstractResource<LoggerResource> {
     @NonNull @Getter private final LoggerCategory category;
 
     @Singular
-    private List<LogHandlerName> handlers;
+    private List<LogHandlerName> handlers = new ArrayList<>();
     private Boolean useParentHandlers;
     private LogLevel level;
 
-    private LoggerResource(LoggerCategory category, Batch batch) {
+    private LoggerResource(@NotNull LoggerCategory category, Batch batch) {
         super(batch);
         this.category = category;
     }

@@ -32,6 +32,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static com.github.t1.deployer.model.Expressions.Match.Mode.matches;
 import static com.github.t1.deployer.model.Expressions.Match.Mode.proceed;
 import static com.github.t1.deployer.model.Expressions.Match.Mode.stop;
@@ -55,7 +56,7 @@ public class Expressions {
     public static class VariableName implements Comparable<VariableName> {
         @NonNull String value;
 
-        @JsonCreator public VariableName(@NonNull String value) { this.value = check(value); }
+        @JsonCreator(mode = DELEGATING) public VariableName(@NonNull String value) { this.value = check(value); }
 
         private static String check(String value) {
             if (!NAME_TOKEN.matcher(value).matches())
