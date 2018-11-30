@@ -20,7 +20,7 @@
 
     <build>
         <plugins>
-            <plugin id="org.pitest:pitest-maven:1.3.2">
+            <plugin id="org.pitest:pitest-maven:1.4.3">
                 <configuration>
                     <timestampedReports>false</timestampedReports>
                 </configuration>
