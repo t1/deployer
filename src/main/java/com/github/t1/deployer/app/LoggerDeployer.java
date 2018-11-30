@@ -50,15 +50,15 @@ class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder,
         if (!Objects.equals(resource.handlers(), plan.getHandlers())) {
             List<LogHandlerName> oldHandlers = new ArrayList<>(resource.handlers());
             List<LogHandlerName> newHandlers = plan
-                    .getHandlers()
-                    .stream()
-                    .filter(newHandler -> !oldHandlers.remove(newHandler))
-                    .collect(Collectors.toList());
+                .getHandlers()
+                .stream()
+                .filter(newHandler -> !oldHandlers.remove(newHandler))
+                .collect(Collectors.toList());
             newHandlers.forEach(resource::addLoggerHandler);
             oldHandlers.forEach(resource::removeLoggerHandler);
             audit.change("handlers",
-                    (oldHandlers.isEmpty()) ? null : oldHandlers,
-                    (newHandlers.isEmpty()) ? null : newHandlers);
+                (oldHandlers.isEmpty()) ? null : oldHandlers,
+                (newHandlers.isEmpty()) ? null : newHandlers);
         }
     }
 
@@ -82,13 +82,12 @@ class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder,
     }
 
     @Override public void read(PlanBuilder builder, LoggerResource logger) {
-        builder.logger(LoggerPlan
-                .builder()
-                .category(logger.category())
-                .state(deployed)
-                .level(logger.level())
-                .handlers(logger.handlers())
-                .useParentHandlers(logger.isDefaultUseParentHandlers() ? null : logger.useParentHandlers())
-                .build());
+        builder.logger(LoggerPlan.builder()
+            .category(logger.category())
+            .state(deployed)
+            .level(logger.level())
+            .handlers(logger.handlers())
+            .useParentHandlers(logger.isDefaultUseParentHandlers() ? null : logger.useParentHandlers())
+            .build());
     }
 }
