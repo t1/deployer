@@ -19,7 +19,7 @@ public class MavenCentralTest {
     private final MavenCentralRepository repository = new MavenCentralRepository(rest);
 
     @Test
-    public void shouldDeserializeSearchByChecksumResult() throws Exception {
+    public void shouldDeserializeSearchByChecksumResult() {
         Checksum checksum = Checksum.fromString("f6e5786754116cc8e1e9261b2a117701747b1259");
         mock.on(repository.searchUri().with("checksum", checksum))
             .GET()

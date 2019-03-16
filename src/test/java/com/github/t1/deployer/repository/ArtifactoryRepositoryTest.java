@@ -22,7 +22,7 @@ public class ArtifactoryRepositoryTest {
     private static final URI APP_URI = DEFAULT_ARTIFACTORY_URI.resolve(PATH.toString());
 
     @Test
-    public void shouldDeriveArtifactFromUri() throws Exception {
+    public void shouldDeriveArtifactFromUri() {
         Artifact artifact = artifactFromArtifactoryUri(Checksum.fromString("1234"), APP_URI);
 
         assertThat(artifact.getGroupId()).hasToString("org.jolokia");
@@ -33,7 +33,7 @@ public class ArtifactoryRepositoryTest {
     }
 
     @Test
-    public void shouldUnmarshalMavenMetadata() throws Exception {
+    public void shouldUnmarshalMavenMetadata() {
         MavenMetadata metadata = JAXB.unmarshal(new StringReader(""
                 + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<metadata>\n"

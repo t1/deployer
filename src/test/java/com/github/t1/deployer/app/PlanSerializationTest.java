@@ -58,7 +58,7 @@ public class PlanSerializationTest {
 
 
     @Test
-    public void shouldSerializeEmptyPlan() throws Exception {
+    public void shouldSerializeEmptyPlan() {
         Plan plan = Plan.builder().build();
 
         String yaml = plan.toYaml();
@@ -67,7 +67,7 @@ public class PlanSerializationTest {
     }
 
     @Test
-    public void shouldDeserializeEmptyPlan() throws Exception {
+    public void shouldDeserializeEmptyPlan() {
         Plan plan = Plan.load(expressions, new StringReader("{}"), "empty");
 
         assertThat(plan).isEqualTo(Plan.builder().build());
@@ -88,14 +88,14 @@ public class PlanSerializationTest {
             .build();
 
     @Test
-    public void shouldDeserializePlanWithOneDeployment() throws Exception {
+    public void shouldDeserializePlanWithOneDeployment() {
         Plan plan = Plan.load(expressions, new StringReader(ONE_DEPLOYMENT_YAML), "yaml1");
 
         assertThat(plan).isEqualTo(ONE_DEPLOYMENT_PLAN);
     }
 
     @Test
-    public void shouldSerializePlanWithOneDeployment() throws Exception {
+    public void shouldSerializePlanWithOneDeployment() {
         String yaml = ONE_DEPLOYMENT_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(ONE_DEPLOYMENT_YAML);
@@ -129,14 +129,14 @@ public class PlanSerializationTest {
             .build();
 
     @Test
-    public void shouldDeserializePlanWithTwoDeployments() throws Exception {
+    public void shouldDeserializePlanWithTwoDeployments() {
         Plan plan = Plan.load(expressions, new StringReader(TWO_DEPLOYMENTS_YAML), "yaml2");
 
         assertThat(plan).isEqualTo(TWO_DEPLOYMENTS_PLAN);
     }
 
     @Test
-    public void shouldSerializePlanWithTwoDeployments() throws Exception {
+    public void shouldSerializePlanWithTwoDeployments() {
         String yaml = TWO_DEPLOYMENTS_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(TWO_DEPLOYMENTS_YAML);
@@ -168,14 +168,14 @@ public class PlanSerializationTest {
             .build();
 
     @Test
-    public void shouldDeserializePlanWithBundleDeploymentWithVars() throws Exception {
+    public void shouldDeserializePlanWithBundleDeploymentWithVars() {
         Plan plan = Plan.load(expressions, new StringReader(BUNDLE_YAML), "yaml-bundle");
 
         assertThat(plan).isEqualTo(BUNDLE_PLAN);
     }
 
     @Test
-    public void shouldSerializePlanWithBundleDeploymentWithVars() throws Exception {
+    public void shouldSerializePlanWithBundleDeploymentWithVars() {
         String yaml = BUNDLE_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(BUNDLE_YAML);
@@ -201,14 +201,14 @@ public class PlanSerializationTest {
             .build();
 
     @Test
-    public void shouldDeserializePlanWithOneLogger() throws Exception {
+    public void shouldDeserializePlanWithOneLogger() {
         Plan plan = Plan.load(expressions, new StringReader(ONE_LOGGER_YAML), "1log");
 
         assertThat(plan).isEqualTo(ONE_LOGGER_PLAN);
     }
 
     @Test
-    public void shouldSerializePlanWithOneLogger() throws Exception {
+    public void shouldSerializePlanWithOneLogger() {
         String yaml = ONE_LOGGER_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(ONE_LOGGER_YAML);
@@ -237,14 +237,14 @@ public class PlanSerializationTest {
             .build();
 
     @Test
-    public void shouldDeserializePlanWithOneLogHandler() throws Exception {
+    public void shouldDeserializePlanWithOneLogHandler() {
         Plan plan = Plan.load(expressions, new StringReader(ONE_LOGHANDLER_YAML), "1log-h");
 
         assertThat(plan).isEqualTo(ONE_LOGHANDLER_PLAN);
     }
 
     @Test
-    public void shouldSerializePlanWithOneLogHandler() throws Exception {
+    public void shouldSerializePlanWithOneLogHandler() {
         String yaml = ONE_LOGHANDLER_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(ONE_LOGHANDLER_YAML);
@@ -273,21 +273,21 @@ public class PlanSerializationTest {
             .build();
 
     @Test
-    public void shouldDeserializePlanWithCustomLogHandler() throws Exception {
+    public void shouldDeserializePlanWithCustomLogHandler() {
         Plan plan = Plan.load(expressions, new StringReader(CUSTOM_HANDLER_YAML), "custom-h");
 
         assertThat(plan).isEqualTo(CUSTOM_HANDLER_PLAN);
     }
 
     @Test
-    public void shouldSerializePlanWithCustomLogHandler() throws Exception {
+    public void shouldSerializePlanWithCustomLogHandler() {
         String yaml = CUSTOM_HANDLER_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(CUSTOM_HANDLER_YAML);
     }
 
     @Test
-    public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutModule() throws Exception {
+    public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutModule() {
         Throwable thrown = catchThrowable(() -> Plan.load(expressions, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
@@ -301,7 +301,7 @@ public class PlanSerializationTest {
     }
 
     @Test
-    public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutClass() throws Exception {
+    public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutClass() {
         Throwable thrown = catchThrowable(() -> Plan.load(expressions, new StringReader(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
@@ -349,14 +349,14 @@ public class PlanSerializationTest {
             .build();
 
     @Test
-    public void shouldDeserializePlanWithDataSource() throws Exception {
+    public void shouldDeserializePlanWithDataSource() {
         Plan plan = Plan.load(expressions, new StringReader(DATASOURCE_YAML), "ds-h");
 
         assertThat(plan).isEqualTo(DATASOURCE_PLAN);
     }
 
     @Test
-    public void shouldSerializePlanWithDataSource() throws Exception {
+    public void shouldSerializePlanWithDataSource() {
         String yaml = DATASOURCE_PLAN.toYaml();
 
         assertThat(yaml).isEqualTo(DATASOURCE_YAML);

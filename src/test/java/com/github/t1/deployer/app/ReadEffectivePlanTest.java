@@ -52,14 +52,14 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldReadZeroDeployments() throws Exception {
+    public void shouldReadZeroDeployments() {
         Plan plan = boundary.getEffectivePlan();
 
         assertThat(deployables(plan)).isEmpty();
     }
 
     @Test
-    public void shouldReadOneDeployment() throws Exception {
+    public void shouldReadOneDeployment() {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
 
         Plan plan = boundary.getEffectivePlan();
@@ -68,7 +68,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldReadTwoDeployments() throws Exception {
+    public void shouldReadTwoDeployments() {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("2.0").deployed();
 
@@ -79,14 +79,14 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldReadZeroLoggers() throws Exception {
+    public void shouldReadZeroLoggers() {
         Plan plan = boundary.getEffectivePlan();
 
         assertThat(loggers(plan)).containsExactly(ROOT);
     }
 
     @Test
-    public void shouldReadOneLogger() throws Exception {
+    public void shouldReadOneLogger() {
         LoggerFixture foo = givenLogger("foo").deployed();
 
         Plan plan = boundary.getEffectivePlan();
@@ -95,7 +95,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldReadTwoLoggers() throws Exception {
+    public void shouldReadTwoLoggers() {
         LoggerFixture foo = givenLogger("foo").deployed();
         LoggerFixture bar = givenLogger("bar").deployed();
 
@@ -142,14 +142,14 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldReadZeroLogHandlers() throws Exception {
+    public void shouldReadZeroLogHandlers() {
         Plan plan = boundary.getEffectivePlan();
 
         assertThat(logHandlers(plan)).isEmpty();
     }
 
     @Test
-    public void shouldReadOneLogHandler() throws Exception {
+    public void shouldReadOneLogHandler() {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "foo").deployed();
 
         Plan plan = boundary.getEffectivePlan();
@@ -158,7 +158,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldReadTwoLogHandlers() throws Exception {
+    public void shouldReadTwoLogHandlers() {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "foo").deployed();
         LogHandlerFixture bar = givenLogHandler(custom, "bar")
                 .module("org.bar")
@@ -173,14 +173,14 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
 
 
     @Test
-    public void shouldReadZeroDataSources() throws Exception {
+    public void shouldReadZeroDataSources() {
         Plan plan = boundary.getEffectivePlan();
 
         assertThat(dataSources(plan)).isEmpty();
     }
 
     @Test
-    public void shouldReadOneDataSource() throws Exception {
+    public void shouldReadOneDataSource() {
         DataSourceFixture foo = givenDataSource("foo").credentials("joe", "secret").deployed();
 
         Plan plan = boundary.getEffectivePlan();
@@ -189,7 +189,7 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldReadTwoDataSources() throws Exception {
+    public void shouldReadTwoDataSources() {
         DataSourceFixture foo = givenDataSource("foo").credentials("joe", "secret").deployed();
         DataSourceFixture bar = givenDataSource("bar").credentials("joe", "secret").deployed();
 

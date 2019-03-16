@@ -25,7 +25,7 @@ public class CipherFacadeMainTest {
     @Rule public final SystemOutCaptorRule out = new SystemOutCaptorRule();
 
     @Test
-    public void shouldEncryptPublic() throws Exception {
+    public void shouldEncryptPublic() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
@@ -36,7 +36,7 @@ public class CipherFacadeMainTest {
     }
 
     @Test
-    public void shouldEncryptCert() throws Exception {
+    public void shouldEncryptCert() {
         main("--keystore", "src/test/resources/cert.keystore",
                 "--storetype", "jceks",
                 "--alias", "cert",
@@ -47,7 +47,7 @@ public class CipherFacadeMainTest {
     }
 
     @Test
-    public void shouldDecryptPublic() throws Exception {
+    public void shouldDecryptPublic() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
@@ -57,7 +57,7 @@ public class CipherFacadeMainTest {
     }
 
     @Test
-    public void shouldEncryptPrivate() throws Exception {
+    public void shouldEncryptPrivate() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
@@ -67,7 +67,7 @@ public class CipherFacadeMainTest {
     }
 
     @Test
-    public void shouldDecryptPrivate() throws Exception {
+    public void shouldDecryptPrivate() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
@@ -77,7 +77,7 @@ public class CipherFacadeMainTest {
     }
 
     @Test
-    public void shouldEncryptPublicToUri() throws Exception {
+    public void shouldEncryptPublicToUri() {
         Throwable e = catchThrowable(() -> {
             main("--uri", "https://www.github.com", PLAIN_TEXT);
 

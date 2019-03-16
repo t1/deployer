@@ -44,21 +44,22 @@ public class MavenCentralIT {
     }
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
+        @SuppressWarnings("ResultOfMethodCallIgnored")
         Throwable e = catchThrowable(() -> InetAddress.getByName(DEFAULT_MAVEN_CENTRAL_URI.getHost()));
         if (e instanceof UnknownHostException)
             assumeNoException(e);
     }
 
     @Test
-    public void shouldGetByChecksum() throws Exception {
+    public void shouldGetByChecksum() {
         Artifact artifact = repository.searchByChecksum(JOLOKIA_133_CHECKSUM);
 
         assertJolokia133(artifact, war, JOLOKIA_133_CHECKSUM);
     }
 
     @Test
-    public void shouldGetByPomChecksum() throws Exception {
+    public void shouldGetByPomChecksum() {
         Artifact artifact = repository.searchByChecksum(JOLOKIA_133_POM_CHECKSUM);
 
         // maven central returns the info for the 'war', even when we search by the checksum of the pom
@@ -69,14 +70,14 @@ public class MavenCentralIT {
     }
 
     @Test
-    public void shouldLookupArtifact() throws Exception {
+    public void shouldLookupArtifact() {
         Artifact artifact = repository.resolveArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
 
         assertJolokia133(artifact, war, JOLOKIA_133_CHECKSUM);
     }
 
     @Test
-    public void shouldLookupArtifactChecksum() throws Exception {
+    public void shouldLookupArtifactChecksum() {
         Artifact artifact = repository.resolveArtifact(ORG_JOLOKIA, JOLOKIA_WAR, VERSION_1_3_3, war, null);
 
         assertThat(artifact.getChecksum()).isEqualTo(JOLOKIA_133_CHECKSUM);
@@ -114,7 +115,7 @@ public class MavenCentralIT {
     }
 
     @Test
-    public void shouldFetchStableVersions() throws Exception {
+    public void shouldFetchStableVersions() {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 
@@ -125,7 +126,7 @@ public class MavenCentralIT {
     }
 
     @Test
-    public void shouldFetchUnstableVersions() throws Exception {
+    public void shouldFetchUnstableVersions() {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 

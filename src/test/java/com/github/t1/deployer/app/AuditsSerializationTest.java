@@ -80,7 +80,7 @@ public class AuditsSerializationTest {
 
 
     @Test
-    public void shouldFailToDeserializeUnknownDeployableType() throws Exception {
+    public void shouldFailToDeserializeUnknownDeployableType() {
         String json = "{'type':'xxx','operation':'add'}";
 
         assertThatThrownBy(() -> deserialize(json))
@@ -150,7 +150,7 @@ public class AuditsSerializationTest {
 
 
     @Test
-    public void shouldFailToDeserializeDeployableAuditWithUnknownState() throws Exception {
+    public void shouldFailToDeserializeDeployableAuditWithUnknownState() {
         String json = "{"
                 + "'type':'deployable',"
                 + "'operation':'xxx',"

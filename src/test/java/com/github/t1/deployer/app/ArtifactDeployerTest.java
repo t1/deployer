@@ -231,7 +231,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
     @Test
-    public void shouldDeploySecondWebArchiveWithOnlyOneVersionVariable() throws Exception {
+    public void shouldDeploySecondWebArchiveWithOnlyOneVersionVariable() {
         givenArtifact("foo").version("1.3.2").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("4.0.5");
 

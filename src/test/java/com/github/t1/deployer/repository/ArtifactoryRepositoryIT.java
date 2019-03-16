@@ -123,7 +123,7 @@ public class ArtifactoryRepositoryIT {
     }
 
     @Test
-    public void shouldFetchReleasedArtifact() throws Exception {
+    public void shouldFetchReleasedArtifact() {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
         Version version = new Version("1.3.3");
@@ -137,7 +137,7 @@ public class ArtifactoryRepositoryIT {
     }
 
     @Test
-    public void shouldFetchSnapshotArtifact() throws Exception {
+    public void shouldFetchSnapshotArtifact() {
         JOLOKIA_134_SNAPSHOT_CHECKSUM.hexByteArray(); // init
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
@@ -152,7 +152,7 @@ public class ArtifactoryRepositoryIT {
     }
 
     @Test
-    public void shouldFetchStableVersions() throws Exception {
+    public void shouldFetchStableVersions() {
         assert JOLOKIA_134_CHECKSUM != null; // make sure it's indexed
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
@@ -164,7 +164,7 @@ public class ArtifactoryRepositoryIT {
     }
 
     @Test
-    public void shouldFetchUnstableVersions() throws Exception {
+    public void shouldFetchUnstableVersions() {
         GroupId groupId = new GroupId("org.jolokia");
         ArtifactId artifactId = new ArtifactId("jolokia-war");
 

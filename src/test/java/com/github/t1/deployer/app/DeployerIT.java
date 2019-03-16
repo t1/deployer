@@ -216,7 +216,7 @@ public class DeployerIT {
 
 
     @Test
-    public void shouldFailToDeployWebArchiveWithUnknownVersion() throws Exception {
+    public void shouldFailToDeployWebArchiveWithUnknownVersion() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia-war:\n"
@@ -232,7 +232,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldFailToDeployWebArchiveWithIncorrectChecksum() throws Exception {
+    public void shouldFailToDeployWebArchiveWithIncorrectChecksum() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -249,7 +249,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeployWebArchiveWithCorrectChecksum() throws Exception {
+    public void shouldDeployWebArchiveWithCorrectChecksum() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -273,7 +273,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldNotUpdateWebArchiveWithSameVersion() throws Exception {
+    public void shouldNotUpdateWebArchiveWithSameVersion() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -288,7 +288,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldFailToUpdateWebArchiveWithWrongChecksum() throws Exception {
+    public void shouldFailToUpdateWebArchiveWithWrongChecksum() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -305,7 +305,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUpdateWebArchiveWithConfiguredVariablePlusAddLogger() throws Exception {
+    public void shouldUpdateWebArchiveWithConfiguredVariablePlusAddLogger() {
         String plan = PLAN_JOLOKIA_WITH_VERSION_VAR
                 .replace("${jolokia.version}", "${config-var}")
                 + "loggers:\n"
@@ -327,7 +327,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUpdateWebArchiveWithPostParameterAndRemoveLogger() throws Exception {
+    public void shouldUpdateWebArchiveWithPostParameterAndRemoveLogger() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -351,7 +351,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldFailToOverwriteVariableWithPostParameter() throws Exception {
+    public void shouldFailToOverwriteVariableWithPostParameter() {
         String plan = PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}");
 
         Entity<String> entity = Entity.json("{\"config-var\":\"1.3.3\"}");
@@ -363,7 +363,7 @@ public class DeployerIT {
 
     // @Test
     @Ignore("sending */* behaves different from sending no Content-Type header at all... but how should we do that?")
-    public void shouldNotAcceptPostWildcardWithBody() throws Exception {
+    public void shouldNotAcceptPostWildcardWithBody() {
         Entity<String> entity = Entity.entity("non-empty", WILDCARD_TYPE);
         String detail = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, BAD_REQUEST).readEntity(String.class);
 
@@ -372,7 +372,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldAcceptJsonBody() throws Exception {
+    public void shouldAcceptJsonBody() {
         Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
@@ -381,7 +381,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldAcceptYamlBody() throws Exception {
+    public void shouldAcceptYamlBody() {
         Entity<String> entity = Entity.entity("jolokia.version: 1.3.3\n", APPLICATION_YAML_TYPE);
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
@@ -390,7 +390,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldAcceptFormBody() throws Exception {
+    public void shouldAcceptFormBody() {
         Entity<Form> entity = Entity.form(new Form("jolokia.version", "1.3.3"));
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
@@ -399,7 +399,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUndeployWebArchive() throws Exception {
+    public void shouldUndeployWebArchive() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -422,7 +422,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeployTwoWebArchives() throws Exception {
+    public void shouldDeployTwoWebArchives() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -457,7 +457,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUpdateTwoWebArchives() throws Exception {
+    public void shouldUpdateTwoWebArchives() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -486,7 +486,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUndeployTwoWebArchives() throws Exception {
+    public void shouldUndeployTwoWebArchives() {
         List<Audit> audits = post("{}");
 
         assertThat(theDeployments()).isEmpty();
@@ -508,7 +508,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeploySnapshotWebArchive() throws Exception {
+    public void shouldDeploySnapshotWebArchive() {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
         String plan = ""
@@ -532,7 +532,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUndeploySnapshotWebArchive() throws Exception {
+    public void shouldUndeploySnapshotWebArchive() {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
         String plan = ""
@@ -557,7 +557,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeployJdbcDriver() throws Exception {
+    public void shouldDeployJdbcDriver() {
         List<Audit> audits = post(POSTGRESQL);
 
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
@@ -572,7 +572,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeployDataSource() throws Exception {
+    public void shouldDeployDataSource() {
         String plan = ""
                 + POSTGRESQL
                 + "data-sources:\n"
@@ -608,7 +608,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldChangeDataSourceMaxAgeTo10() throws Exception {
+    public void shouldChangeDataSourceMaxAgeTo10() {
         String plan = ""
                 + POSTGRESQL
                 + "data-sources:\n"
@@ -639,7 +639,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeployXaDataSource() throws Exception {
+    public void shouldDeployXaDataSource() {
         String plan = ""
                 + POSTGRESQL
                 + "data-sources:\n"
@@ -691,7 +691,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUndeployAllDataSources() throws Exception {
+    public void shouldUndeployAllDataSources() {
         List<Audit> audits = post(POSTGRESQL);
 
         assertThat(audits).containsOnly(
@@ -723,7 +723,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeployLogHandlerAndLogger() throws Exception {
+    public void shouldDeployLogHandlerAndLogger() {
         String plan = ""
                 + POSTGRESQL
                 + "log-handlers:\n"
@@ -768,7 +768,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldUndeployLogHandler() throws Exception {
+    public void shouldUndeployLogHandler() {
         String plan = ""
                 + POSTGRESQL;
 
@@ -791,7 +791,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldDeploySecondDeployableWithOnlyOnePostParameter() throws Exception {
+    public void shouldDeploySecondDeployableWithOnlyOnePostParameter() {
         String plan = ""
                 + "deployables:\n"
                 + "  jolokia:\n"
@@ -820,7 +820,7 @@ public class DeployerIT {
     }
 
     @Test
-    public void shouldCleanUp() throws Exception {
+    public void shouldCleanUp() {
         String plan = "---\n";
 
         List<Audit> audits = post(plan);
