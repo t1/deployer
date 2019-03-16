@@ -1,11 +1,11 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Audit.AuditBuilder;
 import com.github.t1.deployer.container.AbstractResource;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.Plan.AbstractPlan;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -22,11 +22,11 @@ import static com.github.t1.deployer.model.Password.CONCEALED;
 
 @Slf4j
 abstract class ResourceDeployer<
-        PLAN extends AbstractPlan,
-        BUILDER extends Supplier<RESOURCE>,
-        RESOURCE extends AbstractResource<RESOURCE>,
-        AUDIT extends AuditBuilder>
-        extends AbstractDeployer<PLAN, RESOURCE, AUDIT> {
+    PLAN extends AbstractPlan,
+    BUILDER extends Supplier<RESOURCE>,
+    RESOURCE extends AbstractResource<RESOURCE>,
+    AUDIT extends Audit>
+    extends AbstractDeployer<PLAN, RESOURCE, AUDIT> {
 
     class Property<TYPE> {
         private final String name;
@@ -99,26 +99,25 @@ abstract class ResourceDeployer<
         }
 
         public boolean equals(Object o) {
-            if (o == this) return true;
-            if (!(o instanceof ResourceDeployer.Property)) return false;
-            final Property other = (Property) o;
-            if (!other.canEqual((Object) this)) return false;
-            final Object this$name = this.name();
-            final Object other$name = other.name();
-            if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
-            final Object this$resource = this.resource();
-            final Object other$resource = other.resource();
-            if (this$resource == null ? other$resource != null : !this$resource.equals(other$resource)) return false;
-            final Object this$plan = this.plan();
-            final Object other$plan = other.plan();
-            if (this$plan == null ? other$plan != null : !this$plan.equals(other$plan)) return false;
-            final Object this$addTo = this.addTo();
-            final Object other$addTo = other.addTo();
-            if (this$addTo == null ? other$addTo != null : !this$addTo.equals(other$addTo)) return false;
-            final Object this$write = this.write();
-            final Object other$write = other.write();
-            if (this$write == null ? other$write != null : !this$write.equals(other$write)) return false;
-            if (this.confidential != other.confidential) return false;
+            if (o == this)
+                return true;
+            if (!(o instanceof Property))
+                return false;
+            final Property that = (Property) o;
+            if (!that.canEqual(this))
+                return false;
+            if (!Objects.equals(this.name(), that.name()))
+                return false;
+            if (!Objects.equals(this.resource(), that.resource()))
+                return false;
+            if (!Objects.equals(this.plan(), that.plan()))
+                return false;
+            if (!Objects.equals(this.addTo(), that.addTo()))
+                return false;
+            if (!Objects.equals(this.write(), that.write()))
+                return false;
+            if (this.confidential != that.confidential)
+                return false;
             return true;
         }
 
@@ -149,17 +148,12 @@ abstract class ResourceDeployer<
     private final List<Property<?>> properties = new ArrayList<>();
 
 
-    @SneakyThrows(ReflectiveOperationException.class)
-    protected <TYPE> Property<TYPE> property(String name, Class<TYPE> type, Class<RESOURCE> resource,
-                                             Class<PLAN> plan) {
-        @SuppressWarnings("unchecked")
-        Class<BUILDER> resourceBuilder = (Class<BUILDER>) Class.forName(
-                resource.getName() + "$" + resource.getSimpleName() + "Builder");
+    protected <TYPE> Property<TYPE> property(String name, Class<TYPE> type, Class<RESOURCE> resource, Class<PLAN> plan) {
         return this.<TYPE>property(name)
-                .resource(function(resource, toMethodName(name, false), type))
-                .plan(function(plan, ((boolean.class.equals(type)) ? "is" : "get") + toMethodName(name, true), type))
-                .addTo(addTo(resourceBuilder, toMethodName(name, false), type))
-                .write(update(resource, "update" + toMethodName(name, true), type));
+            .resource(function(resource, toMethodName(name, false), type))
+            .plan(function(plan, ((boolean.class.equals(type)) ? "is" : "get") + toMethodName(name, true), type))
+            .addTo(addTo(resource, type, name))
+            .write(update(resource, "update" + toMethodName(name, true), type));
     }
 
     private String toMethodName(String name, boolean initCap) {
@@ -187,11 +181,31 @@ abstract class ResourceDeployer<
         };
     }
 
-    private static <T, R> BiFunction<T, R, T> addTo(Class<T> methodContainer, String name, Class<?>... paramTypes) {
+    @NotNull private <TYPE> BiFunction<BUILDER, TYPE, BUILDER> addTo(Class<RESOURCE> resource, Class<TYPE> type, String name) {
+        Class<BUILDER> builderClass;
+        try {
+            builderClass = resourceBuilder(resource);
+        } catch (ClassNotFoundException e) {
+            //noinspection unchecked
+            builderClass = (Class<BUILDER>) (Class) resource;
+        }
+        return addTo(builderClass, toMethodName(name, false), type);
+    }
+
+    @SuppressWarnings("unchecked") private Class<BUILDER> resourceBuilder(Class<RESOURCE> resource) throws ClassNotFoundException {
+        return (Class<BUILDER>) Class.forName(resource.getName() + "$" + resource.getSimpleName() + "Builder");
+    }
+
+    private <TYPE> BiFunction<BUILDER, TYPE, BUILDER> addTo(Class<BUILDER> methodContainer, String name, Class<?>... paramTypes) {
         Method method = method(methodContainer, name, methodContainer, paramTypes);
-        return (i, j) -> {
+        return (BUILDER builder, TYPE type) -> {
             try {
-                return methodContainer.cast(method.invoke(i, j));
+                if (methodContainer.isInstance(builder)) {
+                    return methodContainer.cast(method.invoke(builder, type));
+                } else {
+                    method.invoke(builder.get(), type);
+                    return builder;
+                }
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException("can't invoke", e);
             }
@@ -210,12 +224,11 @@ abstract class ResourceDeployer<
     }
 
     @SneakyThrows(NoSuchMethodException.class)
-    private static <T, R> Method method(Class<T> methodContainer, String name, Class<R> returnType,
-                                        Class<?>... paramTypes) {
+    private static <T, R> Method method(Class<T> methodContainer, String name, Class<R> returnType, Class<?>... paramTypes) {
         Method method = methodContainer.getMethod(name, paramTypes);
         assert method.getReturnType().equals(returnType)
-                : "expected return type " + returnType + " but found " + method.getReturnType()
-                + " in " + methodContainer.getSimpleName() + "#" + name;
+            : "expected return type " + returnType + " but found " + method.getReturnType()
+            + " in " + methodContainer.getSimpleName() + "#" + name;
         return method;
     }
 
@@ -245,7 +258,7 @@ abstract class ResourceDeployer<
 
     @Override protected void cleanup(RESOURCE resource) {
         log.info("cleanup remaining {}", resource);
-        AUDIT audit = auditBuilder(resource);
+        AUDIT audit = audit(resource);
         auditRemove(resource, audit);
         audits.add(audit.removed());
 

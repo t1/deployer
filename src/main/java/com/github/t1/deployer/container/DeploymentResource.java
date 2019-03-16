@@ -2,15 +2,14 @@ package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.DeploymentName;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 
 import java.io.InputStream;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentName.ALL;
@@ -26,8 +25,7 @@ import static org.jboss.as.controller.client.helpers.Operations.createOperation;
 import static org.jboss.as.controller.client.helpers.Operations.createRemoveOperation;
 
 @Slf4j
-@Builder(builderMethodName = "do_not_call", buildMethodName = "get")
-@Accessors(fluent = true, chain = true)
+@Getter @Setter @Accessors(fluent = true, chain = true)
 public class DeploymentResource extends AbstractResource<DeploymentResource> {
     public static final String WAR_SUFFIX = ".war";
     private static final int TIMEOUT = 30;
@@ -41,40 +39,23 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
         this.name = name;
     }
 
-    public static DeploymentResourceBuilder builder(DeploymentName name, Batch batch) {
-        DeploymentResourceBuilder builder = new DeploymentResourceBuilder().name(name);
-        builder.batch = batch;
-        return builder;
-    }
-
     public static Stream<DeploymentResource> allDeployments(Batch batch) {
         return batch.readResource(address(ALL))
-                    .map(match -> toDeployment(match.get("result"), batch))
-                    .sorted(comparing(DeploymentResource::name));
+            .map(match -> toDeployment(match.get("result"), batch))
+            .sorted(comparing(DeploymentResource::name));
     }
 
     private static DeploymentResource toDeployment(ModelNode node, Batch batch) {
         DeploymentName name = readName(node);
         Checksum hash = readHash(node);
         log.debug("read deployment '{}' [{}]", name, hash);
-        return DeploymentResource.builder(name, batch).checksum(hash).get();
-    }
-
-    public static class DeploymentResourceBuilder implements Supplier<DeploymentResource> {
-        private Batch batch;
-
-        @Override public DeploymentResource get() {
-            DeploymentResource resource = new DeploymentResource(name, batch);
-            resource.inputStream = inputStream;
-            resource.checksum = checksum;
-            return resource;
-        }
+        return new DeploymentResource(name, batch).checksum(hash);
     }
 
     @Override public String toString() {
         return name
-                + ((checksum == null) ? "" : ":" + checksum)
-                + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
+            + ((checksum == null) ? "" : ":" + checksum)
+            + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
     }
 
     public Checksum checksum() {

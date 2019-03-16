@@ -1,9 +1,5 @@
 package com.github.t1.deployer.container;
 
-import com.github.t1.deployer.container.DataSourceResource.DataSourceResourceBuilder;
-import com.github.t1.deployer.container.DeploymentResource.DeploymentResourceBuilder;
-import com.github.t1.deployer.container.LogHandlerResource.LogHandlerResourceBuilder;
-import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.DataSourceName;
 import com.github.t1.deployer.model.DeploymentName;
 import com.github.t1.deployer.model.LogHandlerName;
@@ -51,31 +47,29 @@ public class Container {
 
     public static Path getConfigDir() {
         return Stream.of(
-                System.getenv("DEPLOYER_CONFIG_DIR"),
-                System.getProperty("deployer.config.dir"),
-                System.getProperty("jboss.server.config.dir")
+            System.getenv("DEPLOYER_CONFIG_DIR"),
+            System.getProperty("deployer.config.dir"),
+            System.getProperty("jboss.server.config.dir")
         ).filter(Objects::nonNull)
-                .peek(s -> log.debug("found config dir {}", s))
-                .findFirst()
-                .map(Paths::get)
-                .orElseThrow(() -> new RuntimeException("no config dir configured"));
+            .peek(s -> log.debug("found config dir {}", s))
+            .findFirst()
+            .map(Paths::get)
+            .orElseThrow(() -> new RuntimeException("no config dir configured"));
     }
 
-    public LogHandlerResourceBuilder builderFor(LogHandlerType type, LogHandlerName name) {
-        return LogHandlerResource.builder(type, name, batch);
-    }
+    public LogHandlerResource builderFor(LogHandlerType type, LogHandlerName name) { return new LogHandlerResource(type, name, batch); }
 
     public Stream<LogHandlerResource> allLogHandlers() { return LogHandlerResource.allHandlers(batch).stream(); }
 
-    public LoggerResourceBuilder builderFor(LoggerCategory category) { return LoggerResource.builder(category, batch); }
+    public LoggerResource builderFor(LoggerCategory category) { return new LoggerResource(category, batch); }
 
     public Stream<LoggerResource> allLoggers() { return LoggerResource.allLoggers(batch).stream(); }
 
-    public DataSourceResourceBuilder builderFor(DataSourceName name) { return DataSourceResource.builder(name, batch); }
+    public DataSourceResource builderFor(DataSourceName name) { return new DataSourceResource(name, batch); }
 
     public Stream<DataSourceResource> allDataSources() { return DataSourceResource.allDataSources(batch).stream(); }
 
-    public DeploymentResourceBuilder builderFor(DeploymentName name) { return DeploymentResource.builder(name, batch); }
+    public DeploymentResource builderFor(DeploymentName name) { return new DeploymentResource(name, batch); }
 
     public Stream<DeploymentResource> allDeployments() { return DeploymentResource.allDeployments(batch); }
 

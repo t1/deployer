@@ -28,12 +28,11 @@ public class CipherIT {
 
     @NotNull private static Object[] bindings() {
         return new Object[]{
-                CipherBoundary.class,
-                CipherFacade.class,
-                KeyStoreConfig.builder()
-                        .path(KEYSTORE.toString())
-                        .alias("keypair")
-                        .build()
+            CipherBoundary.class,
+            CipherFacade.class,
+            new KeyStoreConfig()
+                .setPath(KEYSTORE.toString())
+                .setAlias("keypair")
         };
     }
 

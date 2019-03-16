@@ -6,12 +6,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.log.LogLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.Singular;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.github.t1.deployer.model.DeploymentState.deployed;
@@ -22,82 +22,79 @@ import static com.github.t1.deployer.model.Plan.PlanLoadingException;
 import static com.github.t1.deployer.model.Plan.apply;
 import static com.github.t1.deployer.model.Plan.expressions;
 import static java.util.function.Function.identity;
-import static lombok.AccessLevel.PRIVATE;
 
-@Data
-@Builder
-@AllArgsConstructor(access = PRIVATE)
+@Data @Accessors(chain = true)
+@RequiredArgsConstructor
 @JsonNaming(KebabCaseStrategy.class)
 public final class LogHandlerPlan implements AbstractPlan {
     private static final Expressions.VariableName DEFAULT_LOG_FORMATTER
-            = new Expressions.VariableName("default.log-formatter");
+        = new Expressions.VariableName("default.log-formatter");
     public static final String DEFAULT_SUFFIX = ".yyyy-MM-dd";
 
     @NonNull @JsonIgnore private final LogHandlerName name;
-    private final DeploymentState state;
-    @NonNull private final LogHandlerType type;
-    private final LogLevel level;
-    private final String format;
-    private final String formatter;
+    private DeploymentState state;
+    private LogHandlerType type;
+    private LogLevel level;
+    private String format;
+    private String formatter;
 
-    private final String file;
-    private final String suffix;
-    private final String encoding;
+    private String file;
+    private String suffix;
+    private String encoding;
 
-    private final String module;
-    @JsonProperty("class") private final String class_;
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    @Singular private final Map<String, String> properties;
+    private String module;
+    @JsonProperty("class") private String class_;
+    private Map<String, String> properties = new LinkedHashMap<>();
 
 
     @Override public String getId() { return name.getValue(); }
 
+    public void addProperty(String key, String value) { properties.put(key, value); }
+
     static LogHandlerPlan fromJson(LogHandlerName name, JsonNode node) {
-        LogHandlerPlanBuilder builder = builder().name(name);
-        apply(node, "state", builder::state, DeploymentState::valueOf);
-        apply(node, "level", builder::level, LogLevel::valueOf, "«ALL»");
-        apply(node, "type", builder::type, LogHandlerType::valueOfTypeName,
-                "default.log-handler-type or «" + periodicRotatingFile + "»");
+        LogHandlerPlan plan = new LogHandlerPlan(name);
+        apply(node, "state", plan::setState, DeploymentState::valueOf);
+        apply(node, "level", plan::setLevel, LogLevel::valueOf, "«ALL»");
+        apply(node, "type", plan::setType, LogHandlerType::valueOfTypeName,
+            "default.log-handler-type or «" + periodicRotatingFile + "»");
         if (node.has("format") || (!node.has("formatter") && !Plan.expressions.contains(DEFAULT_LOG_FORMATTER)))
-            apply(node, "format", builder::format, identity(), "default.log-format or null");
-        apply(node, "formatter", builder::formatter, identity(), "default.log-formatter");
-        apply(node, "encoding", builder::encoding, identity(), "default.log-encoding");
-        applyByType(node, builder);
-        return builder.build().validate();
+            apply(node, "format", plan::setFormat, identity(), "default.log-format or null");
+        apply(node, "formatter", plan::setFormatter, identity(), "default.log-formatter");
+        apply(node, "encoding", plan::setEncoding, identity(), "default.log-encoding");
+        applyByType(node, plan);
+        return plan.validate();
     }
 
-    private static void applyByType(JsonNode node, LogHandlerPlanBuilder builder) {
-        switch (builder.type) {
-        case console:
-            // nothing more to load here
-            return;
-        case periodicRotatingFile:
-            apply(node, "file", builder::file, identity(),
-                    "«" + (builder.name.getValue().toLowerCase() + ".log") + "»");
-            applySuffix(node, builder, true);
-            return;
-        case custom:
-            apply(node, "file", builder::file, identity(), null);
-            applySuffix(node, builder, false);
-            apply(node, "module", builder::module, identity());
-            apply(node, "class", builder::class_, identity());
-            if (node.has("properties") && !node.get("properties").isNull())
-                node.get("properties").fieldNames().forEachRemaining(fieldName ->
-                        builder.property(
-                                expressions.resolve(fieldName),
-                                expressions.resolve(node.get("properties").get(fieldName).asText())));
-            return;
+    private static void applyByType(JsonNode node, LogHandlerPlan plan) {
+        switch (plan.type) {
+            case console:
+                // nothing more to load here
+                return;
+            case periodicRotatingFile:
+                apply(node, "file", plan::setFile, identity(),
+                    "«" + (plan.name.getValue().toLowerCase() + ".log") + "»");
+                applySuffix(node, plan, true);
+                return;
+            case custom:
+                apply(node, "file", plan::setFile, identity(), null);
+                applySuffix(node, plan, false);
+                apply(node, "module", plan::setModule, identity());
+                apply(node, "class", plan::setClass_, identity());
+                if (node.has("properties") && !node.get("properties").isNull())
+                    node.get("properties").fieldNames().forEachRemaining(fieldName ->
+                        plan.addProperty(
+                            expressions.resolve(fieldName),
+                            expressions.resolve(node.get("properties").get(fieldName).asText())));
+                return;
         }
-        throw new PlanLoadingException("unhandled log-handler type [" + builder.type + "]"
-                + " in [" + builder.name + "]");
+        throw new PlanLoadingException("unhandled log-handler type [" + plan.type + "]"
+            + " in [" + plan.name + "]");
     }
 
-    private static void applySuffix(JsonNode node, LogHandlerPlanBuilder builder, boolean defaultSuffix) {
-        apply(node, "suffix", builder::suffix, identity(),
-                "default.log-file-suffix" + (defaultSuffix ? " or «" + DEFAULT_SUFFIX + "»" : ""));
+    private static void applySuffix(JsonNode node, LogHandlerPlan plan, boolean defaultSuffix) {
+        apply(node, "suffix", plan::setSuffix, identity(),
+            "default.log-file-suffix" + (defaultSuffix ? " or «" + DEFAULT_SUFFIX + "»" : ""));
     }
-
-    /* make builder fields visible */ public static class LogHandlerPlanBuilder {}
 
     private LogHandlerPlan validate() {
         if (format != null && formatter != null)
@@ -105,10 +102,10 @@ public final class LogHandlerPlan implements AbstractPlan {
         if (type == custom) {
             if (module == null)
                 throw new PlanLoadingException(
-                        "log-handler [" + name + "] is of type [" + type + "], so it requires a 'module'");
+                    "log-handler [" + name + "] is of type [" + type + "], so it requires a 'module'");
             if (class_ == null)
                 throw new PlanLoadingException(
-                        "log-handler [" + name + "] is of type [" + type + "], so it requires a 'class'");
+                    "log-handler [" + name + "] is of type [" + type + "], so it requires a 'class'");
         }
         return this;
     }
@@ -116,14 +113,14 @@ public final class LogHandlerPlan implements AbstractPlan {
     @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
     @Override public String toString() {
-        return "log-handler:" + getState() + ":" + type + ":" + name + ":" + getLevel()
-                + ((format == null) ? "" : ":format=" + format)
-                + ((formatter == null) ? "" : ":formatter=" + formatter)
-                + ((file == null) ? "" : ":" + file)
-                + ((suffix == null) ? "" : ":" + suffix)
-                + ((encoding == null) ? "" : ":" + encoding)
-                + ((module == null) ? "" : ":" + module)
-                + ((class_ == null) ? "" : ":" + class_)
-                + ((properties == null) ? "" : ":" + properties);
+        return "log-handler:" + getState() + ":" + type + ":" + name + ":" + level
+            + ((format == null) ? "" : ":format=" + format)
+            + ((formatter == null) ? "" : ":formatter=" + formatter)
+            + ((file == null) ? "" : ":" + file)
+            + ((suffix == null) ? "" : ":" + suffix)
+            + ((encoding == null) ? "" : ":" + encoding)
+            + ((module == null) ? "" : ":" + module)
+            + ((class_ == null) ? "" : ":" + class_)
+            + ((properties == null) ? "" : ":" + properties);
     }
 }

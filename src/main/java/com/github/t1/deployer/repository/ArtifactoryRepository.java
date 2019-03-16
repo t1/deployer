@@ -41,17 +41,15 @@ import static javax.xml.bind.annotation.XmlAccessType.FIELD;
 class ArtifactoryRepository extends Repository {
     public static Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
         Path path = Paths.get(uri.getPath());
-        return Artifact
-                .builder()
-                .groupId(groupIdFrom(path))
-                .artifactId(artifactIdFrom(path))
-                .version(versionFrom(path))
-                .type(typeFrom(path))
-                .checksum(checksum)
-                .inputStreamSupplier(() -> {
-                    throw new RuntimeException("already downloaded?");
-                })
-                .build();
+        return new Artifact()
+            .setGroupId(groupIdFrom(path))
+            .setArtifactId(artifactIdFrom(path))
+            .setVersion(versionFrom(path))
+            .setType(typeFrom(path))
+            .setChecksum(checksum)
+            .setInputStreamSupplier(() -> {
+                throw new RuntimeException("already downloaded?");
+            });
     }
 
     public static GroupId groupIdFrom(Path path) {
@@ -104,16 +102,16 @@ class ArtifactoryRepository extends Repository {
     private URI findUriFor(Checksum checksum) {
         List<ChecksumSearchResultItem> results = searchByChecksumResults(checksum);
         switch (results.size()) {
-        case 0:
-            log.debug("not found: {}", checksum);
-            throw new UnknownChecksumException(checksum);
-        case 1:
-            ChecksumSearchResultItem item = results.get(0);
-            log.debug("got {}", item);
-            return item.getUri();
-        default:
-            log.error("checksum not unique in repository: '{}'", checksum);
-            throw new RuntimeException("checksum not unique in repository: '" + checksum + "'");
+            case 0:
+                log.debug("not found: {}", checksum);
+                throw new UnknownChecksumException(checksum);
+            case 1:
+                ChecksumSearchResultItem item = results.get(0);
+                log.debug("got {}", item);
+                return item.getUri();
+            default:
+                log.error("checksum not unique in repository: '{}'", checksum);
+                throw new RuntimeException("checksum not unique in repository: '" + checksum + "'");
         }
     }
 
@@ -129,13 +127,13 @@ class ArtifactoryRepository extends Repository {
 
     private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
         UriTemplate uri = rest
-                .nonQueryUri("repository")
-                .path("api/search/checksum")
-                .query("sha1", "{checkSum}");
+            .nonQueryUri("repository")
+            .path("api/search/checksum")
+            .query("sha1", "{checkSum}");
         return rest
-                .createResource(uri)
-                .header("X-Result-Detail", "info")
-                .accept(ChecksumSearchResult.class);
+            .createResource(uri)
+            .header("X-Result-Detail", "info")
+            .accept(ChecksumSearchResult.class);
     }
 
     @lombok.Data
@@ -200,44 +198,42 @@ class ArtifactoryRepository extends Repository {
 
     @Override
     protected Artifact lookupArtifact(
-            @NonNull GroupId groupId,
-            @NonNull ArtifactId artifactId,
-            @NonNull Version version,
-            @NonNull ArtifactType type,
-            Classifier classifier) {
+        @NonNull GroupId groupId,
+        @NonNull ArtifactId artifactId,
+        @NonNull Version version,
+        @NonNull ArtifactType type,
+        Classifier classifier) {
         String fileName = getFileName(groupId, artifactId, version, type, classifier);
         FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),
-                "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
-                FileInfo.class, groupId, artifactId, version, type);
+            "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
+            FileInfo.class, groupId, artifactId, version, type);
         //noinspection resource
-        return Artifact
-                .builder()
-                .groupId(groupId)
-                .artifactId(artifactId)
-                .type(type)
-                .version(version)
-                .checksum(fileInfo.getChecksum())
-                .inputStreamSupplier(() -> download(fileInfo))
-                .build();
+        return new Artifact()
+            .setGroupId(groupId)
+            .setArtifactId(artifactId)
+            .setType(type)
+            .setVersion(version)
+            .setChecksum(fileInfo.getChecksum())
+            .setInputStreamSupplier(() -> download(fileInfo));
     }
 
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
         UriTemplate uri = rest.nonQueryUri("repository").nonQuery().path("api/storage/{repoKey}/{*orgPath}/{module}")
-                              .with("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
-                              .with("orgPath", groupId.asPath())
-                              .with("module", artifactId);
+            .with("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
+            .with("orgPath", groupId.asPath())
+            .with("module", artifactId);
         log.debug("fetch folder from {}", uri);
         EntityResponse<FolderInfo> response = rest.createResource(uri).GET_Response(FolderInfo.class);
         checkStatus(response, "folder for " + groupId + ":" + artifactId);
         FolderInfo fileInfo = response.getBody();
         log.debug("found folder: {}", fileInfo);
         List<Version> versions = fileInfo
-                .getChildren()
-                .stream()
-                .filter(FileInfo::isFolder)
-                .map(this::toVersion)
-                .sorted()
-                .collect(toList());
+            .getChildren()
+            .stream()
+            .filter(FileInfo::isFolder)
+            .map(this::toVersion)
+            .sorted()
+            .collect(toList());
         log.debug("found versions: {}", versions);
         return versions;
     }
@@ -250,18 +246,18 @@ class ArtifactoryRepository extends Repository {
     }
 
     private String getFileName(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type,
-            Classifier classifier) {
+                               Classifier classifier) {
         String classifierSuffix = (classifier == null) ? "" : "-" + classifier;
         if (version.isSnapshot()) {
             MavenMetadata metadata = fetch(rest.nonQueryUri("repository"),
-                    "{repoKey}/{*orgPath}/{module}/{baseRev}/maven-metadata.xml",
-                    MavenMetadata.class, groupId, artifactId, version, type);
+                "{repoKey}/{*orgPath}/{module}/{baseRev}/maven-metadata.xml",
+                MavenMetadata.class, groupId, artifactId, version, type);
             String snapshot = metadata
-                    .getVersioning().getSnapshotVersions().stream()
-                    .filter(snapshotVersion -> type.extension().equals(snapshotVersion.getExtension()))
-                    .map(MavenMetadata.Versioning.SnapshotVersion::getValue)
-                    .findAny()
-                    .orElseThrow(() -> notFound("no metadata for extension [" + type.extension() + "]"));
+                .getVersioning().getSnapshotVersions().stream()
+                .filter(snapshotVersion -> type.extension().equals(snapshotVersion.getExtension()))
+                .map(MavenMetadata.Versioning.SnapshotVersion::getValue)
+                .findAny()
+                .orElseThrow(() -> notFound("no metadata for extension [" + type.extension() + "]"));
             return artifactId + "-" + snapshot + classifierSuffix + "." + type.extension();
         } else {
             return "{module}-{baseRev}" + classifierSuffix + ".{ext}";
@@ -269,40 +265,40 @@ class ArtifactoryRepository extends Repository {
     }
 
     private <T> T fetch(UriTemplate base, String path, Class<T> type,
-            GroupId groupId, ArtifactId artifactId, Version version, ArtifactType artifactType) {
+                        GroupId groupId, ArtifactId artifactId, Version version, ArtifactType artifactType) {
         UriTemplate uri = resolve(base.nonQuery().path(path), groupId, artifactId, version, artifactType);
         log.debug("fetch {} from {}", type.getSimpleName(), uri);
         EntityResponse<T> response = rest.createResource(uri).GET_Response(type);
         checkStatus(response, type.getSimpleName()
-                + " for " + groupId + ":" + artifactId + ":" + version + ":" + artifactType);
+            + " for " + groupId + ":" + artifactId + ":" + version + ":" + artifactType);
         T result = response.getBody();
         log.debug("found {}: {}", type.getSimpleName(), result);
         return result;
     }
 
     private UriTemplate resolve(UriTemplate template,
-            GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+                                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
         return template
-                .with("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
-                .with("org", groupId)
-                .with("orgPath", groupId.asPath())
-                .with("baseRev", version)
-                .with("module", artifactId)
-                // (-{folderItegRev})
-                // (-{fileItegRev})
-                // (-{classifier})
-                .with("ext", type)
-                .with("type", type);
+            .with("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
+            .with("org", groupId)
+            .with("orgPath", groupId.asPath())
+            .with("baseRev", version)
+            .with("module", artifactId)
+            // (-{folderItegRev})
+            // (-{fileItegRev})
+            // (-{classifier})
+            .with("ext", type)
+            .with("type", type);
     }
 
     private void checkStatus(EntityResponse<?> response, String what) {
         switch ((Status) response.status()) {
-        case OK:
-            return;
-        case NOT_FOUND:
-            throw notFound("not in repository: " + what);
-        default:
-            throw new UnexpectedStatusException(response.status(), response.headers(), OK);
+            case OK:
+                return;
+            case NOT_FOUND:
+                throw notFound("not in repository: " + what);
+            default:
+                throw new UnexpectedStatusException(response.status(), response.headers(), OK);
         }
     }
 

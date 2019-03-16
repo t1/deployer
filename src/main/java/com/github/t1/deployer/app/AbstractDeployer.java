@@ -1,11 +1,9 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Audit.AuditBuilder;
 import com.github.t1.deployer.container.AbstractResource;
 import com.github.t1.deployer.model.Config;
 import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Plan.AbstractPlan;
-import com.github.t1.deployer.model.Plan.PlanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +23,7 @@ import static java.util.stream.Collectors.toList;
 abstract class AbstractDeployer<
         PLAN extends AbstractPlan,
         RESOURCE extends AbstractResource<RESOURCE>,
-        AUDIT extends AuditBuilder>
+        AUDIT extends Audit>
         implements Deployer {
     @Inject Audits audits;
     @Inject @Config("managed.resources") List<String> managedResourceNames;
@@ -34,8 +32,8 @@ abstract class AbstractDeployer<
     private List<RESOURCE> remaining;
 
     /* ------------------------------------------------------------------------------------------------------------ */
-    @Override public void read(PlanBuilder builder) {
-        unpinnedResources().forEach(resource -> read(builder, resource));
+    @Override public void read(Plan plan) {
+        unpinnedResources().forEach(resource -> read(plan, resource));
     }
 
     private Stream<RESOURCE> unpinnedResources() {
@@ -50,7 +48,7 @@ abstract class AbstractDeployer<
 
     protected abstract String getType();
 
-    protected abstract void read(PlanBuilder builder, RESOURCE resource);
+    protected abstract void read(Plan plan, RESOURCE resource);
 
 
     /* ------------------------------------------------------------------------------------------------------------ */
@@ -73,7 +71,7 @@ abstract class AbstractDeployer<
 
         RESOURCE resource = readResource(plan);
         log.debug("apply {} to {}", plan, resource);
-        AUDIT audit = auditBuilder(resource);
+        AUDIT audit = audit(resource);
         switch (plan.getState()) {
         case deployed:
             if (resource.isDeployed()) {
@@ -104,7 +102,7 @@ abstract class AbstractDeployer<
 
     protected abstract RESOURCE readResource(PLAN plan);
 
-    protected abstract AUDIT auditBuilder(RESOURCE resource);
+    protected abstract AUDIT audit(RESOURCE resource);
 
     private void removeFromRemaining(RESOURCE resource) {
         boolean removed = remaining.removeIf(resource::matchesId);

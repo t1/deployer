@@ -26,14 +26,11 @@ import static com.github.t1.log.LogLevel.WARN;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReadEffectivePlanTest extends AbstractDeployerTests {
-    private static final LoggerPlan ROOT = LoggerPlan
-            .builder()
-            .category(LoggerCategory.ROOT)
-            .state(deployed)
-            .level(INFO)
-            .handler("CONSOLE")
-            .handler("FILE")
-            .build();
+    private static final LoggerPlan ROOT = new LoggerPlan(LoggerCategory.ROOT)
+        .setState(deployed)
+        .setLevel(INFO)
+        .addHandler("CONSOLE")
+        .addHandler("FILE");
 
     private static List<DeployablePlan> deployables(Plan plan) {
         return plan.deployables().collect(Collectors.toList());
@@ -161,10 +158,10 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
     public void shouldReadTwoLogHandlers() {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "foo").deployed();
         LogHandlerFixture bar = givenLogHandler(custom, "bar")
-                .module("org.bar")
-                .class_("org.bar.MyHandler")
-                .property("bar", "baz")
-                .deployed();
+            .module("org.bar")
+            .class_("org.bar.MyHandler")
+            .property("bar", "baz")
+            .deployed();
 
         Plan plan = boundary.getEffectivePlan();
 
@@ -196,6 +193,6 @@ public class ReadEffectivePlanTest extends AbstractDeployerTests {
         Plan plan = boundary.getEffectivePlan();
 
         assertThat(dataSources(plan))
-                .containsExactly(bar.password(null).asPlan(), foo.password(null).asPlan()); // sorted!
+            .containsExactly(bar.password(null).asPlan(), foo.password(null).asPlan()); // sorted!
     }
 }

@@ -3,9 +3,7 @@ package com.github.t1.deployer.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
-import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LoggerAudit;
-import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.model.LoggerCategory;
 import org.junit.Test;
 
@@ -32,12 +30,12 @@ public class AuditsSerializationTest {
     }
 
 
-    private static final DeployableAuditBuilder JOLOKIA = DeployableAudit.builder().name("jolokia");
+    private static final DeployableAudit JOLOKIA = new DeployableAudit().setName("jolokia");
 
-    private static final DeployableAuditBuilder MOCKSERVER = DeployableAudit.builder().name("mockserver");
+    private static final DeployableAudit MOCKSERVER = new DeployableAudit().setName("mockserver");
 
-    private static LoggerAuditBuilder deployerLog() {
-        return LoggerAudit.of(LoggerCategory.of("com.github.t1.deployer"));
+    private static LoggerAudit deployerLog() {
+        return new LoggerAudit().setCategory(LoggerCategory.of("com.github.t1.deployer"));
     }
 
 

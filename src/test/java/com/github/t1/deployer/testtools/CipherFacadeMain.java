@@ -36,7 +36,7 @@ public class CipherFacadeMain {
     @Parameter
     private List<String> bodies;
     @Parameter(names = "--keystore",
-               description = "Path to the keystore file to use. Either this or `--uri` is mandatory.")
+        description = "Path to the keystore file to use. Either this or `--uri` is mandatory.")
     private String keystore;
     @Parameter(names = "--storetype", description = "The file format of the keystore")
     private String storetype = KeyStore.getDefaultType();
@@ -47,7 +47,7 @@ public class CipherFacadeMain {
     @Parameter(names = "--decrypt", description = "Decrypt instead of encrypt")
     private boolean decrypt = false;
     @Parameter(names = "--uri",
-               description = "Use the certificate of a 'https' server to encrypt. Either this or `--keystore` is mandatory.")
+        description = "Use the certificate of a 'https' server to encrypt. Either this or `--keystore` is mandatory.")
     private URI uri;
 
     private final CipherFacade cipher = new CipherFacade();
@@ -57,7 +57,7 @@ public class CipherFacadeMain {
             if (keystore == null)
                 throw new IllegalArgumentException("require `--keystore` option (or `--uri`)");
             System.err.println((decrypt ? "decrypt" : "encrypt")
-                    + " with " + alias + " from " + storetype + " keystore " + keystore);
+                + " with " + alias + " from " + storetype + " keystore " + keystore);
             return decrypt ? cipher.decrypt(body(), config()) : cipher.encrypt(body(), config());
         } else {
             if (decrypt)
@@ -90,12 +90,10 @@ public class CipherFacadeMain {
     private String body() { return String.join(" ", bodies); }
 
     private KeyStoreConfig config() {
-        return KeyStoreConfig
-                .builder()
-                .path(keystore)
-                .type(storetype)
-                .pass(storepass)
-                .alias(alias)
-                .build();
+        return new KeyStoreConfig()
+            .setPath(keystore)
+            .setType(storetype)
+            .setPass(storepass)
+            .setAlias(alias);
     }
 }

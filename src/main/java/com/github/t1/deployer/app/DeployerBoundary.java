@@ -13,7 +13,6 @@ import com.github.t1.deployer.model.Expressions.UnresolvedVariableException;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Plan;
-import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.deployer.model.ProcessState;
 import com.github.t1.deployer.model.RootBundleConfig;
 import com.github.t1.deployer.model.Version;
@@ -78,9 +77,9 @@ public class DeployerBoundary {
 
     @GET
     public Plan getEffectivePlan() {
-        PlanBuilder builder = Plan.builder();
-        deployers.forEach(deployer -> deployer.read(builder));
-        return builder.build();
+        Plan plan = new Plan();
+        deployers.forEach(deployer -> deployer.read(plan));
+        return plan;
     }
 
 

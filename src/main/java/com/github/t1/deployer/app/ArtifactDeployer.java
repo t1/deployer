@@ -1,7 +1,6 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.DeployableAudit;
-import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audits.Warning;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.container.DeploymentResource;
@@ -9,7 +8,6 @@ import com.github.t1.deployer.model.Artifact;
 import com.github.t1.deployer.model.DeployablePlan;
 import com.github.t1.deployer.model.DeploymentName;
 import com.github.t1.deployer.model.Plan;
-import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +23,7 @@ import static com.github.t1.deployer.model.DeploymentState.deployed;
 import static com.github.t1.problem.WebException.badRequest;
 
 @Slf4j
-class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAuditBuilder> {
+class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAudit> {
     private static final String CURRENT = "CURRENT";
 
     @Inject Container container;
@@ -38,8 +36,8 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
 
     @Override protected String getType() { return "deployables"; }
 
-    @Override protected DeployableAuditBuilder auditBuilder(DeploymentResource resource) {
-        return DeployableAudit.builder().name(toDeploymentName(resource));
+    @Override protected DeployableAudit audit(DeploymentResource resource) {
+        return new DeployableAudit().setName(toDeploymentName(resource));
     }
 
     private static DeploymentName toDeploymentName(DeploymentResource resource) {
@@ -47,7 +45,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     }
 
     @Override protected DeploymentResource readResource(DeployablePlan plan) {
-        return container.builderFor(toDeploymentName(plan)).get();
+        return container.builderFor(toDeploymentName(plan));
     }
 
     private static DeploymentName toDeploymentName(DeployablePlan plan) {
@@ -55,7 +53,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     }
 
     @Override
-    protected void update(DeploymentResource resource, DeployablePlan plan, DeployableAuditBuilder audit) {
+    protected void update(DeploymentResource resource, DeployablePlan plan, DeployableAudit audit) {
         Artifact old = repository.lookupByChecksum(resource.checksum());
         if (plan.getVersion().matches(CURRENT) && old.getVersion().matches("unknown")) {
             log.warn("skip update of [{}] to CURRENT: unknown checksum", plan.getName());
@@ -70,7 +68,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
             return;
         }
 
-        container.builderFor(toDeploymentName(plan)).inputStream(artifact.getInputStream()).get().redeploy();
+        container.builderFor(toDeploymentName(plan)).inputStream(artifact.getInputStream()).redeploy();
         audit.change("checksum", resource.checksum(), artifact.getChecksum());
 
         if (!Objects.equals(old.getGroupId(), artifact.getGroupId()))
@@ -86,14 +84,14 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     private void checkChecksums(DeployablePlan plan, Artifact artifact) {
         if (plan.getChecksum() != null && !plan.getChecksum().equals(artifact.getChecksum()))
             throw badRequest("Repository checksum ["
-                    + artifact.getChecksum()
-                    + "] does not match planned checksum ["
-                    + plan.getChecksum()
-                    + "]");
+                + artifact.getChecksum()
+                + "] does not match planned checksum ["
+                + plan.getChecksum()
+                + "]");
     }
 
     @Override
-    protected Supplier<DeploymentResource> buildResource(DeployablePlan plan, DeployableAuditBuilder audit) {
+    protected Supplier<DeploymentResource> buildResource(DeployablePlan plan, DeployableAudit audit) {
         if (plan.getVersion().matches(CURRENT)) {
             audits.add(new Warning("skip deploying " + plan.getName() + " in version " + CURRENT));
             return () -> null;
@@ -102,13 +100,13 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
         if (artifact == null)
             throw badRequest("artifact not found: " + plan);
         checkChecksums(plan, artifact);
-        audit.name(plan.getName())
-             .change("group-id", null, artifact.getGroupId())
-             .change("artifact-id", null, artifact.getArtifactId())
-             .change("version", null, artifact.getVersion())
-             .change("type", null, artifact.getType())
-             .change("checksum", null, artifact.getChecksum());
-        return container.builderFor(toDeploymentName(plan)).inputStream(artifact.getInputStream());
+        audit.setName(plan.getName())
+            .change("group-id", null, artifact.getGroupId())
+            .change("artifact-id", null, artifact.getArtifactId())
+            .change("version", null, artifact.getVersion())
+            .change("type", null, artifact.getType())
+            .change("checksum", null, artifact.getChecksum());
+        return () -> container.builderFor(toDeploymentName(plan)).inputStream(artifact.getInputStream());
     }
 
     private Artifact lookupDeployedArtifact(DeployablePlan plan, Artifact old) {
@@ -123,14 +121,14 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
 
     private Artifact lookupArtifact(DeployablePlan plan, Version version) {
         return repository.resolveArtifact(plan.getGroupId(), plan.getArtifactId(), version, plan.getType(),
-                plan.getClassifier());
+            plan.getClassifier());
     }
 
     @Override
-    protected void auditRegularRemove(DeploymentResource resource, DeployablePlan plan, DeployableAuditBuilder audit) {
+    protected void auditRegularRemove(DeploymentResource resource, DeployablePlan plan, DeployableAudit audit) {
         if (plan.getChecksum() != null && !plan.getChecksum().equals(resource.checksum()))
             throw badRequest("Planned to undeploy artifact with checksum [" + plan.getChecksum() + "] "
-                    + "but deployed is [" + resource.checksum() + "]");
+                + "but deployed is [" + resource.checksum() + "]");
 
         Artifact artifact = repository.lookupByChecksum(resource.checksum());
         auditRemove(audit, artifact);
@@ -139,14 +137,14 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
 
     @Override protected void cleanup(DeploymentResource resource) {
         log.info("cleanup remaining {}", resource);
-        DeployableAuditBuilder audit = auditBuilder(resource);
+        DeployableAudit audit = audit(resource);
         auditRemove(audit, repository.lookupByChecksum(resource.checksum()));
         audit.change("checksum", resource.checksum(), null);
         audits.add(audit.removed());
         resource.addRemoveStep();
     }
 
-    private void auditRemove(DeployableAuditBuilder audit, Artifact artifact) {
+    private void auditRemove(DeployableAudit audit, Artifact artifact) {
         audit.change("group-id", artifact.getGroupId(), null);
         audit.change("artifact-id", artifact.getArtifactId(), null);
         audit.change("version", artifact.getVersion(), null);
@@ -154,18 +152,16 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     }
 
 
-    @Override public void read(PlanBuilder builder, DeploymentResource deployment) {
+    @Override public void read(Plan plan, DeploymentResource deployment) {
         Artifact artifact = repository.lookupByChecksum(deployment.checksum());
-        builder.deployable(DeployablePlan
-                .builder()
-                .name(toDeploymentName(deployment))
-                .groupId(artifact.getGroupId())
-                .artifactId(artifact.getArtifactId())
-                .version(artifact.getVersion())
-                .type(artifact.getType())
-                .checksum(artifact.getChecksum())
-                .error(artifact.getError())
-                .state(deployed)
-                .build());
+        plan.addDeployable(
+            new DeployablePlan(toDeploymentName(deployment))
+                .setType(artifact.getType())
+                .setError(artifact.getError())
+                .setState(deployed)
+                .setGroupId(artifact.getGroupId())
+                .setArtifactId(artifact.getArtifactId())
+                .setVersion(artifact.getVersion())
+                .setChecksum(artifact.getChecksum()));
     }
 }

@@ -40,14 +40,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class PlanSerializationTest {
-    private static final DeployablePlan FOO = DeployablePlan
-            .builder()
-            .type(war)
-            .name(new DeploymentName("foo"))
-            .groupId(new GroupId("org.foo"))
-            .artifactId(new ArtifactId("foo-war"))
-            .version(new Version("1"))
-            .build();
+    private static final DeployablePlan FOO = new DeployablePlan(new DeploymentName("foo"))
+        .setType(war)
+        .setGroupId(new GroupId("org.foo"))
+        .setArtifactId(new ArtifactId("foo-war"))
+        .setVersion(new Version("1"));
     private static Expressions expressions = mock(Expressions.class);
 
     static {
@@ -59,7 +56,7 @@ public class PlanSerializationTest {
 
     @Test
     public void shouldSerializeEmptyPlan() {
-        Plan plan = Plan.builder().build();
+        Plan plan = new Plan();
 
         String yaml = plan.toYaml();
 
@@ -70,22 +67,19 @@ public class PlanSerializationTest {
     public void shouldDeserializeEmptyPlan() {
         Plan plan = Plan.load(expressions, new StringReader("{}"), "empty");
 
-        assertThat(plan).isEqualTo(Plan.builder().build());
+        assertThat(plan).isEqualTo(new Plan());
     }
 
 
     private static final String ONE_DEPLOYMENT_YAML = ""
-            + "deployables:\n"
-            + "  foo:\n"
-            + "    group-id: org.foo\n"
-            + "    artifact-id: foo-war\n"
-            + "    version: 1\n"
-            + "    type: war\n";
+        + "deployables:\n"
+        + "  foo:\n"
+        + "    group-id: org.foo\n"
+        + "    artifact-id: foo-war\n"
+        + "    version: 1\n"
+        + "    type: war\n";
 
-    private static final Plan ONE_DEPLOYMENT_PLAN = Plan
-            .builder()
-            .deployable(FOO)
-            .build();
+    private static final Plan ONE_DEPLOYMENT_PLAN = new Plan().addDeployable(FOO);
 
     @Test
     public void shouldDeserializePlanWithOneDeployment() {
@@ -103,30 +97,25 @@ public class PlanSerializationTest {
 
 
     private static final String TWO_DEPLOYMENTS_YAML = ""
-            + "deployables:\n"
-            + "  foo:\n"
-            + "    group-id: org.foo\n"
-            + "    artifact-id: foo-war\n"
-            + "    version: 1\n"
-            + "    type: war\n"
-            + "  bar-name:\n"
-            + "    group-id: org.bar\n"
-            + "    artifact-id: bar-war\n"
-            + "    version: 1.2.3\n"
-            + "    type: war\n";
+        + "deployables:\n"
+        + "  foo:\n"
+        + "    group-id: org.foo\n"
+        + "    artifact-id: foo-war\n"
+        + "    version: 1\n"
+        + "    type: war\n"
+        + "  bar-name:\n"
+        + "    group-id: org.bar\n"
+        + "    artifact-id: bar-war\n"
+        + "    version: 1.2.3\n"
+        + "    type: war\n";
 
-    private static final Plan TWO_DEPLOYMENTS_PLAN = Plan
-            .builder()
-            .deployable(FOO)
-            .deployable(DeployablePlan
-                    .builder()
-                    .type(war)
-                    .name(new DeploymentName("bar-name"))
-                    .groupId(new GroupId("org.bar"))
-                    .artifactId(new ArtifactId("bar-war"))
-                    .version(new Version("1.2.3"))
-                    .build())
-            .build();
+    private static final Plan TWO_DEPLOYMENTS_PLAN = new Plan()
+        .addDeployable(FOO)
+        .addDeployable(new DeployablePlan(new DeploymentName("bar-name"))
+            .setType(war)
+            .setGroupId(new GroupId("org.bar"))
+            .setArtifactId(new ArtifactId("bar-war"))
+            .setVersion(new Version("1.2.3")));
 
     @Test
     public void shouldDeserializePlanWithTwoDeployments() {
@@ -144,28 +133,24 @@ public class PlanSerializationTest {
 
 
     private static final String BUNDLE_YAML = ""
-            + "bundles:\n"
-            + "  foo:\n"
-            + "    group-id: org.foo\n"
-            + "    artifact-id: foo\n"
-            + "    version: 1\n"
-            + "    instances:\n"
-            + "      bar:\n"
-            + "        version: 2\n"
-            + "      baz:\n"
-            + "        version: 3\n";
-    private static final Plan BUNDLE_PLAN = Plan
-            .builder()
-            .bundle(BundlePlan
-                    .builder()
-                    .name(new BundleName("foo"))
-                    .groupId(new GroupId("org.foo"))
-                    .artifactId(new ArtifactId("foo"))
-                    .version(new Version("1"))
-                    .instance("bar", ImmutableMap.of(VERSION, "2"))
-                    .instance("baz", ImmutableMap.of(VERSION, "3"))
-                    .build())
-            .build();
+        + "bundles:\n"
+        + "  foo:\n"
+        + "    group-id: org.foo\n"
+        + "    artifact-id: foo\n"
+        + "    version: 1\n"
+        + "    instances:\n"
+        + "      bar:\n"
+        + "        version: 2\n"
+        + "      baz:\n"
+        + "        version: 3\n";
+    private static final Plan BUNDLE_PLAN = new Plan()
+        .addBundle(new BundlePlan(new BundleName("foo"))
+            .instance("bar", ImmutableMap.of(VERSION, "2"))
+            .instance("baz", ImmutableMap.of(VERSION, "3"))
+            .setGroupId(new GroupId("org.foo"))
+            .setArtifactId(new ArtifactId("foo"))
+            .setVersion(new Version("1"))
+        );
 
     @Test
     public void shouldDeserializePlanWithBundleDeploymentWithVars() {
@@ -183,22 +168,17 @@ public class PlanSerializationTest {
 
 
     private static final String ONE_LOGGER_YAML = ""
-            + "loggers:\n"
-            + "  some.logger.category:\n"
-            + "    level: TRACE\n"
-            + "    handlers:\n"
-            + "    - CONSOLE\n"
-            + "    use-parent-handlers: true\n";
-    private static final Plan ONE_LOGGER_PLAN = Plan
-            .builder()
-            .logger(LoggerPlan
-                    .builder()
-                    .category(LoggerCategory.of("some.logger.category"))
-                    .level(TRACE)
-                    .handler("CONSOLE")
-                    .useParentHandlers(true)
-                    .build())
-            .build();
+        + "loggers:\n"
+        + "  some.logger.category:\n"
+        + "    level: TRACE\n"
+        + "    handlers:\n"
+        + "    - CONSOLE\n"
+        + "    use-parent-handlers: true\n";
+    private static final Plan ONE_LOGGER_PLAN = new Plan()
+        .addLogger(new LoggerPlan(LoggerCategory.of("some.logger.category"))
+            .setLevel(TRACE)
+            .setUseParentHandlers(true)
+            .addHandler("CONSOLE"));
 
     @Test
     public void shouldDeserializePlanWithOneLogger() {
@@ -216,25 +196,20 @@ public class PlanSerializationTest {
 
 
     private static final String ONE_LOGHANDLER_YAML = ""
-            + "log-handlers:\n"
-            + "  FOO:\n"
-            + "    type: periodic-rotating-file\n"
-            + "    level: INFO\n"
-            + "    format: the-format\n"
-            + "    file: the-file\n"
-            + "    suffix: the-suffix\n";
-    private static final Plan ONE_LOGHANDLER_PLAN = Plan
-            .builder()
-            .logHandler(LogHandlerPlan
-                    .builder()
-                    .name(new LogHandlerName("FOO"))
-                    .level(INFO)
-                    .type(periodicRotatingFile)
-                    .file("the-file")
-                    .suffix("the-suffix")
-                    .format("the-format")
-                    .build())
-            .build();
+        + "log-handlers:\n"
+        + "  FOO:\n"
+        + "    type: periodic-rotating-file\n"
+        + "    level: INFO\n"
+        + "    format: the-format\n"
+        + "    file: the-file\n"
+        + "    suffix: the-suffix\n";
+    private static final Plan ONE_LOGHANDLER_PLAN = new Plan()
+        .addLogHandler(new LogHandlerPlan(new LogHandlerName("FOO"))
+            .setLevel(INFO)
+            .setType(periodicRotatingFile)
+            .setFile("the-file")
+            .setSuffix("the-suffix")
+            .setFormat("the-format"));
 
     @Test
     public void shouldDeserializePlanWithOneLogHandler() {
@@ -252,25 +227,20 @@ public class PlanSerializationTest {
 
 
     private static final String CUSTOM_HANDLER_YAML = ""
-            + "log-handlers:\n"
-            + "  FOO:\n"
-            + "    type: custom\n"
-            + "    level: INFO\n"
-            + "    format: the-format\n"
-            + "    module: org.foo\n"
-            + "    class: org.foo.MyHandler\n";
-    private static final Plan CUSTOM_HANDLER_PLAN = Plan
-            .builder()
-            .logHandler(LogHandlerPlan
-                    .builder()
-                    .name(new LogHandlerName("FOO"))
-                    .level(INFO)
-                    .type(custom)
-                    .format("the-format")
-                    .module("org.foo")
-                    .class_("org.foo.MyHandler")
-                    .build())
-            .build();
+        + "log-handlers:\n"
+        + "  FOO:\n"
+        + "    type: custom\n"
+        + "    level: INFO\n"
+        + "    format: the-format\n"
+        + "    module: org.foo\n"
+        + "    class: org.foo.MyHandler\n";
+    private static final Plan CUSTOM_HANDLER_PLAN = new Plan()
+        .addLogHandler(new LogHandlerPlan(new LogHandlerName("FOO"))
+            .setLevel(INFO)
+            .setType(custom)
+            .setFormat("the-format")
+            .setModule("org.foo")
+            .setClass_("org.foo.MyHandler"));
 
     @Test
     public void shouldDeserializePlanWithCustomLogHandler() {
@@ -289,12 +259,12 @@ public class PlanSerializationTest {
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutModule() {
         Throwable thrown = catchThrowable(() -> Plan.load(expressions, new StringReader(""
-                + "log-handlers:\n"
-                + "  FOO:\n"
-                + "    level: INFO\n"
-                + "    type: custom\n"
-                + "    format: the-format\n"
-                + "    class: org.foo.MyHandler\n"
+            + "log-handlers:\n"
+            + "  FOO:\n"
+            + "    level: INFO\n"
+            + "    type: custom\n"
+            + "    format: the-format\n"
+            + "    class: org.foo.MyHandler\n"
         ), "xm"));
 
         assertThat(thrown).hasStackTraceContaining("log-handler [FOO] is of type [custom], so it requires a 'module'");
@@ -303,12 +273,12 @@ public class PlanSerializationTest {
     @Test
     public void shouldFailToDeserializePlanWithCustomLogHandlerWithoutClass() {
         Throwable thrown = catchThrowable(() -> Plan.load(expressions, new StringReader(""
-                + "log-handlers:\n"
-                + "  FOO:\n"
-                + "    level: INFO\n"
-                + "    type: custom\n"
-                + "    format: the-format\n"
-                + "    module: org.foo\n"
+            + "log-handlers:\n"
+            + "  FOO:\n"
+            + "    level: INFO\n"
+            + "    type: custom\n"
+            + "    format: the-format\n"
+            + "    module: org.foo\n"
         ), "xc"));
 
         assertThat(thrown).hasStackTraceContaining("log-handler [FOO] is of type [custom], so it requires a 'class'");
@@ -316,37 +286,32 @@ public class PlanSerializationTest {
 
 
     private static final String DATASOURCE_YAML = ""
-            + "data-sources:\n"
-            + "  FOO:\n"
-            + "    uri: jdbc:h2:mem:test\n"
-            + "    jndi-name: java:/datasources/TestDS\n"
-            + "    driver: h3\n"
-            + "    user-name: joe\n"
-            + "    password: secret\n"
-            + "    pool:\n"
-            + "      min: 3\n"
-            + "      initial: 5\n"
-            + "      max: 10\n"
-            + "      max-age: 3600 ms\n";
-    private static final Plan DATASOURCE_PLAN = Plan
-            .builder()
-            .dataSource(DataSourcePlan
-                    .builder()
-                    .name(new DataSourceName("FOO"))
-                    .uri(URI.create("jdbc:h2:mem:test"))
-                    .jndiName("java:/datasources/TestDS")
-                    .driver("h3")
-                    .userName("joe")
-                    .password("secret")
-                    .pool(PoolPlan
-                            .builder()
-                            .min(3)
-                            .initial(5)
-                            .max(10)
-                            .maxAge(new Age(Duration.ofMillis(3600)))
-                            .build())
-                    .build())
-            .build();
+        + "data-sources:\n"
+        + "  FOO:\n"
+        + "    uri: jdbc:h2:mem:test\n"
+        + "    jndi-name: java:/datasources/TestDS\n"
+        + "    driver: h3\n"
+        + "    user-name: joe\n"
+        + "    password: secret\n"
+        + "    pool:\n"
+        + "      min: 3\n"
+        + "      initial: 5\n"
+        + "      max: 10\n"
+        + "      max-age: 3600 ms\n";
+    private static final Plan DATASOURCE_PLAN = new Plan()
+        .addDataSource(new DataSourcePlan(new DataSourceName("FOO"))
+            .setUri(URI.create("jdbc:h2:mem:test"))
+            .setJndiName("java:/datasources/TestDS")
+            .setDriver("h3")
+            .setUserName("joe")
+            .setPassword("secret")
+            .setPool(new PoolPlan()
+                .setMin(3)
+                .setInitial(5)
+                .setMax(10)
+                .setMaxAge(new Age(Duration.ofMillis(3600)))
+            )
+        );
 
     @Test
     public void shouldDeserializePlanWithDataSource() {

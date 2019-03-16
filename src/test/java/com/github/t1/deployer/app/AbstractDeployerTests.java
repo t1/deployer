@@ -1,11 +1,8 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.deployer.app.Audit.AuditBuilder;
 import com.github.t1.deployer.app.Audit.DataSourceAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
-import com.github.t1.deployer.app.Audit.DeployableAudit.DeployableAuditBuilder;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit;
-import com.github.t1.deployer.app.Audit.LogHandlerAudit.LogHandlerAuditBuilder;
 import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.container.JBossCliTestClient;
@@ -17,7 +14,6 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.DataSourceName;
 import com.github.t1.deployer.model.DataSourcePlan;
-import com.github.t1.deployer.model.DataSourcePlan.DataSourcePlanBuilder;
 import com.github.t1.deployer.model.DataSourcePlan.PoolPlan;
 import com.github.t1.deployer.model.DeployablePlan;
 import com.github.t1.deployer.model.DeploymentName;
@@ -132,8 +128,8 @@ public abstract class AbstractDeployerTests {
     private final Path tempDir = tempDir();
 
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
-            .given("jboss.server.config.dir", tempDir)
-            .given(CLI_DEBUG, "true");
+        .given("jboss.server.config.dir", tempDir)
+        .given(CLI_DEBUG, "true");
     @Rule @SuppressWarnings("resource")
     public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE));
 
@@ -173,28 +169,28 @@ public abstract class AbstractDeployerTests {
     @Before
     public void before() {
         logHandlerDeployer.managedResourceNames
-                = loggerDeployer.managedResourceNames
-                = dataSourceDeployer.managedResourceNames
-                = artifactDeployer.managedResourceNames
-                = managedResourceNames;
+            = loggerDeployer.managedResourceNames
+            = dataSourceDeployer.managedResourceNames
+            = artifactDeployer.managedResourceNames
+            = managedResourceNames;
         logHandlerDeployer.pinnedResourceNames
-                = loggerDeployer.pinnedResourceNames
-                = dataSourceDeployer.pinnedResourceNames
-                = artifactDeployer.pinnedResourceNames
-                = pinnedResourceNames;
+            = loggerDeployer.pinnedResourceNames
+            = dataSourceDeployer.pinnedResourceNames
+            = artifactDeployer.pinnedResourceNames
+            = pinnedResourceNames;
         artifactDeployer.repository
-                = repository;
+            = repository;
         logHandlerDeployer.container
-                = loggerDeployer.container
-                = dataSourceDeployer.container
-                = artifactDeployer.container
-                = container;
+            = loggerDeployer.container
+            = dataSourceDeployer.container
+            = artifactDeployer.container
+            = container;
         boundary.audits
-                = logHandlerDeployer.audits
-                = loggerDeployer.audits
-                = dataSourceDeployer.audits
-                = artifactDeployer.audits
-                = new Audits();
+            = logHandlerDeployer.audits
+            = loggerDeployer.audits
+            = dataSourceDeployer.audits
+            = artifactDeployer.audits
+            = new Audits();
         boundary.configuredVariables = this.configuredVariables;
         boundary.deployers = this.deployers;
         boundary.triggers = EnumSet.allOf(Trigger.class);
@@ -202,7 +198,7 @@ public abstract class AbstractDeployerTests {
         //noinspection unchecked
         doAnswer(i -> {
             asList(logHandlerDeployer, loggerDeployer, dataSourceDeployer, artifactDeployer)
-                    .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
+                .forEach(i.<Consumer<AbstractDeployer>>getArgument(0));
             return null;
         }).when(deployers).forEach(any(Consumer.class));
 
@@ -215,12 +211,11 @@ public abstract class AbstractDeployerTests {
         Arrays.stream(LogHandlerType.values()).forEach(this::stubAllLogHandlers);
         whenCli(readDeploymentRequest("*")).then(this::allDeploymentsResponse);
 
-        //noinspection deprecation
         when(repository.listVersions(isA(GroupId.class), isA(ArtifactId.class), isA(Boolean.class)))
-                .then(i -> versions.get(versionsKey(i.getArgument(0), i.getArgument(1)))
-                                   .stream()
-                                   .filter(i.getArgument(2) ? Version::isSnapshot : Version::isStable)
-                                   .collect(toList()));
+            .then(i -> versions.get(versionsKey(i.getArgument(0), i.getArgument(1)))
+                .stream()
+                .filter(i.getArgument(2) ? Version::isSnapshot : Version::isStable)
+                .collect(toList()));
     }
 
     @SneakyThrows(IOException.class)
@@ -237,8 +232,7 @@ public abstract class AbstractDeployerTests {
             thenRaw(() -> success(supplier.get()));
         }
 
-        @SneakyThrows(IOException.class)
-        public void thenRaw(Supplier<ModelNode> supplier) {
+        @SneakyThrows(IOException.class) void thenRaw(Supplier<ModelNode> supplier) {
             when(cli.execute(eq(request), any(OperationMessageHandler.class))).then(i -> supplier.get());
         }
     }
@@ -256,23 +250,23 @@ public abstract class AbstractDeployerTests {
 
     private ModelNode rootLoggerResponse() {
         return toModelNode(""
-                + "{\n"
-                + "    'outcome' => 'success',\n"
-                + "    'result' => {\n"
-                + "        'filter' => undefined,\n"
-                + "        'filter-spec' => undefined,\n"
-                + "        'handlers' => [\n"
-                + "            'CONSOLE',\n"
-                + "            'FILE'\n"
-                + "        ],\n"
-                + "        'level' => 'INFO'\n"
-                + "    }\n"
-                + "}");
+            + "{\n"
+            + "    'outcome' => 'success',\n"
+            + "    'result' => {\n"
+            + "        'filter' => undefined,\n"
+            + "        'filter-spec' => undefined,\n"
+            + "        'handlers' => [\n"
+            + "            'CONSOLE',\n"
+            + "            'FILE'\n"
+            + "        ],\n"
+            + "        'level' => 'INFO'\n"
+            + "    }\n"
+            + "}");
     }
 
     private void stubAllLogHandlers(LogHandlerType type) {
         whenCli(readLogHandlerRequest(type, "*"))
-                .then(() -> joinModelNode(allLogHandlers.getOrDefault(type, emptyList())));
+            .then(() -> joinModelNode(allLogHandlers.getOrDefault(type, emptyList())));
     }
 
     private ModelNode allLoggersResponse() { return joinModelNode(allLoggers); }
@@ -296,7 +290,7 @@ public abstract class AbstractDeployerTests {
         verifyCli(readDatasourceRequest("*", true), atLeast(0));
         verifyCli(readDatasourceRequest("*", false), atLeast(0));
         Arrays.stream(LogHandlerType.values()).forEach(type ->
-                verifyCli(readLogHandlerRequest(type, "*"), atLeast(0)));
+            verifyCli(readLogHandlerRequest(type, "*"), atLeast(0)));
 
         verifyNoMoreInteractions(cli);
     }
@@ -334,13 +328,13 @@ public abstract class AbstractDeployerTests {
     private static ModelNode notDeployedNode(String subsystem, Object type, Object name) {
         //noinspection SpellCheckingInspection
         return ModelNode.fromString("{\n"
-                + "    \"outcome\" => \"failed\",\n"
-                + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
-                + ((subsystem == null) ? "" : "    (\\\"subsystem\\\" => \\\"" + subsystem + "\\\"),\n")
-                + "    (\\\"" + type + "\\\" => \\\"" + name + "\\\")\n"
-                + "]' not found\",\n"
-                + "    \"rolled-back\" => true\n"
-                + "}");
+            + "    \"outcome\" => \"failed\",\n"
+            + "    \"failure-description\" => \"WFLYCTL0216: Management resource '[\n"
+            + ((subsystem == null) ? "" : "    (\\\"subsystem\\\" => \\\"" + subsystem + "\\\"),\n")
+            + "    (\\\"" + type + "\\\" => \\\"" + name + "\\\")\n"
+            + "]' not found\",\n"
+            + "    \"rolled-back\" => true\n"
+            + "}");
     }
 
 
@@ -407,13 +401,13 @@ public abstract class AbstractDeployerTests {
             this.name = name;
 
             whenCli(readDeploymentRequest(fullName())).thenRaw(() -> (deployed == null)
-                    ? notDeployedNode(null, "deployment", name)
-                    : toModelNode("{" + deployed.deployedNode() + "}"));
+                ? notDeployedNode(null, "deployment", name)
+                : toModelNode("{" + deployed.deployedNode() + "}"));
         }
 
         private String fullName() { return deploymentName() + ((this.type == war) ? ".war" : ""); }
 
-        public ArtifactFixtureBuilder groupId(String groupId) {
+        ArtifactFixtureBuilder groupId(String groupId) {
             this.groupId = groupId;
             return this;
         }
@@ -427,7 +421,7 @@ public abstract class AbstractDeployerTests {
 
         ArtifactId artifactId() { return new ArtifactId(artifactId); }
 
-        public ArtifactFixtureBuilder classifier(String classifier) {
+        ArtifactFixtureBuilder classifier(String classifier) {
             this.classifier = classifier;
             return this;
         }
@@ -451,7 +445,7 @@ public abstract class AbstractDeployerTests {
 
                 if (!version.equals(UNKNOWN)) {
                     when(repository.resolveArtifact(groupId(), artifactId(), version, type, classifier()))
-                            .then(i -> artifact());
+                        .then(i -> artifact());
                     versions.computeIfAbsent(versionsKey(groupId(), artifactId()), k -> new ArrayList<>()).add(version);
                 }
                 checksum(fakeChecksumFor(deploymentName(), version));
@@ -459,35 +453,35 @@ public abstract class AbstractDeployerTests {
 
             String deployedNode() {
                 return ""
-                        + "'outcome' => 'success',\n"
-                        + "'result' => {\n"
-                        + "    'content' => [{'hash' => bytes {" + checksum.hexByteArray() + "}}],\n"
-                        + "    'enabled' => true,\n"
-                        + "    'name' => '" + fullName() + "',\n"
-                        + "    'persistent' => true,\n"
-                        + "    'runtime-name' => '" + deploymentName() + "',\n"
-                        + "    'subdeployment' => undefined,\n"
-                        + "    'subsystem' => {"
-                        + "        'jaxrs' => {},\n"
-                        + "        'ejb3' => {\n"
-                        + "            'entity-bean' => undefined,\n"
-                        + "            'message-driven-bean' => undefined,\n"
-                        + "            'singleton-bean' => undefined,\n"
-                        + "            'stateful-session-bean' => undefined,\n"
-                        + "            'stateless-session-bean' => undefined\n"
-                        + "        },\n"
-                        + "        'undertow' => {\n"
-                        + "            'context-root' => '" + deploymentName() + "',\n"
-                        + "            'virtual-host' => 'default-host',\n"
-                        + "            'servlet' => {'javax.ws.rs.core.Application' => {\n"
-                        + "                'servlet-class' => 'org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher',\n"
-                        + "                'servlet-name' => 'javax.ws.rs.core.Application'\n"
-                        + "            }},\n"
-                        + "            'websocket' => undefined,\n"
-                        + "            'logging' => {'configuration' => undefined}\n"
-                        + "        }\n"
-                        + "    }\n"
-                        + "}";
+                    + "'outcome' => 'success',\n"
+                    + "'result' => {\n"
+                    + "    'content' => [{'hash' => bytes {" + checksum.hexByteArray() + "}}],\n"
+                    + "    'enabled' => true,\n"
+                    + "    'name' => '" + fullName() + "',\n"
+                    + "    'persistent' => true,\n"
+                    + "    'runtime-name' => '" + deploymentName() + "',\n"
+                    + "    'subdeployment' => undefined,\n"
+                    + "    'subsystem' => {"
+                    + "        'jaxrs' => {},\n"
+                    + "        'ejb3' => {\n"
+                    + "            'entity-bean' => undefined,\n"
+                    + "            'message-driven-bean' => undefined,\n"
+                    + "            'singleton-bean' => undefined,\n"
+                    + "            'stateful-session-bean' => undefined,\n"
+                    + "            'stateless-session-bean' => undefined\n"
+                    + "        },\n"
+                    + "        'undertow' => {\n"
+                    + "            'context-root' => '" + deploymentName() + "',\n"
+                    + "            'virtual-host' => 'default-host',\n"
+                    + "            'servlet' => {'javax.ws.rs.core.Application' => {\n"
+                    + "                'servlet-class' => 'org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher',\n"
+                    + "                'servlet-name' => 'javax.ws.rs.core.Application'\n"
+                    + "            }},\n"
+                    + "            'websocket' => undefined,\n"
+                    + "            'logging' => {'configuration' => undefined}\n"
+                    + "        }\n"
+                    + "    }\n"
+                    + "}";
             }
 
             public ArtifactFixture version(String version) { return ArtifactFixtureBuilder.this.version(version); }
@@ -501,14 +495,14 @@ public abstract class AbstractDeployerTests {
                 return this;
             }
 
-            public void containing(String contents) { this.contents = contents; }
+            void containing(String contents) { this.contents = contents; }
 
-            public ArtifactFixture pinned() {
+            ArtifactFixture pinned() {
                 givenPinned("deployables", name);
                 return this;
             }
 
-            public ArtifactFixture deployed() {
+            ArtifactFixture deployed() {
                 if (deployed != null)
                     throw new RuntimeException("already have deployed " + name + ":" + version);
                 deployed = this;
@@ -520,121 +514,118 @@ public abstract class AbstractDeployerTests {
 
             InputStream inputStream() {
                 return (contents == null)
-                        ? inputStreamFor(deploymentName(), version)
-                        : new StringInputStream(contents);
+                    ? inputStreamFor(deploymentName(), version)
+                    : new StringInputStream(contents);
             }
 
             public Artifact artifact() {
-                return Artifact
-                        .builder()
-                        .groupId(groupId())
-                        .artifactId(artifactId())
-                        .version(this.version)
-                        .type(type)
-                        .checksum(checksum)
-                        .inputStreamSupplier(this::inputStream)
-                        .build();
+                return new Artifact()
+                    .setGroupId(groupId())
+                    .setArtifactId(artifactId())
+                    .setVersion(this.version)
+                    .setType(type)
+                    .setChecksum(checksum)
+                    .setInputStreamSupplier(this::inputStream);
             }
 
-            public GroupId groupId() { return ArtifactFixtureBuilder.this.groupId(); }
+            GroupId groupId() { return ArtifactFixtureBuilder.this.groupId(); }
 
-            public ArtifactId artifactId() { return ArtifactFixtureBuilder.this.artifactId(); }
+            ArtifactId artifactId() { return ArtifactFixtureBuilder.this.artifactId(); }
 
             Classifier classifier() { return ArtifactFixtureBuilder.this.classifier(); }
 
-            DeployableAuditBuilder artifactAudit() { return DeployableAudit.builder().name(deploymentName()); }
+            DeployableAudit artifactAudit() { return new DeployableAudit().setName(deploymentName()); }
 
 
-            public ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
+            ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
-            public void verifyDeployed(Audits audits) {
+            void verifyDeployed(Audits audits) {
                 ModelNode request = toModelNode("{\n"
-                        + "    'operation' => 'add',\n"
-                        + "    'address' => [('deployment' => '" + fullName() + "')],\n"
-                        + "    'enabled' => true,\n"
-                        + "    'content' => [('input-stream-index' => 0)]\n"
-                        + "}");
+                    + "    'operation' => 'add',\n"
+                    + "    'address' => [('deployment' => '" + fullName() + "')],\n"
+                    + "    'enabled' => true,\n"
+                    + "    'content' => [('input-stream-index' => 0)]\n"
+                    + "}");
                 assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                                .haveExactly(1, step(request));
+                    .haveExactly(1, step(request));
 
                 assertThat(audits.getAudits()).contains(addedAudit());
             }
 
-            public Audit addedAudit() {
+            Audit addedAudit() {
                 return artifactAudit()
-                        .change("group-id", null, groupId)
-                        .change("artifact-id", null, artifactId)
-                        .change("version", null, version)
-                        .change("type", null, type)
-                        .change("checksum", null, checksum)
-                        .added();
+                    .change("group-id", null, groupId)
+                    .change("artifact-id", null, artifactId)
+                    .change("version", null, version)
+                    .change("type", null, type)
+                    .change("checksum", null, checksum)
+                    .added();
             }
 
-            public void verifyRedeployed(Audits audits) {
+            void verifyRedeployed(Audits audits) {
                 verifyRedeployExecuted();
 
                 Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
                 assertThat(audits.getAudits()).contains(artifactAudit()
-                        .change("checksum", oldChecksum, checksum)
-                        .change("version", oldVersion, version)
-                        .changed());
+                    .change("checksum", oldChecksum, checksum)
+                    .change("version", oldVersion, version)
+                    .changed());
             }
 
             private void verifyRedeployExecuted() {
                 ModelNode request = toModelNode("{\n"
-                        + "    'operation' => 'full-replace-deployment',\n"
-                        + "    'address' => [],\n"
-                        + "    'name' => '" + fullName() + "',\n"
-                        + "    'content' => [('input-stream-index' => 0)],\n"
-                        + "    'enabled' => true\n"
-                        + "}");
+                    + "    'operation' => 'full-replace-deployment',\n"
+                    + "    'address' => [],\n"
+                    + "    'name' => '" + fullName() + "',\n"
+                    + "    'content' => [('input-stream-index' => 0)],\n"
+                    + "    'enabled' => true\n"
+                    + "}");
                 assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                                .haveExactly(1, step(request));
+                    .haveExactly(1, step(request));
             }
 
-            public void verifyRemoved(Audits audits) {
+            void verifyRemoved(Audits audits) {
                 verifyUndeployExecuted();
                 assertThat(audits.getAudits()).contains(removedAudit());
             }
 
-            public void verifyUndeployExecuted() {
+            void verifyUndeployExecuted() {
                 ModelNode undeploy = toModelNode(""
-                        + "{\n"
-                        + "    'operation' => 'undeploy',\n"
-                        + "    'address' => [('deployment' => '" + fullName() + "')]\n"
-                        + "}\n");
+                    + "{\n"
+                    + "    'operation' => 'undeploy',\n"
+                    + "    'address' => [('deployment' => '" + fullName() + "')]\n"
+                    + "}\n");
                 ModelNode remove = toModelNode(""
-                        + "{\n"
-                        + "    'operation' => 'remove',\n"
-                        + "    'address' => [('deployment' => '" + fullName() + "')]\n"
-                        + "}\n");
+                    + "{\n"
+                    + "    'operation' => 'remove',\n"
+                    + "    'address' => [('deployment' => '" + fullName() + "')]\n"
+                    + "}\n");
                 assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                                .haveExactly(1, step(undeploy))
-                                                .haveExactly(1, step(remove));
+                    .haveExactly(1, step(undeploy))
+                    .haveExactly(1, step(remove));
             }
 
-            public Audit removedAudit() {
+            Audit removedAudit() {
                 return artifactAudit()
-                        .change("group-id", groupId, null)
-                        .change("artifact-id", artifactId, null)
-                        .change("version", version, null)
-                        .change("type", type, null)
-                        .change("checksum", checksum, null)
-                        .removed();
+                    .change("group-id", groupId, null)
+                    .change("artifact-id", artifactId, null)
+                    .change("version", version, null)
+                    .change("type", type, null)
+                    .change("checksum", checksum, null)
+                    .removed();
             }
 
-            public DeployablePlan asPlan() {
-                return DeployablePlan
-                        .builder()
-                        .name(deploymentName())
-                        .groupId(groupId())
-                        .artifactId(artifactId())
-                        .version(version)
-                        .type(type)
-                        .state(deployed == null ? DeploymentState.undeployed : DeploymentState.deployed)
-                        .checksum(checksum)
-                        .build();
+            DeployablePlan asPlan() {
+                DeployablePlan plan = new DeployablePlan(deploymentName());
+                plan
+                    .setGroupId(groupId())
+                    .setArtifactId(artifactId())
+                    .setVersion(version);
+                plan.setType(type)
+                    .setState(deployed == null ? DeploymentState.undeployed : DeploymentState.deployed)
+                    .setChecksum(checksum);
+                return plan;
             }
         }
     }
@@ -643,7 +634,7 @@ public abstract class AbstractDeployerTests {
 
     private String capturedOperationsDescription() {
         return "operations: " + capturedOperations().stream().map(Operation::getOperation)
-                                                    .map(ModelNode::toString).collect(joining("\n"));
+            .map(ModelNode::toString).collect(joining("\n"));
     }
 
     @SneakyThrows(IOException.class) @SuppressWarnings("resource")
@@ -673,21 +664,21 @@ public abstract class AbstractDeployerTests {
             this.category = LoggerCategory.of(category);
 
             whenCli(readLoggerRequest(category)).thenRaw(() -> deployed
-                    ? toModelNode("{" + deployedNode() + "}")
-                    : notDeployedNode("logging", "logger", category));
+                ? toModelNode("{" + deployedNode() + "}")
+                : notDeployedNode("logging", "logger", category));
         }
 
         String deployedNode() {
             return ""
-                    + "'outcome' => 'success',\n"
-                    + "'result' => {\n"
-                    + "    'category' => " + ((category == null) ? "undefined" : "'" + category + "'") + ",\n"
-                    + "    'filter' => undefined,\n"
-                    + "    'filter-spec' => undefined,\n"
-                    + (handlers.isEmpty() ? "" : "        'handlers' => " + handlersArrayNode() + ",\n")
-                    + "    'level' => " + ((level == null) ? "undefined" : "'" + level + "'") + ",\n"
-                    + "    'use-parent-handlers' => " + useParentHandlers + "\n"
-                    + "}\n";
+                + "'outcome' => 'success',\n"
+                + "'result' => {\n"
+                + "    'category' => " + ((category == null) ? "undefined" : "'" + category + "'") + ",\n"
+                + "    'filter' => undefined,\n"
+                + "    'filter-spec' => undefined,\n"
+                + (handlers.isEmpty() ? "" : "        'handlers' => " + handlersArrayNode() + ",\n")
+                + "    'level' => " + ((level == null) ? "undefined" : "'" + level + "'") + ",\n"
+                + "    'use-parent-handlers' => " + useParentHandlers + "\n"
+                + "}\n";
         }
 
         public LoggerFixture level(LogLevel level) { return level(level.name()); }
@@ -697,28 +688,28 @@ public abstract class AbstractDeployerTests {
             return this;
         }
 
-        public LoggerFixture handler(String handlerName) {
+        LoggerFixture handler(String handlerName) {
             this.handlers.add(handlerName);
             return this;
         }
 
-        public LoggerFixture useParentHandlers(Boolean useParentHandlers) {
+        LoggerFixture useParentHandlers(Boolean useParentHandlers) {
             this.useParentHandlers = useParentHandlers;
             return this;
         }
 
-        public LoggerFixture pinned() {
+        LoggerFixture pinned() {
             givenPinned("loggers", category.getValue());
             return this;
         }
 
-        public LoggerFixture deployed() {
+        LoggerFixture deployed() {
             this.deployed = true;
             allLoggers.add("{" + loggerAddress() + deployedNode() + "}");
             return this;
         }
 
-        public String loggerAddress() { return address("logging", "logger", category); }
+        String loggerAddress() { return address("logging", "logger", category); }
 
         ModelNode loggerAddressNode() {
             return createAddress("subsystem", "logging", "logger", category.getValue());
@@ -731,22 +722,22 @@ public abstract class AbstractDeployerTests {
                 return handlers.stream().collect(joining("',\n        '", "[\n        '", "'\n    ]"));
         }
 
-        public void verifyAdded(Audits audits) {
+        void verifyAdded(Audits audits) {
             ModelNode request = toModelNode("{\n"
-                    + loggerAddress()
-                    + "    'operation' => 'add',\n"
-                    + loggerAddress()
-                    + ((level == null) ? "" : "    'level' => '" + level + "',\n")
-                    + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
-                    + "    'use-parent-handlers' => " + useParentHandlers + "\n"
-                    + "}");
+                + loggerAddress()
+                + "    'operation' => 'add',\n"
+                + loggerAddress()
+                + ((level == null) ? "" : "    'level' => '" + level + "',\n")
+                + (handlers.isEmpty() ? "" : "    'handlers' => " + handlersArrayNode() + ",\n")
+                + "    'use-parent-handlers' => " + useParentHandlers + "\n"
+                + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
 
-            AuditBuilder audit = LoggerAudit
-                    .of(getCategory())
-                    .change("level", null, level)
-                    .change("use-parent-handlers", null, useParentHandlers);
+            Audit audit = new LoggerAudit()
+                .setCategory(getCategory())
+                .change("level", null, level)
+                .change("use-parent-handlers", null, useParentHandlers);
             if (!handlerNames().isEmpty())
                 audit.change("handlers", null, handlerNames());
             assertThat(audits.getAudits()).contains(audit.added());
@@ -756,22 +747,22 @@ public abstract class AbstractDeployerTests {
             return handlers.stream().map(LogHandlerName::new).collect(toList());
         }
 
-        public void verifyUpdatedLogLevelFrom(LogLevel oldLevel, Audits audits) {
+        void verifyUpdatedLogLevelFrom(LogLevel oldLevel, Audits audits) {
             verifyWriteAttribute(loggerAddressNode(), "level", level);
             assertThat(audits.getAudits()).contains(
-                    LoggerAudit.of(getCategory()).change("level", oldLevel, level).changed());
+                new LoggerAudit().setCategory(getCategory()).change("level", oldLevel, level).changed());
         }
 
-        public void verifyRemoved(Audits audits) {
+        void verifyRemoved(Audits audits) {
             ModelNode request = toModelNode(""
-                    + "{\n"
-                    + loggerAddress()
-                    + "    'operation' => 'remove'\n"
-                    + "}");
+                + "{\n"
+                + loggerAddress()
+                + "    'operation' => 'remove'\n"
+                + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
 
-            AuditBuilder audit = LoggerAudit.of(getCategory());
+            Audit audit = new LoggerAudit().setCategory(getCategory());
             if (level != null)
                 audit.change("level", level, null);
             if (useParentHandlers != null)
@@ -781,48 +772,45 @@ public abstract class AbstractDeployerTests {
             assertThat(audits.getAudits()).contains(audit.removed());
         }
 
-        public void verifyUpdatedUseParentHandlersFrom(Boolean oldUseParentHandlers, Audits audits) {
+        void verifyUpdatedUseParentHandlersFrom(Boolean oldUseParentHandlers, Audits audits) {
             verifyWriteAttribute(loggerAddressNode(), "use-parent-handlers", useParentHandlers);
             assertThat(audits.getAudits()).contains(
-                    LoggerAudit.of(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
-                               .changed());
+                new LoggerAudit().setCategory(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
+                    .changed());
         }
 
         public void verifyAddedHandler(Audits audits, String name) {
             ModelNode request = toModelNode(""
-                    + "{\n"
-                    + loggerAddress()
-                    + "    'operation' => 'add-handler',\n"
-                    + "    'name' => '" + name + "'\n"
-                    + "}");
+                + "{\n"
+                + loggerAddress()
+                + "    'operation' => 'add-handler',\n"
+                + "    'name' => '" + name + "'\n"
+                + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
             assertThat(audits.getAudits()).contains(
-                    LoggerAudit.of(getCategory()).change("handlers", null, "[" + name + "]").changed());
+                new LoggerAudit().setCategory(getCategory()).change("handlers", null, "[" + name + "]").changed());
         }
 
         public void verifyRemovedHandler(Audits audits, String name) {
             ModelNode request = toModelNode(""
-                    + "{\n"
-                    + loggerAddress()
-                    + "    'operation' => 'remove-handler',\n"
-                    + "    'name' => '" + name + "'\n"
-                    + "}");
+                + "{\n"
+                + loggerAddress()
+                + "    'operation' => 'remove-handler',\n"
+                + "    'name' => '" + name + "'\n"
+                + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
             assertThat(audits.getAudits()).contains(
-                    LoggerAudit.of(getCategory()).change("handlers", "[" + name + "]", null).changed());
+                new LoggerAudit().setCategory(getCategory()).change("handlers", "[" + name + "]", null).changed());
         }
 
-        public LoggerPlan asPlan() {
-            return LoggerPlan
-                    .builder()
-                    .category(category)
-                    .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
-                    .level((level == null) ? null : LogLevel.valueOf(level))
-                    .handlers(handlerNames())
-                    .useParentHandlers((useParentHandlers == FALSE) ? false : null) // true -> null (default)
-                    .build();
+        LoggerPlan asPlan() {
+            return new LoggerPlan(category)
+                .setState(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
+                .setLevel((level == null) ? null : LogLevel.valueOf(level))
+                .setHandlers(handlerNames())
+                .setUseParentHandlers((useParentHandlers == FALSE) ? false : null); // true -> null (default)
         }
     }
 
@@ -834,7 +822,7 @@ public abstract class AbstractDeployerTests {
     public class LogHandlerFixture {
         private final LogHandlerType type;
         private final LogHandlerName name;
-        private final LogHandlerAuditBuilder expectedAudit;
+        private final LogHandlerAudit expectedAudit;
         private LogLevel level;
         private String format;
         private String formatter;
@@ -849,45 +837,45 @@ public abstract class AbstractDeployerTests {
         LogHandlerFixture(LogHandlerType type, String name) {
             this.type = type;
             this.name = new LogHandlerName(name);
-            this.expectedAudit = LogHandlerAudit.builder().type(this.type).name(this.name);
+            this.expectedAudit = new LogHandlerAudit().setType(this.type).setName(this.name);
             this.suffix = (type == periodicRotatingFile) ? DEFAULT_SUFFIX : null;
 
             whenCli(readLogHandlerRequest(type, name)).thenRaw(() -> deployed
-                    ? toModelNode("{" + deployedNode() + "}")
-                    : notDeployedNode("logging", type.getHandlerTypeName(), name));
+                ? toModelNode("{" + deployedNode() + "}")
+                : notDeployedNode("logging", type.getHandlerTypeName(), name));
         }
 
         String deployedNode() {
             return ""
-                    + "'outcome' => 'success',\n"
-                    + "'result' => {\n"
-                    + "    'name' => '" + name + "',\n"
-                    + ((level == null) ? "" : "    'level' => '" + level + "',\n")
-                    + "    'append' => true,\n"
-                    + "    'autoflush' => true,\n"
-                    + "    'enabled' => true,\n"
-                    + "    'encoding' => undefined,\n"
-                    + "    'formatter' => '"
-                    + ((format == null) ? "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n" : format) + "',\n"
-                    + "    'named-formatter' => " + ((formatter == null) ? "undefined" : "'" + formatter + "'") + ",\n"
-                    + ((file == null) ? "" :
-                    "    'file' => {\n"
-                            + "        'relative-to' => 'jboss.server.log.dir',\n"
-                            + "        'path' => '" + file + "'\n"
-                            + "    },\n")
-                    + ((suffix == null) ? "" : "    'suffix' => '" + suffix + "',\n")
-                    + ((encoding == null) ? "" : "    'encoding' => '" + encoding + "',\n")
-                    + ((module == null) ? "" : "    'module' => '" + module + "',\n")
-                    + ((class_ == null) ? "" : "    'class' => '" + class_ + "',\n")
-                    + ((properties == null) ? "" :
-                    "    'properties' => [\n        "
-                            + properties.entrySet().stream()
-                                        .map(entry -> "('" + entry.getKey() + "' => '" + entry.getValue() + "')")
-                                        .collect(joining(",\n        "))
-                            + "\n    ],\n")
-                    + "    'filter' => undefined,\n"
-                    + "    'filter-spec' => undefined\n"
-                    + "}\n";
+                + "'outcome' => 'success',\n"
+                + "'result' => {\n"
+                + "    'name' => '" + name + "',\n"
+                + ((level == null) ? "" : "    'level' => '" + level + "',\n")
+                + "    'append' => true,\n"
+                + "    'autoflush' => true,\n"
+                + "    'enabled' => true,\n"
+                + "    'encoding' => undefined,\n"
+                + "    'formatter' => '"
+                + ((format == null) ? "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n" : format) + "',\n"
+                + "    'named-formatter' => " + ((formatter == null) ? "undefined" : "'" + formatter + "'") + ",\n"
+                + ((file == null) ? "" :
+                "    'file' => {\n"
+                    + "        'relative-to' => 'jboss.server.log.dir',\n"
+                    + "        'path' => '" + file + "'\n"
+                    + "    },\n")
+                + ((suffix == null) ? "" : "    'suffix' => '" + suffix + "',\n")
+                + ((encoding == null) ? "" : "    'encoding' => '" + encoding + "',\n")
+                + ((module == null) ? "" : "    'module' => '" + module + "',\n")
+                + ((class_ == null) ? "" : "    'class' => '" + class_ + "',\n")
+                + ((properties == null) ? "" :
+                "    'properties' => [\n        "
+                    + properties.entrySet().stream()
+                    .map(entry -> "('" + entry.getKey() + "' => '" + entry.getValue() + "')")
+                    .collect(joining(",\n        "))
+                    + "\n    ],\n")
+                + "    'filter' => undefined,\n"
+                + "    'filter-spec' => undefined\n"
+                + "}\n";
         }
 
         public LogHandlerFixture level(LogLevel level) {
@@ -895,13 +883,13 @@ public abstract class AbstractDeployerTests {
             return this;
         }
 
-        public LogHandlerFixture format(String format) {
+        LogHandlerFixture format(String format) {
             this.format = format;
             this.formatter = null;
             return this;
         }
 
-        public LogHandlerFixture formatter(String formatter) {
+        LogHandlerFixture formatter(String formatter) {
             this.format = null;
             this.formatter = formatter;
             return this;
@@ -912,42 +900,42 @@ public abstract class AbstractDeployerTests {
             return this;
         }
 
-        public LogHandlerFixture suffix(String suffix) {
+        LogHandlerFixture suffix(String suffix) {
             this.suffix = suffix;
             return this;
         }
 
-        public LogHandlerFixture encoding(String encoding) {
+        LogHandlerFixture encoding(String encoding) {
             this.encoding = encoding;
             return this;
         }
 
-        public LogHandlerFixture module(String module) {
+        LogHandlerFixture module(String module) {
             this.module = module;
             return this;
         }
 
-        public LogHandlerFixture class_(String class_) {
+        LogHandlerFixture class_(String class_) {
             this.class_ = class_;
             return this;
         }
 
-        public LogHandlerFixture property(String key, String value) {
+        LogHandlerFixture property(String key, String value) {
             if (this.properties == null)
                 this.properties = new LinkedHashMap<>();
             this.properties.put(key, value);
             return this;
         }
 
-        public LogHandlerFixture pinned() {
+        LogHandlerFixture pinned() {
             givenPinned("log-handlers", name.getValue());
             return this;
         }
 
-        public LogHandlerFixture deployed() {
+        LogHandlerFixture deployed() {
             this.deployed = true;
             allLogHandlers.computeIfAbsent(type, t -> new ArrayList<>())
-                          .add("{" + logHandlerAddress() + deployedNode() + "}");
+                .add("{" + logHandlerAddress() + deployedNode() + "}");
             return this;
         }
 
@@ -956,71 +944,71 @@ public abstract class AbstractDeployerTests {
             return address("logging", type.getHandlerTypeName(), name);
         }
 
-        public ModelNode logHandlerAddressNode() {
+        ModelNode logHandlerAddressNode() {
             return createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
         }
 
 
-        public <T> LogHandlerFixture verifyChange(String name, T oldValue, T newValue) {
+        <T> LogHandlerFixture verifyChange(String name, T oldValue, T newValue) {
             verifyWriteAttribute(logHandlerAddressNode(), name, toStringOrNull(newValue));
             expectChange(name, oldValue, newValue);
             return this;
         }
 
-        public <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
+        <T> LogHandlerFixture expectChange(String name, T oldValue, T newValue) {
             expectedAudit.change(name, oldValue, newValue);
             return this;
         }
 
-        public void verifyChanged(Audits audits) {
+        void verifyChanged(Audits audits) {
             assertThat(audits.getAudits()).contains(this.expectedAudit.changed());
         }
 
-        public void verifyPutProperty(String key, String value) {
+        void verifyPutProperty(String key, String value) {
             ModelNode request = createOperation("map-put", logHandlerAddressNode());
             request.get("name").set("property");
             request.get("key").set(key);
             request.get("value").set(value);
 
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
         }
 
-        public void verifyRemoveProperty(String key) {
+        void verifyRemoveProperty(String key) {
             ModelNode request = createOperation("map-remove", logHandlerAddressNode());
             request.get("name").set("property");
             request.get("key").set(key);
 
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
         }
 
-        public void verifyAdded(Audits audits) {
+        void verifyAdded(Audits audits) {
             ModelNode request = toModelNode("{\n"
-                    + logHandlerAddress()
-                    + "    'operation' => 'add'"
-                    + ",\n    'level' => '" + ((level == null) ? "ALL" : level) + "'"
-                    + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
-                    + ((format == null) ? "" : ",\n    'formatter' => '" + format + "'")
-                    + (hasFile()
-                               ? ",\n    'file' => {\n"
-                    + "        'path' => '" + ((file == null) ? name.getValue().toLowerCase() + ".log" : file) + "',\n"
-                    + "        'relative-to' => 'jboss.server.log.dir'\n"
-                    + "    }"
-                               : "")
-                    + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
-                    + ((encoding == null) ? "" : ",\n    'encoding' => '" + encoding + "'")
-                    + ((module == null) ? "" : ",\n    'module' => '" + module + "'")
-                    + ((class_ == null) ? "" : ",\n    'class' => '" + class_ + "'")
-                    + ((properties == null) ? "" :
-                    ",\n    'properties' => [\n        "
-                            + properties.entrySet().stream()
-                                        .map(entry -> "('" + entry.getKey() + "' => '" + entry.getValue() + "')")
-                                        .collect(joining(",\n        "))
-                            + "\n    ]\n")
-                    + "\n}");
+                + logHandlerAddress()
+                + "    'operation' => 'add'"
+                + ",\n    'level' => '" + ((level == null) ? "ALL" : level) + "'"
+                + ((formatter == null) ? "" : ",\n    'named-formatter' => '" + formatter + "'")
+                + ((format == null) ? "" : ",\n    'formatter' => '" + format + "'")
+                + (hasFile()
+                ? ",\n    'file' => {\n"
+                + "        'path' => '" + ((file == null) ? name.getValue().toLowerCase() + ".log" : file) + "',\n"
+                + "        'relative-to' => 'jboss.server.log.dir'\n"
+                + "    }"
+                : "")
+                + ((suffix == null) ? "" : ",\n    'suffix' => '" + suffix + "'")
+                + ((encoding == null) ? "" : ",\n    'encoding' => '" + encoding + "'")
+                + ((module == null) ? "" : ",\n    'module' => '" + module + "'")
+                + ((class_ == null) ? "" : ",\n    'class' => '" + class_ + "'")
+                + ((properties == null) ? "" :
+                ",\n    'properties' => [\n        "
+                    + properties.entrySet().stream()
+                    .map(entry -> "('" + entry.getKey() + "' => '" + entry.getValue() + "')")
+                    .collect(joining(",\n        "))
+                    + "\n    ]\n")
+                + "\n}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
 
             expectedAudit.change("level", null, (level == null) ? ALL : level);
             if (format != null)
@@ -1046,13 +1034,13 @@ public abstract class AbstractDeployerTests {
             return type == periodicRotatingFile || (type == custom && file != null);
         }
 
-        public void verifyRemoved(Audits audits) {
+        void verifyRemoved(Audits audits) {
             ModelNode request = toModelNode("{\n"
-                    + logHandlerAddress()
-                    + "    'operation' => 'remove'\n"
-                    + "}");
+                + logHandlerAddress()
+                + "    'operation' => 'remove'\n"
+                + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
 
             if (this.level != null)
                 expectedAudit.change("level", this.level, null);
@@ -1075,21 +1063,18 @@ public abstract class AbstractDeployerTests {
             assertThat(audits.getAudits()).contains(expectedAudit.removed());
         }
 
-        public LogHandlerPlan asPlan() {
-            return LogHandlerPlan
-                    .builder()
-                    .type(type)
-                    .name(name)
-                    .level(level)
-                    .format(format)
-                    .formatter(formatter)
-                    .file(file)
-                    .suffix(suffix)
-                    .encoding(encoding)
-                    .module(module)
-                    .class_(class_)
-                    .properties((properties == null) ? emptyMap() : properties)
-                    .build();
+        LogHandlerPlan asPlan() {
+            return new LogHandlerPlan(name)
+                .setType(type)
+                .setLevel(level)
+                .setFormat(format)
+                .setFormatter(formatter)
+                .setFile(file)
+                .setSuffix(suffix)
+                .setEncoding(encoding)
+                .setModule(module)
+                .setClass_(class_)
+                .setProperties((properties == null) ? emptyMap() : properties);
         }
     }
 
@@ -1120,39 +1105,39 @@ public abstract class AbstractDeployerTests {
             this.driver = "h2";
 
             whenCli(readDatasourceRequest(name, true)).thenRaw(() -> xa && deployed
-                    ? toModelNode("{" + deployedNode() + "}")
-                    : notDeployedNode("datasources", dataSource(xa), name));
+                ? toModelNode("{" + deployedNode() + "}")
+                : notDeployedNode("datasources", dataSource(xa), name));
             whenCli(readDatasourceRequest(name, false)).thenRaw(() -> !xa && deployed
-                    ? toModelNode("{" + deployedNode() + "}")
-                    : notDeployedNode("datasources", dataSource(xa), name));
+                ? toModelNode("{" + deployedNode() + "}")
+                : notDeployedNode("datasources", dataSource(xa), name));
         }
 
         String deployedNode() {
             return ""
-                    + "'outcome' => 'success',\n"
-                    + "'result' => {\n"
-                    + "    'name' => " + ((name == null) ? "undefined" : "'" + name + "'") + ",\n"
-                    + (xa ? "" : "    'connection-url' => '" + uri + "',\n")
-                    + "    'jndi-name' => '" + jndiName + "',\n"
-                    + "    'driver-name' => '" + driver + "',\n"
+                + "'outcome' => 'success',\n"
+                + "'result' => {\n"
+                + "    'name' => " + ((name == null) ? "undefined" : "'" + name + "'") + ",\n"
+                + (xa ? "" : "    'connection-url' => '" + uri + "',\n")
+                + "    'jndi-name' => '" + jndiName + "',\n"
+                + "    'driver-name' => '" + driver + "',\n"
 
-                    + "    'user-name' => " + ((userName == null) ? "undefined" : "'" + userName + "'") + ",\n"
-                    + "    'password' => " + ((password == null) ? "undefined" : "'" + password + "'") + ",\n"
+                + "    'user-name' => " + ((userName == null) ? "undefined" : "'" + userName + "'") + ",\n"
+                + "    'password' => " + ((password == null) ? "undefined" : "'" + password + "'") + ",\n"
 
-                    + "    'min-pool-size' => " + ((minPoolSize == null)
-                                                           ? "undefined" : "'" + minPoolSize + "'") + ",\n"
-                    + "    'initial-pool-size' => " + ((initialPoolSize == null)
-                                                               ? "undefined" : "'" + initialPoolSize + "'") + ",\n"
-                    + "    'max-pool-size' => " + ((maxPoolSize == null)
-                                                           ? "undefined" : "'" + maxPoolSize + "'") + ",\n"
-                    + "    'idle-timeout-minutes' => "
-                    + ((maxAge == null) ? "undefined" : "'" + maxAge.asMinutes() + "'") + "\n"
-                    + (xa
-                               ? ", 'xa-datasource-properties' => {"
-                    + "'ServerName' => {'value' => '" + jdbcHost() + "'}, "
-                    + "'DatabaseName' => {'value' => '" + jdbcDbName() + "'}}"
-                               : "")
-                    + "}\n";
+                + "    'min-pool-size' => " + ((minPoolSize == null)
+                ? "undefined" : "'" + minPoolSize + "'") + ",\n"
+                + "    'initial-pool-size' => " + ((initialPoolSize == null)
+                ? "undefined" : "'" + initialPoolSize + "'") + ",\n"
+                + "    'max-pool-size' => " + ((maxPoolSize == null)
+                ? "undefined" : "'" + maxPoolSize + "'") + ",\n"
+                + "    'idle-timeout-minutes' => "
+                + ((maxAge == null) ? "undefined" : "'" + maxAge.asMinutes() + "'") + "\n"
+                + (xa
+                ? ", 'xa-datasource-properties' => {"
+                + "'ServerName' => {'value' => '" + jdbcHost() + "'}, "
+                + "'DatabaseName' => {'value' => '" + jdbcDbName() + "'}}"
+                : "")
+                + "}\n";
         }
 
         public DataSourceFixture uri(String uri) {
@@ -1161,66 +1146,66 @@ public abstract class AbstractDeployerTests {
         }
 
 
-        public DataSourceFixture xa(boolean xa) {
+        DataSourceFixture xa(boolean xa) {
             this.xa = xa;
             return this;
         }
 
-        public DataSourceFixture jndiName(String jndiName) {
+        DataSourceFixture jndiName(String jndiName) {
             this.jndiName = jndiName;
             return this;
         }
 
-        public DataSourceFixture driver(String driver) {
+        DataSourceFixture driver(String driver) {
             this.driver = driver;
             return this;
         }
 
-        public DataSourceFixture credentials(String userName, String password) {
+        DataSourceFixture credentials(String userName, String password) {
             return userName(userName).password(password);
         }
 
-        public DataSourceFixture userName(String userName) {
+        DataSourceFixture userName(String userName) {
             this.userName = userName;
             return this;
         }
 
-        public DataSourceFixture password(String password) {
+        DataSourceFixture password(String password) {
             this.password = password;
             return this;
         }
 
-        public DataSourceFixture minPoolSize(Integer minPoolSize) {
+        DataSourceFixture minPoolSize(Integer minPoolSize) {
             this.minPoolSize = minPoolSize;
             return this;
         }
 
-        public DataSourceFixture initialPoolSize(Integer initialPoolSize) {
+        DataSourceFixture initialPoolSize(Integer initialPoolSize) {
             this.initialPoolSize = initialPoolSize;
             return this;
         }
 
-        public DataSourceFixture maxPoolSize(Integer maxPoolSize) {
+        DataSourceFixture maxPoolSize(Integer maxPoolSize) {
             this.maxPoolSize = maxPoolSize;
             return this;
         }
 
-        public DataSourceFixture maxAge(Age maxAge) {
+        DataSourceFixture maxAge(Age maxAge) {
             this.maxAge = maxAge;
             return this;
         }
 
-        public DataSourceFixture processState(String processState) {
+        DataSourceFixture processState(String processState) {
             AbstractDeployerTests.this.processState = processState;
             return this;
         }
 
-        public DataSourceFixture pinned() {
+        DataSourceFixture pinned() {
             givenPinned("data-sources", name.getValue());
             return this;
         }
 
-        public DataSourceFixture deployed() {
+        DataSourceFixture deployed() {
             this.deployed = true;
             (xa ? allXaDataSources : allNonXaDataSources).add("{" + dataSourceAddress() + deployedNode() + "}");
             return this;
@@ -1232,38 +1217,38 @@ public abstract class AbstractDeployerTests {
             return createAddress("subsystem", "datasources", dataSource(xa), name.getValue());
         }
 
-        public void verifyAdded(Audits audits) {
+        void verifyAdded(Audits audits) {
             verifyAddCli();
             assertAddAudit(audits);
         }
 
-        @SuppressWarnings("resource") public void verifyAddCli() {
+        @SuppressWarnings("resource") void verifyAddCli() {
             ModelNode addRequest = toModelNode("{\n"
-                    + "    'operation' => 'add',\n"
-                    + dataSourceAddress()
-                    + (xa ? "" : "    'connection-url' => '" + uri + "',\n")
-                    + "    'jndi-name' => '" + jndiName + "',\n"
-                    + "    'driver-name' => '" + driver + "'\n"
+                + "    'operation' => 'add',\n"
+                + dataSourceAddress()
+                + (xa ? "" : "    'connection-url' => '" + uri + "',\n")
+                + "    'jndi-name' => '" + jndiName + "',\n"
+                + "    'driver-name' => '" + driver + "'\n"
 
-                    + ((userName == null) ? "" : ",    'user-name' => '" + userName + "'\n")
-                    + ((password == null) ? "" : ",    'password' => '" + password + "'\n")
+                + ((userName == null) ? "" : ",    'user-name' => '" + userName + "'\n")
+                + ((password == null) ? "" : ",    'password' => '" + password + "'\n")
 
-                    + ((minPoolSize == null) ? "" : ",    'min-pool-size' => " + minPoolSize + "\n")
-                    + ((initialPoolSize == null) ? "" : ",    'initial-pool-size' => " + initialPoolSize + "\n")
-                    + ((maxPoolSize == null) ? "" : ",    'max-pool-size' => " + maxPoolSize + "\n")
-                    + ((maxAge == null) ? "" : ",    'idle-timeout-minutes' => " + maxAge.asMinutes() + "L\n")
-                    + "}");
+                + ((minPoolSize == null) ? "" : ",    'min-pool-size' => " + minPoolSize + "\n")
+                + ((initialPoolSize == null) ? "" : ",    'initial-pool-size' => " + initialPoolSize + "\n")
+                + ((maxPoolSize == null) ? "" : ",    'max-pool-size' => " + maxPoolSize + "\n")
+                + ((maxAge == null) ? "" : ",    'idle-timeout-minutes' => " + maxAge.asMinutes() + "L\n")
+                + "}");
 
             if (xa) {
                 assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                                .haveExactly(1, step(addRequest))
-                                                .haveExactly(1, step(addXaDataSourceProperty("ServerName", jdbcHost())))
-                                                .haveExactly(1, step(addXaDataSourceProperty("PortNumber", jdbcPort())))
-                                                .haveExactly(1,
-                                                        step(addXaDataSourceProperty("DatabaseName", jdbcDbName())));
+                    .haveExactly(1, step(addRequest))
+                    .haveExactly(1, step(addXaDataSourceProperty("ServerName", jdbcHost())))
+                    .haveExactly(1, step(addXaDataSourceProperty("PortNumber", jdbcPort())))
+                    .haveExactly(1,
+                        step(addXaDataSourceProperty("DatabaseName", jdbcDbName())));
             } else {
                 assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                                .haveExactly(1, step(addRequest));
+                    .haveExactly(1, step(addRequest));
             }
         }
 
@@ -1280,22 +1265,22 @@ public abstract class AbstractDeployerTests {
 
         private ModelNode addXaDataSourceProperty(String propertyName, String value) {
             return toModelNode("{\n"
-                    + "'operation' => 'add',\n"
-                    + "'address' => [\n"
-                    + "    ('subsystem' => 'datasources'),\n"
-                    + "    ('xa-data-source' => '" + name + "'),\n"
-                    + "    ('xa-datasource-properties' => '" + propertyName + "')\n"
-                    + "],\n"
-                    + "'value' => '" + value + "'\n"
-                    + "}");
+                + "'operation' => 'add',\n"
+                + "'address' => [\n"
+                + "    ('subsystem' => 'datasources'),\n"
+                + "    ('xa-data-source' => '" + name + "'),\n"
+                + "    ('xa-datasource-properties' => '" + propertyName + "')\n"
+                + "],\n"
+                + "'value' => '" + value + "'\n"
+                + "}");
         }
 
         private void assertAddAudit(Audits audits) {
-            AuditBuilder audit = DataSourceAudit
-                    .of(getName())
-                    .change("uri", null, uri)
-                    .change("jndi-name", null, jndiName)
-                    .change("driver", null, driver);
+            Audit audit = new DataSourceAudit()
+                .setName(getName())
+                .change("uri", null, uri)
+                .change("jndi-name", null, jndiName)
+                .change("driver", null, driver);
             if (xa)
                 audit.change("xa", null, true);
             if (userName != null)
@@ -1313,76 +1298,76 @@ public abstract class AbstractDeployerTests {
             assertThat(audits.getAudits()).containsExactly(audit.added());
         }
 
-        public void verifyUpdatedUriFrom(String oldUri, Audits audits) {
+        void verifyUpdatedUriFrom(String oldUri, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "uri", uri);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("uri", oldUri, uri).changed());
+                new DataSourceAudit().setName(name).change("uri", oldUri, uri).changed());
         }
 
-        public void verifyUpdatedJndiNameFrom(String oldJndiName, Audits audits) {
+        void verifyUpdatedJndiNameFrom(String oldJndiName, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "jndi-name", jndiName);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("jndi-name", oldJndiName, jndiName).changed());
+                new DataSourceAudit().setName(name).change("jndi-name", oldJndiName, jndiName).changed());
         }
 
-        public void verifyUpdatedDriverNameFrom(String oldDriverName, Audits audits) {
+        void verifyUpdatedDriverNameFrom(String oldDriverName, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "driver-name", driver);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("driver", oldDriverName, driver).changed());
+                new DataSourceAudit().setName(name).change("driver", oldDriverName, driver).changed());
         }
 
-        public void verifyUpdatedUserNameFrom(String oldUserName, Audits audits) {
+        void verifyUpdatedUserNameFrom(String oldUserName, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "user-name", userName);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name)
-                                   .changeRaw("user-name",
-                                           oldUserName == null ? null : CONCEALED,
-                                           userName == null ? null : CONCEALED)
-                                   .changed());
+                new DataSourceAudit().setName(name)
+                    .changeRaw("user-name",
+                        oldUserName == null ? null : CONCEALED,
+                        userName == null ? null : CONCEALED)
+                    .changed());
         }
 
-        public void verifyUpdatedPasswordFrom(String oldPassword, Audits audits) {
+        void verifyUpdatedPasswordFrom(String oldPassword, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "password", password);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name)
-                                   .changeRaw("password",
-                                           oldPassword == null ? null : CONCEALED,
-                                           password == null ? null : CONCEALED)
-                                   .changed());
+                new DataSourceAudit().setName(name)
+                    .changeRaw("password",
+                        oldPassword == null ? null : CONCEALED,
+                        password == null ? null : CONCEALED)
+                    .changed());
         }
 
-        public void verifyUpdatedMinPoolSizeFrom(Integer oldMinPoolSize, Audits audits) {
+        void verifyUpdatedMinPoolSizeFrom(Integer oldMinPoolSize, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "min-pool-size", minPoolSize);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("pool:min", oldMinPoolSize, minPoolSize).changed());
+                new DataSourceAudit().setName(name).change("pool:min", oldMinPoolSize, minPoolSize).changed());
         }
 
-        public void verifyUpdatedInitialPoolSizeFrom(Integer oldInitialPoolSize, Audits audits) {
+        void verifyUpdatedInitialPoolSizeFrom(Integer oldInitialPoolSize, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "initial-pool-size", initialPoolSize);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("pool:initial", oldInitialPoolSize, initialPoolSize).changed());
+                new DataSourceAudit().setName(name).change("pool:initial", oldInitialPoolSize, initialPoolSize).changed());
         }
 
-        public void verifyUpdatedMaxPoolSizeFrom(Integer oldMaxPoolSize, Audits audits) {
+        void verifyUpdatedMaxPoolSizeFrom(Integer oldMaxPoolSize, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "max-pool-size", maxPoolSize);
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("pool:max", oldMaxPoolSize, maxPoolSize).changed());
+                new DataSourceAudit().setName(name).change("pool:max", oldMaxPoolSize, maxPoolSize).changed());
         }
 
-        public void verifyUpdatedMaxAgeFrom(Age oldMaxAge, Audits audits) {
+        void verifyUpdatedMaxAgeFrom(Age oldMaxAge, Audits audits) {
             verifyWriteAttribute(dataSourceAddressNode(), "idle-timeout-minutes", maxAge.asMinutes());
             assertThat(audits.getAudits()).contains(
-                    DataSourceAudit.of(name).change("pool:max-age", oldMaxAge, maxAge).changed());
+                new DataSourceAudit().setName(name).change("pool:max-age", oldMaxAge, maxAge).changed());
         }
 
-        public void verifyRemoved(Audits audits) {
+        void verifyRemoved(Audits audits) {
             verifyRemoveCli();
 
-            AuditBuilder audit = DataSourceAudit
-                    .of(getName())
-                    .change("uri", uri, null)
-                    .change("jndi-name", jndiName, null)
-                    .change("driver", driver, null);
+            Audit audit = new DataSourceAudit()
+                .setName(getName())
+                .change("uri", uri, null)
+                .change("jndi-name", jndiName, null)
+                .change("driver", driver, null);
             if (xa)
                 audit.change("xa", true, null);
             if (userName != null)
@@ -1400,33 +1385,29 @@ public abstract class AbstractDeployerTests {
             assertThat(audits.getAudits()).contains(audit.removed());
         }
 
-        public void verifyRemoveCli() {
+        void verifyRemoveCli() {
             ModelNode request = toModelNode(""
-                    + "{\n"
-                    + "    'operation' => 'remove',\n"
-                    + dataSourceAddress().substring(0, dataSourceAddress().length() - 1)
-                    + "}");
+                + "{\n"
+                + "    'operation' => 'remove',\n"
+                + dataSourceAddress().substring(0, dataSourceAddress().length() - 1)
+                + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
-                                            .haveExactly(1, step(request));
+                .haveExactly(1, step(request));
         }
 
-        public DataSourcePlan asPlan() {
-            DataSourcePlanBuilder builder = DataSourcePlan
-                    .builder()
-                    .name(name)
-                    .state(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
-                    .uri(URI.create(uri))
-                    .jndiName(jndiName)
-                    .driver(driver)
-                    .userName(userName)
-                    .password(password)
-                    .pool(PoolPlan.builder()
-                                  .min(minPoolSize)
-                                  .initial(initialPoolSize)
-                                  .max(maxPoolSize)
-                                  .maxAge(maxAge)
-                                  .build());
-            return builder.build();
+        DataSourcePlan asPlan() {
+            return new DataSourcePlan(name)
+                .setState(deployed ? DeploymentState.deployed : DeploymentState.undeployed)
+                .setUri(URI.create(uri))
+                .setJndiName(jndiName)
+                .setDriver(driver)
+                .setUserName(userName)
+                .setPassword(password)
+                .setPool(new PoolPlan()
+                    .setMin(minPoolSize)
+                    .setInitial(initialPoolSize)
+                    .setMax(maxPoolSize)
+                    .setMaxAge(maxAge));
         }
     }
 }

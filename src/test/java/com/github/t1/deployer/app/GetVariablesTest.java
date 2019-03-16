@@ -33,9 +33,9 @@ import static org.mockito.Mockito.when;
 
 public class GetVariablesTest {
     private static final ObjectMapper JSON = new ObjectMapper()
-            .setSerializationInclusion(NON_EMPTY) //
-            .configure(FAIL_ON_UNKNOWN_PROPERTIES, false) //
-            .setPropertyNamingStrategy(KEBAB_CASE);
+        .setSerializationInclusion(NON_EMPTY) //
+        .configure(FAIL_ON_UNKNOWN_PROPERTIES, false) //
+        .setPropertyNamingStrategy(KEBAB_CASE);
     private static final GroupId DUMMY_GROUP_ID = new GroupId("dummy-group");
     private static final ArtifactId DUMMY_ARTIFACT_ID = new ArtifactId("dummy-artifact");
     private static final Version DUMMY_VERSION = new Version("dummy-version");
@@ -43,13 +43,13 @@ public class GetVariablesTest {
     private final Path tempDir = AbstractDeployerTests.tempDir();
 
     @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
-            .given("jboss.server.config.dir", tempDir)
-            .given(CLI_DEBUG, "true");
+        .given("jboss.server.config.dir", tempDir)
+        .given(CLI_DEBUG, "true");
 
     @Rule public FileMemento rootBundleConfigFile = new FileMemento(tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE));
 
-    DeployerBoundary boundary = new DeployerBoundary();
-    Repository repository = mock(Repository.class);
+    private DeployerBoundary boundary = new DeployerBoundary();
+    private Repository repository = mock(Repository.class);
 
     @Before
     public void setUp() { boundary.repository = repository; }
@@ -66,80 +66,77 @@ public class GetVariablesTest {
         Set<VariableName> variables = boundary.getVariables();
 
         assertThat(variables).containsExactly(
-                new VariableName("default.group-id"),
-                new VariableName("version"));
+            new VariableName("default.group-id"),
+            new VariableName("version"));
     }
 
     @Test
     public void shouldGetConfiguredRootBundle() {
-        boundary.rootBundleConfig = RootBundleConfig
-                .builder()
-                .groupId(DUMMY_GROUP_ID)
-                .artifactId(DUMMY_ARTIFACT_ID)
-                .version(DUMMY_VERSION)
-                .build();
+        boundary.rootBundleConfig = new RootBundleConfig()
+            .setGroupId(DUMMY_GROUP_ID)
+            .setArtifactId(DUMMY_ARTIFACT_ID)
+            .setVersion(DUMMY_VERSION);
         when(repository.resolveArtifact(DUMMY_GROUP_ID, DUMMY_ARTIFACT_ID, DUMMY_VERSION, bundle, null))
-                .thenReturn(Artifact
-                        .builder()
-                        .groupId(DUMMY_GROUP_ID)
-                        .artifactId(DUMMY_ARTIFACT_ID)
-                        .version(DUMMY_VERSION)
-                        .type(bundle)
-                        .inputStreamSupplier(() -> new StringInputStream(""
-                                + "# starting with a comment found a bug\n"
-                                + "bundles:\n"
-                                + "  app:\n"
-                                + "    group-id: com.oneandone.access.apps\n"
-                                + "    version: UNSTABLE # can't use variable here, as it's required in raw format, too\n"
-                                + "    instances:\n"
-                                + "      jolokia:\n"
-                                + "        group-id: org.jolokia\n"
-                                + "        artifact-id: jolokia-war\n"
-                                + "        version: ${jolokia.version}\n"
-                                + "        state: ${jolokia.state or «deployed»}\n"
-                                + "      mockserver:\n"
-                                + "        group-id: org.mock-server\n"
-                                + "        artifact-id: mockserver-war\n"
-                                + "        version: ${mockserver.version}\n"
-                                + "        state: ${mockserver.state or «deployed»}\n"
-                        )).build());
+            .thenReturn(new Artifact()
+                .setGroupId(DUMMY_GROUP_ID)
+                .setArtifactId(DUMMY_ARTIFACT_ID)
+                .setVersion(DUMMY_VERSION)
+                .setType(bundle)
+                .setInputStreamSupplier(() -> new StringInputStream(""
+                    + "# starting with a comment found a bug\n"
+                    + "bundles:\n"
+                    + "  app:\n"
+                    + "    group-id: com.example.apps\n"
+                    + "    version: UNSTABLE # can't use variable here, as it's required in raw format, too\n"
+                    + "    instances:\n"
+                    + "      jolokia:\n"
+                    + "        group-id: org.jolokia\n"
+                    + "        artifact-id: jolokia-war\n"
+                    + "        version: ${jolokia.version}\n"
+                    + "        state: ${jolokia.state or «deployed»}\n"
+                    + "      mockserver:\n"
+                    + "        group-id: org.mock-server\n"
+                    + "        artifact-id: mockserver-war\n"
+                    + "        version: ${mockserver.version}\n"
+                    + "        state: ${mockserver.state or «deployed»}\n"
+                )));
 
         Set<VariableName> variables = boundary.getVariables();
 
         assertThat(variables).containsExactly(
-                new VariableName("jolokia.state"),
-                new VariableName("jolokia.version"),
-                new VariableName("mockserver.state"),
-                new VariableName("mockserver.version"));
+            new VariableName("jolokia.state"),
+            new VariableName("jolokia.version"),
+            new VariableName("mockserver.state"),
+            new VariableName("mockserver.version"));
     }
 
     @Test
     public void shouldGetVariablesFromRootBundleFile() {
         rootBundleConfigFile.write(""
-                + "bundles:\n"
-                + "  app:\n"
-                + "    group-id: com.github.t1\n"
-                + "    version: UNSTABLE\n"
-                + "    instances:\n"
-                + "      jolokia:\n"
-                + "        group-id: org.jolokia\n"
-                + "        artifact-id: jolokia-war\n"
-                + "        version: ${jolokia.version}\n"
-                + "        state: ${jolokia.state or «deployed»}\n"
-                + "loggers:\n"
-                + "  com.github.t1.deployer:\n"
-                + "    level: DEBUG\n");
+            + "bundles:\n"
+            + "  app:\n"
+            + "    group-id: com.github.t1\n"
+            + "    version: UNSTABLE\n"
+            + "    instances:\n"
+            + "      jolokia:\n"
+            + "        group-id: org.jolokia\n"
+            + "        artifact-id: jolokia-war\n"
+            + "        version: ${jolokia.version}\n"
+            + "        state: ${jolokia.state or «deployed»}\n"
+            + "loggers:\n"
+            + "  com.github.t1.deployer:\n"
+            + "    level: DEBUG\n");
 
         Set<VariableName> variables = boundary.getVariables();
 
         assertThat(variables).containsExactly(
-                new VariableName("jolokia.state"),
-                new VariableName("jolokia.version"));
+            new VariableName("jolokia.state"),
+            new VariableName("jolokia.version"));
     }
 
     @Test
     public void shouldSerializeBundleTreeAsJson() throws Exception {
         assertThat(toJson(asList(new VariableName("jolokia.state"), new VariableName("jolokia.version"))))
-                .isEqualTo("[\"jolokia.state\",\"jolokia.version\"]");
+            .isEqualTo("[\"jolokia.state\",\"jolokia.version\"]");
     }
 }

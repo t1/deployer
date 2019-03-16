@@ -1,26 +1,24 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LoggerAudit;
-import com.github.t1.deployer.app.Audit.LoggerAudit.LoggerAuditBuilder;
 import com.github.t1.deployer.container.LoggerResource;
-import com.github.t1.deployer.container.LoggerResource.LoggerResourceBuilder;
 import com.github.t1.deployer.model.LogHandlerName;
 import com.github.t1.deployer.model.LoggerPlan;
 import com.github.t1.deployer.model.Plan;
-import com.github.t1.deployer.model.Plan.PlanBuilder;
 import com.github.t1.log.LogLevel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DeploymentState.deployed;
 
 @Slf4j
-class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder, LoggerResource, LoggerAuditBuilder> {
+class LoggerDeployer extends ResourceDeployer<LoggerPlan, Supplier<LoggerResource>, LoggerResource, LoggerAudit> {
     public LoggerDeployer() {
         property("level", LogLevel.class);
         property("use-parent-handlers", Boolean.class);
@@ -36,15 +34,16 @@ class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder,
 
     @Override protected Stream<LoggerPlan> resourcesIn(Plan plan) { return plan.loggers(); }
 
-    @Override protected LoggerAuditBuilder auditBuilder(LoggerResource logger) {
-        return LoggerAudit.builder().category(logger.category());
+    @Override protected LoggerAudit audit(LoggerResource logger) {
+        return new LoggerAudit().setCategory(logger.category());
     }
 
-    @Override protected LoggerResourceBuilder resourceBuilder(LoggerPlan plan) {
-        return container.builderFor(plan.getCategory());
+    @Override protected Supplier<LoggerResource> resourceBuilder(LoggerPlan plan) {
+        LoggerResource resource = container.builderFor(plan.getCategory());
+        return () -> resource;
     }
 
-    @Override protected void update(LoggerResource resource, LoggerPlan plan, LoggerAuditBuilder audit) {
+    @Override protected void update(LoggerResource resource, LoggerPlan plan, LoggerAudit audit) {
         super.update(resource, plan, audit);
 
         if (!Objects.equals(resource.handlers(), plan.getHandlers())) {
@@ -62,14 +61,15 @@ class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder,
         }
     }
 
-    @Override protected LoggerResourceBuilder buildResource(LoggerPlan plan, LoggerAuditBuilder audit) {
-        LoggerResourceBuilder builder = super.buildResource(plan, audit);
+    @Override protected Supplier<LoggerResource> buildResource(LoggerPlan plan, LoggerAudit audit) {
+        LoggerResource resource = super.buildResource(plan, audit).get();
         if (!plan.getHandlers().isEmpty())
             audit.change("handlers", null, plan.getHandlers());
-        return builder.handlers(plan.getHandlers());
+        resource.handlers(plan.getHandlers());
+        return () -> resource;
     }
 
-    @Override protected void auditRemove(LoggerResource resource, LoggerAuditBuilder audit) {
+    @Override protected void auditRemove(LoggerResource resource, LoggerAudit audit) {
         super.auditRemove(resource, audit);
 
         if (!resource.handlers().isEmpty())
@@ -81,13 +81,11 @@ class LoggerDeployer extends ResourceDeployer<LoggerPlan, LoggerResourceBuilder,
             super.cleanup(resource);
     }
 
-    @Override public void read(PlanBuilder builder, LoggerResource logger) {
-        builder.logger(LoggerPlan.builder()
-            .category(logger.category())
-            .state(deployed)
-            .level(logger.level())
-            .handlers(logger.handlers())
-            .useParentHandlers(logger.isDefaultUseParentHandlers() ? null : logger.useParentHandlers())
-            .build());
+    @Override public void read(Plan plan, LoggerResource logger) {
+        plan.addLogger(new LoggerPlan(logger.category())
+            .setState(deployed)
+            .setLevel(logger.level())
+            .setHandlers(logger.handlers())
+            .setUseParentHandlers(logger.isDefaultUseParentHandlers() ? null : logger.useParentHandlers()));
     }
 }

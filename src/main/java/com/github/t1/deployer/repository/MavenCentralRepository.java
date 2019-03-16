@@ -76,14 +76,13 @@ class MavenCentralRepository extends Repository {
         ArtifactType type = ArtifactType.valueOf(doc.p);
 
         //noinspection resource
-        return Artifact.builder()
-                       .groupId(groupId)
-                       .artifactId(artifactId)
-                       .version(version)
-                       .type(type)
-                       .checksum(checksum)
-                       .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
-                       .build();
+        return new Artifact()
+                       .setGroupId(groupId)
+                       .setArtifactId(artifactId)
+                       .setVersion(version)
+                       .setType(type)
+                       .setChecksum(checksum)
+                       .setInputStreamSupplier(() -> download(groupId, artifactId, version, type));
     }
 
     public UriTemplate searchUri() {
@@ -103,15 +102,14 @@ class MavenCentralRepository extends Repository {
             @NonNull ArtifactType type,
             Classifier classifier) {
         //noinspection resource
-        return Artifact.builder()
-                       .groupId(groupId)
-                       .artifactId(artifactId)
-                       .version(version)
-                       .type(type)
-                       .classifier(classifier)
-                       .checksumSupplier(() -> downloadChecksum(groupId, artifactId, version, type))
-                       .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
-                       .build();
+        return new Artifact()
+                       .setGroupId(groupId)
+                       .setArtifactId(artifactId)
+                       .setVersion(version)
+                       .setType(type)
+                       .setClassifier(classifier)
+                       .setChecksumSupplier(() -> downloadChecksum(groupId, artifactId, version, type))
+                       .setInputStreamSupplier(() -> download(groupId, artifactId, version, type));
     }
 
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
