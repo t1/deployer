@@ -159,6 +159,7 @@ public class DeployerIT {
                 .with(DeployerBoundary.class.getPackage())
                 .withBeansXml()
                 .library("com.github.t1", "problem-detail")
+                .library("com.google.guava", "guava")
                 .print()
                 .build();
     }
