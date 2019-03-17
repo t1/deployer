@@ -177,7 +177,7 @@ public class DeployerBoundary {
             throw e;
         }
 
-        if (rootBundleConfig != null && rootBundleConfig.getShutdownAfterBoot() == TRUE)
+        if (rootBundleConfig != null && TRUE.equals(rootBundleConfig.getShutdownAfterBoot()))
             container.shutdown();
     }
 
@@ -255,21 +255,21 @@ public class DeployerBoundary {
         }
 
         private void apply(Reader reader, String sourceMessage) {
-            String failureMessage = "can't apply plan [" + sourceMessage + "]";
+            StringBuilder failureMessage = new StringBuilder("can't apply plan [" + sourceMessage + "]");
             try {
                 this.apply(Plan.load(expressions, reader, sourceMessage));
             } catch (WebApplicationApplicationException e) {
-                log.info(failureMessage);
+                log.info(failureMessage.toString());
                 throw e;
             } catch (RuntimeException e) {
-                log.debug(failureMessage, e);
+                log.debug(failureMessage.toString(), e);
                 for (Throwable cause = e; cause != null; cause = cause.getCause())
                     if (cause.getMessage() != null && !cause.getMessage().isEmpty())
-                        failureMessage += ": " + cause.getMessage();
+                        failureMessage.append(": ").append(cause.getMessage());
                 throw WebException
                     .builderFor(BAD_REQUEST)
                     .causedBy(e)
-                    .detail(failureMessage)
+                    .detail(failureMessage.toString())
                     .build();
             }
         }
