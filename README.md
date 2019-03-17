@@ -40,13 +40,13 @@ deployments:
   jolokia:
     groupId: org.jolokia
     artifact-id: jolokia-war
-    version: 1.3.2
+    version: 1.6.0
 ```
 
 - Deploy the `deployer.war` to your container.
 On startup, it will find your file, pull jolokia from maven central, and deploy it to the container.
 
-- Change the file to version `1.3.3` and the deployer will pick up the change and upgrade jolokia.
+- Change the version in the file to `1.5.0` and the deployer will pick up the change and downgrade jolokia.
 
 ## Documentation
 
