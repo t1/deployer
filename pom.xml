@@ -92,7 +92,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
-            <version>3.1.0.Final</version>
+            <version>8.0.0.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -531,7 +531,7 @@
                 <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.20</version>
+            <version>1.18.6</version>
             <scope>provided</scope>
         </dependency>
                 <dependency>
