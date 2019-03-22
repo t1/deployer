@@ -3,7 +3,6 @@ package com.github.t1.deployer.app;
 import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Expressions.UnresolvedVariableException;
-import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.tools.CipherFacade;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.problem.WebApplicationApplicationException;
@@ -12,7 +11,6 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 
-import static com.github.t1.deployer.app.Trigger.post;
 import static com.github.t1.deployer.model.ArtifactType.bundle;
 import static com.github.t1.deployer.model.ArtifactType.ear;
 import static com.github.t1.deployer.model.ArtifactType.jar;
@@ -21,7 +19,6 @@ import static com.github.t1.deployer.model.Expressions.hostName;
 import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
 import static com.github.t1.deployer.testtools.TestData.VERSION;
 import static com.github.t1.log.LogLevel.DEBUG;
-import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -39,7 +36,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
     @Test
     public void shouldFailToDeployBundleAsDeployable() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo-war:\n"
             + "    type: bundle\n"
@@ -56,7 +53,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
         ArtifactFixture bar = givenArtifact("bar", foo.groupId(), foo.artifactId()).version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  bar:\n"
             + "    group-id: org.foo\n"
@@ -64,7 +61,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"
         );
 
-        bar.verifyDeployed(audits);
+        bar.verifyDeployed();
     }
 
 
@@ -75,13 +72,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("fooVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  ${fooArtifactId}:\n"
             + "    group-id: ${fooGroupId}\n"
             + "    version: ${fooVersion}\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -90,13 +87,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("fooVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: ${fooVersion or barVersion}\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -105,13 +102,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("barVersion", "1.3.2");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: ${fooVersion or barVersion}\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -120,13 +117,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("fooName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
             + "    group-id: org.foo\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -135,13 +132,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("barName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
             + "    group-id: org.foo\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -149,13 +146,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("bazName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  ${toLowerCase(fooName) or toLowerCase(barName) or toLowerCase(bazName)}:\n"
             + "    group-id: org.foo\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -164,19 +161,19 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         String hostName = InetAddress.getLocalHost().getHostName().split("\\.")[0];
         ArtifactFixture foo = givenArtifact("foo").groupId(hostName).version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${hostName()}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
     @Test
     public void shouldFailToResolveHostNameFunctionWithParameter() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${hostName(os.name)}\n"
@@ -193,18 +190,18 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         String domainName = InetAddress.getLocalHost().getHostName().split("\\.", 2)[1];
         ArtifactFixture foo = givenArtifact("foo").groupId(domainName).version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${domainName()}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldFailToResolveDomainNameFunctionWithParameter() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${domainName(os.name)}\n"
@@ -220,13 +217,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithStringLiteral() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${«org.foo»}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -234,39 +231,39 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithStringLiteralContainingSingleQuotes() {
         ArtifactFixture foo = givenArtifact("foo").groupId("foo'bar'baz").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${«foo'bar'baz»}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldDeployWebArchiveWithStringLiteralContainingDoubleQuotes() {
         ArtifactFixture foo = givenArtifact("foo").groupId("foo\"bar\"baz").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${«foo\"bar\"baz»}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldDeployWebArchiveWithStringLiteralContainingGuillemetQuotes() {
         ArtifactFixture foo = givenArtifact("foo").groupId("foo«bar»baz").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${«foo«bar»baz»}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -274,13 +271,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithOrParam() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${undefined0 or toLowerCase(undefined1 or «org.FOO»)}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -288,13 +285,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithRegexSuffix() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${regex(«org.foo01», «(.*?)\\d*»)}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -302,13 +299,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithRegexPrefix() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${regex(«qa.org.foo», «(?:qa\\.)(.*?)»)}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -316,13 +313,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("my-regex", "(?:qa\\.)(.*?)");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${regex(«qa.org.foo», my-regex)}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -331,13 +328,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KEYSTORE.withAlias("keypair"));
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -346,13 +343,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredKeyStore(KEYSTORE);
 
         String secret = cipher.encrypt(foo.getVersion().getValue(), boundary.keyStore.withAlias("keypair"));
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: ${decrypt(«" + secret + "», «keypair»)}\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -360,13 +357,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(KEYSTORE.withAlias("secretkey"));
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -377,20 +374,20 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             .setPass("changeit")
             .setAlias("keypair"));
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: ${decrypt(«" + encrypt(foo.getVersion().getValue()) + "»)}\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldFailToDeployWebArchiveWithEncryptedVariableButWithoutKeystoreConfig() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -404,7 +401,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         givenConfiguredKeyStore(new KeyStoreConfig().setType("jceks").setPass("changeit").withAlias("keypair"));
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -419,7 +416,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("bar", "A");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -429,7 +426,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    C: «1.3.3»\n"
             + "    }\"\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -437,7 +434,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("bar", "B");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -447,7 +444,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    C: «1.3.3»\n"
             + "    }\"\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -455,7 +452,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("bar", "C");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.3");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -465,12 +462,12 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    C: «1.3.3»\n"
             + "    }\"\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldFailToDeployWebArchiveWithSwitchWithoutHead() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -487,7 +484,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
     @Test
     public void shouldFailToDeployWebArchiveWithSwitchWithUnsetVariable() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -506,7 +503,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCase() {
         givenConfiguredVariable("bar", "B");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -525,7 +522,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldFailToDeployWebArchiveWithSwitchWithoutMatchingCaseButSomethingWithAPrefix() {
         givenConfiguredVariable("bar", "B");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -550,7 +547,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             .setPass("changeit")
             .setAlias("keypair"));
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -560,7 +557,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "      PROD: «prod-dummy»\n"
             + "      )}\"\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -573,7 +570,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     private void shouldFailToReplaceVariableValueWith(String value) {
         givenConfiguredVariable("foo", value);
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  ${foo}:\n"
             + "    group-id: org.foo\n"
@@ -591,13 +588,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("fooVar", "foo");
         ArtifactFixture foo = givenArtifact("foo").version("1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${orgVar}.${fooVar}\n"
             + "    version: 1\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -606,13 +603,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("orgVar", "org");
         ArtifactFixture foo = givenArtifact("foo").version("1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${orgVar}.foo # cool\n"
             + "    version: 1\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -620,13 +617,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithDollarString() {
         ArtifactFixture foo = givenArtifact("foo").version("$1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: $1\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -634,20 +631,20 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithVariableInComment() {
         ArtifactFixture foo = givenArtifact("foo").version("1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: 1 # ${not} cool\n"
             + "# absolutely ${not} cool");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
     @Test
     public void shouldFailToDeployWebArchiveWithUndefinedVariable() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: ${undefined}\n"
@@ -663,14 +660,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchiveWithEscapedVariable() {
         ArtifactFixture foo = givenArtifact("${bar}", "org.foo", "foo-war").version("1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  $${bar}:\n"
             + "    group-id: org.foo\n"
             + "    artifact-id: foo-war\n"
             + "    version: 1\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -678,14 +675,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("foo", "foo");
         ArtifactFixture foo = givenArtifact("FOO", "org.foo", "Foo").version("1.3.2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  ${toUpperCase(foo)}:\n"
             + "    group-id: org.${toLowerCase(foo)}\n"
             + "    artifact-id: ${toInitCap(foo)}\n"
             + "    version: 1.3.2\n");
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
 
@@ -693,7 +690,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldFailToDeployWebArchiveWithUndefinedVariableFunction() {
         givenConfiguredVariable("foo", "Foo");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  ${bar(foo)}:\n"
             + "    group-id: org.foo\n"
@@ -707,7 +704,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
 
     @Test
     public void shouldFailToDeployWebArchiveWithVariableFunctionMissingParam() {
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  ${toLowerCase()}:\n"
             + "    group-id: org.foo\n"
@@ -722,7 +719,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     @Test
     public void shouldFailToDeployWebArchiveWithUndefinedFunctionVariable() {
         Throwable thrown = catchThrowable(() ->
-            deploy(""
+            deployWithRootBundle(""
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: ${toLowerCase(undefined)}\n"
@@ -741,30 +738,29 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             .and()
             .version("2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: 2\n");
 
-        foo2.verifyRedeployed(audits);
+        foo2.verifyRedeployed();
     }
 
 
     @Test
     public void shouldNotRedeployWebArchiveWithSameNameAndChecksum() {
-        givenArtifact("foo")
+        ArtifactFixture foo = givenArtifact("foo")
             .version("1").deployed()
             .and()
             .version("2");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "org.foo:\n"
             + "  foo-war:\n"
             + "    version: 1\n");
 
-        // #after(): no deploy operations
-        assertThat(audits.getAudits()).isEmpty();
+        foo.verifyUnchanged();
     }
 
 
@@ -773,7 +769,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
         ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1").checksum(foo.getChecksum());
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  bar:\n"
             + "    group-id: org.foo\n"
@@ -781,8 +777,8 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1\n"
         );
 
-        // #after(): foo not undeployed
-        bar.verifyDeployed(audits);
+        foo.verifyUnchanged();
+        bar.verifyDeployed();
     }
 
 
@@ -791,7 +787,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
         ArtifactFixture bar = givenArtifact("bar", foo.groupId(), foo.artifactId()).version("1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  bar:\n"
             + "    group-id: org.foo\n"
@@ -799,21 +795,21 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1\n"
         );
 
-        // #after(): foo not undeployed
-        bar.verifyDeployed(audits);
+        foo.verifyUnchanged();
+        bar.verifyDeployed();
     }
 
 
     @Test
     public void shouldDeploySecondWebArchive() {
-        givenArtifact("jolokia")
+        ArtifactFixture jolokia = givenArtifact("jolokia")
             .version("1.3.2").deployed()
             .and()
             .version("1.3.3");
         ArtifactFixture mockServer = givenArtifact("mockserver", "org.mock-server", "mockserver-war")
             .version("3.10.4");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  jolokia:\n"
             + "    group-id: org.jolokia\n"
@@ -823,8 +819,8 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    artifact-id: mockserver-war\n"
             + "    version: 3.10.4\n");
 
-        // #after(): jolokia not undeployed
-        mockServer.verifyDeployed(audits);
+        jolokia.verifyUnchanged();
+        mockServer.verifyDeployed();
     }
 
 
@@ -832,7 +828,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldUndeployWebArchiveWhenStateIsUndeployed() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -840,7 +836,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    state: undeployed\n"
         );
 
-        foo.verifyRemoved(audits);
+        foo.verifyRemoved();
     }
 
 
@@ -848,12 +844,12 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldUndeployWebArchiveWithoutVersionAndGroupId() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    state: undeployed\n");
 
-        foo.verifyRemoved(audits);
+        foo.verifyRemoved();
     }
 
 
@@ -861,35 +857,35 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldUndeployWebArchiveWithOtherVersionWhenStateIsUndeployed() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: 999\n"
             + "    state: undeployed\n");
 
-        foo.verifyRemoved(audits);
+        foo.verifyRemoved();
     }
 
     @Test
     public void shouldUndeployWebArchiveWithOtherGroupIdWhenStateIsUndeployed() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.bar\n"
             + "    version: 1.3.2\n"
             + "    state: undeployed\n");
 
-        foo.verifyRemoved(audits);
+        foo.verifyRemoved();
     }
 
     @Test
     public void shouldUndeployWebArchiveWithOtherArtifactIdWhenStateIsUndeployed() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -897,14 +893,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"
             + "    state: undeployed\n");
 
-        foo.verifyRemoved(audits);
+        foo.verifyRemoved();
     }
 
     @Test
     public void shouldFailToUndeployWebArchiveWithWrongChecksum() {
         givenArtifact("foo").version("1.3.2").deployed();
 
-        Throwable thrown = catchThrowable(() -> deploy(""
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
@@ -926,7 +922,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture bar = givenArtifact("bar", "org.foo", "foo-war").version("1");
         givenManaged("deployables");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  bar:\n"
             + "    group-id: org.foo\n"
@@ -934,43 +930,42 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1\n"
         );
 
-        bar.verifyDeployed(audits);
-        foo.verifyUndeployExecuted();
-        assertThat(audits.getAudits()).containsExactly(bar.addedAudit(), foo.removedAudit());
+        bar.verifyDeployed();
+        foo.verifyRemoved();
     }
 
 
     @Test
     public void shouldUndeployUnspecifiedWebArchiveWhenManaged() {
-        givenArtifact("jolokia").version("1.3.2").deployed();
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
         givenManaged("deployables");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  jolokia:\n"
             + "    group-id: org.jolokia\n"
             + "    version: 1.3.2\n");
 
-        // #after(): jolokia not undeployed
-        mockserver.verifyRemoved(audits);
+        jolokia.verifyUnchanged();
+        mockserver.verifyRemoved();
     }
 
 
     @Test
     public void shouldUndeployUnspecifiedWebArchiveWhenAllManaged() {
-        givenArtifact("jolokia").version("1.3.2").deployed();
+        ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
         givenManaged("all");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  jolokia:\n"
             + "    group-id: org.jolokia\n"
             + "    version: 1.3.2\n");
 
-        // #after(): jolokia not undeployed
-        mockserver.verifyRemoved(audits);
+        jolokia.verifyUnchanged();
+        mockserver.verifyRemoved();
     }
 
 
@@ -979,14 +974,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("v", "1.3.3");
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  jolokia:\n"
             + "    group-id: org.jolokia\n"
             + "    artifact-id: jolokia-war\n"
             + "    version: ${v}");
 
-        jolokia.verifyDeployed(audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -994,13 +989,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("default.group-id", "org.jolokia");
         ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.3");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  jolokia:\n"
             + "    artifact-id: jolokia-war\n"
             + "    version: 1.3.3\n");
 
-        jolokia.verifyDeployed(audits);
+        jolokia.verifyDeployed();
     }
 
 
@@ -1008,14 +1003,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployJar() {
         ArtifactFixture postgresql = givenArtifact(jar, "postgresql").version("9.4.1207");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  postgresql:\n"
             + "    group-id: org.postgresql\n"
             + "    version: 9.4.1207\n"
             + "    type: jar\n");
 
-        postgresql.verifyDeployed(audits);
+        postgresql.verifyDeployed();
     }
 
 
@@ -1024,13 +1019,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         givenConfiguredVariable("default.deployable-type", "jar");
         ArtifactFixture postgresql = givenArtifact(jar, "postgresql").version("9.4.1207");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  postgresql:\n"
             + "    group-id: org.postgresql\n"
             + "    version: 9.4.1207\n");
 
-        postgresql.verifyDeployed(audits);
+        postgresql.verifyDeployed();
     }
 
 
@@ -1038,14 +1033,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldDeployEar() {
         ArtifactFixture postgresql = givenArtifact(ear, "foo").version("1");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: 1\n"
             + "    type: ear\n");
 
-        postgresql.verifyDeployed(audits);
+        postgresql.verifyDeployed();
     }
 
 
@@ -1055,11 +1050,10 @@ public class BundleDeployerTest extends AbstractDeployerTests {
         ArtifactFixture mockserver = givenArtifact("org.mock-server", "mockserver-war").version("3.10.4").deployed();
         givenManaged("deployables", "loggers", "log-handlers");
 
-        Audits audits = deploy("---\n");
+        deployWithRootBundle("---\n");
 
-        jolokia.verifyUndeployExecuted();
-        mockserver.verifyUndeployExecuted();
-        assertThat(audits.getAudits()).containsExactly(jolokia.removedAudit(), mockserver.removedAudit());
+        jolokia.verifyRemoved();
+        mockserver.verifyRemoved();
     }
 
     @Test
@@ -1071,14 +1065,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             .version("1.5.0-SNAPSHOT").and()
             .version("1.4.11");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: LATEST\n"
         );
 
-        latest.verifyDeployed(audits);
+        latest.verifyDeployed();
     }
 
     @Test
@@ -1090,14 +1084,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             .version("1.5.0-SNAPSHOT").and()
             .version("2.0.0-SNAPSHOT");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: UNSTABLE\n"
         );
 
-        unstable.verifyDeployed(audits);
+        unstable.verifyDeployed();
     }
 
     @Test
@@ -1110,19 +1104,19 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             .version("2.0.0-SNAPSHOT").and()
             .version("2.0.0");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: UNSTABLE\n"
         );
 
-        unstable.verifyDeployed(audits);
+        unstable.verifyDeployed();
     }
 
     @Test
     public void shouldDeployBundle() {
-        givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
         ArtifactFixture mockserver = givenArtifact("mockserver", "org.mock-server", "mockserver-war").version("3.10.4");
         givenArtifact(bundle, "artifact-deployer-test", "some-bundle")
             .version("1")
@@ -1137,14 +1131,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: mockserver-war\n"
                 + "    version: 3.10.4\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  some-bundle:\n"
             + "    group-id: artifact-deployer-test\n"
             + "    version: 1\n");
 
-        // #after(): jolokia not re-deployed
-        mockserver.verifyDeployed(audits);
+        jolokia.verifyUnchanged();
+        mockserver.verifyDeployed();
     }
 
 
@@ -1161,13 +1155,13 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: ${jolokia.version}\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  bundle-with-system-param:\n"
             + "    group-id: artifact-deployer-test\n"
             + "    version: 1\n");
 
-        jolokia.verifyDeployed(audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -1182,7 +1176,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: ${v}\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  bundle-with-passed-param:\n"
             + "    group-id: artifact-deployer-test\n"
@@ -1191,7 +1185,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "      jolokia:\n"
             + "        v: 1.3.3\n");
 
-        jolokia.verifyDeployed(audits);
+        jolokia.verifyDeployed();
     }
 
 
@@ -1207,7 +1201,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: 1.3.3\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  bundle-with-name:\n"
             + "    group-id: artifact-deployer-test\n"
@@ -1215,7 +1209,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    instances:\n"
             + "      jolokia:\n");
 
-        jolokia.verifyDeployed(audits);
+        jolokia.verifyDeployed();
     }
 
 
@@ -1234,7 +1228,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: LATEST\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  latest-bundle:\n"
             + "    group-id: artifact-deployer-test\n"
@@ -1242,7 +1236,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    instances:\n"
             + "      jolokia:\n");
 
-        latest.verifyDeployed(audits);
+        latest.verifyDeployed();
     }
 
 
@@ -1261,7 +1255,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: UNSTABLE\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  unstable-bundle:\n"
             + "    group-id: artifact-deployer-test\n"
@@ -1269,7 +1263,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "    instances:\n"
             + "      jolokia:\n");
 
-        unstable.verifyDeployed(audits);
+        unstable.verifyDeployed();
     }
 
 
@@ -1286,7 +1280,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: ${version}\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  expression-bundle:\n"
             + "    group-id: artifact-deployer-test\n"
@@ -1295,14 +1289,14 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "      jolokia:\n"
             + "        version: ${jolokia.version}\n");
 
-        jolokia.verifyDeployed(audits);
+        jolokia.verifyDeployed();
     }
 
 
     @Test
     public void shouldNotDeployBundleWithDefaultCurrentVersionExpression() {
-        givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
-        givenArtifact(bundle, "artifact-deployer-test", "current-expression-bundle")
+        ArtifactFixture jolokia = givenArtifact("jolokia", "org.jolokia", "jolokia-war").version("1.3.2").deployed();
+        ArtifactFixture foo = givenArtifact(bundle, "artifact-deployer-test", "current-expression-bundle")
             .version("1")
             .containing(""
                 + "deployables:\n"
@@ -1311,7 +1305,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: ${version}\n");
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
             + "bundles:\n"
             + "  current-expression-bundle:\n"
             + "    group-id: artifact-deployer-test\n"
@@ -1320,7 +1314,8 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "      jolokia:\n"
             + "        version: ${jolokia.version}\n");
 
-        assertThat(audits.getAudits()).isEmpty();
+        jolokia.verifyUnchanged();
+        foo.verifyUnchanged();
     }
 
 
@@ -1336,7 +1331,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    artifact-id: jolokia-war\n"
                 + "    version: 1.3.3\n");
 
-        Throwable throwable = catchThrowable(() -> deploy(""
+        Throwable throwable = catchThrowable(() -> deployWithRootBundle(""
             + "bundles:\n"
             + "  bundle-without-name:\n"
             + "    group-id: artifact-deployer-test\n"
@@ -1352,7 +1347,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     public void shouldFailToDeployDefaultRootBundleWithoutConfigFile() {
         boundary.useDefaultConfig = true;
 
-        Throwable thrown = catchThrowable(() -> boundary.apply(post, ImmutableMap.of(VERSION, "1.2")));
+        Throwable thrown = catchThrowable(() -> postVariables(ImmutableMap.of(VERSION, "1.2")));
 
         assertThat(thrown).hasMessageContaining(
             "applying the default root bundle is only allowed when there is a configuration file");
@@ -1361,7 +1356,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
     @Test
     public void shouldDeployDefaultRootBundle() {
         ArtifactFixture jolokia = givenArtifact("jolokia").version("1.3.2");
-        givenArtifact(bundle, "dummy", domainName(), hostName())
+        ArtifactFixture dummy = givenArtifact(bundle, "dummy", domainName(), hostName())
             .version("1.2")
             .containing(""
                 + "deployables:\n"
@@ -1369,9 +1364,10 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    group-id: org.jolokia\n"
                 + "    version: 1.3.2\n");
 
-        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
+        postVariables(ImmutableMap.of(VERSION, "1.2"));
 
-        jolokia.verifyDeployed(boundary.audits);
+        jolokia.verifyDeployed();
+        dummy.verifyUnchanged();
     }
 
     @Test
@@ -1386,9 +1382,9 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    group-id: org.jolokia\n"
                 + "    version: 1.3.2\n");
 
-        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
+        postVariables(ImmutableMap.of(VERSION, "1.2"));
 
-        jolokia.verifyDeployed(boundary.audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -1403,9 +1399,9 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    version: 1.3.2\n");
         givenConfiguredRootBundle("artifact-id", "foo");
 
-        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
+        postVariables(ImmutableMap.of(VERSION, "1.2"));
 
-        jolokia.verifyDeployed(boundary.audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -1420,9 +1416,9 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    version: 1.3.2\n");
         givenConfiguredRootBundle("artifact-id", "${hostName()}");
 
-        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
+        postVariables(ImmutableMap.of(VERSION, "1.2"));
 
-        jolokia.verifyDeployed(boundary.audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -1437,9 +1433,9 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    version: 1.3.2\n");
         givenConfiguredRootBundle("group-id", "my.other.group");
 
-        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
+        postVariables(ImmutableMap.of(VERSION, "1.2"));
 
-        jolokia.verifyDeployed(boundary.audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -1455,9 +1451,9 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    version: 1.3.2\n");
         givenConfiguredRootBundle("classifier", "my.classifier");
 
-        boundary.apply(post, ImmutableMap.of(VERSION, "1.2"));
+        postVariables(ImmutableMap.of(VERSION, "1.2"));
 
-        jolokia.verifyDeployed(boundary.audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -1472,9 +1468,9 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    version: 1.3.2\n");
         givenConfiguredRootBundle("version", "1.2");
 
-        boundary.apply(post, emptyMap());
+        post();
 
-        jolokia.verifyDeployed(boundary.audits);
+        jolokia.verifyDeployed();
     }
 
     @Test
@@ -1488,7 +1484,7 @@ public class BundleDeployerTest extends AbstractDeployerTests {
                 + "    group-id: org.jolokia\n"
                 + "    version: 1.3.2\n");
 
-        Throwable thrown = catchThrowable(() -> boundary.apply(post, emptyMap()));
+        Throwable thrown = catchThrowable(this::post);
 
         assertThat(thrown).hasMessageContaining("unresolved variable expression: root-bundle:version or version");
     }
@@ -1527,10 +1523,10 @@ public class BundleDeployerTest extends AbstractDeployerTests {
             + "        group-id: org.jolokia\n"
             + "        artifact-id: jolokia-war\n"
             + "        version: 1.3.3\n");
-        boundary.apply(post, ImmutableMap.of(new VariableName("version"), "1"));
+        postVariables(ImmutableMap.of(VERSION, "1"));
 
-        logHandler.verifyAdded(boundary.audits);
-        logger.verifyAdded(boundary.audits);
-        jolokia.verifyDeployed(boundary.audits);
+        logHandler.verifyAdded();
+        logger.verifyAdded();
+        jolokia.verifyDeployed();
     }
 }

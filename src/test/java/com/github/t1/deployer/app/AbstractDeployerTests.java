@@ -4,6 +4,7 @@ import com.github.t1.deployer.app.Audit.DataSourceAudit;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.LogHandlerAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit;
+import com.github.t1.deployer.app.Audits.Warning;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.container.JBossCliTestClient;
 import com.github.t1.deployer.model.Age;
@@ -25,6 +26,7 @@ import com.github.t1.deployer.model.LogHandlerPlan;
 import com.github.t1.deployer.model.LogHandlerType;
 import com.github.t1.deployer.model.LoggerCategory;
 import com.github.t1.deployer.model.LoggerPlan;
+import com.github.t1.deployer.model.ProcessState;
 import com.github.t1.deployer.model.RootBundleConfig;
 import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
@@ -36,15 +38,18 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Condition;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.dmr.ModelNode;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -77,6 +82,9 @@ import static com.github.t1.deployer.model.LogHandlerType.custom;
 import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
 import static com.github.t1.deployer.model.Password.CONCEALED;
 import static com.github.t1.deployer.model.Plan.YAML;
+import static com.github.t1.deployer.model.ProcessState.reloadRequired;
+import static com.github.t1.deployer.model.ProcessState.restartRequired;
+import static com.github.t1.deployer.model.ProcessState.running;
 import static com.github.t1.deployer.repository.ArtifactoryMock.StringInputStream;
 import static com.github.t1.deployer.repository.ArtifactoryMock.fakeChecksumFor;
 import static com.github.t1.deployer.repository.ArtifactoryMock.inputStreamFor;
@@ -99,12 +107,16 @@ import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.as.controller.client.helpers.ClientConstants.ADDRESS;
+import static org.jboss.as.controller.client.helpers.ClientConstants.COMPOSITE;
 import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OP;
 import static org.jboss.as.controller.client.helpers.ClientConstants.STEPS;
 import static org.jboss.as.controller.client.helpers.ClientConstants.VALUE;
 import static org.jboss.as.controller.client.helpers.ClientConstants.WRITE_ATTRIBUTE_OPERATION;
 import static org.jboss.as.controller.client.helpers.Operations.createAddress;
 import static org.jboss.as.controller.client.helpers.Operations.createOperation;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
@@ -112,6 +124,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -133,10 +146,17 @@ public abstract class AbstractDeployerTests {
     @Rule @SuppressWarnings("resource")
     public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE));
 
-    Audits deploy(String plan) {
+    void deployWithRootBundle(String plan) { deployWithRootBundle(plan, emptyMap()); }
+
+    void deployWithRootBundle(String plan, Map<VariableName, String> variables) {
         rootBundle.write(plan);
-        boundary.apply(post, emptyMap());
-        return boundary.audits;
+        postVariables(variables);
+    }
+
+    void post() { postVariables(emptyMap()); }
+
+    void postVariables(Map<VariableName, String> variables) {
+        boundary.apply(post, variables);
     }
 
 
@@ -435,7 +455,7 @@ public abstract class AbstractDeployerTests {
         public ArtifactFixture version(Version version) { return new ArtifactFixture(version); }
 
         @SuppressWarnings("resource")
-        public class ArtifactFixture {
+        public class ArtifactFixture extends AbstractFixture {
             @NonNull @Getter private final Version version;
             @Getter private Checksum checksum;
             private String contents;
@@ -495,7 +515,7 @@ public abstract class AbstractDeployerTests {
                 return this;
             }
 
-            void containing(String contents) { this.contents = contents; }
+            ArtifactFixture containing(String contents) { this.contents = contents; return this; }
 
             ArtifactFixture pinned() {
                 givenPinned("deployables", name);
@@ -539,7 +559,18 @@ public abstract class AbstractDeployerTests {
 
             ArtifactFixtureBuilder and() { return ArtifactFixtureBuilder.this; }
 
-            void verifyDeployed(Audits audits) {
+            void verifySkipped() {
+                verifyUnchanged();
+                assertThat(boundary.audits.getWarnings()).describedAs("warnings").containsExactly(new Warning("skip deploying " + name + " in version CURRENT"));
+            }
+
+            @Override Condition<Audit> forThisArtifact() {
+                return new Condition<>(audit -> audit instanceof DeployableAudit && ((DeployableAudit) audit).getName().equals(deploymentName()), "for artifact " + name);
+            }
+
+            @Override ModelNode addressNode() { return createAddress("deployment", name + "." + type); }
+
+            void verifyDeployed() {
                 ModelNode request = toModelNode("{\n"
                     + "    'operation' => 'add',\n"
                     + "    'address' => [('deployment' => '" + fullName() + "')],\n"
@@ -549,7 +580,7 @@ public abstract class AbstractDeployerTests {
                 assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
                     .haveExactly(1, step(request));
 
-                assertThat(audits.getAudits()).contains(addedAudit());
+                assertThat(boundary.audits.getAudits()).contains(addedAudit());
             }
 
             Audit addedAudit() {
@@ -562,12 +593,12 @@ public abstract class AbstractDeployerTests {
                     .added();
             }
 
-            void verifyRedeployed(Audits audits) {
+            void verifyRedeployed() {
                 verifyRedeployExecuted();
 
                 Checksum oldChecksum = (deployed == null) ? null : deployed.checksum;
                 Version oldVersion = (deployed == null) ? null : deployed.version;
-                assertThat(audits.getAudits()).contains(artifactAudit()
+                assertThat(boundary.audits.getAudits()).contains(artifactAudit()
                     .change("checksum", oldChecksum, checksum)
                     .change("version", oldVersion, version)
                     .changed());
@@ -585,12 +616,12 @@ public abstract class AbstractDeployerTests {
                     .haveExactly(1, step(request));
             }
 
-            void verifyRemoved(Audits audits) {
+            void verifyRemoved() {
                 verifyUndeployExecuted();
-                assertThat(audits.getAudits()).contains(removedAudit());
+                assertThat(boundary.audits.getAudits()).contains(removedAudit());
             }
 
-            void verifyUndeployExecuted() {
+            private void verifyUndeployExecuted() {
                 ModelNode undeploy = toModelNode(""
                     + "{\n"
                     + "    'operation' => 'undeploy',\n"
@@ -653,7 +684,7 @@ public abstract class AbstractDeployerTests {
     public LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
 
     @Getter
-    public class LoggerFixture {
+    public class LoggerFixture extends AbstractFixture {
         private final LoggerCategory category;
         private final List<String> handlers = new ArrayList<>();
         private String level;
@@ -667,6 +698,8 @@ public abstract class AbstractDeployerTests {
                 ? toModelNode("{" + deployedNode() + "}")
                 : notDeployedNode("logging", "logger", category));
         }
+
+        @Override public String toString() { return "Logger:" + category; }
 
         String deployedNode() {
             return ""
@@ -711,7 +744,7 @@ public abstract class AbstractDeployerTests {
 
         String loggerAddress() { return address("logging", "logger", category); }
 
-        ModelNode loggerAddressNode() {
+        @Override ModelNode addressNode() {
             return createAddress("subsystem", "logging", "logger", category.getValue());
         }
 
@@ -722,7 +755,7 @@ public abstract class AbstractDeployerTests {
                 return handlers.stream().collect(joining("',\n        '", "[\n        '", "'\n    ]"));
         }
 
-        void verifyAdded(Audits audits) {
+        void verifyAdded() {
             ModelNode request = toModelNode("{\n"
                 + loggerAddress()
                 + "    'operation' => 'add',\n"
@@ -740,20 +773,20 @@ public abstract class AbstractDeployerTests {
                 .change("use-parent-handlers", null, useParentHandlers);
             if (!handlerNames().isEmpty())
                 audit.change("handlers", null, handlerNames());
-            assertThat(audits.getAudits()).contains(audit.added());
+            assertThat(boundary.audits.getAudits()).contains(audit.added());
         }
 
         List<LogHandlerName> handlerNames() {
             return handlers.stream().map(LogHandlerName::new).collect(toList());
         }
 
-        void verifyUpdatedLogLevelFrom(LogLevel oldLevel, Audits audits) {
-            verifyWriteAttribute(loggerAddressNode(), "level", level);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedLogLevelFrom(LogLevel oldLevel) {
+            verifyWriteAttribute(addressNode(), "level", level);
+            assertThat(boundary.audits.getAudits()).contains(
                 new LoggerAudit().setCategory(getCategory()).change("level", oldLevel, level).changed());
         }
 
-        void verifyRemoved(Audits audits) {
+        void verifyRemoved() {
             ModelNode request = toModelNode(""
                 + "{\n"
                 + loggerAddress()
@@ -769,17 +802,17 @@ public abstract class AbstractDeployerTests {
                 audit.change("use-parent-handlers", useParentHandlers, null);
             if (!handlerNames().isEmpty())
                 audit.change("handlers", handlerNames(), null);
-            assertThat(audits.getAudits()).contains(audit.removed());
+            assertThat(boundary.audits.getAudits()).contains(audit.removed());
         }
 
-        void verifyUpdatedUseParentHandlersFrom(Boolean oldUseParentHandlers, Audits audits) {
-            verifyWriteAttribute(loggerAddressNode(), "use-parent-handlers", useParentHandlers);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedUseParentHandlersFrom(Boolean oldUseParentHandlers) {
+            verifyWriteAttribute(addressNode(), "use-parent-handlers", useParentHandlers);
+            assertThat(boundary.audits.getAudits()).contains(
                 new LoggerAudit().setCategory(getCategory()).change("use-parent-handlers", oldUseParentHandlers, useParentHandlers)
                     .changed());
         }
 
-        public void verifyAddedHandler(Audits audits, String name) {
+        public void verifyAddedHandler(String name) {
             ModelNode request = toModelNode(""
                 + "{\n"
                 + loggerAddress()
@@ -788,11 +821,11 @@ public abstract class AbstractDeployerTests {
                 + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
                 .haveExactly(1, step(request));
-            assertThat(audits.getAudits()).contains(
+            assertThat(boundary.audits.getAudits()).contains(
                 new LoggerAudit().setCategory(getCategory()).change("handlers", null, "[" + name + "]").changed());
         }
 
-        public void verifyRemovedHandler(Audits audits, String name) {
+        public void verifyRemovedHandler(String name) {
             ModelNode request = toModelNode(""
                 + "{\n"
                 + loggerAddress()
@@ -801,7 +834,7 @@ public abstract class AbstractDeployerTests {
                 + "}");
             assertThat(capturedOperations()).describedAs(capturedOperationsDescription())
                 .haveExactly(1, step(request));
-            assertThat(audits.getAudits()).contains(
+            assertThat(boundary.audits.getAudits()).contains(
                 new LoggerAudit().setCategory(getCategory()).change("handlers", "[" + name + "]", null).changed());
         }
 
@@ -812,6 +845,10 @@ public abstract class AbstractDeployerTests {
                 .setHandlers(handlerNames())
                 .setUseParentHandlers((useParentHandlers == FALSE) ? false : null); // true -> null (default)
         }
+
+        @Override Condition<Audit> forThisArtifact() {
+            return new Condition<>(audit -> audit instanceof LoggerAudit && ((LoggerAudit) audit).getCategory().equals(category), "for logger " + category);
+        }
     }
 
     public LogHandlerFixture givenLogHandler(LogHandlerType type, String name) {
@@ -819,7 +856,7 @@ public abstract class AbstractDeployerTests {
     }
 
     @Getter
-    public class LogHandlerFixture {
+    public class LogHandlerFixture extends AbstractFixture {
         private final LogHandlerType type;
         private final LogHandlerName name;
         private final LogHandlerAudit expectedAudit;
@@ -944,13 +981,13 @@ public abstract class AbstractDeployerTests {
             return address("logging", type.getHandlerTypeName(), name);
         }
 
-        ModelNode logHandlerAddressNode() {
+        @Override ModelNode addressNode() {
             return createAddress("subsystem", "logging", type.getHandlerTypeName(), name.getValue());
         }
 
 
         <T> LogHandlerFixture verifyChange(String name, T oldValue, T newValue) {
-            verifyWriteAttribute(logHandlerAddressNode(), name, toStringOrNull(newValue));
+            verifyWriteAttribute(addressNode(), name, toStringOrNull(newValue));
             expectChange(name, oldValue, newValue);
             return this;
         }
@@ -960,12 +997,12 @@ public abstract class AbstractDeployerTests {
             return this;
         }
 
-        void verifyChanged(Audits audits) {
-            assertThat(audits.getAudits()).contains(this.expectedAudit.changed());
+        void verifyChanged() {
+            assertThat(boundary.audits.getAudits()).contains(this.expectedAudit.changed());
         }
 
         void verifyPutProperty(String key, String value) {
-            ModelNode request = createOperation("map-put", logHandlerAddressNode());
+            ModelNode request = createOperation("map-put", addressNode());
             request.get("name").set("property");
             request.get("key").set(key);
             request.get("value").set(value);
@@ -975,7 +1012,7 @@ public abstract class AbstractDeployerTests {
         }
 
         void verifyRemoveProperty(String key) {
-            ModelNode request = createOperation("map-remove", logHandlerAddressNode());
+            ModelNode request = createOperation("map-remove", addressNode());
             request.get("name").set("property");
             request.get("key").set(key);
 
@@ -983,7 +1020,7 @@ public abstract class AbstractDeployerTests {
                 .haveExactly(1, step(request));
         }
 
-        void verifyAdded(Audits audits) {
+        void verifyAdded() {
             ModelNode request = toModelNode("{\n"
                 + logHandlerAddress()
                 + "    'operation' => 'add'"
@@ -1027,14 +1064,14 @@ public abstract class AbstractDeployerTests {
                 expectedAudit.change("class", null, class_);
             if (properties != null)
                 properties.forEach((key, value) -> expectedAudit.change("property:" + key, null, value));
-            assertThat(audits.getAudits()).contains(expectedAudit.added());
+            assertThat(boundary.audits.getAudits()).contains(expectedAudit.added());
         }
 
         private boolean hasFile() {
             return type == periodicRotatingFile || (type == custom && file != null);
         }
 
-        void verifyRemoved(Audits audits) {
+        void verifyRemoved() {
             ModelNode request = toModelNode("{\n"
                 + logHandlerAddress()
                 + "    'operation' => 'remove'\n"
@@ -1060,7 +1097,7 @@ public abstract class AbstractDeployerTests {
                 expectedAudit.change("class", this.class_, null);
             if (properties != null)
                 properties.forEach((key, value) -> expectedAudit.change("property:" + key, value, null));
-            assertThat(audits.getAudits()).contains(expectedAudit.removed());
+            assertThat(boundary.audits.getAudits()).contains(expectedAudit.removed());
         }
 
         LogHandlerPlan asPlan() {
@@ -1076,13 +1113,17 @@ public abstract class AbstractDeployerTests {
                 .setClass_(class_)
                 .setProperties((properties == null) ? emptyMap() : properties);
         }
+
+        @Override Condition<Audit> forThisArtifact() {
+            return new Condition<>(audit -> audit instanceof LogHandlerAudit && ((LogHandlerAudit) audit).getName().equals(name), "for log handler " + name);
+        }
     }
 
 
     public DataSourceFixture givenDataSource(String name) { return new DataSourceFixture(name); }
 
     @Getter
-    public class DataSourceFixture {
+    public class DataSourceFixture extends AbstractFixture {
         private final DataSourceName name;
         private boolean xa;
         private boolean deployed;
@@ -1213,13 +1254,13 @@ public abstract class AbstractDeployerTests {
 
         String dataSourceAddress() { return address("datasources", dataSource(xa), name); }
 
-        ModelNode dataSourceAddressNode() {
+        @Override ModelNode addressNode() {
             return createAddress("subsystem", "datasources", dataSource(xa), name.getValue());
         }
 
-        void verifyAdded(Audits audits) {
+        void verifyAdded() {
             verifyAddCli();
-            assertAddAudit(audits);
+            assertAddAudit();
         }
 
         @SuppressWarnings("resource") void verifyAddCli() {
@@ -1275,7 +1316,7 @@ public abstract class AbstractDeployerTests {
                 + "}");
         }
 
-        private void assertAddAudit(Audits audits) {
+        private void assertAddAudit() {
             Audit audit = new DataSourceAudit()
                 .setName(getName())
                 .change("uri", null, uri)
@@ -1295,30 +1336,30 @@ public abstract class AbstractDeployerTests {
                 audit.change("pool:max", null, maxPoolSize);
             if (maxAge != null)
                 audit.change("pool:max-age", null, maxAge);
-            assertThat(audits.getAudits()).containsExactly(audit.added());
+            assertThat(boundary.audits.getAudits()).containsExactly(audit.added());
         }
 
-        void verifyUpdatedUriFrom(String oldUri, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "uri", uri);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedUriFrom(String oldUri) {
+            verifyWriteAttribute(addressNode(), "uri", uri);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name).change("uri", oldUri, uri).changed());
         }
 
-        void verifyUpdatedJndiNameFrom(String oldJndiName, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "jndi-name", jndiName);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedJndiNameFrom(String oldJndiName) {
+            verifyWriteAttribute(addressNode(), "jndi-name", jndiName);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name).change("jndi-name", oldJndiName, jndiName).changed());
         }
 
-        void verifyUpdatedDriverNameFrom(String oldDriverName, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "driver-name", driver);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedDriverNameFrom(String oldDriverName) {
+            verifyWriteAttribute(addressNode(), "driver-name", driver);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name).change("driver", oldDriverName, driver).changed());
         }
 
-        void verifyUpdatedUserNameFrom(String oldUserName, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "user-name", userName);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedUserNameFrom(String oldUserName) {
+            verifyWriteAttribute(addressNode(), "user-name", userName);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name)
                     .changeRaw("user-name",
                         oldUserName == null ? null : CONCEALED,
@@ -1326,9 +1367,9 @@ public abstract class AbstractDeployerTests {
                     .changed());
         }
 
-        void verifyUpdatedPasswordFrom(String oldPassword, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "password", password);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedPasswordFrom(String oldPassword) {
+            verifyWriteAttribute(addressNode(), "password", password);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name)
                     .changeRaw("password",
                         oldPassword == null ? null : CONCEALED,
@@ -1336,31 +1377,31 @@ public abstract class AbstractDeployerTests {
                     .changed());
         }
 
-        void verifyUpdatedMinPoolSizeFrom(Integer oldMinPoolSize, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "min-pool-size", minPoolSize);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedMinPoolSizeFrom(Integer oldMinPoolSize) {
+            verifyWriteAttribute(addressNode(), "min-pool-size", minPoolSize);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name).change("pool:min", oldMinPoolSize, minPoolSize).changed());
         }
 
-        void verifyUpdatedInitialPoolSizeFrom(Integer oldInitialPoolSize, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "initial-pool-size", initialPoolSize);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedInitialPoolSizeFrom(Integer oldInitialPoolSize) {
+            verifyWriteAttribute(addressNode(), "initial-pool-size", initialPoolSize);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name).change("pool:initial", oldInitialPoolSize, initialPoolSize).changed());
         }
 
-        void verifyUpdatedMaxPoolSizeFrom(Integer oldMaxPoolSize, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "max-pool-size", maxPoolSize);
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedMaxPoolSizeFrom(Integer oldMaxPoolSize) {
+            verifyWriteAttribute(addressNode(), "max-pool-size", maxPoolSize);
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name).change("pool:max", oldMaxPoolSize, maxPoolSize).changed());
         }
 
-        void verifyUpdatedMaxAgeFrom(Age oldMaxAge, Audits audits) {
-            verifyWriteAttribute(dataSourceAddressNode(), "idle-timeout-minutes", maxAge.asMinutes());
-            assertThat(audits.getAudits()).contains(
+        void verifyUpdatedMaxAgeFrom(Age oldMaxAge) {
+            verifyWriteAttribute(addressNode(), "idle-timeout-minutes", maxAge.asMinutes());
+            assertThat(boundary.audits.getAudits()).contains(
                 new DataSourceAudit().setName(name).change("pool:max-age", oldMaxAge, maxAge).changed());
         }
 
-        void verifyRemoved(Audits audits) {
+        void verifyRemoved() {
             verifyRemoveCli();
 
             Audit audit = new DataSourceAudit()
@@ -1382,7 +1423,7 @@ public abstract class AbstractDeployerTests {
                 audit.change("pool:max", maxPoolSize, null);
             if (maxAge != null)
                 audit.change("pool:max-age", maxAge, null);
-            assertThat(audits.getAudits()).contains(audit.removed());
+            assertThat(boundary.audits.getAudits()).contains(audit.removed());
         }
 
         void verifyRemoveCli() {
@@ -1409,5 +1450,47 @@ public abstract class AbstractDeployerTests {
                     .setMax(maxPoolSize)
                     .setMaxAge(maxAge));
         }
+
+        void verifyReloadRequired() { verifyProcessState(reloadRequired); }
+
+        void verifyRestartRequired() { verifyProcessState(restartRequired); }
+
+        private void verifyProcessState(ProcessState processState) { assertThat(boundary.audits.getProcessState()).isEqualTo(processState); }
+
+        @Override Condition<Audit> forThisArtifact() {
+            return new Condition<>(audit -> audit instanceof DataSourceAudit && ((DataSourceAudit) audit).getName().equals(name), "for artifact " + name);
+        }
+    }
+
+    abstract class AbstractFixture {
+        void verifyUnchanged() {
+            verifyNoOperation();
+            assertThat(boundary.audits.getAudits()).describedAs("audits").areNot(forThisArtifact());
+            assertThat(boundary.audits.getProcessState()).describedAs("process state").isEqualTo(running);
+        }
+
+        abstract Condition<Audit> forThisArtifact();
+
+        @SneakyThrows(IOException.class) void verifyNoOperation() { verify(cli, never()).execute(argThat(operationOnThis()), any(OperationMessageHandler.class)); }
+
+        @NotNull private ArgumentMatcher<Operation> operationOnThis() {
+            return new ArgumentMatcher<Operation>() {
+                @Override public boolean matches(Operation op) {
+                    ModelNode operation = op.getOperation();
+                    assert operation.get(OP).asString().equals(COMPOSITE);
+                    assert operation.get(ADDRESS).asList().isEmpty();
+                    List<ModelNode> steps = operation.get(STEPS).asList();
+                    return steps.stream().anyMatch(step -> matchAddress(step.get(ADDRESS)));
+                }
+
+                @Override public String toString() { return "operation on " + AbstractFixture.this; }
+            };
+        }
+
+        private boolean matchAddress(ModelNode actualAddress) {
+            return actualAddress.equals(addressNode());
+        }
+
+        abstract ModelNode addressNode();
     }
 }

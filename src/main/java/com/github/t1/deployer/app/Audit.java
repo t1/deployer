@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,7 +126,7 @@ public abstract class Audit {
 
     public Audit removed() { return operation(remove); }
 
-    public <U> Audit change(String name, U oldValue, U newValue) {
+    public <U> Audit change(String name, @Nullable U oldValue, @Nullable U newValue) {
         String oldString = toStringOrNull(oldValue);
         String newString = toStringOrNull(newValue);
         if (!Objects.equals(oldString, newString))

@@ -1,14 +1,11 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
-import com.github.t1.deployer.app.Audits.Warning;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
-import static com.github.t1.deployer.app.Trigger.post;
-import static com.github.t1.deployer.model.ProcessState.running;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -17,14 +14,14 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     public void shouldDeployWebArchive() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
         );
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -32,61 +29,61 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         systemProperties.given("foo:bar", "foobar");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
         );
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldDeployWebArchiveWithClassifier() {
         ArtifactFixture foo = givenArtifact("foo").classifier("plus").version("1.3.2");
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    classifier: plus\n"
-                + "    version: 1.3.2\n"
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    classifier: plus\n"
+            + "    version: 1.3.2\n"
         );
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldDeployWebArchiveWithCorrectChecksum() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"
-                + "    checksum: " + foo.getChecksum() + "\n"
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+            + "    checksum: " + foo.getChecksum() + "\n"
         );
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
     public void shouldFailToDeployWebArchiveWithIncorrectChecksum() {
         givenArtifact("foo").version("1.3.2");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"
-                + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+            + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
         assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f]"
-                        + " does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+            .isInstanceOf(WebApplicationApplicationException.class)
+            .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f]"
+                + " does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
     @Test
@@ -94,15 +91,15 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         givenArtifact("foo").version("1.3.1").deployed();
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"
-                + "    checksum: " + foo.getChecksum() + "\n"
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+            + "    checksum: " + foo.getChecksum() + "\n"
         );
 
-        foo.verifyDeployed(audits);
+        foo.verifyDeployed();
     }
 
     @Test
@@ -110,50 +107,50 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         givenArtifact("foo").version("1.3.1").deployed();
         givenArtifact("foo").version("1.3.2");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"
-                + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+            + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
         assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f] "
-                        + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+            .isInstanceOf(WebApplicationApplicationException.class)
+            .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f] "
+                + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
     @Test
     public void shouldFailToCheckWebArchiveWithIncorrectChecksum() {
         givenArtifact("foo").version("1.3.1").deployed();
 
-        Throwable thrown = catchThrowable(() -> deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.1\n"
-                + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.1\n"
+            + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
         assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("Repository checksum [face000094d353f082e6939015af81d263ba0f8f] "
-                        + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
+            .isInstanceOf(WebApplicationApplicationException.class)
+            .hasMessageContaining("Repository checksum [face000094d353f082e6939015af81d263ba0f8f] "
+                + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
     @Test
     public void shouldDeployEmptyDeployables() {
-        Audits audits = deploy(""
-                + "deployables:\n");
+        deployWithRootBundle(""
+            + "deployables:\n");
 
-        assertThat(audits.getAudits()).isEmpty();
+        assertThat(boundary.audits.getAudits()).isEmpty();
     }
 
 
     @Test
     public void shouldFailToDeployWebArchiveWithEmptyItem() {
-        Throwable thrown = catchThrowable(() -> deploy(""
-                + "deployables:\n"
-                + "  foo-war:\n"));
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo-war:\n"));
 
         assertThat(thrown).hasStackTraceContaining("incomplete deployables plan 'foo-war'");
     }
@@ -163,71 +160,99 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     public void shouldFailToDeployWebArchiveWithoutGroupId() {
         givenArtifact("foo").version("1.3.2");
 
-        Throwable thrown = catchThrowable(() -> deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    state: deployed\n"
-                + "    version: 1.3.2\n"));
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    state: deployed\n"
+            + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("the `group-id` can only be null when undeploying");
+            .isInstanceOf(WebApplicationApplicationException.class)
+            .hasMessageContaining("the `group-id` can only be null when undeploying");
     }
 
 
     @Test
-    public void shouldSkipDeployingWebArchiveWithoutVersion() {
-        givenArtifact("foo").version("1.3.2");
+    public void shouldSkipUndeployedWebArchiveWithVersionVariableDefaultingToCurrent() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    state: deployed\n");
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: ${foo.version}\n"
+            + "    state: ${foo.state or «deployed»}\n"
+        );
 
-        assertThat(audits.getAudits()).isEmpty();
-        assertThat(audits.getProcessState()).isEqualTo(running);
-        assertThat(audits.getWarnings()).containsExactly(new Warning("skip deploying foo in version CURRENT"));
+        foo.verifySkipped();
+    }
+
+    @Test
+    public void shouldSkipDeployedWebArchiveWithVersionVariableDefaultingToCurrent() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: ${foo.version}\n"
+            + "    state: ${foo.state or «deployed»}\n"
+        );
+
+        foo.verifyUnchanged();
+    }
+
+    @Test
+    public void shouldSkipUndeployedWebArchiveWithoutPlannedVersion() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    state: deployed\n");
+
+        foo.verifySkipped();
     }
 
 
     @Test
-    public void shouldSkipDeployWebArchiveWithoutVersion() {
-        givenUnknownArtifact("foo").deployed();
+    public void shouldSkipDeployedWebArchiveWithPlannedVersionExplicitlyCurrent() {
+        ArtifactFixture foo = givenUnknownArtifact("foo").deployed();
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: CURRENT\n");
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: CURRENT\n");
 
-        assertThat(audits.getAudits()).isEmpty();
+        foo.verifyUnchanged();
     }
 
 
     @Test
     public void shouldNotDeployWebArchiveWithoutVersion() {
-        givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n");
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n");
 
-        assertThat(audits.getAudits()).isEmpty();
+        foo.verifyUnchanged();
     }
 
     @Test
     public void shouldNotDeployWebArchiveWithCurrentVersionVariable() {
-        givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: CURRENT\n");
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: CURRENT\n");
 
-        assertThat(audits.getAudits()).isEmpty();
+        foo.verifyUnchanged();
     }
 
     @Test
@@ -235,49 +260,49 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         givenArtifact("foo").version("1.3.2").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("4.0.5");
 
-        rootBundle.write(""
+        deployWithRootBundle(""
                 + "deployables:\n"
                 + "  foo:\n"
                 + "    group-id: org.foo\n"
                 + "    version: ${foo.version}\n"
                 + "  bar:\n"
                 + "    group-id: org.bar\n"
-                + "    version: ${bar.version}\n");
-        boundary.apply(post, ImmutableMap.of(new VariableName("bar.version"), "4.0.5"));
+                + "    version: ${bar.version}\n",
+            ImmutableMap.of(new VariableName("bar.version"), "4.0.5"));
 
-        bar.verifyDeployed(boundary.audits);
+        bar.verifyDeployed();
     }
 
 
     @Test
-    public void shouldSkipDeployedWebArchiveWithoutVersion() {
-        givenArtifact("foo").version("1").deployed();
+    public void shouldSkipOneOfTwoDeployedWebArchiveWithVersionDefaultingToCurrent() {
+        ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("2");
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "  bar:\n"
-                + "    group-id: org.bar\n"
-                + "    version: 2\n");
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "  bar:\n"
+            + "    group-id: org.bar\n"
+            + "    version: 2\n");
 
-        bar.verifyDeployed(audits);
+        bar.verifyDeployed();
+        foo.verifyUnchanged();
     }
 
     @Test
     public void shouldUndeployWebArchive() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"
-                + "    state: undeployed\n");
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+            + "    state: undeployed\n");
 
-        foo.verifyUndeployExecuted();
-        assertThat(audits.getAudits()).containsExactly(foo.removedAudit());
+        foo.verifyRemoved();
     }
 
     @Test
@@ -285,41 +310,42 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         givenManaged("all");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Audits audits = deploy(""
-                + "deployables:\n");
+        deployWithRootBundle(""
+            + "deployables:\n");
 
-        foo.verifyUndeployExecuted();
-        assertThat(audits.getAudits()).containsExactly(foo.removedAudit());
+        foo.verifyRemoved();
     }
 
     @Test
     public void shouldIgnorePinnedWebArchiveWhenManaged() {
         givenManaged("all");
-        givenArtifact("foo").version("1.3.2").deployed();
-        givenArtifact("bar").version("2").deployed().pinned();
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture bar = givenArtifact("bar").version("2").deployed().pinned();
         ArtifactFixture baz = givenArtifact("baz").version("3").deployed();
 
-        Audits audits = deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n");
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n");
 
-        baz.verifyRemoved(audits);
+        foo.verifyUnchanged();
+        bar.verifyUnchanged();
+        baz.verifyRemoved();
     }
 
     @Test
     public void shouldFailToDeployPinnedWebArchive() {
         givenArtifact("foo").version("1.3.2").deployed().pinned();
 
-        Throwable thrown = catchThrowable(() -> deploy(""
-                + "deployables:\n"
-                + "  foo:\n"
-                + "    group-id: org.foo\n"
-                + "    version: 1.3.2\n"));
+        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-                .isInstanceOf(WebApplicationApplicationException.class)
-                .hasMessageContaining("resource is pinned: deployment:foo:deployed:org.foo:foo:1.3.2:war");
+            .isInstanceOf(WebApplicationApplicationException.class)
+            .hasMessageContaining("resource is pinned: deployment:foo:deployed:org.foo:foo:1.3.2:war");
     }
 }
