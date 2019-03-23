@@ -73,9 +73,9 @@ public abstract class Audit {
 
     @Override public String toString() { return getTypeName() + ":" + operation; }
 
-    @JsonIgnore public String getTypeName() { return getClass().getAnnotation(JsonTypeName.class).value(); }
+    @JsonIgnore private String getTypeName() { return getClass().getAnnotation(JsonTypeName.class).value(); }
 
-    public int changeCount() { return (changes == null) ? 0 : changes.size(); }
+    int changeCount() { return (changes == null) ? 0 : changes.size(); }
 
     @Data @Accessors(chain = true)
     @EqualsAndHashCode(callSuper = true)
@@ -120,11 +120,11 @@ public abstract class Audit {
         @Override public String toString() { return super.toString() + ":" + name + ":" + super.changes; }
     }
 
-    public Audit added() { return operation(add); }
+    Audit added() { return operation(add); }
 
-    public Audit changed() { return operation(change); }
+    Audit changed() { return operation(change); }
 
-    public Audit removed() { return operation(remove); }
+    Audit removed() { return operation(remove); }
 
     public <U> Audit change(String name, @Nullable U oldValue, @Nullable U newValue) {
         String oldString = toStringOrNull(oldValue);
@@ -134,8 +134,9 @@ public abstract class Audit {
         return this;
     }
 
-    public Audit changeRaw(String name, String oldString, String newString) {
-        changes = new ArrayList<>();
+    Audit changeRaw(String name, String oldString, String newString) {
+        if (changes == null)
+            changes = new ArrayList<>();
         changes.add(new Change(name, oldString, newString));
         return this;
     }

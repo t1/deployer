@@ -108,6 +108,8 @@ public class Expressions {
             VariableName name = entry.getKey();
             if (checkNotDefined)
                 checkNotDefined(name);
+            if (entry.getValue() == null || entry.getValue().isEmpty())
+                continue;
             builder.put(name, entry.getValue());
         }
         return withVariables(ImmutableMap.copyOf(builder));

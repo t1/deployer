@@ -61,8 +61,8 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 @Logged(level = INFO)
 @Slf4j
 public class DeployerBoundary {
-    public static final String IGNORE_SERVER_RELOAD = DeployerBoundary.class + "#IGNORE_SERVER_RELOAD";
-    public static final String ROOT_BUNDLE_CONFIG_FILE = "deployer.root.bundle";
+    private static final String IGNORE_SERVER_RELOAD = DeployerBoundary.class + "#IGNORE_SERVER_RELOAD";
+    static final String ROOT_BUNDLE_CONFIG_FILE = "deployer.root.bundle";
     private static final String DEFAULT_ROOT_BUNDLE = ""
         + "bundles:\n"
         + "  ${regex(root-bundle:artifact-id or hostName(), «(.*?)\\d*»)}:\n"
@@ -72,6 +72,8 @@ public class DeployerBoundary {
     private static final VariableName NAME = new VariableName("name");
     private static final Object CONTAINER_LOCK = new Object();
 
+    // must be public, as it's a EJB business method
+    @SuppressWarnings("WeakerAccess")
     public Path getRootBundlePath() { return Container.getConfigDir().resolve(ROOT_BUNDLE_CONFIG_FILE); }
 
 
@@ -101,8 +103,7 @@ public class DeployerBoundary {
     }
 
     private Map<VariableName, String> mapVariableNames(Map<String, String> form) {
-        return (form == null)
-            ? emptyMap()
+        return (form == null) ? emptyMap()
             : form.entrySet().stream()
             .collect(toMap(entry -> new VariableName(entry.getKey()), Map.Entry::getValue));
     }
@@ -161,8 +162,9 @@ public class DeployerBoundary {
     }
 
 
-    @Asynchronous
-    public void applyAsync(Trigger trigger) {
+    // must be public, as it's a EJB business method
+    @SuppressWarnings("WeakerAccess")
+    @Asynchronous public void applyAsync(@SuppressWarnings("SameParameterValue") Trigger trigger) {
         Container.waitForMBean();
         container.waitForBoot();
 

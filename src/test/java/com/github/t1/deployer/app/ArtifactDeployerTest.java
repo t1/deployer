@@ -6,6 +6,9 @@ import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -183,6 +186,38 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
             + "    version: ${foo.version}\n"
             + "    state: ${foo.state or «deployed»}\n"
         );
+
+        foo.verifySkipped();
+    }
+
+    @Test
+    public void shouldSkipUndeployedWebArchiveWithEmptyVersionVariable() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${foo.version}\n"
+                + "    state: ${foo.state or «deployed»}\n",
+            ImmutableMap.of(new VariableName("bar.version"), ""));
+
+        foo.verifySkipped();
+    }
+
+    @Test
+    public void shouldSkipUndeployedWebArchiveWithNullVersionVariable() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+        Map<VariableName, String> variables = new HashMap<>();
+        variables.put(new VariableName("bar.version"), null);
+
+        deployWithRootBundle(""
+                + "deployables:\n"
+                + "  foo:\n"
+                + "    group-id: org.foo\n"
+                + "    version: ${foo.version}\n"
+                + "    state: ${foo.state or «deployed»}\n",
+            variables);
 
         foo.verifySkipped();
     }
