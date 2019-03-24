@@ -12,11 +12,8 @@ import com.github.t1.deployer.model.RootBundleConfig;
 import com.github.t1.deployer.repository.RepositoryConfig;
 import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.deployer.tools.KeyStoreConfig;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -58,20 +55,17 @@ public class ConfigProducer {
 
     static final String DEPLOYER_CONFIG_YAML = "deployer.config.yaml";
 
-    private static final DeployerConfig DEFAULT_CONFIG = new DeployerConfig().setRepository(new RepositoryConfig());
+    private static final DeployerConfig DEFAULT_CONFIG = new DeployerConfig();
 
-    @Data
-    @Accessors(chain = true)
-    @NoArgsConstructor
-    @AllArgsConstructor(access = PRIVATE)
+    @NoArgsConstructor(access = PRIVATE)
     private static class DeployerConfig {
-        private RepositoryConfig repository;
+        @JsonProperty("repository") private RepositoryConfig repository = new RepositoryConfig();
         @JsonProperty("root-bundle") private RootBundleConfig rootBundle;
         @JsonProperty("key-store") private KeyStoreConfig keyStore;
         @JsonProperty("vars") private final Map<VariableName, String> variables = new LinkedHashMap<>();
         @JsonProperty("manage") private final List<String> managedResourceNames = new ArrayList<>();
         @JsonProperty("pin") private final Map<String, List<String>> pinned = new LinkedHashMap<>();
-        private final EnumSet<Trigger> triggers = EnumSet.allOf(Trigger.class);
+        @JsonProperty("triggers") private final EnumSet<Trigger> triggers = EnumSet.allOf(Trigger.class);
 
         @Override public String toString() { return toYAML(); }
 
@@ -101,14 +95,15 @@ public class ConfigProducer {
         }
     }
 
+    @Override public String toString() { return config.toString(); }
 
-    private RepositoryConfig getRepository() { return nvl(config.getRepository(), DEFAULT_CONFIG.getRepository()); }
+    private RepositoryConfig getRepository() { return nvl(config.repository, DEFAULT_CONFIG.repository); }
 
     @Produces @Config("root-bundle")
-    public RootBundleConfig rootBundle() { return config.getRootBundle(); }
+    public RootBundleConfig rootBundle() { return config.rootBundle; }
 
     @Produces @Config("key-store")
-    public KeyStoreConfig keyStore() { return config.getKeyStore(); }
+    public KeyStoreConfig keyStore() { return config.keyStore; }
 
     @Produces @Config("repository.type")
     public RepositoryType repositoryType() { return getRepository().getType(); }
@@ -123,24 +118,24 @@ public class ConfigProducer {
     public Password repositoryPassword() { return getRepository().getPassword(); }
 
     @Produces @Config("repository.snapshots")
-    public String repositorySnapshots() { return getRepository().getRepositorySnapshots(); }
+    public String repositorySnapshots() { return getRepository().getSnapshots(); }
 
     @Produces @Config("repository.releases")
-    public String repositoryReleases() { return getRepository().getRepositoryReleases(); }
+    public String repositoryReleases() { return getRepository().getReleases(); }
 
 
     @Produces @Config("managed.resources")
-    public List<String> managedResources() { return nvl(config.getManagedResourceNames(), emptyList()); }
+    public List<String> managedResources() { return nvl(config.managedResourceNames, emptyList()); }
 
     @Produces @Config("pinned.resources")
-    public Map<String, List<String>> pinned() { return nvl(config.getPinned(), emptyMap()); }
+    public Map<String, List<String>> pinned() { return nvl(config.pinned, emptyMap()); }
 
     @Produces @Config("triggers")
-    public Set<Trigger> triggers() { return config.getTriggers(); }
+    public Set<Trigger> triggers() { return config.triggers; }
 
 
     @Produces @Config("variables")
-    public Map<VariableName, String> variables() { return config.getVariables(); }
+    public Map<VariableName, String> variables() { return config.variables; }
 
     @Produces @Config("use.default.config") public boolean useDefaultConfig() { return config == DEFAULT_CONFIG; }
 }

@@ -13,6 +13,6 @@ public class RepositoryConfig {
     URI uri;
     String username;
     Password password;
-    String repositorySnapshots;
-    String repositoryReleases;
+    String snapshots;
+    String releases;
 }

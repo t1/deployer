@@ -1,8 +1,11 @@
 package com.github.t1.deployer.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Value;
 
 @Value
+@JsonSerialize(using = ToStringSerializer.class)
 public class Password {
     public static final String CONCEALED = "concealed";
 

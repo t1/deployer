@@ -22,7 +22,9 @@
         <plugins>
             <plugin id="org.pitest:pitest-maven:1.4.6">
                 <configuration>
+                    <withHistory>true</withHistory>
                     <timestampedReports>false</timestampedReports>
+                    <excludedTestClasses>*IT</excludedTestClasses>
                 </configuration>
             </plugin>
             <plugin id="org.apache.maven.plugins:maven-pmd-plugin:3.11.0"/>

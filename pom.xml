@@ -25,7 +25,9 @@
                 <artifactId>pitest-maven</artifactId>
                 <version>1.4.6</version>
                 <configuration>
+                    <withHistory>true</withHistory>
                     <timestampedReports>false</timestampedReports>
+                    <excludedTestClasses>*IT</excludedTestClasses>
                 </configuration>
             </plugin>
             <plugin>
