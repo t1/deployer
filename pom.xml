@@ -12,7 +12,7 @@
 
     <properties>
         <jackson.version>2.9.9</jackson.version>
-        <jqassistant.version>1.6.0</jqassistant.version>
+        <jqassistant.version>1.7.0-MS3</jqassistant.version>
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.java.pmd.reportPaths>./target/pmd.xml</sonar.java.pmd.reportPaths>
         <sonar.java.checkstyle.reportPaths>./target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
