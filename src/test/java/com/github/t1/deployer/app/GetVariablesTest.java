@@ -61,8 +61,7 @@ public class GetVariablesTest {
     }
 
 
-    @Test
-    public void shouldGetDefaultRootBundleWhenUnresolvedVersion() {
+    @Test public void shouldGetDefaultRootBundleWhenUnresolvedVersion() {
         Set<VariableName> variables = boundary.getVariables();
 
         assertThat(variables).containsExactly(
@@ -70,8 +69,7 @@ public class GetVariablesTest {
             new VariableName("version"));
     }
 
-    @Test
-    public void shouldGetConfiguredRootBundle() {
+    @Test public void shouldGetConfiguredRootBundle() {
         boundary.rootBundleConfig = new RootBundleConfig()
             .setGroupId(DUMMY_GROUP_ID)
             .setArtifactId(DUMMY_ARTIFACT_ID)
@@ -110,8 +108,7 @@ public class GetVariablesTest {
             new VariableName("mockserver.version"));
     }
 
-    @Test
-    public void shouldGetVariablesFromRootBundleFile() {
+    @Test public void shouldGetVariablesFromRootBundleFile() {
         rootBundleConfigFile.write(""
             + "bundles:\n"
             + "  app:\n"
@@ -134,8 +131,7 @@ public class GetVariablesTest {
             new VariableName("jolokia.version"));
     }
 
-    @Test
-    public void shouldSerializeBundleTreeAsJson() throws Exception {
+    @Test public void shouldSerializeBundleTreeAsJson() throws Exception {
         assertThat(toJson(asList(new VariableName("jolokia.state"), new VariableName("jolokia.version"))))
             .isEqualTo("[\"jolokia.state\",\"jolokia.version\"]");
     }

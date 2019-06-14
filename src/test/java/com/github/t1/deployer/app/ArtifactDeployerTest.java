@@ -13,8 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class ArtifactDeployerTest extends AbstractDeployerTests {
-    @Test
-    public void shouldDeployWebArchive() {
+    @Test public void shouldDeployWebArchive() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         deployWithRootBundle(""
@@ -27,8 +26,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyDeployed();
     }
 
-    @Test
-    public void shouldDeployWebArchiveEvenWithInvalidSystemProperty() {
+    @Test public void shouldDeployWebArchiveEvenWithInvalidSystemProperty() {
         systemProperties.given("foo:bar", "foobar");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -42,8 +40,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyDeployed();
     }
 
-    @Test
-    public void shouldDeployWebArchiveWithClassifier() {
+    @Test public void shouldDeployWebArchiveWithClassifier() {
         ArtifactFixture foo = givenArtifact("foo").classifier("plus").version("1.3.2");
 
         deployWithRootBundle(""
@@ -57,8 +54,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyDeployed();
     }
 
-    @Test
-    public void shouldDeployWebArchiveWithCorrectChecksum() {
+    @Test public void shouldDeployWebArchiveWithCorrectChecksum() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         deployWithRootBundle(""
@@ -72,8 +68,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyDeployed();
     }
 
-    @Test
-    public void shouldFailToDeployWebArchiveWithIncorrectChecksum() {
+    @Test public void shouldFailToDeployWebArchiveWithIncorrectChecksum() {
         givenArtifact("foo").version("1.3.2");
 
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
@@ -89,8 +84,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
                 + " does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
-    @Test
-    public void shouldUpdateWebArchiveWithCorrectChecksum() {
+    @Test public void shouldUpdateWebArchiveWithCorrectChecksum() {
         givenArtifact("foo").version("1.3.1").deployed();
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -105,8 +99,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyDeployed();
     }
 
-    @Test
-    public void shouldFailToUpdateWebArchiveWithIncorrectChecksum() {
+    @Test public void shouldFailToUpdateWebArchiveWithIncorrectChecksum() {
         givenArtifact("foo").version("1.3.1").deployed();
         givenArtifact("foo").version("1.3.2");
 
@@ -123,8 +116,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
                 + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
-    @Test
-    public void shouldFailToCheckWebArchiveWithIncorrectChecksum() {
+    @Test public void shouldFailToCheckWebArchiveWithIncorrectChecksum() {
         givenArtifact("foo").version("1.3.1").deployed();
 
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
@@ -140,8 +132,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
                 + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
 
-    @Test
-    public void shouldDeployEmptyDeployables() {
+    @Test public void shouldDeployEmptyDeployables() {
         deployWithRootBundle(""
             + "deployables:\n");
 
@@ -149,8 +140,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test
-    public void shouldFailToDeployWebArchiveWithEmptyItem() {
+    @Test public void shouldFailToDeployWebArchiveWithEmptyItem() {
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo-war:\n"));
@@ -159,8 +149,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test
-    public void shouldFailToDeployWebArchiveWithoutGroupId() {
+    @Test public void shouldFailToDeployWebArchiveWithoutGroupId() {
         givenArtifact("foo").version("1.3.2");
 
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
@@ -175,8 +164,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test
-    public void shouldSkipUndeployedWebArchiveWithVersionVariableDefaultingToCurrent() {
+    @Test public void shouldSkipUndeployedWebArchiveWithVersionVariableDefaultingToCurrent() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         deployWithRootBundle(""
@@ -190,8 +178,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifySkipped();
     }
 
-    @Test
-    public void shouldSkipUndeployedWebArchiveWithEmptyVersionVariable() {
+    @Test public void shouldSkipUndeployedWebArchiveWithEmptyVersionVariable() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         deployWithRootBundle(""
@@ -205,8 +192,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifySkipped();
     }
 
-    @Test
-    public void shouldSkipUndeployedWebArchiveWithNullVersionVariable() {
+    @Test public void shouldSkipUndeployedWebArchiveWithNullVersionVariable() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
         Map<VariableName, String> variables = new HashMap<>();
         variables.put(new VariableName("bar.version"), null);
@@ -222,8 +208,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifySkipped();
     }
 
-    @Test
-    public void shouldSkipDeployedWebArchiveWithVersionVariableDefaultingToCurrent() {
+    @Test public void shouldSkipDeployedWebArchiveWithVersionVariableDefaultingToCurrent() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
         deployWithRootBundle(""
@@ -237,8 +222,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyUnchanged();
     }
 
-    @Test
-    public void shouldSkipUndeployedWebArchiveWithoutPlannedVersion() {
+    @Test public void shouldSkipUndeployedWebArchiveWithoutPlannedVersion() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
         deployWithRootBundle(""
@@ -251,8 +235,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test
-    public void shouldSkipDeployedWebArchiveWithPlannedVersionExplicitlyCurrent() {
+    @Test public void shouldSkipDeployedWebArchiveWithPlannedVersionExplicitlyCurrent() {
         ArtifactFixture foo = givenUnknownArtifact("foo").deployed();
 
         deployWithRootBundle(""
@@ -265,8 +248,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test
-    public void shouldNotDeployWebArchiveWithoutVersion() {
+    @Test public void shouldNotDeployWebArchiveWithoutVersion() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
         deployWithRootBundle(""
@@ -277,8 +259,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyUnchanged();
     }
 
-    @Test
-    public void shouldNotDeployWebArchiveWithCurrentVersionVariable() {
+    @Test public void shouldNotDeployWebArchiveWithCurrentVersionVariable() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
         deployWithRootBundle(""
@@ -290,8 +271,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyUnchanged();
     }
 
-    @Test
-    public void shouldDeploySecondWebArchiveWithOnlyOneVersionVariable() {
+    @Test public void shouldDeploySecondWebArchiveWithOnlyOneVersionVariable() {
         givenArtifact("foo").version("1.3.2").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("4.0.5");
 
@@ -309,8 +289,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test
-    public void shouldSkipOneOfTwoDeployedWebArchiveWithVersionDefaultingToCurrent() {
+    @Test public void shouldSkipOneOfTwoDeployedWebArchiveWithVersionDefaultingToCurrent() {
         ArtifactFixture foo = givenArtifact("foo").version("1").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("2");
 
@@ -326,8 +305,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyUnchanged();
     }
 
-    @Test
-    public void shouldUndeployWebArchive() {
+    @Test public void shouldUndeployWebArchive() {
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
         deployWithRootBundle(""
@@ -340,8 +318,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyRemoved();
     }
 
-    @Test
-    public void shouldUndeployWebArchiveWhenManaged() {
+    @Test public void shouldUndeployWebArchiveWhenManaged() {
         givenManaged("all");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
@@ -351,8 +328,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyRemoved();
     }
 
-    @Test
-    public void shouldIgnorePinnedWebArchiveWhenManaged() {
+    @Test public void shouldIgnorePinnedWebArchiveWhenManaged() {
         givenManaged("all");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
         ArtifactFixture bar = givenArtifact("bar").version("2").deployed().pinned();
@@ -369,8 +345,7 @@ public class ArtifactDeployerTest extends AbstractDeployerTests {
         baz.verifyRemoved();
     }
 
-    @Test
-    public void shouldFailToDeployPinnedWebArchive() {
+    @Test public void shouldFailToDeployPinnedWebArchive() {
         givenArtifact("foo").version("1.3.2").deployed().pinned();
 
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""

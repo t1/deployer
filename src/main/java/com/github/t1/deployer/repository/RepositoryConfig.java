@@ -1,6 +1,6 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.deployer.model.Password;
+import com.github.t1.deployer.tools.Password;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

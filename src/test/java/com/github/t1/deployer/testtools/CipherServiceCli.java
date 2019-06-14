@@ -2,7 +2,7 @@ package com.github.t1.deployer.testtools;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.github.t1.deployer.tools.CipherFacade;
+import com.github.t1.deployer.tools.CipherService;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import lombok.SneakyThrows;
 
@@ -16,13 +16,13 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.List;
 
-import static com.github.t1.deployer.tools.CipherFacade.DEFAULT_PASS;
+import static com.github.t1.deployer.tools.CipherService.DEFAULT_PASS;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class CipherFacadeMain {
-    public static void main(String... args) { System.out.println(new CipherFacadeMain(args).run()); }
+public class CipherServiceCli {
+    public static void main(String... args) { System.out.println(new CipherServiceCli(args).run()); }
 
-    private CipherFacadeMain(String[] args) {
+    private CipherServiceCli(String[] args) {
         JCommander cli = new JCommander(this);
         cli.parse(args);
         if (help) {
@@ -50,7 +50,7 @@ public class CipherFacadeMain {
         description = "Use the certificate of a 'https' server to encrypt. Either this or `--keystore` is mandatory.")
     private URI uri;
 
-    private final CipherFacade cipher = new CipherFacade();
+    private final CipherService cipher = new CipherService();
 
     private String run() {
         if (uri == null) {

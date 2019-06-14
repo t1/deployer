@@ -3,7 +3,7 @@ package com.github.t1.deployer.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.github.t1.deployer.tools.CipherFacade;
+import com.github.t1.deployer.tools.CipherService;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.problem.ReturnStatus;
 import com.github.t1.problem.WebApplicationApplicationException;
@@ -347,7 +347,7 @@ public class Expressions {
     private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");
 
     private class FunctionResolver implements Resolver {
-        private final CipherFacade cipher = new CipherFacade();
+        private final CipherService cipher = new CipherService();
 
         @Override public Match match(String expression) {
             Matcher matcher = FUNCTION.matcher(expression);

@@ -37,5 +37,7 @@ public class TestData {
     public static final Checksum MOCKSERVER_3_10_3_CHECKSUM = checksumFor(ORG_MOCKSERVER, MOCKSERVER_WAR, war,
             v("3.10.3"));
 
+    public static final Checksum JDEPEND_291_CHECKSUM = Checksum.ofHexString("3d3089f585c2740a707c2cb99f4bb149a90d63f0");
+
     private static Version v(String value) { return new Version(value); }
 }

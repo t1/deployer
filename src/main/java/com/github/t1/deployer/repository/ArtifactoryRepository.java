@@ -1,5 +1,6 @@
 package com.github.t1.deployer.repository;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.t1.deployer.model.Artifact;
 import com.github.t1.deployer.model.ArtifactId;
 import com.github.t1.deployer.model.ArtifactType;
@@ -7,18 +8,14 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
-import com.github.t1.rest.EntityResponse;
-import com.github.t1.rest.RestContext;
-import com.github.t1.rest.RestRequest;
-import com.github.t1.rest.UnexpectedStatusException;
-import com.github.t1.rest.UriTemplate;
-import com.github.t1.rest.VendorType;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -33,53 +30,12 @@ import java.util.Map;
 import static com.github.t1.problem.WebException.notFound;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Response.Status.OK;
 import static javax.xml.bind.annotation.XmlAccessType.FIELD;
 
 @Slf4j
 @RequiredArgsConstructor
 class ArtifactoryRepository extends Repository {
-    public static Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
-        Path path = Paths.get(uri.getPath());
-        return new Artifact()
-            .setGroupId(groupIdFrom(path))
-            .setArtifactId(artifactIdFrom(path))
-            .setVersion(versionFrom(path))
-            .setType(typeFrom(path))
-            .setChecksum(checksum)
-            .setInputStreamSupplier(() -> {
-                throw new RuntimeException("already downloaded?");
-            });
-    }
-
-    public static GroupId groupIdFrom(Path path) {
-        String string = path.subpath(4, path.getNameCount() - 3).toString().replace("/", ".");
-        return new GroupId(string);
-    }
-
-    public static ArtifactId artifactIdFrom(Path path) {
-        String string = element(-3, path);
-        return new ArtifactId(string);
-    }
-
-    public static Version versionFrom(Path path) {
-        String string = element(-2, path);
-        return new Version(string);
-    }
-
-    public static ArtifactType typeFrom(Path path) {
-        String pathString = path.toString();
-        String typeString = pathString.substring(pathString.lastIndexOf('.') + 1);
-        return ArtifactType.valueOf(typeString);
-    }
-
-    private static String element(int n, Path path) {
-        if (n < 0)
-            n += path.getNameCount();
-        return path.getName(n).toString();
-    }
-
-    @NonNull private final RestContext rest;
+    @NonNull private final WebTarget baseTarget;
     @NonNull private final String repositorySnapshots;
     @NonNull private final String repositoryReleases;
 
@@ -116,35 +72,30 @@ class ArtifactoryRepository extends Repository {
     }
 
     private List<ChecksumSearchResultItem> searchByChecksumResults(Checksum checksum) {
-        RestRequest<ChecksumSearchResult> request = searchByChecksumRequest();
+        Invocation.Builder request = baseTarget
+            .path("api/search/checksum")
+            .queryParam("sha1", checksum.hexString())
+            .request()
+            .header("X-Result-Detail", "info");
         try {
-            return request.with("checkSum", checksum.hexString()).GET().getResults();
+            return request.get(ChecksumSearchResult.class).results;
         } catch (RuntimeException e) {
             log.error("can't search by checksum [" + checksum + "] in " + request, e);
             throw new ErrorWhileFetchingChecksumException(checksum);
         }
     }
 
-    private RestRequest<ChecksumSearchResult> searchByChecksumRequest() {
-        UriTemplate uri = rest
-            .nonQueryUri("repository")
-            .path("api/search/checksum")
-            .query("sha1", "{checkSum}");
-        return rest
-            .createResource(uri)
-            .header("X-Result-Detail", "info")
-            .accept(ChecksumSearchResult.class);
-    }
-
     @lombok.Data
     @lombok.NoArgsConstructor
-    @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
+    // @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChecksumSearchResult {
         List<ChecksumSearchResultItem> results;
     }
 
     @lombok.Data
     @lombok.NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChecksumSearchResultItem {
         URI uri;
         URI downloadUri;
@@ -152,7 +103,8 @@ class ArtifactoryRepository extends Repository {
 
     @lombok.Data
     @lombok.NoArgsConstructor
-    @VendorType("org.jfrog.artifactory.storage.FileInfo")
+    // @VendorType("org.jfrog.artifactory.storage.FileInfo")
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FileInfo {
         boolean folder;
         URI uri, downloadUri;
@@ -165,7 +117,8 @@ class ArtifactoryRepository extends Repository {
 
     @lombok.Data
     @lombok.NoArgsConstructor
-    @VendorType("org.jfrog.artifactory.storage.FolderInfo")
+    // @VendorType("org.jfrog.artifactory.storage.FolderInfo")
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FolderInfo {
         List<FileInfo> children;
         URI uri;
@@ -177,17 +130,20 @@ class ArtifactoryRepository extends Repository {
 
     @Data
     @XmlRootElement(name = "metadata")
+    @JsonIgnoreProperties(ignoreUnknown = true)
     static class MavenMetadata {
         private Versioning versioning;
 
         @Data
         @XmlAccessorType(FIELD)
+        @JsonIgnoreProperties(ignoreUnknown = true)
         static class Versioning {
             @XmlElementWrapper
             @XmlElement(name = "snapshotVersion")
             private List<SnapshotVersion> snapshotVersions;
 
             @Data
+            @JsonIgnoreProperties(ignoreUnknown = true)
             static class SnapshotVersion {
                 private String extension;
                 private String value;
@@ -204,8 +160,7 @@ class ArtifactoryRepository extends Repository {
         @NonNull ArtifactType type,
         Classifier classifier) {
         String fileName = getFileName(groupId, artifactId, version, type, classifier);
-        FileInfo fileInfo = fetch(rest.nonQueryUri("repository"),
-            "api/storage/{repoKey}/{*orgPath}/{module}/{baseRev}/" + fileName,
+        FileInfo fileInfo = fetch("api/storage/{repoKey}/{orgPath}/{module}/{baseRev}/" + fileName,
             FileInfo.class, groupId, artifactId, version, type);
         //noinspection resource
         return new Artifact()
@@ -218,14 +173,14 @@ class ArtifactoryRepository extends Repository {
     }
 
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
-        UriTemplate uri = rest.nonQueryUri("repository").nonQuery().path("api/storage/{repoKey}/{*orgPath}/{module}")
-            .with("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
-            .with("orgPath", groupId.asPath())
-            .with("module", artifactId);
-        log.debug("fetch folder from {}", uri);
-        EntityResponse<FolderInfo> response = rest.createResource(uri).GET_Response(FolderInfo.class);
+        WebTarget resolvedTarget = baseTarget.path("api/storage/{repoKey}/{orgPath}/{module}")
+            .resolveTemplate("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
+            .resolveTemplate("orgPath", groupId.asPath())
+            .resolveTemplate("module", artifactId);
+        log.debug("fetch folder from {}", resolvedTarget);
+        Response response = resolvedTarget.request().get();
         checkStatus(response, "folder for " + groupId + ":" + artifactId);
-        FolderInfo fileInfo = response.getBody();
+        FolderInfo fileInfo = response.readEntity(FolderInfo.class);
         log.debug("found folder: {}", fileInfo);
         List<Version> versions = fileInfo
             .getChildren()
@@ -238,7 +193,7 @@ class ArtifactoryRepository extends Repository {
         return versions;
     }
 
-    public Version toVersion(FileInfo file) {
+    private Version toVersion(FileInfo file) {
         String string = file.getUri().toString();
         if (string.length() > 0 && string.charAt(0) == '/')
             string = string.substring(1);
@@ -249,8 +204,7 @@ class ArtifactoryRepository extends Repository {
                                Classifier classifier) {
         String classifierSuffix = (classifier == null) ? "" : "-" + classifier;
         if (version.isSnapshot()) {
-            MavenMetadata metadata = fetch(rest.nonQueryUri("repository"),
-                "{repoKey}/{*orgPath}/{module}/{baseRev}/maven-metadata.xml",
+            MavenMetadata metadata = fetch("{repoKey}/{orgPath}/{module}/{baseRev}/maven-metadata.xml",
                 MavenMetadata.class, groupId, artifactId, version, type);
             String snapshot = metadata
                 .getVersioning().getSnapshotVersions().stream()
@@ -264,41 +218,36 @@ class ArtifactoryRepository extends Repository {
         }
     }
 
-    private <T> T fetch(UriTemplate base, String path, Class<T> type,
+    private <T> T fetch(String path, Class<T> type,
                         GroupId groupId, ArtifactId artifactId, Version version, ArtifactType artifactType) {
-        UriTemplate uri = resolve(base.nonQuery().path(path), groupId, artifactId, version, artifactType);
-        log.debug("fetch {} from {}", type.getSimpleName(), uri);
-        EntityResponse<T> response = rest.createResource(uri).GET_Response(type);
+        WebTarget target = baseTarget.path(path)
+            .resolveTemplate("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
+            .resolveTemplate("org", groupId)
+            .resolveTemplate("orgPath", groupId.asPath())
+            .resolveTemplate("baseRev", version)
+            .resolveTemplate("module", artifactId)
+            // (-{folderItegRev})
+            // (-{fileItegRev})
+            // (-{classifier})
+            .resolveTemplate("ext", artifactType)
+            .resolveTemplate("type", artifactType);
+        log.debug("fetch {} from {}", type.getSimpleName(), target.getUri());
+        Response response = target.request().get();
         checkStatus(response, type.getSimpleName()
             + " for " + groupId + ":" + artifactId + ":" + version + ":" + artifactType);
-        T result = response.getBody();
+        T result = response.readEntity(type);
         log.debug("found {}: {}", type.getSimpleName(), result);
         return result;
     }
 
-    private UriTemplate resolve(UriTemplate template,
-                                GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        return template
-            .with("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
-            .with("org", groupId)
-            .with("orgPath", groupId.asPath())
-            .with("baseRev", version)
-            .with("module", artifactId)
-            // (-{folderItegRev})
-            // (-{fileItegRev})
-            // (-{classifier})
-            .with("ext", type)
-            .with("type", type);
-    }
-
-    private void checkStatus(EntityResponse<?> response, String what) {
-        switch ((Status) response.status()) {
-            case OK:
+    private void checkStatus(Response response, String what) {
+        switch (response.getStatus()) {
+            case 200:
                 return;
-            case NOT_FOUND:
+            case 404:
                 throw notFound("not in repository: " + what);
             default:
-                throw new UnexpectedStatusException(response.status(), response.headers(), OK);
+                throw new RuntimeException("unexpected http status " + response.getStatusInfo());
         }
     }
 
@@ -306,6 +255,46 @@ class ArtifactoryRepository extends Repository {
         URI uri = fileInfo.getDownloadUri();
         if (uri == null)
             throw new RuntimeException("no download uri from repository for " + fileInfo.getUri());
-        return rest.createResource(uri).GET(InputStream.class);
+        return baseTarget.request().get(InputStream.class);
+    }
+
+    static Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {
+        Path path = Paths.get(uri.getPath());
+        return new Artifact()
+            .setGroupId(groupIdFrom(path))
+            .setArtifactId(artifactIdFrom(path))
+            .setVersion(versionFrom(path))
+            .setType(typeFrom(path))
+            .setChecksum(checksum)
+            .setInputStreamSupplier(() -> {
+                throw new RuntimeException("already downloaded?");
+            });
+    }
+
+    private static GroupId groupIdFrom(Path path) {
+        String string = path.subpath(4, path.getNameCount() - 3).toString().replace("/", ".");
+        return new GroupId(string);
+    }
+
+    private static ArtifactId artifactIdFrom(Path path) {
+        String string = element(-3, path);
+        return new ArtifactId(string);
+    }
+
+    static Version versionFrom(Path path) {
+        String string = element(-2, path);
+        return new Version(string);
+    }
+
+    private static ArtifactType typeFrom(Path path) {
+        String pathString = path.toString();
+        String typeString = pathString.substring(pathString.lastIndexOf('.') + 1);
+        return ArtifactType.valueOf(typeString);
+    }
+
+    private static String element(int n, Path path) {
+        if (n < 0)
+            n += path.getNameCount();
+        return path.getName(n).toString();
     }
 }

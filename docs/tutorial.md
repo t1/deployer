@@ -659,7 +659,7 @@ If you have configured your server to use this certificate for `https`,
 you can encrypt a password (e.g. `secret`) like this:
 
 ```bash
-mvn exec:java -Dexec.mainClass="com.github.t1.deployer.tools.CipherFacade" -Dexec.args="--uri https://my-service.example.org secret"
+mvn exec:java -Dexec.mainClass="com.github.t1.deployer.tools.CipherService/my-service.example.org secret"
 ```
 
 For other options to decrypt secrets, see the `decrypt` methods in the [reference](reference.md#variables).

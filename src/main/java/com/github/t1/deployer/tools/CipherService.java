@@ -24,7 +24,7 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
 import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
-public class CipherFacade {
+public class CipherService {
     public static final String DEFAULT_PASS = "changeit";
 
     public String encrypt(String plain, KeyStoreConfig config) {

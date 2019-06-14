@@ -18,7 +18,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.github.t1.deployer.model.Password.CONCEALED;
+import static com.github.t1.deployer.tools.Password.CONCEALED;
 
 @Slf4j
 abstract class ResourceDeployer<
@@ -103,7 +103,7 @@ abstract class ResourceDeployer<
                 return true;
             if (!(o instanceof Property))
                 return false;
-            final Property that = (Property) o;
+            @SuppressWarnings("unchecked") final Property that = (Property) o;
             if (!that.canEqual(this))
                 return false;
             if (!Objects.equals(this.name(), that.name()))
@@ -116,9 +116,7 @@ abstract class ResourceDeployer<
                 return false;
             if (!Objects.equals(this.write(), that.write()))
                 return false;
-            if (this.confidential != that.confidential)
-                return false;
-            return true;
+            return this.confidential == that.confidential;
         }
 
         public int hashCode() {

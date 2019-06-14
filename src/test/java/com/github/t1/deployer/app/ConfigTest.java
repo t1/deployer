@@ -5,11 +5,11 @@ import com.github.t1.deployer.model.ArtifactId;
 import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.Expressions.VariableName;
 import com.github.t1.deployer.model.GroupId;
-import com.github.t1.deployer.model.Password;
 import com.github.t1.deployer.model.RootBundleConfig;
 import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.deployer.tools.KeyStoreConfig;
+import com.github.t1.deployer.tools.Password;
 import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.SystemPropertiesRule;
 import org.junit.Rule;
@@ -51,8 +51,7 @@ public class ConfigTest {
     }
 
 
-    @Test
-    public void shouldConfigureDefaultRepositoryWithoutConfigFile() {
+    @Test public void shouldConfigureDefaultRepositoryWithoutConfigFile() {
         // given no file
 
         ConfigProducer producer = loadConfig();
@@ -66,8 +65,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldConfigureDefaultRepositoryWithEmptyConfigFile() {
+    @Test public void shouldConfigureDefaultRepositoryWithEmptyConfigFile() {
         configFile.write("---\n");
 
         ConfigProducer producer = loadConfig();
@@ -80,8 +78,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldConfigureDefaultRepositoryWithConfigFileWithoutRepositoryEntry() {
+    @Test public void shouldConfigureDefaultRepositoryWithConfigFileWithoutRepositoryEntry() {
         configFile.write(""
             + "#comment\n"
             + "other: true\n");
@@ -96,8 +93,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldConfigureDefaultRepositoryWithConfigFileWithEmptyRepositoryEntry() {
+    @Test public void shouldConfigureDefaultRepositoryWithConfigFileWithEmptyRepositoryEntry() {
         configFile.write(""
             + "repository:\n");
 
@@ -111,8 +107,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithTypeArtifactory() {
+    @Test public void shouldLoadConfigFileWithTypeArtifactory() {
         configFile.write(""
             + "repository:\n"
             + "  type: artifactory\n");
@@ -128,8 +123,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithUri() {
+    @Test public void shouldLoadConfigFileWithUri() {
         configFile.write(""
             + "repository:\n"
             + "  uri: " + DUMMY_URI + "\n");
@@ -144,8 +138,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithTypeAndUri() {
+    @Test public void shouldLoadConfigFileWithTypeAndUri() {
         configFile.write(""
             + "repository:\n"
             + "  type: artifactory\n"
@@ -161,8 +154,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithTypeAndUriAndCredentials() {
+    @Test public void shouldLoadConfigFileWithTypeAndUriAndCredentials() {
         configFile.write(""
             + "repository:\n"
             + "  type: artifactory\n"
@@ -180,8 +172,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithSnapshots() {
+    @Test public void shouldLoadConfigFileWithSnapshots() {
         configFile.write(""
             + "repository:\n"
             + "  snapshots: snap\n");
@@ -196,8 +187,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithReleases() {
+    @Test public void shouldLoadConfigFileWithReleases() {
         configFile.write(""
             + "repository:\n"
             + "  releases: release\n");
@@ -213,8 +203,7 @@ public class ConfigTest {
     }
 
 
-    @Test
-    public void shouldLoadConfigFileWithVariable() {
+    @Test public void shouldLoadConfigFileWithVariable() {
         configFile.write(""
             + "vars:\n"
             + "  foo: bar\n");
@@ -224,13 +213,11 @@ public class ConfigTest {
         assertThat(producer.variables().get(new VariableName("foo"))).isEqualTo("bar");
     }
 
-    @Test
-    public void shouldFailToLoadConfigFileWithVariableNameContainingColon() {
+    @Test public void shouldFailToLoadConfigFileWithVariableNameContainingColon() {
         shouldFailToLoadConfigFileWithVariableName("foo:bar");
     }
 
-    @Test
-    public void shouldFailToLoadConfigFileWithVariableNameContainingSpace() {
+    @Test public void shouldFailToLoadConfigFileWithVariableNameContainingSpace() {
         shouldFailToLoadConfigFileWithVariableName("foo bar");
     }
 
@@ -246,8 +233,7 @@ public class ConfigTest {
     }
 
 
-    @Test
-    public void shouldLoadConfigFileWithDefaultGroupId() {
+    @Test public void shouldLoadConfigFileWithDefaultGroupId() {
         configFile.write(""
             + "vars:\n"
             + "  default.group-id: foo\n");
@@ -258,8 +244,7 @@ public class ConfigTest {
     }
 
 
-    @Test
-    public void shouldLoadConfigFileWithManagedDeployables() {
+    @Test public void shouldLoadConfigFileWithManagedDeployables() {
         configFile.write(""
             + "manage:\n"
             + "- deployables\n");
@@ -270,8 +255,7 @@ public class ConfigTest {
     }
 
 
-    @Test
-    public void shouldLoadConfigFileWithRootBundleGroupId() {
+    @Test public void shouldLoadConfigFileWithRootBundleGroupId() {
         configFile.write(""
             + "root-bundle:\n"
             + "  group-id: foo\n");
@@ -281,8 +265,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getGroupId()).isEqualTo(GroupId.of("foo"));
     }
 
-    @Test
-    public void shouldLoadConfigFileWithRootBundleArtifactId() {
+    @Test public void shouldLoadConfigFileWithRootBundleArtifactId() {
         configFile.write(""
             + "root-bundle:\n"
             + "  artifact-id: foo\n");
@@ -292,8 +275,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getArtifactId()).isEqualTo(new ArtifactId("foo"));
     }
 
-    @Test
-    public void shouldLoadConfigFileWithRootBundleClassifier() {
+    @Test public void shouldLoadConfigFileWithRootBundleClassifier() {
         configFile.write(""
             + "root-bundle:\n"
             + "  classifier: raw\n");
@@ -303,8 +285,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getClassifier()).isEqualTo(new Classifier("raw"));
     }
 
-    @Test
-    public void shouldLoadConfigFileWithRootBundleVersion() {
+    @Test public void shouldLoadConfigFileWithRootBundleVersion() {
         configFile.write(""
             + "root-bundle:\n"
             + "  version: 1.0\n");
@@ -314,8 +295,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getVersion()).isEqualTo(new Version("1.0"));
     }
 
-    @Test
-    public void shouldLoadConfigFileWithOnePinnedDeployable() {
+    @Test public void shouldLoadConfigFileWithOnePinnedDeployable() {
         configFile.write(""
             + "pin:\n"
             + "  deployables: [foo]\n");
@@ -325,8 +305,7 @@ public class ConfigTest {
         assertThat(producer.pinned().get("deployables")).containsExactly("foo");
     }
 
-    @Test
-    public void shouldLoadConfigFileWithTwoPinnedDeployable() {
+    @Test public void shouldLoadConfigFileWithTwoPinnedDeployable() {
         configFile.write(""
             + "pin:\n"
             + "  deployables: [foo, bar]\n");
@@ -337,8 +316,7 @@ public class ConfigTest {
     }
 
 
-    @Test
-    public void shouldLoadConfigFileWithKeyStore() {
+    @Test public void shouldLoadConfigFileWithKeyStore() {
         configFile.write(""
             + "key-store:\n"
             + "  path: foo\n"
@@ -354,8 +332,7 @@ public class ConfigTest {
         assertThat(config.getAlias()).isEqualTo("bog");
     }
 
-    @Test
-    public void shouldLoadConfigFileWithoutKeyStore() {
+    @Test public void shouldLoadConfigFileWithoutKeyStore() {
         configFile.write("");
 
         ConfigProducer producer = loadConfig();
@@ -363,8 +340,7 @@ public class ConfigTest {
         assertThat(producer.keyStore()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithEmptyKeyStore() {
+    @Test public void shouldLoadConfigFileWithEmptyKeyStore() {
         configFile.write(""
             + "key-store:");
 
@@ -373,8 +349,7 @@ public class ConfigTest {
         assertThat(producer.keyStore()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithEmptyKeyStorePath() {
+    @Test public void shouldLoadConfigFileWithEmptyKeyStorePath() {
         configFile.write(""
             + "key-store:\n"
             + "  path:");
@@ -384,8 +359,7 @@ public class ConfigTest {
         assertThat(producer.keyStore().getPath()).isNull();
     }
 
-    @Test
-    public void shouldLoadConfigFileWithOneTrigger() {
+    @Test public void shouldLoadConfigFileWithOneTrigger() {
         configFile.write(""
             + "triggers: [startup]");
 
@@ -394,8 +368,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup);
     }
 
-    @Test
-    public void shouldLoadConfigFileWithTwoTriggers() {
+    @Test public void shouldLoadConfigFileWithTwoTriggers() {
         configFile.write(""
             + "triggers: [startup, post]");
 
@@ -404,8 +377,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup, post);
     }
 
-    @Test
-    public void shouldLoadConfigFileWithThreeTriggers() {
+    @Test public void shouldLoadConfigFileWithThreeTriggers() {
         configFile.write(""
             + "triggers: [startup, post, fileChange]");
 
@@ -414,8 +386,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup, post, fileChange);
     }
 
-    @Test
-    public void shouldLoadConfigFileWithAllTriggersDefaultToAll() {
+    @Test public void shouldLoadConfigFileWithAllTriggersDefaultToAll() {
         configFile.write("");
 
         ConfigProducer producer = loadConfig();
@@ -423,8 +394,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup, post, fileChange);
     }
 
-    @Test
-    public void shouldFailToGetConfigDirWithoutConfiguredJbossConfigDir() {
+    @Test public void shouldFailToGetConfigDirWithoutConfiguredJbossConfigDir() {
         systemProperties.given("jboss.server.config.dir", null);
 
         Throwable throwable = catchThrowable(Container::getConfigDir);
@@ -432,15 +402,13 @@ public class ConfigTest {
         assertThat(throwable).hasMessage("no config dir configured");
     }
 
-    @Test
-    public void shouldGetConfigDirFromJbossConfigDir() {
+    @Test public void shouldGetConfigDirFromJbossConfigDir() {
         Path configDir = Container.getConfigDir();
 
         assertThat(configDir).hasToString(System.getProperty("jboss.server.config.dir"));
     }
 
-    @Test
-    public void shouldGetConfigDirFromSystemProperty() {
+    @Test public void shouldGetConfigDirFromSystemProperty() {
         systemProperties.given("deployer.config.dir", "foobar");
 
         Path configDir = Container.getConfigDir();
@@ -448,8 +416,7 @@ public class ConfigTest {
         assertThat(configDir).hasToString("foobar");
     }
 
-    @Test
-    public void shouldGetConfigDirFromEnvironmentVariable() {
+    @Test public void shouldGetConfigDirFromEnvironmentVariable() {
         assumeThat(System.getenv("DEPLOYER_CONFIG_DIR"))
             .describedAs("set env var 'DEPLOYER_CONFIG_DIR' to 'foo' in run config for this test, but not for others!")
             .isEqualTo("foo");
@@ -459,8 +426,7 @@ public class ConfigTest {
         assertThat(configDir).hasToString("foo");
     }
 
-    @Test
-    public void shouldLoadConfigFileWithEverything() {
+    @Test public void shouldLoadConfigFileWithEverything() {
         String yaml = ""
             + "repository:\n"
             + "  type: artifactory\n"

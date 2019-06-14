@@ -1,63 +1,70 @@
 package com.github.t1.deployer.repository;
 
-import com.github.t1.rest.RestClientMocker;
+import io.dropwizard.testing.junit.DropwizardClientRule;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import java.net.URI;
-import java.net.UnknownHostException;
 
-import static com.github.t1.deployer.repository.RepositoryProducer.DEFAULT_ARTIFACTORY_URI;
-import static com.github.t1.rest.RestContext.REST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RepositoryProducerTest {
-    private static final URI DUMMY_URI = URI.create("http://example.nowhere");
-    private final RestClientMocker mocker = new RestClientMocker();
+    @ClassRule
+    public static DropwizardClientRule MOCK = new DropwizardClientRule(LocalArtifactoryMock.class);
 
-    public static Repository createMavenCentralRepository() {
-        return new MavenCentralRepository(REST.register("repository", URI.create("https://search.maven.org")));
+    @Path("/")
+    public static class LocalArtifactoryMock {
+        @GET public String remotecontent() {
+            ++artifactoryCalls;
+            return "okay";
+        }
     }
 
-    public RepositoryProducer createRepositoryProducer() {
-        RepositoryProducer producer = new RepositoryProducer();
-        producer.rest = mocker.context();
-        return producer;
+    private static int artifactoryCalls = 0;
+
+    private final RepositoryProducer producer = new RepositoryProducer();
+
+    @Before
+    public void setUp() { artifactoryCalls = 0; }
+
+    @Test public void shouldUseArtifactory() {
+        producer.uri = MOCK.baseUri();
+        producer.type = RepositoryType.artifactory;
+
+        Repository repository = producer.repository();
+
+        assertThat(repository).isInstanceOf(ArtifactoryRepository.class);
+        assertThat(artifactoryCalls).isEqualTo(0);
     }
 
-    public void unknownHost(URI uri) {
-        mocker.on(uri).GET().produceBody(() -> {
-            throw new RuntimeException(new UnknownHostException());
-        });
-    }
-
-    @Test
-    public void shouldFallbackToMavenCentralWhenLocalArtifactoryNotAvailable() throws Throwable {
-        unknownHost(DEFAULT_ARTIFACTORY_URI);
-        RepositoryProducer producer = createRepositoryProducer();
+    @Test public void shouldUseMavenCentral() {
+        producer.type = RepositoryType.mavenCentral;
+        producer.uri = MOCK.baseUri();
 
         Repository repository = producer.repository();
 
         assertThat(repository).isInstanceOf(MavenCentralRepository.class);
+        assertThat(artifactoryCalls).isEqualTo(0);
     }
 
-    @Test
-    public void shouldLookupLocalArtifactoryRepository() throws Throwable {
-        mocker.on(DEFAULT_ARTIFACTORY_URI).GET().respond("okay");
-        RepositoryProducer producer = createRepositoryProducer();
+    @Test public void shouldLookupArtifactory() {
+        producer.uri = MOCK.baseUri();
 
         Repository repository = producer.repository();
 
         assertThat(repository).isInstanceOf(ArtifactoryRepository.class);
+        assertThat(artifactoryCalls).isEqualTo(1);
     }
 
-    @Test
-    public void shouldLookupRemoteArtifactoryRepository() throws Throwable {
-        mocker.on(DUMMY_URI).GET().respond("okay");
-        RepositoryProducer producer = createRepositoryProducer();
-        producer.uri = DUMMY_URI;
+    @Test public void shouldFallbackToMavenCentralWhenArtifactoryNotAvailable() {
+        producer.uri = URI.create("http://unknown");
 
         Repository repository = producer.repository();
 
-        assertThat(repository).isInstanceOf(ArtifactoryRepository.class);
+        assertThat(repository).isInstanceOf(MavenCentralRepository.class);
+        assertThat(artifactoryCalls).isEqualTo(0);
     }
 }

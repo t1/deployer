@@ -57,13 +57,12 @@ public class EffectivePlanHtmlWriterTest {
             .setVersion(new Version("2.0"))
             .setType(jar));
 
-    public String expected() throws MalformedURLException {
+    private String expected() throws MalformedURLException {
         URI expected = Paths.get("src/test/java/com/github/t1/deployer/app/expected-plan.html").toUri();
         return contentOf(expected.toURL()).replaceAll("###hostname###", hostName());
     }
 
-    @Test
-    public void shouldWrite() throws Exception {
+    @Test public void shouldWrite() throws Exception {
         EffectivePlanHtmlWriter writer = new EffectivePlanHtmlWriter();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 

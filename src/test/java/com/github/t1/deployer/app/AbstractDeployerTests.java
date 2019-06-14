@@ -80,7 +80,6 @@ import static com.github.t1.deployer.model.ArtifactType.war;
 import static com.github.t1.deployer.model.LogHandlerPlan.DEFAULT_SUFFIX;
 import static com.github.t1.deployer.model.LogHandlerType.custom;
 import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
-import static com.github.t1.deployer.model.Password.CONCEALED;
 import static com.github.t1.deployer.model.Plan.YAML;
 import static com.github.t1.deployer.model.ProcessState.reloadRequired;
 import static com.github.t1.deployer.model.ProcessState.restartRequired;
@@ -98,6 +97,7 @@ import static com.github.t1.deployer.testtools.ModelNodeTestTools.readResourceRe
 import static com.github.t1.deployer.testtools.ModelNodeTestTools.step;
 import static com.github.t1.deployer.testtools.ModelNodeTestTools.success;
 import static com.github.t1.deployer.testtools.ModelNodeTestTools.toModelNode;
+import static com.github.t1.deployer.tools.Password.CONCEALED;
 import static com.github.t1.deployer.tools.Tools.toStringOrNull;
 import static com.github.t1.log.LogLevel.ALL;
 import static java.lang.Boolean.FALSE;

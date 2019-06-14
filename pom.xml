@@ -105,12 +105,6 @@
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
-            <artifactId>rest-client</artifactId>
-            <version>1.0.13</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.t1</groupId>
             <artifactId>problem-detail</artifactId>
             <version>1.0.2</version>
             <scope>compile</scope>
@@ -174,12 +168,6 @@
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.74</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>fluent-hc</artifactId>
-            <version>4.5.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -430,8 +418,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>${java.specification.version}</source>
-                    <target>${java.specification.version}</target>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
                     <encoding>utf8</encoding>

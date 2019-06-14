@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 import static com.github.t1.deployer.model.ArtifactType.unknown;
 import static com.github.t1.problem.WebException.badRequest;
@@ -29,7 +28,7 @@ public abstract class Repository {
             Artifact artifact = searchByChecksum(checksum);
             if (!artifact.getChecksumRaw().equals(checksum))
                 throw new AssertionError("expected checksum from repository [" + artifact.getChecksumRaw() + "] "
-                        + "to be equal to the checksum requested with [" + checksum + "]");
+                    + "to be equal to the checksum requested with [" + checksum + "]");
             return artifact;
         } catch (UnknownChecksumException e) {
             return errorArtifact(checksum, "unknown");
@@ -41,21 +40,21 @@ public abstract class Repository {
 
     private Artifact errorArtifact(Checksum checksum, String error) {
         return new Artifact()
-                .setGroupId(new GroupId("unknown"))
-                .setArtifactId(new ArtifactId("unknown"))
-                .setVersion(new Version("unknown"))
-                .setType(unknown)
-                .setChecksum(checksum)
-                .setError(error)
-                .setInputStreamSupplier(() -> {
-                    throw new UnsupportedOperationException();
-                });
+            .setGroupId(new GroupId("unknown"))
+            .setArtifactId(new ArtifactId("unknown"))
+            .setVersion(new Version("unknown"))
+            .setType(unknown)
+            .setChecksum(checksum)
+            .setError(error)
+            .setInputStreamSupplier(() -> {
+                throw new UnsupportedOperationException();
+            });
     }
 
     public abstract Artifact searchByChecksum(Checksum checksum);
 
     public final Artifact resolveArtifact(GroupId groupId, ArtifactId artifactId, Version version,
-            ArtifactType type, Classifier classifier) {
+                                          ArtifactType type, Classifier classifier) {
         if ("LATEST".equals(version.getValue()))
             version = findVersion(groupId, artifactId, false, version);
         else if ("UNSTABLE".equals(version.getValue()))
@@ -67,15 +66,14 @@ public abstract class Repository {
         List<Version> versions = listVersions(groupId, artifactId, false);
         if (snapshots)
             versions.addAll(listVersions(groupId, artifactId, true));
-        Optional<Version> max = versions.stream().max(Comparator.naturalOrder());
-        if (!max.isPresent())
-            throw badRequest("no versions found for " + groupId + ":" + artifactId);
-        log.debug("resolved {}:{} {} to {}", groupId, artifactId, versionExpression, max.get());
-        return max.get();
+        Version max = versions.stream().max(Comparator.naturalOrder())
+            .orElseThrow(() -> badRequest("no versions found for " + groupId + ":" + artifactId));
+        log.debug("resolved {}:{} {} to {}", groupId, artifactId, versionExpression, max);
+        return max;
     }
 
     protected abstract Artifact lookupArtifact(GroupId groupId, ArtifactId artifactId, Version version,
-            ArtifactType type, Classifier classifier);
+                                               ArtifactType type, Classifier classifier);
 
     public abstract List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot);
 }

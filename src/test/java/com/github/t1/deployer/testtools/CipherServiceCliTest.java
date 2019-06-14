@@ -6,12 +6,12 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 
-import static com.github.t1.deployer.testtools.CipherFacadeMain.main;
+import static com.github.t1.deployer.testtools.CipherServiceCli.main;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assume.assumeNoException;
 
-public class CipherFacadeMainTest {
+public class CipherServiceCliTest {
     private static final String PLAIN_TEXT = "foo";
     @SuppressWarnings("SpellCheckingInspection") private static final String PUBLIC_CIPHER_TEXT
             = "7780CE2D448C1631BECC020B72E6022BFA38E37D4EEB6FAB3891949C0FF591BE2C64761AE03ED294D1E0D"
@@ -24,8 +24,7 @@ public class CipherFacadeMainTest {
 
     @Rule public final SystemOutCaptorRule out = new SystemOutCaptorRule();
 
-    @Test
-    public void shouldEncryptPublic() {
+    @Test public void shouldEncryptPublic() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
@@ -35,8 +34,7 @@ public class CipherFacadeMainTest {
         assertThat(out.out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());
     }
 
-    @Test
-    public void shouldEncryptCert() {
+    @Test public void shouldEncryptCert() {
         main("--keystore", "src/test/resources/cert.keystore",
                 "--storetype", "jceks",
                 "--alias", "cert",
@@ -46,8 +44,7 @@ public class CipherFacadeMainTest {
         assertThat(out.out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());
     }
 
-    @Test
-    public void shouldDecryptPublic() {
+    @Test public void shouldDecryptPublic() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
@@ -56,8 +53,7 @@ public class CipherFacadeMainTest {
         assertThat(out.out()).isEqualTo(PLAIN_TEXT);
     }
 
-    @Test
-    public void shouldEncryptPrivate() {
+    @Test public void shouldEncryptPrivate() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
@@ -66,8 +62,7 @@ public class CipherFacadeMainTest {
         assertThat(out.out()).isEqualTo(PRIVATE_CIPHER_TEXT);
     }
 
-    @Test
-    public void shouldDecryptPrivate() {
+    @Test public void shouldDecryptPrivate() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
@@ -76,8 +71,7 @@ public class CipherFacadeMainTest {
         assertThat(out.out()).isEqualTo(PLAIN_TEXT);
     }
 
-    @Test
-    public void shouldEncryptPublicToUri() {
+    @Test public void shouldEncryptPublicToUri() {
         Throwable e = catchThrowable(() -> {
             main("--uri", "https://www.github.com", PLAIN_TEXT);
 

@@ -9,8 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.jboss.as.controller.client.helpers.ClientConstants.ADDRESS;
 
 public class BatchSortingTest extends AbstractDeployerTests {
-    @Test
-    public void shouldAddLoggerAndHandler() {
+    @Test public void shouldAddLoggerAndHandler() {
         LogHandlerFixture handler = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
                 .file("the-file")
@@ -42,8 +41,7 @@ public class BatchSortingTest extends AbstractDeployerTests {
                 .contains("\"logger\" => \"foo\"");
     }
 
-    @Test
-    public void shouldRemoveLoggerAndHandler() {
+    @Test public void shouldRemoveLoggerAndHandler() {
         givenManaged("all");
         LogHandlerFixture handler = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
