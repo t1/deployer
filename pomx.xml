@@ -3,7 +3,7 @@
         xmlns="urn:xsd:maven:pomx:5.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:xsd:maven:pomx:5.0.0 https://raw.githubusercontent.com/t1/pomx/master/src/main/resources/schemas/pomx-5.0.0.xsd">
-    <war>com.github.t1:deployer:2.10.2-SNAPSHOT</war>
+    <war>com.github.t1:deployer:3.0.0-SNAPSHOT</war>
     <name>Deployer</name>
     <description>Deploys web archives to a JBoss web container</description>
 
@@ -15,7 +15,7 @@
         <sonar.java.checkstyle.reportPaths>./target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
     </properties>
 
-    <profile>com.github.t1:profile-javaee:7.0.0-SNAPSHOT</profile>
+    <profile>com.github.t1:profile-javaee:8.0.0-SNAPSHOT</profile>
     <profile>com.github.t1:profile-t1:1.0.0-SNAPSHOT</profile>
 
     <build>
@@ -76,16 +76,18 @@
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:8.0.0.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:9.0.1.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.1.Final</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
-            <jar>com.google.guava:guava:27.1-jre</jar>
+            <jar>com.google.guava:guava:28.0-jre</jar>
         </compile>
 
         <test>
+            <jar>org.eclipse:yasson:1.0.3</jar>
+            <jar>org.glassfish:javax.json:1.1.3</jar>
             <jar>org.jdom:jdom2:2.0.6</jar>
             <jar>com.github.t1:xml:0.0.5</jar>
             <jar>ch.qos.logback:logback-classic:1.2.3</jar>

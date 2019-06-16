@@ -34,7 +34,7 @@ import static javax.xml.bind.annotation.XmlAccessType.FIELD;
 
 @Slf4j
 @RequiredArgsConstructor
-class ArtifactoryRepository extends Repository {
+public class ArtifactoryRepository extends Repository {
     @NonNull private final WebTarget baseTarget;
     @NonNull private final String repositorySnapshots;
     @NonNull private final String repositoryReleases;
@@ -110,9 +110,7 @@ class ArtifactoryRepository extends Repository {
         URI uri, downloadUri;
         Map<String, Checksum> checksums;
 
-        public Checksum getChecksum() {
-            return checksums.get("sha1");
-        }
+        public Checksum getSha1() { return checksums.get("sha1"); }
     }
 
     @lombok.Data
@@ -168,7 +166,7 @@ class ArtifactoryRepository extends Repository {
             .setArtifactId(artifactId)
             .setType(type)
             .setVersion(version)
-            .setChecksum(fileInfo.getChecksum())
+            .setChecksum(fileInfo.getSha1())
             .setInputStreamSupplier(() -> download(fileInfo));
     }
 
@@ -255,7 +253,7 @@ class ArtifactoryRepository extends Repository {
         URI uri = fileInfo.getDownloadUri();
         if (uri == null)
             throw new RuntimeException("no download uri from repository for " + fileInfo.getUri());
-        return baseTarget.request().get(InputStream.class);
+        return baseTarget.property("jersey.config.client.followRedirects", Boolean.TRUE).request().get(InputStream.class);
     }
 
     static Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {

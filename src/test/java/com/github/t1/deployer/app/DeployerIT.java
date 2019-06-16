@@ -109,7 +109,7 @@ public class DeployerIT {
         + "      max: 10\n";
 
     @ClassRule public static WildflyContainerTestRule container =
-        new WildflyContainerTestRule("10.1.0.Final")
+        new WildflyContainerTestRule("17.0.0.Final")
             .withLogger("org.apache.http.headers", DEBUG)
             // .withLogger("org.apache.http.wire", DEBUG)
             // .withLogger("com.github.t1.rest", DEBUG)

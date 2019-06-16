@@ -26,7 +26,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
 @Slf4j
-class MavenCentralRepository extends Repository {
+public class MavenCentralRepository extends Repository {
     private final WebTarget searchUri;
     private final WebTarget listVersionsTemplate;
     private final WebTarget downloadUri;
@@ -52,19 +52,19 @@ class MavenCentralRepository extends Repository {
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class MavenCentralSearchResult {
+    public static class MavenCentralSearchResult {
         MavenCentralSearchResponse response;
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class MavenCentralSearchResponse {
+    public static class MavenCentralSearchResponse {
         List<MavenCentralSearchResponseDocs> docs;
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class MavenCentralSearchResponseDocs {
+    public static class MavenCentralSearchResponseDocs {
         String g;
         String a;
         String v;
