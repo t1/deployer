@@ -20,7 +20,7 @@
 
     <build>
         <plugins>
-            <plugin id="org.pitest:pitest-maven:1.4.8">
+            <plugin id="org.pitest:pitest-maven:1.4.9">
                 <configuration>
                     <withHistory>true</withHistory>
                     <timestampedReports>false</timestampedReports>
@@ -28,7 +28,7 @@
                 </configuration>
             </plugin>
             <plugin id="org.apache.maven.plugins:maven-pmd-plugin:3.12.0"/>
-            <plugin id="com.github.spotbugs:spotbugs-maven-plugin:3.1.11">
+            <plugin id="com.github.spotbugs:spotbugs-maven-plugin:3.1.12">
                 <executions>
                     <execution>
                         <id>default</id>
@@ -76,7 +76,7 @@
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:9.0.1.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:9.0.2.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.1.Final</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
@@ -86,8 +86,8 @@
         </compile>
 
         <test>
-            <jar>org.eclipse:yasson:1.0.3</jar>
-            <jar>org.glassfish:javax.json:1.1.3</jar>
+            <jar>org.eclipse:yasson:1.0.4</jar>
+            <jar>org.glassfish:javax.json:1.1.4</jar>
             <jar>org.jdom:jdom2:2.0.6</jar>
             <jar>com.github.t1:xml:0.0.5</jar>
             <jar>ch.qos.logback:logback-classic:1.2.3</jar>
