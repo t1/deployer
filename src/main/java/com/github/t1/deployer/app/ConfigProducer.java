@@ -7,17 +7,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.model.Config;
 import com.github.t1.deployer.model.Expressions.VariableName;
-import com.github.t1.deployer.model.Password;
 import com.github.t1.deployer.model.RootBundleConfig;
 import com.github.t1.deployer.repository.RepositoryConfig;
 import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.deployer.tools.KeyStoreConfig;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import com.github.t1.deployer.tools.Password;
 import lombok.NoArgsConstructor;
-import lombok.Singular;
 import lombok.SneakyThrows;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -29,7 +25,9 @@ import java.io.Reader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,33 +45,27 @@ import static lombok.AccessLevel.PRIVATE;
 @Singleton
 public class ConfigProducer {
     private static final ObjectMapper YAML = new ObjectMapper(
-            new YAMLFactory()
-                    .enable(MINIMIZE_QUOTES)
-                    .disable(WRITE_DOC_START_MARKER))
-            .setSerializationInclusion(NON_EMPTY)
-            .setPropertyNamingStrategy(new KebabCaseStrategy())
-            .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .findAndRegisterModules();
+        new YAMLFactory()
+            .enable(MINIMIZE_QUOTES)
+            .disable(WRITE_DOC_START_MARKER))
+        .setSerializationInclusion(NON_EMPTY)
+        .setPropertyNamingStrategy(new KebabCaseStrategy())
+        .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .findAndRegisterModules();
 
-    public static final String DEPLOYER_CONFIG_YAML = "deployer.config.yaml";
+    static final String DEPLOYER_CONFIG_YAML = "deployer.config.yaml";
 
-    private static final DeployerConfig DEFAULT_CONFIG = DeployerConfig
-            .builder()
-            .repository(RepositoryConfig.builder().build())
-            .build();
+    private static final DeployerConfig DEFAULT_CONFIG = new DeployerConfig();
 
-    @Value
-    @Builder
-    @NoArgsConstructor(access = PRIVATE, force = true)
-    @AllArgsConstructor(access = PRIVATE)
+    @NoArgsConstructor(access = PRIVATE)
     private static class DeployerConfig {
-        private final RepositoryConfig repository;
-        @JsonProperty("root-bundle") private final RootBundleConfig rootBundle;
-        @JsonProperty("key-store") private final KeyStoreConfig keyStore;
-        @Singular @JsonProperty("vars") private final Map<VariableName, String> variables;
-        @Singular @JsonProperty("manage") private final List<String> managedResourceNames;
-        @Singular("pin") @JsonProperty("pin") private final Map<String, List<String>> pinned;
-        private final EnumSet<Trigger> triggers = EnumSet.allOf(Trigger.class);
+        @JsonProperty("repository") private RepositoryConfig repository = new RepositoryConfig();
+        @JsonProperty("root-bundle") private RootBundleConfig rootBundle;
+        @JsonProperty("key-store") private KeyStoreConfig keyStore;
+        @JsonProperty("vars") private final Map<VariableName, String> variables = new LinkedHashMap<>();
+        @JsonProperty("manage") private final List<String> managedResourceNames = new ArrayList<>();
+        @JsonProperty("pin") private final Map<String, List<String>> pinned = new LinkedHashMap<>();
+        @JsonProperty("triggers") private final EnumSet<Trigger> triggers = EnumSet.allOf(Trigger.class);
 
         @Override public String toString() { return toYAML(); }
 
@@ -96,21 +88,22 @@ public class ConfigProducer {
                     this.config = newConfig;
             } catch (IOException e) {
                 log.error("can't load config from '" + path + "'.\n"
-                        + "--------- CONTINUE WITH DEFAULT CONFIG! ---------", e);
+                    + "--------- CONTINUE WITH DEFAULT CONFIG! ---------", e);
             }
         } else {
             log.info("no deployer config file at '" + path + "'; use default config");
         }
     }
 
+    @Override public String toString() { return config.toString(); }
 
-    private RepositoryConfig getRepository() { return nvl(config.getRepository(), DEFAULT_CONFIG.getRepository()); }
+    private RepositoryConfig getRepository() { return nvl(config.repository, DEFAULT_CONFIG.repository); }
 
     @Produces @Config("root-bundle")
-    public RootBundleConfig rootBundle() { return config.getRootBundle(); }
+    public RootBundleConfig rootBundle() { return config.rootBundle; }
 
     @Produces @Config("key-store")
-    public KeyStoreConfig keyStore() { return config.getKeyStore(); }
+    public KeyStoreConfig keyStore() { return config.keyStore; }
 
     @Produces @Config("repository.type")
     public RepositoryType repositoryType() { return getRepository().getType(); }
@@ -125,24 +118,24 @@ public class ConfigProducer {
     public Password repositoryPassword() { return getRepository().getPassword(); }
 
     @Produces @Config("repository.snapshots")
-    public String repositorySnapshots() { return getRepository().getRepositorySnapshots(); }
+    public String repositorySnapshots() { return getRepository().getSnapshots(); }
 
     @Produces @Config("repository.releases")
-    public String repositoryReleases() { return getRepository().getRepositoryReleases(); }
+    public String repositoryReleases() { return getRepository().getReleases(); }
 
 
     @Produces @Config("managed.resources")
-    public List<String> managedResources() { return nvl(config.getManagedResourceNames(), emptyList()); }
+    public List<String> managedResources() { return nvl(config.managedResourceNames, emptyList()); }
 
     @Produces @Config("pinned.resources")
-    public Map<String, List<String>> pinned() { return nvl(config.getPinned(), emptyMap()); }
+    public Map<String, List<String>> pinned() { return nvl(config.pinned, emptyMap()); }
 
     @Produces @Config("triggers")
-    public Set<Trigger> triggers() { return config.getTriggers(); }
+    public Set<Trigger> triggers() { return config.triggers; }
 
 
     @Produces @Config("variables")
-    public Map<VariableName, String> variables() { return config.getVariables(); }
+    public Map<VariableName, String> variables() { return config.variables; }
 
     @Produces @Config("use.default.config") public boolean useDefaultConfig() { return config == DEFAULT_CONFIG; }
 }

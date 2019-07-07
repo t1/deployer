@@ -9,8 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.jboss.as.controller.client.helpers.ClientConstants.ADDRESS;
 
 public class BatchSortingTest extends AbstractDeployerTests {
-    @Test
-    public void shouldAddLoggerAndHandler() {
+    @Test public void shouldAddLoggerAndHandler() {
         LogHandlerFixture handler = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
                 .file("the-file")
@@ -18,7 +17,7 @@ public class BatchSortingTest extends AbstractDeployerTests {
                 .format("the-format");
         LoggerFixture logger = givenLogger("foo").level(DEBUG).handler("FOO").useParentHandlers(false);
 
-        Audits audits = deploy(""
+        deployWithRootBundle(""
                 + "log-handlers:\n"
                 + "  FOO:\n"
                 + "    type: periodic-rotating-file\n"
@@ -31,8 +30,8 @@ public class BatchSortingTest extends AbstractDeployerTests {
                 + "    level: DEBUG\n"
                 + "    handler: FOO\n");
 
-        handler.verifyAdded(audits);
-        logger.verifyAdded(audits);
+        handler.verifyAdded();
+        logger.verifyAdded();
         assertThat(steps()).hasSize(2);
         assertThat(steps().get(0).get(ADDRESS).toString())
                 .as("add handler first")
@@ -42,8 +41,7 @@ public class BatchSortingTest extends AbstractDeployerTests {
                 .contains("\"logger\" => \"foo\"");
     }
 
-    @Test
-    public void shouldRemoveLoggerAndHandler() {
+    @Test public void shouldRemoveLoggerAndHandler() {
         givenManaged("all");
         LogHandlerFixture handler = givenLogHandler(periodicRotatingFile, "FOO")
                 .level(ALL)
@@ -53,10 +51,10 @@ public class BatchSortingTest extends AbstractDeployerTests {
                 .deployed();
         LoggerFixture logger = givenLogger("foo").level(DEBUG).handler("FOO").useParentHandlers(false).deployed();
 
-        Audits audits = deploy("---");
+        deployWithRootBundle("---");
 
-        handler.verifyRemoved(audits);
-        logger.verifyRemoved(audits);
+        handler.verifyRemoved();
+        logger.verifyRemoved();
         assertThat(steps()).hasSize(2);
         assertThat(steps().get(0).get(ADDRESS).toString())
                 .as("remove logger first")

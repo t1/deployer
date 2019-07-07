@@ -4,12 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.github.t1.deployer.model.DataSourcePlan.PoolPlan.PoolPlanBuilder;
 import com.github.t1.deployer.tools.Tools;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.net.URI;
 import java.util.regex.Matcher;
@@ -19,36 +18,33 @@ import static com.github.t1.deployer.model.DeploymentState.deployed;
 import static com.github.t1.deployer.model.DeploymentState.undeployed;
 import static com.github.t1.deployer.model.Plan.apply;
 import static java.util.function.Function.identity;
-import static lombok.AccessLevel.PRIVATE;
 
-@Data
-@Builder
-@AllArgsConstructor(access = PRIVATE)
+@Data @Accessors(chain = true)
+@RequiredArgsConstructor
 @JsonNaming(KebabCaseStrategy.class)
 public final class DataSourcePlan implements Plan.AbstractPlan {
     private static final Pattern JDBC_URI = Pattern.compile("jdbc:(\\p{Alnum}{1,256}):.*");
 
     @NonNull @JsonIgnore private final DataSourceName name;
-    private final DeploymentState state;
-    private final Boolean xa;
-    private final URI uri;
-    private final String jndiName;
-    private final String driver;
+    private DeploymentState state;
+    private Boolean xa;
+    private URI uri;
+    private String jndiName;
+    private String driver;
 
-    private final String userName;
-    private final String password;
+    private String userName;
+    private String password;
 
-    private final PoolPlan pool;
+    private PoolPlan pool;
 
-    @lombok.Value
-    @lombok.Builder
-    @lombok.AllArgsConstructor(access = PRIVATE)
+    @Data @Accessors(chain = true)
+    @RequiredArgsConstructor
     @JsonNaming(KebabCaseStrategy.class)
     public static class PoolPlan {
-        private final Integer min;
-        private final Integer initial;
-        private final Integer max;
-        private final Age maxAge;
+        private Integer min;
+        private Integer initial;
+        private Integer max;
+        private Age maxAge;
 
         @Override public String toString() { return min + "/" + initial + "/" + max + "/" + maxAge; }
     }
@@ -58,27 +54,27 @@ public final class DataSourcePlan implements Plan.AbstractPlan {
     static DataSourcePlan fromJson(DataSourceName name, JsonNode node) {
         if (node.isNull())
             throw new Plan.PlanLoadingException("incomplete data-sources plan '" + name + "'");
-        DataSourcePlanBuilder builder = builder().name(name);
-        apply(node, "xa", builder::xa, Tools::trueOrNull, "false");
-        apply(node, "state", builder::state, DeploymentState::valueOf);
-        apply(node, "uri", builder::uri, URI::create);
-        apply(node, "jndi-name", builder::jndiName, identity(), "«java:/datasources/" + name + "»");
-        apply(node, "driver", builder::driver, identity(), defaultDriver(builder.uri));
+        DataSourcePlan builder = new DataSourcePlan(name);
+        apply(node, "xa", builder::setXa, Tools::trueOrNull, "false");
+        apply(node, "state", builder::setState, DeploymentState::valueOf);
+        apply(node, "uri", builder::setUri, URI::create);
+        apply(node, "jndi-name", builder::setJndiName, identity(), "«java:/datasources/" + name + "»");
+        apply(node, "driver", builder::setDriver, identity(), defaultDriver(builder.uri));
 
-        apply(node, "user-name", builder::userName, identity());
-        apply(node, "password", builder::password, identity());
+        apply(node, "user-name", builder::setUserName, identity());
+        apply(node, "password", builder::setPassword, identity());
 
         if (node.hasNonNull("pool")) {
-            PoolPlanBuilder pool = PoolPlan.builder();
+            PoolPlan pool = new PoolPlan();
             JsonNode poolNode = node.get("pool");
-            apply(poolNode, "min", pool::min, Integer::valueOf);
-            apply(poolNode, "initial", pool::initial, Integer::valueOf);
-            apply(poolNode, "max", pool::max, Integer::valueOf);
-            apply(poolNode, "max-age", pool::maxAge, Age::new);
-            builder.pool(pool.build());
+            apply(poolNode, "min", pool::setMin, Integer::valueOf);
+            apply(poolNode, "initial", pool::setInitial, Integer::valueOf);
+            apply(poolNode, "max", pool::setMax, Integer::valueOf);
+            apply(poolNode, "max-age", pool::setMaxAge, Age::new);
+            builder.setPool(pool);
         }
 
-        return builder.build().validate();
+        return builder.validate();
     }
 
     private static String defaultDriver(URI uri) {
@@ -93,16 +89,14 @@ public final class DataSourcePlan implements Plan.AbstractPlan {
     private DataSourcePlan validate() {
         if (uri == null && state != undeployed)
             throw new Plan.PlanLoadingException(
-                    "field 'uri' for data-source '" + name + "' can only be null when undeploying");
+                "field 'uri' for data-source '" + name + "' can only be null when undeploying");
         return this;
     }
-
-    /* make builder fields visible */ public static class DataSourcePlanBuilder {}
 
     @JsonIgnore @Override public DeploymentState getState() { return (state == null) ? deployed : state; }
 
     @Override public String toString() {
         return "data-source:" + getState() + ":" + name + ":" + jndiName + ":" + driver + ":" + uri + ":xa=" + xa
-                + ((pool == null) ? "" : "{" + pool + "}");
+            + ((pool == null) ? "" : "{" + pool + "}");
     }
 }

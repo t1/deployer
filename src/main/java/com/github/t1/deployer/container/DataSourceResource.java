@@ -2,9 +2,9 @@ package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.Age;
 import com.github.t1.deployer.model.DataSourceName;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.helpers.Operations;
@@ -13,7 +13,6 @@ import org.jboss.dmr.ModelNode;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.github.t1.deployer.model.DataSourceName.ALL;
@@ -26,13 +25,12 @@ import static org.jboss.as.controller.client.helpers.Operations.createAddOperati
 
 /** @see javax.annotation.sql.DataSourceDefinition */
 @Slf4j
-@Getter
+@Getter @Setter
 @Accessors(fluent = true, chain = true)
-@Builder(builderMethodName = "do_not_call", buildMethodName = "get")
 @SuppressWarnings("unused")
 public final class DataSourceResource extends AbstractResource<DataSourceResource> {
     private final DataSourceName name;
-    private boolean xa;
+    private Boolean xa;
     private String driver;
     private String jndiName;
     private URI uri;
@@ -45,28 +43,22 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
     private Integer maxPoolSize;
     private Age maxPoolAge;
 
-    private DataSourceResource(@NonNull DataSourceName name, @NonNull Batch batch) {
+    public DataSourceResource(@NonNull DataSourceName name, @NonNull Batch batch) {
         super(batch);
         this.name = name;
     }
 
-    public static DataSourceResourceBuilder builder(DataSourceName name, Batch batch) {
-        DataSourceResourceBuilder builder = new DataSourceResourceBuilder();
-        builder.batch = batch;
-        return builder.name(name);
-    }
-
     public static List<DataSourceResource> allDataSources(Batch batch) {
         return Stream.concat(
-                readDataSources(batch, false),
-                readDataSources(batch, true))
-                     .sorted(comparing(DataSourceResource::name))
-                     .collect(toList());
+            readDataSources(batch, false),
+            readDataSources(batch, true))
+            .sorted(comparing(DataSourceResource::name))
+            .collect(toList());
     }
 
     private static Stream<DataSourceResource> readDataSources(Batch batch, boolean xa) {
         return batch.readResource(address(ALL, xa))
-                    .map(node -> toDataSourceResource(name(node, xa), batch, node.get("result"), xa));
+            .map(node -> toDataSourceResource(name(node, xa), batch, node.get("result"), xa));
     }
 
     private static DataSourceName name(ModelNode node, boolean xa) {
@@ -83,38 +75,13 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
         return dataSource;
     }
 
-    public static class DataSourceResourceBuilder implements Supplier<DataSourceResource> {
-        private Batch batch;
+    public Boolean isXa() { return xa == TRUE; }
 
-        public DataSourceResourceBuilder xa(Boolean value) {
-            xa = (value == TRUE);
-            return this;
-        }
-
-        @Override public DataSourceResource get() {
-            DataSourceResource dataSource = new DataSourceResource(name, batch);
-            dataSource.xa = xa;
-            dataSource.uri = uri;
-            dataSource.jndiName = jndiName;
-            dataSource.driver = driver;
-
-            dataSource.userName = userName;
-            dataSource.password = password;
-
-            dataSource.minPoolSize = minPoolSize;
-            dataSource.initialPoolSize = initialPoolSize;
-            dataSource.maxPoolSize = maxPoolSize;
-            dataSource.maxPoolAge = maxPoolAge;
-
-            return dataSource;
-        }
-    }
-
-    public Boolean xa() { return xa ? TRUE : null; }
+    public Boolean xa() { return isXa() ? TRUE : null; }
 
     @Override public String toString() {
-        return name + ":" + jndiName + ":" + driver + ":" + uri + ":" + (xa ? "xa" : "non-xa")
-                + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
+        return name + ":" + jndiName + ":" + driver + ":" + uri + ":" + (isXa() ? "xa" : "non-xa")
+            + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed");
     }
 
     @Override public boolean isDeployed() {
@@ -127,7 +94,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
         return deployed;
     }
 
-    @Override protected ModelNode address() { return address(name, xa); }
+    @Override protected ModelNode address() { return address(name, isXa()); }
 
     private static ModelNode address(DataSourceName name, boolean xa) {
         return Operations.createAddress(addressStrings(name, xa));
@@ -140,7 +107,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
     public void updateXa(Boolean newXa) {
         checkDeployed();
         addRemoveStep();
-        this.xa = (newXa == TRUE);
+        xa(newXa == TRUE);
         add();
     }
 
@@ -218,16 +185,16 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
             return result.get("connection-url").asString();
         ModelNode properties = result.get("xa-datasource-properties");
         return "jdbc:" + result.get("driver-name").asString()
-                + "://" + properties.get("ServerName").get("value").asString()
-                + (properties.has("PortNumber") ? ":" + properties.get("PortNumber").get("value").asInt() : "")
-                + "/" + properties.get("DatabaseName").get("value").asString();
+            + "://" + properties.get("ServerName").get("value").asString()
+            + (properties.has("PortNumber") ? ":" + properties.get("PortNumber").get("value").asInt() : "")
+            + "/" + properties.get("DatabaseName").get("value").asString();
     }
 
     @Override public void add() {
         log.debug("add data-source {}", name);
         ModelNode addDataSource = createAddOperation(address());
 
-        if (!xa)
+        if (!isXa())
             addDataSource.get("connection-url").set(uri.toString());
         addDataSource.get("jndi-name").set(jndiName);
         addDataSource.get("driver-name").set(driver);
@@ -247,7 +214,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
             addDataSource.get("idle-timeout-minutes").set(maxPoolAge.asMinutes());
 
         addStep(addDataSource);
-        if (xa) {
+        if (isXa()) {
             URI uri = (this.uri.getScheme().equals("jdbc")) ? URI.create(this.uri.getSchemeSpecificPart()) : this.uri;
             addStep(addXaProperty("ServerName", uri.getHost()));
             if (uri.getPort() >= 0)
@@ -272,7 +239,7 @@ public final class DataSourceResource extends AbstractResource<DataSourceResourc
     }
 
     private ModelNode xaPropertiesAddress(String propertyName) {
-        List<String> address = new ArrayList<>(addressStrings(name, xa));
+        List<String> address = new ArrayList<>(addressStrings(name, isXa()));
         address.add("xa-datasource-properties");
         address.add(propertyName);
         return Operations.createAddress(address);

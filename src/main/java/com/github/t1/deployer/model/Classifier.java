@@ -14,6 +14,8 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(access = PRIVATE, force = true)
 @JsonSerialize(using = ToStringSerializer.class)
 public class Classifier {
+    public static Classifier of(String classifier) { return (classifier == null) ? null : new Classifier(classifier); }
+
     @NonNull String value;
 
     @JsonCreator(mode = DELEGATING) public Classifier(@NonNull String value) { this.value = value; }

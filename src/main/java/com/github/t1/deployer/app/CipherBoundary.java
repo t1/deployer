@@ -1,7 +1,7 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.tools.CipherFacade;
+import com.github.t1.deployer.tools.CipherService;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,7 +15,7 @@ import javax.ws.rs.Path;
 @Slf4j
 public class CipherBoundary {
     @Inject
-    CipherFacade cipher;
+    CipherService cipher;
 
     @Inject @Config("key-store")
     KeyStoreConfig keyStore;

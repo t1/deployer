@@ -21,6 +21,8 @@ import static lombok.AccessLevel.PRIVATE;
 @XmlAccessorType(XmlAccessType.NONE)
 @JsonSerialize(using = ToStringSerializer.class)
 public class Version implements Comparable<Version> {
+    public static Version of(String version) { return (version == null) ? null : new Version(version); }
+
     @NonNull
     @XmlValue
     private final String value;

@@ -71,8 +71,9 @@ import static javax.ws.rs.core.Response.Status.OK;
 @Path("/")
 public class ArtifactoryMock {
     @SuppressWarnings("SpellCheckingInspection") private static final DateTimeFormatter TIMESTAMP
-            = new DateTimeFormatterBuilder().appendPattern("yyyyMMddHHmmss").toFormatter();
-    private static final String BASIC_FOO_BAR_AUTHORIZATION = "Basic Zm9vOmJhcg==";
+        = new DateTimeFormatterBuilder().appendPattern("yyyyMMddHHmmss").toFormatter();
+    private static final String FOO_BAR_AUTHORIZATION = "Zm9vOmJhcg=="; // foo:bar
+    private static final String AUTHORIZATION_BASIC_PREFIX = "basic ";
     private static final String MAVEN_METADATA_XML = "maven-metadata.xml";
 
     static boolean FAKES = false;
@@ -99,7 +100,7 @@ public class ArtifactoryMock {
             index(path);
         }
         return Objects.requireNonNull(index().inverse().get(path),
-                "no war checksum created for " + groupId + ":" + artifactId + ":" + version);
+            "no war checksum created for " + groupId + ":" + artifactId + ":" + version);
     }
 
     @SneakyThrows(IOException.class)
@@ -116,31 +117,31 @@ public class ArtifactoryMock {
         log.debug("create dummy meta-data {}:{}:{} in {}", groupId, artifactId, version, path);
         String lastUpdate = TIMESTAMP.format(Files.getLastModifiedTime(path).toInstant().atOffset(UTC));
         Files.write(path.getParent().resolve("maven-metadata-local.xml"),
-                ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                        + "<metadata modelVersion=\"1.1.0\">\n"
-                        + "  <groupId>" + groupId + "</groupId>\n"
-                        + "  <artifactId>" + artifactId + "</artifactId>\n"
-                        + "  <version>" + version + "</version>\n"
-                        + "  <versioning>\n"
-                        + "    <snapshot>\n"
-                        + "      <localCopy>true</localCopy>\n"
-                        + "    </snapshot>\n"
-                        + "    <lastUpdated>" + lastUpdate + "</lastUpdated>\n"
-                        + "    <snapshotVersions>\n"
-                        + "      <snapshotVersion>\n"
-                        + "        <extension>war</extension>\n"
-                        + "        <value>" + version + "</value>\n"
-                        + "        <updated>" + lastUpdate + "</updated>\n"
-                        + "      </snapshotVersion>\n"
-                        + "      <snapshotVersion>\n"
-                        + "        <extension>pom</extension>\n"
-                        + "        <value>" + version + "</value>\n"
-                        + "        <updated>" + lastUpdate + "</updated>\n"
-                        + "      </snapshotVersion>\n"
-                        + "    </snapshotVersions>\n"
-                        + "  </versioning>\n"
-                        + "</metadata>\n"
-                ).getBytes());
+            ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<metadata modelVersion=\"1.1.0\">\n"
+                + "  <groupId>" + groupId + "</groupId>\n"
+                + "  <artifactId>" + artifactId + "</artifactId>\n"
+                + "  <version>" + version + "</version>\n"
+                + "  <versioning>\n"
+                + "    <snapshot>\n"
+                + "      <localCopy>true</localCopy>\n"
+                + "    </snapshot>\n"
+                + "    <lastUpdated>" + lastUpdate + "</lastUpdated>\n"
+                + "    <snapshotVersions>\n"
+                + "      <snapshotVersion>\n"
+                + "        <extension>war</extension>\n"
+                + "        <value>" + version + "</value>\n"
+                + "        <updated>" + lastUpdate + "</updated>\n"
+                + "      </snapshotVersion>\n"
+                + "      <snapshotVersion>\n"
+                + "        <extension>pom</extension>\n"
+                + "        <value>" + version + "</value>\n"
+                + "        <updated>" + lastUpdate + "</updated>\n"
+                + "      </snapshotVersion>\n"
+                + "    </snapshotVersions>\n"
+                + "  </versioning>\n"
+                + "</metadata>\n"
+            ).getBytes());
     }
 
     public static Checksum checksumFor(GroupId groupId, ArtifactId artifactId, ArtifactType type, Version version) {
@@ -150,30 +151,30 @@ public class ArtifactoryMock {
             index(path);
         }
         return Objects.requireNonNull(index().inverse().get(path),
-                "no checksum for " + groupId + ":" + artifactId + ":" + type + ":" + version);
+            "no checksum for " + groupId + ":" + artifactId + ":" + type + ":" + version);
     }
 
     private static java.nio.file.Path toPath(GroupId groupId, ArtifactId artifactId, ArtifactType type,
                                              Version version) {
         return groupId.asPath().resolve(artifactId.getValue()).resolve(version.getValue())
-                .resolve(artifactId + "-" + version + "." + type);
+            .resolve(artifactId + "-" + version + "." + type);
     }
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     private static void download(GroupId groupId, ArtifactId artifactId, ArtifactType type, Version version) {
         log.debug("download {}:{}:{}:{}", groupId, artifactId, type, version);
         File out = Paths.get("target/download-" + groupId + ":" + artifactId + ":" + type + ":" + version + ".out")
-                .toFile();
+            .toFile();
         Process process = new ProcessBuilder(
-                "mvn",
-                "dependency:get",
-                "-D" + "groupId=" + groupId,
-                "-D" + "artifactId=" + artifactId,
-                "-D" + "packaging=" + type,
-                "-D" + "version=" + version)
-                .redirectOutput(appendTo(out))
-                .redirectError(appendTo(out))
-                .start();
+            "mvn",
+            "dependency:get",
+            "-D" + "groupId=" + groupId,
+            "-D" + "artifactId=" + artifactId,
+            "-D" + "packaging=" + type,
+            "-D" + "version=" + version)
+            .redirectOutput(appendTo(out))
+            .redirectError(appendTo(out))
+            .start();
         int returnCode = process.waitFor();
         assert returnCode == 0 : "unexpected return code: " + returnCode + ". see mvn output in " + out;
     }
@@ -188,7 +189,8 @@ public class ArtifactoryMock {
         if (INDEX.isEmpty())
             if (Files.isReadable(MAVEN_INDEX_FILE))
                 readIndex();
-            else log.warn("index file not readable: {}", MAVEN_INDEX_FILE);
+            else
+                log.warn("index file not readable: {}", MAVEN_INDEX_FILE);
         return INDEX;
     }
 
@@ -215,15 +217,15 @@ public class ArtifactoryMock {
     static void writeIndex() {
         try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
             INDEX.entrySet().stream()
-                    .sorted(Comparator.comparing(Map.Entry::getValue))
-                    .forEach(entry -> write(writer, entry));
+                .sorted(Comparator.comparing(Map.Entry::getValue))
+                .forEach(entry -> write(writer, entry));
         }
     }
 
     private static void write(BufferedWriter writer, Map.Entry<Checksum, java.nio.file.Path> entry) {
         try {
             writer.append(entry.getKey().hexString()).append(":")
-                    .append(entry.getValue().toString()).append("\n");
+                .append(entry.getValue().toString()).append("\n");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -242,22 +244,22 @@ public class ArtifactoryMock {
     static final Version CURRENT_FOO_VERSION = new Version("1.3.1");
 
     private static final List<Version> FOO_VERSIONS = asList(
-            NEWEST_FOO_VERSION,
-            new Version("1.3.12"),
-            new Version("1.3.2"),
-            CURRENT_FOO_VERSION,
-            new Version("1.3.0"),
-            new Version("1.2.1"),
-            new Version("1.2.1.1"),
-            new Version("1.2.1-SNAPSHOT"),
-            new Version("1.2.0")
+        NEWEST_FOO_VERSION,
+        new Version("1.3.12"),
+        new Version("1.3.2"),
+        CURRENT_FOO_VERSION,
+        new Version("1.3.0"),
+        new Version("1.2.1"),
+        new Version("1.2.1.1"),
+        new Version("1.2.1-SNAPSHOT"),
+        new Version("1.2.0")
     );
 
     private static final Version CURRENT_BAR_VERSION = new Version("0.3");
 
     private static final List<Version> BAR_VERSIONS = asList(
-            CURRENT_BAR_VERSION,
-            new Version("0.2")
+        CURRENT_BAR_VERSION,
+        new Version("0.2")
     );
 
     public static final class StringInputStream extends ByteArrayInputStream {
@@ -305,11 +307,11 @@ public class ArtifactoryMock {
         if (kills != null)
             lives -= kills;
         return Response.status(lives > 0 ? OK : BAD_GATEWAY)
-                .type(APPLICATION_JSON_TYPE)
-                .entity("{" +
-                        "\"status\":\"ok\"," +
-                        "\"lives\":\"" + lives + "\"" +
-                        "}\n").build();
+            .type(APPLICATION_JSON_TYPE)
+            .entity("{" +
+                "\"status\":\"ok\"," +
+                "\"lives\":\"" + lives + "\"" +
+                "}\n").build();
     }
 
     @POST
@@ -320,8 +322,8 @@ public class ArtifactoryMock {
     @Path("/api/search/checksum")
     @Produces("application/vnd.org.jfrog.artifactory.search.ChecksumSearchResult+json")
     public String searchByChecksum(
-            @HeaderParam("Authorization") String authorization,
-            @QueryParam("sha1") Checksum checksum) {
+        @HeaderParam("Authorization") String authorization,
+        @QueryParam("sha1") Checksum checksum) {
         checkAuthorization(authorization);
         log.debug("search by checksum: {}", checksum);
         if (checksum == null)
@@ -336,7 +338,9 @@ public class ArtifactoryMock {
             return;
         if (authorization == null)
             throw new RuntimeException("missing authorization");
-        if (!BASIC_FOO_BAR_AUTHORIZATION.equals(authorization))
+        if (!authorization.toLowerCase().startsWith(AUTHORIZATION_BASIC_PREFIX))
+            throw new RuntimeException("missing 'basic' prefix in authorization");
+        if (!FOO_BAR_AUTHORIZATION.equals(authorization.substring(AUTHORIZATION_BASIC_PREFIX.length())))
             throw new RuntimeException("wrong credentials");
     }
 
@@ -349,7 +353,7 @@ public class ArtifactoryMock {
             throw new RuntimeException("fake error in repo");
         } else if (AMBIGUOUS_CHECKSUM.equals(checksum)) {
             return fileSearchResult(new DeploymentName("x"), new Version("1.0")) + ","
-                    + fileSearchResult(new DeploymentName("y"), new Version("2.0"));
+                + fileSearchResult(new DeploymentName("y"), new Version("2.0"));
         } else if (UNKNOWN_CHECKSUM.equals(checksum)) {
             return "";
         } else if (isIndexed(checksum)) {
@@ -398,9 +402,9 @@ public class ArtifactoryMock {
 
     private static java.nio.file.Path fakePathFor(DeploymentName name, Version version) {
         return REPO_NAME.resolve(fakeGroupId(name).replace(".", "/"))
-                .resolve(fakeArtifactId(name))
-                .resolve(version.toString())
-                .resolve(name + "-" + version + ".war");
+            .resolve(fakeArtifactId(name))
+            .resolve(version.toString())
+            .resolve(name + "-" + version + ".war");
     }
 
     private static String fakeGroupId(DeploymentName name) { return "org." + name; }
@@ -409,9 +413,9 @@ public class ArtifactoryMock {
 
     private String fileSearchResult(String path) {
         return "{"
-                + "\"uri\":\"" + base("api/storage/" + path) + "\",\n"
-                + "\"downloadUri\" : \"" + base(path) + "\"\n"
-                + "}";
+            + "\"uri\":\"" + base("api/storage/" + path) + "\",\n"
+            + "\"downloadUri\" : \"" + base(path) + "\"\n"
+            + "}";
     }
 
     private boolean isIndexed(Checksum checksum) {
@@ -421,7 +425,7 @@ public class ArtifactoryMock {
     private static DeploymentName fakeNameFor(Checksum checksum) {
         if (checksum.hexString().length() < 6)
             throw new RuntimeException("checkSum too short. must be at least 6 characters for fake context root: ["
-                    + checksum.hexString() + "]");
+                + checksum.hexString() + "]");
         return new DeploymentName("fake-" + checksum.hexString().substring(0, 6));
     }
 
@@ -447,18 +451,18 @@ public class ArtifactoryMock {
         checkAuthorization(authorization);
         log.debug("get file/folder info for {} in {}", path, repoKey);
         String info = "{\n"
-                + "   \"repo\" : \"" + repoKey + "\",\n"
-                + "   \"path\" : \"/" + path + "\",\n"
-                + "   \"created\" : \"2014-04-02T16:21:31.385+02:00\",\n"
-                + "   \"createdBy\" : \"kirk\",\n"
-                + "   \"modifiedBy\" : \"spock\",\n"
-                + "   \"lastModified\" : \"2014-04-02T16:21:31.385+02:00\",\n"
-                + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n"
-                + info(Paths.get(path), repoKey.toLowerCase().contains("snapshot"))
-                + "   \"downloadUri\": \"" + base(repoKey + "/" + path) + "\",\n"
-                + "   \"remoteUrl\": \"http://jcenter.bintray.com/" + path + "\",\n"
-                + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n"
-                + "}\n";
+            + "   \"repo\" : \"" + repoKey + "\",\n"
+            + "   \"path\" : \"/" + path + "\",\n"
+            + "   \"created\" : \"2014-04-02T16:21:31.385+02:00\",\n"
+            + "   \"createdBy\" : \"kirk\",\n"
+            + "   \"modifiedBy\" : \"spock\",\n"
+            + "   \"lastModified\" : \"2014-04-02T16:21:31.385+02:00\",\n"
+            + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n"
+            + info(Paths.get(path), repoKey.toLowerCase().contains("snapshot"))
+            + "   \"downloadUri\": \"" + base(repoKey + "/" + path) + "\",\n"
+            + "   \"remoteUrl\": \"http://jcenter.bintray.com/" + path + "\",\n"
+            + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n"
+            + "}\n";
         return Response.ok(info, info.contains("\"children\"") ? FOLDER_INFO : FILE_INFO).build();
     }
 
@@ -490,15 +494,15 @@ public class ArtifactoryMock {
             return fileInfo(12345, checksum, checksum);
         }
         throw new WebApplicationException(Response
-                .status(NOT_FOUND)
-                .type(APPLICATION_JSON)
-                .entity("{\n"
-                        + "  \"errors\" : [ {\n"
-                        + "    \"status\" : 404,\n"
-                        + "    \"message\" : \"Unable to find item\"\n"
-                        + "  } ]\n"
-                        + "}")
-                .build());
+            .status(NOT_FOUND)
+            .type(APPLICATION_JSON)
+            .entity("{\n"
+                + "  \"errors\" : [ {\n"
+                + "    \"status\" : 404,\n"
+                + "    \"message\" : \"Unable to find item\"\n"
+                + "  } ]\n"
+                + "}")
+            .build());
     }
 
     private String folderInfo(java.nio.file.Path path, boolean snapshot) throws IOException {
@@ -506,23 +510,23 @@ public class ArtifactoryMock {
         if (isIndexed(path)) {
             log.debug("indexed folder info {}", path);
             Files.walkFileTree(MAVEN_REPOSITORY.resolve(path), EnumSet.noneOf(FileVisitOption.class), 1,
-                    new SimpleFileVisitor<java.nio.file.Path>() {
-                        @Override
-                        public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attributes) {
-                            String fileName = path.getFileName().toString();
-                            if (Files.isDirectory(path)) {
-                                boolean snapshotFolder = fileName.contains("-SNAPSHOT");
-                                if (snapshot == snapshotFolder) {
-                                    String folder = folderChild(fileName);
-                                    out.append(folder);
-                                }
-                            } else {
-                                String file = fileChild(fileName);
-                                out.append(file);
+                new SimpleFileVisitor<java.nio.file.Path>() {
+                    @Override
+                    public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attributes) {
+                        String fileName = path.getFileName().toString();
+                        if (Files.isDirectory(path)) {
+                            boolean snapshotFolder = fileName.contains("-SNAPSHOT");
+                            if (snapshot == snapshotFolder) {
+                                String folder = folderChild(fileName);
+                                out.append(folder);
                             }
-                            return FileVisitResult.CONTINUE;
+                        } else {
+                            String file = fileChild(fileName);
+                            out.append(file);
                         }
-                    });
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
         } else if (FAKES) {
             log.debug("fake folder info {}", path);
             for (Version version : fakeVersionsFor(new DeploymentName(path.toString()))) {
@@ -577,18 +581,18 @@ public class ArtifactoryMock {
 
     private String folderChild(String fileName) {
         return "      {\n"
-                + "         \"folder\" : true,\n"
-                + "         \"uri\" : \"/" + fileName + "\"\n"
-                + "      },\n"
-                ;
+            + "         \"folder\" : true,\n"
+            + "         \"uri\" : \"/" + fileName + "\"\n"
+            + "      },\n"
+            ;
     }
 
     private String fileChild(String fileName) {
         return "      {\n"
-                + "         \"folder\" : false,\n"
-                + "         \"uri\" : \"/" + fileName + "\"\n"
-                + "      },\n"
-                ;
+            + "         \"folder\" : false,\n"
+            + "         \"uri\" : \"/" + fileName + "\"\n"
+            + "      },\n"
+            ;
     }
 
     private String fileInfo(java.nio.file.Path path) throws IOException {
@@ -601,30 +605,30 @@ public class ArtifactoryMock {
 
     private String fileInfo(long size, Checksum sha1, Checksum md5) {
         return "  \"mimeType\" : \"application/java-archive\",\n"
-                + "  \"size\" : \"" + size + "\",\n"
-                + "  \"checksums\" : {\n"
-                + "    \"sha1\" : \"" + sha1 + "\",\n"
-                + "    \"md5\" : \"" + md5 + "\"\n"
-                + "  },\n"
-                + "  \"originalChecksums\" : {\n"
-                + "    \"sha1\" : \"" + sha1 + "\"\n"
-                // + "    \"md5\" : \"" + md5 + "\"\n"
-                + "  },\n";
+            + "  \"size\" : \"" + size + "\",\n"
+            + "  \"checksums\" : {\n"
+            + "    \"sha1\" : \"" + sha1 + "\",\n"
+            + "    \"md5\" : \"" + md5 + "\"\n"
+            + "  },\n"
+            + "  \"originalChecksums\" : {\n"
+            + "    \"sha1\" : \"" + sha1 + "\"\n"
+            // + "    \"md5\" : \"" + md5 + "\"\n"
+            + "  },\n";
     }
 
     @GET
     @Path("/{repoKey}/{path:.*}")
     @Produces(APPLICATION_XML)
     public InputStream getMetaData(
-            @HeaderParam("Authorization") String authorization,
-            @SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
-            @PathParam("path") String pathString)
-            throws IOException {
+        @HeaderParam("Authorization") String authorization,
+        @SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
+        @PathParam("path") String pathString)
+        throws IOException {
         checkAuthorization(authorization);
         if (!pathString.endsWith(MAVEN_METADATA_XML))
             throw notFound("mock can only serve xml for " + MAVEN_METADATA_XML);
         pathString = pathString.substring(0, pathString.length() - MAVEN_METADATA_XML.length())
-                + "maven-metadata-local.xml";
+            + "maven-metadata-local.xml";
         java.nio.file.Path path = Paths.get(pathString);
         java.nio.file.Path repoPath = MAVEN_REPOSITORY.resolve(path);
         if (!Files.isRegularFile(repoPath)) {
@@ -640,10 +644,10 @@ public class ArtifactoryMock {
     @Path("/{repoKey}/{path:.*}")
     @Produces("application/java-archive")
     public InputStream getFileStream(
-            @HeaderParam("Authorization") String authorization,
-            @SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
-            @PathParam("path") String pathString)
-            throws IOException {
+        @HeaderParam("Authorization") String authorization,
+        @SuppressWarnings("unused") @PathParam("repoKey") String repoKey,
+        @PathParam("path") String pathString)
+        throws IOException {
         checkAuthorization(authorization);
         java.nio.file.Path path = Paths.get(pathString);
         if (isIndexed(path)) {

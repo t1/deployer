@@ -3,7 +3,7 @@ package com.github.t1.deployer.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.github.t1.deployer.tools.CipherFacade;
+import com.github.t1.deployer.tools.CipherService;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.problem.ReturnStatus;
 import com.github.t1.problem.WebApplicationApplicationException;
@@ -90,8 +90,8 @@ public class Expressions {
 
     private static Map<VariableName, String> systemProperties() {
         return System.getProperties().stringPropertyNames().stream()
-                     .filter(name -> NAME_TOKEN.matcher(name).matches())
-                     .collect(toMap(VariableName::new, System::getProperty));
+            .filter(name -> NAME_TOKEN.matcher(name).matches())
+            .collect(toMap(VariableName::new, System::getProperty));
     }
 
     public Expressions with(VariableName name, String value) { return withAllNew(singletonMap(name, value)); }
@@ -103,12 +103,13 @@ public class Expressions {
     private Expressions withAll(Map<VariableName, String> variables, boolean checkNotDefined) {
         if (variables == null || variables.isEmpty())
             return this;
-        Map<VariableName, String> builder = new LinkedHashMap<>();
-        builder.putAll(this.variables);
+        Map<VariableName, String> builder = new LinkedHashMap<>(this.variables);
         for (Map.Entry<VariableName, String> entry : variables.entrySet()) {
             VariableName name = entry.getKey();
             if (checkNotDefined)
                 checkNotDefined(name);
+            if (entry.getValue() == null || entry.getValue().isEmpty())
+                continue;
             builder.put(name, entry.getValue());
         }
         return withVariables(ImmutableMap.copyOf(builder));
@@ -137,10 +138,10 @@ public class Expressions {
         int tail = 0;
         boolean hasNullValue = false;
         while (matcher.find()) {
-            out.append(line.substring(tail, matcher.start()));
+            out.append(line, tail, matcher.start());
             if (matcher.start() > 0 && line.charAt(matcher.start() - 1) == '$') {
                 // +1 to skip the var-$ as we already copied the escape-$
-                out.append(line.substring(matcher.start() + 1, matcher.end()));
+                out.append(line, matcher.start() + 1, matcher.end());
             } else {
                 String expression = groupOneOr(matcher, alternative);
                 Match match = resolver().match(expression);
@@ -218,13 +219,13 @@ public class Expressions {
                 for (Resolver resolver : resolvers) {
                     Match match = resolver.match(subExpression);
                     switch (match.mode) {
-                    case matches:
-                        return match;
-                    case stop:
-                        break resolvers;
-                    case proceed:
-                        //noinspection UnnecessaryContinue
-                        continue resolvers;
+                        case matches:
+                            return match;
+                        case stop:
+                            break resolvers;
+                        case proceed:
+                            //noinspection UnnecessaryContinue
+                            continue resolvers;
                     }
                 }
             }
@@ -256,16 +257,16 @@ public class Expressions {
 
         private String doSwitch(String expression) {
             String head = findBrackets("()", expression)
-                    .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch statement"));
+                .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch statement"));
             String value = resolver().match(head).orElseThrow(() ->
-                    new IllegalArgumentException("no variable defined in switch header: '" + head + "'"));
-            String body = expression.substring(head.length() + 2, expression.length());
+                new IllegalArgumentException("no variable defined in switch header: '" + head + "'"));
+            String body = expression.substring(head.length() + 2);
             int i = body.indexOf(" " + value + ":");
             if (i < 0)
                 throw new IllegalArgumentException("no case label for '" + value + "' in switch statement");
-            String rest = body.substring(i + value.length() + 2, body.length()).trim();
+            String rest = body.substring(i + value.length() + 2).trim();
             return findBrackets("«»", rest)
-                    .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch literal"));
+                .orElseThrow(() -> new IllegalArgumentException("unmatched brackets for switch literal"));
         }
     }
 
@@ -321,10 +322,10 @@ public class Expressions {
 
     private static final String ROOT_BUNDLE = "root-bundle:";
     private static final ImmutableMap<String, Function<RootBundleConfig, String>> BUNDLE = ImmutableMap.of(
-            "group-id", c -> (c.getGroupId() == null) ? null : c.getGroupId().getValue(),
-            "artifact-id", c -> (c.getArtifactId() == null) ? null : c.getArtifactId().getValue(),
-            "classifier", c -> (c.getClassifier() == null) ? null : c.getClassifier().getValue(),
-            "version", c -> (c.getVersion() == null) ? null : c.getVersion().getValue());
+        "group-id", c -> (c.getGroupId() == null) ? null : c.getGroupId().getValue(),
+        "artifact-id", c -> (c.getArtifactId() == null) ? null : c.getArtifactId().getValue(),
+        "classifier", c -> (c.getClassifier() == null) ? null : c.getClassifier().getValue(),
+        "version", c -> (c.getVersion() == null) ? null : c.getVersion().getValue());
 
     private class RootBundleResolver implements Resolver {
         @Override public Match match(String expression) {
@@ -346,7 +347,7 @@ public class Expressions {
     private static final Pattern FUNCTION = Pattern.compile("(?<name>" + NAME_TOKEN + ")" + "(\\((?<body>.*)\\))");
 
     private class FunctionResolver implements Resolver {
-        private final CipherFacade cipher = new CipherFacade();
+        private final CipherService cipher = new CipherService();
 
         @Override public Match match(String expression) {
             Matcher matcher = FUNCTION.matcher(expression);
@@ -363,24 +364,24 @@ public class Expressions {
             private Match match() {
                 log.trace("found function name [{}] with {} params", functionName, params.size());
                 switch (functionName + "#" + params.size()) {
-                case "hostName#0":
-                    return Match.of(hostName());
-                case "domainName#0":
-                    return Match.of(domainName());
-                case "toUpperCase#1":
-                    return apply1(s -> s.toUpperCase(US));
-                case "toLowerCase#1":
-                    return apply1(s -> s.toLowerCase(US));
-                case "toInitCap#1":
-                    return apply1(this::toInitCap);
-                case "decrypt#1":
-                    return apply1(this::decrypt);
-                case "decrypt#2":
-                    return apply2(this::decrypt);
-                case "regex#2":
-                    return applyRegex();
-                default:
-                    throw badRequest("undefined function [" + functionName + "] with " + params.size() + " params");
+                    case "hostName#0":
+                        return Match.of(hostName());
+                    case "domainName#0":
+                        return Match.of(domainName());
+                    case "toUpperCase#1":
+                        return apply1(s -> s.toUpperCase(US));
+                    case "toLowerCase#1":
+                        return apply1(s -> s.toLowerCase(US));
+                    case "toInitCap#1":
+                        return apply1(this::toInitCap);
+                    case "decrypt#1":
+                        return apply1(this::decrypt);
+                    case "decrypt#2":
+                        return apply2(this::decrypt);
+                    case "regex#2":
+                        return applyRegex();
+                    default:
+                        throw badRequest("undefined function [" + functionName + "] with " + params.size() + " params");
                 }
             }
 
@@ -392,8 +393,8 @@ public class Expressions {
                 Optional<String> param0 = param(0);
                 Optional<String> param1 = param(1);
                 return (param0.isPresent() && param1.isPresent())
-                        ? Match.of(function.apply(param0.get(), param1.get()))
-                        : Match.PROCEED;
+                    ? Match.of(function.apply(param0.get(), param1.get()))
+                    : Match.PROCEED;
             }
 
             private Optional<String> param(int index) { return Optional.ofNullable(params.get(index).get()); }
@@ -405,7 +406,7 @@ public class Expressions {
             private String decrypt(String text) { return cipher.decrypt(text, keyStore); }
 
             private String decrypt(String text, String alias) {
-                return cipher.decrypt(text, keyStore.withAlias(alias));
+                return cipher.decrypt(text, keyStore.setAlias(alias));
             }
 
             private Match applyRegex() {
@@ -420,10 +421,10 @@ public class Expressions {
 
         private List<Supplier<String>> params(CharSequence body) {
             return split(body, ",")
-                    .stream()
-                    .map(String::trim)
-                    .map(expression -> (Supplier<String>) () -> resolver().match(expression).getValue())
-                    .collect(toList());
+                .stream()
+                .map(String::trim)
+                .map(expression -> (Supplier<String>) () -> resolver().match(expression).getValue())
+                .collect(toList());
         }
     }
 
@@ -446,7 +447,8 @@ public class Expressions {
 
     private static int count(char c, String string) {
         int n = -1, offset = -1;
-        do {
+        do
+        {
             ++n;
             offset = string.indexOf(c, offset + 1);
         } while (offset >= 0);

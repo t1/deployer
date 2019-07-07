@@ -14,6 +14,8 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(access = PRIVATE, force = true)
 @JsonSerialize(using = ToStringSerializer.class)
 public class ArtifactId {
+    public static ArtifactId of(String value) { return (value == null) ? null : new ArtifactId(value);}
+
     @NonNull String value;
 
     @JsonCreator(mode = DELEGATING) public ArtifactId(@NonNull String value) { this.value = value; }

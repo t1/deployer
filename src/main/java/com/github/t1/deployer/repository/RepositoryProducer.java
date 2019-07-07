@@ -1,48 +1,41 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.Config;
-import com.github.t1.deployer.model.Password;
-import com.github.t1.rest.Credentials;
-import com.github.t1.rest.RestContext;
-import com.github.t1.rest.RestResource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.conn.HttpHostConnectException;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import java.net.URI;
 import java.net.UnknownHostException;
 
 import static com.github.t1.deployer.repository.RepositoryType.artifactory;
 import static com.github.t1.deployer.repository.RepositoryType.mavenCentral;
 import static com.github.t1.deployer.tools.Tools.nvl;
-import static com.github.t1.rest.RestContext.REST;
 
 @Slf4j
 @ApplicationScoped
 class RepositoryProducer {
     static final URI DEFAULT_ARTIFACTORY_URI = URI.create("http://localhost:8081/artifactory");
-    static final URI DEFAULT_MAVEN_CENTRAL_URI = URI.create("https://search.maven.org");
-    static final String REST_ALIAS = "repository";
+    private static final URI DEFAULT_MAVEN_CENTRAL_URI = URI.create("https://search.maven.org");
 
     @Inject @Config("repository.type") RepositoryType type;
     @Inject @Config("repository.uri") URI uri;
-    @Inject @Config("repository.username") String username;
-    @Inject @Config("repository.password") Password password;
     @Inject @Config("repository.snapshots") String repositorySnapshots;
     @Inject @Config("repository.releases") String repositoryReleases;
 
-    RestContext rest = REST;
+    private final Client client = ClientBuilder.newClient();
 
     @Produces Repository repository() {
         if (type == null)
             type = lookupType();
         switch (type) {
-        case mavenCentral:
-            return new MavenCentralRepository(mavenCentralContext());
-        case artifactory:
-            return new ArtifactoryRepository(artifactoryContext(),
+            case mavenCentral:
+                return new MavenCentralRepository(client.target(DEFAULT_MAVEN_CENTRAL_URI));
+            case artifactory:
+                return new ArtifactoryRepository(client.target(artifactoryUri()),
                     nvl(repositorySnapshots, "snapshots-virtual"),
                     nvl(repositoryReleases, "releases-virtual"));
         }
@@ -51,41 +44,27 @@ class RepositoryProducer {
 
     private RepositoryType lookupType() {
         log.debug("lookup repository type");
-        RestResource resource = artifactoryContext().resource(REST_ALIAS);
-        log.debug("try {}", resource.uri());
-        if (replies(resource)) {
-            log.info("{} did reply... choose artifactory", resource.uri());
+        URI artifactoryUri = artifactoryUri();
+        log.debug("try {}", artifactoryUri);
+        if (replies(artifactoryUri)) {
+            log.info("{} did reply... choose artifactory", artifactoryUri);
             return artifactory;
         }
-        log.info("{} did NOT reply... fall back to maven central", resource.uri());
+        log.info("{} did NOT reply... fall back to maven central", artifactoryUri);
         return mavenCentral;
     }
 
-    private boolean replies(RestResource resource) {
+    private URI artifactoryUri() { return nvl(uri, DEFAULT_ARTIFACTORY_URI); }
+
+    private boolean replies(URI uri) {
         try {
-            resource.GET_Response();
+            client.target(uri).request().get();
             return true;
         } catch (RuntimeException e) {
             if ((e.getCause() instanceof UnknownHostException)
-                    || (e.getCause() instanceof HttpHostConnectException
-                                && e.getCause().getMessage().contains("Connection refused")))
+                || (e.getCause().getMessage().contains("Connection refused")))
                 return false;
             throw e;
         }
-    }
-
-    private RestContext mavenCentralContext() { return rest(DEFAULT_MAVEN_CENTRAL_URI); }
-
-    private RestContext artifactoryContext() { return rest(nvl(uri, DEFAULT_ARTIFACTORY_URI)); }
-
-    private RestContext rest(URI baseUri) {
-        if (baseUri != null)
-            rest = rest.register(REST_ALIAS, baseUri);
-        if (username != null && password != null) {
-            log.debug("register {} credentials for {}", username, baseUri);
-            Credentials credentials = new Credentials(username, password.getValue());
-            rest = rest.register(baseUri, credentials);
-        }
-        return rest;
     }
 }

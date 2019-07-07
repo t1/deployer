@@ -4,9 +4,9 @@ import com.github.t1.deployer.model.LogHandlerName;
 import com.github.t1.deployer.model.LogHandlerType;
 import com.github.t1.log.LogLevel;
 import com.google.common.collect.ImmutableMap;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.as.controller.client.helpers.Operations;
@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import static com.github.t1.deployer.container.LoggerResource.mapLogLevel;
 import static com.github.t1.deployer.model.LogHandlerName.ALL;
@@ -27,8 +26,7 @@ import static java.util.stream.Collectors.toList;
 import static org.jboss.as.controller.client.helpers.Operations.createAddOperation;
 
 @Slf4j
-@Builder(builderMethodName = "do_not_call", buildMethodName = "get")
-@Accessors(fluent = true, chain = true)
+@Getter @Setter @Accessors(fluent = true, chain = true)
 @SuppressWarnings("unused")
 public final class LogHandlerResource extends AbstractResource<LogHandlerResource> {
     /** the format is asymmetric, i.e. when you don't write it, you'll get this when reading. */
@@ -49,25 +47,19 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
     private String class_;
     private Map<String, String> properties;
 
-    private LogHandlerResource(LogHandlerType type, LogHandlerName name, Batch batch) {
+    public LogHandlerResource(@NotNull LogHandlerType type, @NotNull LogHandlerName name, Batch batch) {
         super(batch);
         this.type = type;
         this.name = name;
     }
 
-    public static LogHandlerResourceBuilder builder(LogHandlerType type, LogHandlerName name, Batch batch) {
-        LogHandlerResourceBuilder builder = new LogHandlerResourceBuilder().type(type).name(name);
-        builder.batch = batch;
-        return builder;
-    }
-
-    public static List<LogHandlerResource> allHandlers(Batch batch) {
+    static List<LogHandlerResource> allHandlers(Batch batch) {
         return Arrays.stream(LogHandlerType.values())
-                     .flatMap(type -> batch
-                             .readResource(address(type, ALL))
-                             .map(node -> toLoggerResource(type(node), name(node), batch, node.get("result"))))
-                     .sorted(comparing(LogHandlerResource::name))
-                     .collect(toList());
+            .flatMap(type -> batch
+                .readResource(address(type, ALL))
+                .map(node -> toLoggerResource(type(node), name(node), batch, node.get("result"))))
+            .sorted(comparing(LogHandlerResource::name))
+            .collect(toList());
     }
 
     private static LogHandlerType type(ModelNode node) {
@@ -79,32 +71,11 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
     }
 
     private static LogHandlerResource toLoggerResource(LogHandlerType type, LogHandlerName name, Batch batch,
-            ModelNode node) {
+                                                       ModelNode node) {
         LogHandlerResource logger = new LogHandlerResource(type, name, batch);
         logger.readFrom(node);
         logger.deployed = true;
         return logger;
-    }
-
-    public static class LogHandlerResourceBuilder implements Supplier<LogHandlerResource> {
-        private Batch batch;
-
-        @Override public LogHandlerResource get() {
-            LogHandlerResource resource = new LogHandlerResource(type, name, batch);
-            resource.level = level;
-            resource.format = format;
-            resource.formatter = formatter;
-            resource.encoding = encoding;
-
-            resource.file = file;
-            resource.suffix = suffix;
-
-            resource.module = module;
-            resource.class_ = class_;
-            resource.properties = properties;
-
-            return resource;
-        }
     }
 
     public LogLevel level() {
@@ -154,14 +125,14 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
 
     @Override public String toString() {
         return type + ":" + name + ((deployed == null) ? ":?" : deployed ? ":deployed" : ":undeployed") + ":" + level
-                + ((format == null) ? "" : ":" + format)
-                + ((formatter == null) ? "" : ":" + formatter)
-                + ((encoding == null) ? "" : ":" + encoding)
-                + ((file == null) ? "" : ":" + file)
-                + ((suffix == null) ? "" : ":" + suffix)
-                + ((module == null) ? "" : ":" + module)
-                + ((class_ == null) ? "" : ":" + class_)
-                + ((properties == null) ? "" : ":" + properties);
+            + ((format == null) ? "" : ":" + format)
+            + ((formatter == null) ? "" : ":" + formatter)
+            + ((encoding == null) ? "" : ":" + encoding)
+            + ((file == null) ? "" : ":" + file)
+            + ((suffix == null) ? "" : ":" + suffix)
+            + ((module == null) ? "" : ":" + module)
+            + ((class_ == null) ? "" : ":" + class_)
+            + ((properties == null) ? "" : ":" + properties);
     }
 
     public void updateLevel(LogLevel newLevel) {
@@ -237,7 +208,7 @@ public final class LogHandlerResource extends AbstractResource<LogHandlerResourc
     }
 
     private ImmutableMap.Builder<String, String> propertiesBuilder() {
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder();
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         if (this.properties != null)
             builder.putAll(this.properties);
         return builder;

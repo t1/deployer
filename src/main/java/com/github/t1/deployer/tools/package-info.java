@@ -1,6 +1,5 @@
 @DependsUpon(packagesOf = {
         com.github.t1.problem.ProblemDetail.class,
-        com.github.t1.rest.fallback.ConverterTools.class,
 
         com.fasterxml.jackson.annotation.JsonProperty.class,
         com.fasterxml.jackson.core.JsonParser.class,

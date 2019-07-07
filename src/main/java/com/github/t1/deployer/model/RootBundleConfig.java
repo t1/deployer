@@ -3,15 +3,14 @@ package com.github.t1.deployer.model;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Value;
+import lombok.experimental.Accessors;
 
 import static lombok.AccessLevel.PRIVATE;
 
-@Value
-@Builder(toBuilder = true)
-@NoArgsConstructor(access = PRIVATE, force = true)
+@Data @Accessors(chain = true)
+@NoArgsConstructor(force = true)
 @AllArgsConstructor(access = PRIVATE)
 @JsonNaming(KebabCaseStrategy.class)
 public class RootBundleConfig {

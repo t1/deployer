@@ -1,9 +1,10 @@
 package com.github.t1.deployer.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NonNull;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,20 +14,20 @@ import java.util.function.Supplier;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static lombok.AccessLevel.PRIVATE;
 
-@Builder
-@Getter
+@Getter @Setter @Accessors(chain = true)
+@NoArgsConstructor
 @AllArgsConstructor(access = PRIVATE)
 public class Artifact {
-    @NonNull private final GroupId groupId;
-    @NonNull private final ArtifactId artifactId;
-    @NonNull private final Version version;
-    @NonNull private final ArtifactType type;
-    private final String error;
+    private GroupId groupId;
+    private ArtifactId artifactId;
+    private Version version;
+    private ArtifactType type;
+    private String error;
 
-    private final Classifier classifier;
+    private Classifier classifier;
     private Checksum checksum;
-    private final Supplier<Checksum> checksumSupplier;
-    @NonNull private final Supplier<InputStream> inputStreamSupplier;
+    private Supplier<Checksum> checksumSupplier;
+    private Supplier<InputStream> inputStreamSupplier;
 
     public Checksum getChecksumRaw() { return checksum; }
 
@@ -44,8 +45,8 @@ public class Artifact {
 
     @Override public String toString() {
         return groupId + ":" + artifactId + ":" + version + ":" + type
-                + ((classifier == null) ? "" : ":" + classifier)
-                + ((checksum == null) ? "" : "=" + checksum)
-                + ((error == null) ? "" : " ### " + error + " ###");
+            + ((classifier == null) ? "" : ":" + classifier)
+            + ((checksum == null) ? "" : "=" + checksum)
+            + ((error == null) ? "" : " ### " + error + " ###");
     }
 }

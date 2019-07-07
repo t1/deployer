@@ -1,5 +1,6 @@
 package com.github.t1.deployer.repository;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.t1.deployer.model.Artifact;
 import com.github.t1.deployer.model.ArtifactId;
 import com.github.t1.deployer.model.ArtifactType;
@@ -7,15 +8,12 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
-import com.github.t1.rest.EntityResponse;
-import com.github.t1.rest.RestContext;
-import com.github.t1.rest.RestResource;
-import com.github.t1.rest.UriTemplate;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
@@ -28,44 +26,67 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
 @Slf4j
-@RequiredArgsConstructor
-class MavenCentralRepository extends Repository {
+public class MavenCentralRepository extends Repository {
+    private final WebTarget searchUri;
+    private final WebTarget listVersionsTemplate;
+    private final WebTarget downloadUri;
+
+    MavenCentralRepository(WebTarget baseTarget) {
+        this.searchUri = baseTarget
+            .path("solrsearch")
+            .path("select")
+            .queryParam("q", "1:{checksum}")
+            .queryParam("rows", "20")
+            .queryParam("wt", "json");
+        this.listVersionsTemplate = baseTarget
+            .path("solrsearch")
+            .path("select")
+            .queryParam("q", "g:{group-id} AND a:{artifact-id}")
+            .queryParam("core", "gav")
+            .queryParam("rows", "10000")
+            .queryParam("wt", "json");
+        this.downloadUri = baseTarget
+            .path("remotecontent")
+            .queryParam("filepath", "{filepath}");
+    }
+
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MavenCentralSearchResult {
         MavenCentralSearchResponse response;
     }
 
     @Data
-    private static class MavenCentralSearchResponse {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class MavenCentralSearchResponse {
         List<MavenCentralSearchResponseDocs> docs;
     }
 
     @Data
-    private static class MavenCentralSearchResponseDocs {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class MavenCentralSearchResponseDocs {
         String g;
         String a;
         String v;
         String p;
     }
 
-    private final RestContext rest;
-
     @Override public Artifact searchByChecksum(Checksum checksum) {
-        MavenCentralSearchResult result = rest
-                .createResource(searchUri())
-                .with("checksum", checksum)
-                .GET(MavenCentralSearchResult.class);
+        MavenCentralSearchResult result = searchUri
+            .resolveTemplate("checksum", checksum)
+            .request()
+            .get(MavenCentralSearchResult.class);
 
         switch (result.response.docs.size()) {
-        case 0:
-            log.debug("not found: {}", checksum);
-            throw new UnknownChecksumException(checksum);
-        case 1:
-            MavenCentralSearchResponseDocs doc = result.response.docs.get(0);
-            log.debug("got {}", doc);
-            return toArtifact(checksum, doc);
-        default:
-            throw new RuntimeException("checksum not unique in repository: '" + checksum + "'");
+            case 0:
+                log.debug("not found: {}", checksum);
+                throw new UnknownChecksumException(checksum);
+            case 1:
+                MavenCentralSearchResponseDocs doc = result.response.docs.get(0);
+                log.debug("got {}", doc);
+                return toArtifact(checksum, doc);
+            default:
+                throw new RuntimeException("checksum not unique in repository: '" + checksum + "'");
         }
     }
 
@@ -75,100 +96,74 @@ class MavenCentralRepository extends Repository {
         Version version = new Version(doc.v);
         ArtifactType type = ArtifactType.valueOf(doc.p);
 
-        //noinspection resource
-        return Artifact.builder()
-                       .groupId(groupId)
-                       .artifactId(artifactId)
-                       .version(version)
-                       .type(type)
-                       .checksum(checksum)
-                       .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
-                       .build();
-    }
-
-    public UriTemplate searchUri() {
-        return rest.nonQueryUri("repository")
-                   .path("solrsearch")
-                   .path("select")
-                   .query("q", "1:{checksum}")
-                   .query("rows", "20")
-                   .query("wt", "json");
+        return new Artifact()
+            .setGroupId(groupId)
+            .setArtifactId(artifactId)
+            .setVersion(version)
+            .setType(type)
+            .setChecksum(checksum)
+            .setInputStreamSupplier(() -> downloadArtifact(groupId, artifactId, version, type));
     }
 
     @Override
     protected Artifact lookupArtifact(
-            @NonNull GroupId groupId,
-            @NonNull ArtifactId artifactId,
-            @NonNull Version version,
-            @NonNull ArtifactType type,
-            Classifier classifier) {
-        //noinspection resource
-        return Artifact.builder()
-                       .groupId(groupId)
-                       .artifactId(artifactId)
-                       .version(version)
-                       .type(type)
-                       .classifier(classifier)
-                       .checksumSupplier(() -> downloadChecksum(groupId, artifactId, version, type))
-                       .inputStreamSupplier(() -> download(groupId, artifactId, version, type))
-                       .build();
+        @NonNull GroupId groupId,
+        @NonNull ArtifactId artifactId,
+        @NonNull Version version,
+        @NonNull ArtifactType type,
+        Classifier classifier) {
+        return new Artifact()
+            .setGroupId(groupId)
+            .setArtifactId(artifactId)
+            .setVersion(version)
+            .setType(type)
+            .setClassifier(classifier)
+            .setChecksumSupplier(() -> downloadChecksum(groupId, artifactId, version, type))
+            .setInputStreamSupplier(() -> downloadArtifact(groupId, artifactId, version, type));
     }
 
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
-        UriTemplate.Query query = rest.nonQueryUri("repository")
-                                      .path("solrsearch")
-                                      .path("select")
-                                      .query("q", "g:{group-id}+AND+a:{artifact-id}")
-                                      .query("core", "gav")
-                                      .query("rows", "10000")
-                                      .query("wt", "json");
-        MavenCentralSearchResult result = rest
-                .createResource(query)
-                .with("group-id", groupId)
-                .with("artifact-id", artifactId)
-                .GET(MavenCentralSearchResult.class);
+        MavenCentralSearchResult result = listVersionsTemplate
+            .resolveTemplate("group-id", groupId)
+            .resolveTemplate("artifact-id", artifactId)
+            .request()
+            .get(MavenCentralSearchResult.class);
         return result
-                .response
-                .docs
-                .stream()
-                .map(doc -> new Version(doc.v))
-                .sorted()
-                .collect(toList());
+            .response
+            .docs
+            .stream()
+            .map(doc -> new Version(doc.v))
+            .sorted()
+            .collect(toList());
     }
 
     private Checksum downloadChecksum(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        EntityResponse<String> response = resource(downloadPath(groupId, artifactId, version, type) + ".sha1")
-                .accept(String.class).GET_Response();
-        if (response.status() == NOT_FOUND)
-            throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
-        return Checksum.fromString(response.expecting(OK).getBody());
+        Response response = download(groupId, artifactId, version, type, ".sha1");
+        return Checksum.fromString(response.readEntity(String.class));
     }
 
-    private InputStream download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        RestResource resource = resource(downloadPath(groupId, artifactId, version, type));
+    private InputStream downloadArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
+        Response response = download(groupId, artifactId, version, type, "");
+        return response.readEntity(InputStream.class);
+    }
+
+    private Response download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, String suffix) {
+        Path downloadPath = groupId.asPath()
+            .resolve(artifactId.getValue())
+            .resolve(version.getValue())
+            .resolve(artifactId + "-" + version + "." + type.extension() + suffix);
+        WebTarget resource = downloadUri.resolveTemplate("filepath", downloadPath);
         log.debug("download from {}", resource);
-        EntityResponse<InputStream> response = resource.GET_Response(InputStream.class);
-        if (!response.status().equals(OK))
+        Response response = resource.request().get();
+        if (response.getStatusInfo().equals(NOT_FOUND))
+            throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
+        if (!response.getStatusInfo().equals(OK))
             throw builderFor(BAD_GATEWAY)
-                    .title("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type)
-                    .detail("received " + response.status().getStatusCode() + " " + response.status().getReasonPhrase()
-                            + " from " + resource.uri() + "\n"
-                            + "body: " + response.getBody(String.class)).build();
-        return response.getBody();
+                .title("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type)
+                .detail("received " + response.getStatusInfo().getStatusCode() + " " + response.getStatusInfo().getReasonPhrase()
+                    + " from " + resource.getUri() + "\n"
+                    + "body: " + response.readEntity(String.class)).build();
+        return response;
     }
 
-    private RestResource resource(Object filepath) {
-        return rest.createResource(downloadUri()).with("filepath", filepath);
-    }
-
-    private Path downloadPath(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        return groupId.asPath()
-                      .resolve(artifactId.getValue())
-                      .resolve(version.getValue())
-                      .resolve(artifactId + "-" + version + "." + type.extension());
-    }
-
-    public UriTemplate downloadUri() {
-        return rest.nonQueryUri("repository").path("remotecontent").query("filepath", "{filepath}");
-    }
 }

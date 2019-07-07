@@ -1,0 +1,1 @@
+This is an Artifactory mock implemented as Dropwizard uber-jar. Start it as `java -jar target/artifactory-mock.jar` or by running it as a Docker container (see `build.sh`).
