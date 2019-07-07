@@ -4,6 +4,5 @@ workflow "New workflow" {
 }
 
 action "build" {
-  uses = "LucaFeger/action-maven-cli@aed8a1fd96b459b9a0be4b42a5863843cc70724e"
-  args = "clean install"
+  uses = "LucaFeger/action-maven-cli@765e218a50f02a12a7596dc9e7321fc385888a27"
 }
