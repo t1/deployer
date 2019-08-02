@@ -52,7 +52,7 @@
                     </plugins>
                 </configuration>
             </plugin>
-            <plugin id="com.spotify:dockerfile-maven-plugin:1.4.10">
+            <plugin id="com.spotify:dockerfile-maven-plugin:1.4.12">
                 <executions>
                     <execution>
                         <id>default</id>
@@ -81,7 +81,7 @@
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:2.9.9.1</jar><!-- TODO use variable again after next update -->
-            <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
+            <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.0.pr1</jar><!-- TODO use variable again after next update -->
             <jar>com.google.guava:guava:28.0-jre</jar>
         </compile>
 
