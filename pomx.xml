@@ -8,7 +8,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.9.9</jackson.version>
+        <jackson.version>2.10.0.pr1</jackson.version>
         <jqassistant.version>1.6.0</jqassistant.version>
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.java.pmd.reportPaths>./target/pmd.xml</sonar.java.pmd.reportPaths>
@@ -80,8 +80,8 @@
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.1.Final</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
-            <jar>com.fasterxml.jackson.core:jackson-databind:2.9.9.1</jar><!-- TODO use variable again after next update -->
-            <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.0.pr1</jar><!-- TODO use variable again after next update -->
+            <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
+            <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
             <jar>com.google.guava:guava:28.0-jre</jar>
         </compile>
 
