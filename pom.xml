@@ -11,7 +11,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.10.0.pr1</jackson.version>
+        <jackson.version>2.10.0.pr2</jackson.version>
         <jqassistant.version>1.6.0</jqassistant.version>
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.java.pmd.reportPaths>./target/pmd.xml</sonar.java.pmd.reportPaths>
