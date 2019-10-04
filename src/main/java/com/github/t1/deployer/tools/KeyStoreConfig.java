@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.With;
 import lombok.experimental.Accessors;
-import lombok.experimental.Wither;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -14,7 +14,7 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor
 @AllArgsConstructor(access = PRIVATE)
 @JsonNaming(KebabCaseStrategy.class)
-@Wither
+@With
 public class KeyStoreConfig {
     private String path;
     private String type;

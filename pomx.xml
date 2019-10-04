@@ -8,15 +8,15 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.10.0.pr1</jackson.version>
+        <jackson.version>2.10.0.pr3</jackson.version>
         <jqassistant.version>1.6.0</jqassistant.version>
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.java.pmd.reportPaths>./target/pmd.xml</sonar.java.pmd.reportPaths>
         <sonar.java.checkstyle.reportPaths>./target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
     </properties>
 
-    <profile>com.github.t1:profile-javaee:8.0.0-SNAPSHOT</profile>
     <profile>com.github.t1:profile-t1:1.0.0-SNAPSHOT</profile>
+    <profile>com.github.t1:profile-javaee:8.0.0-SNAPSHOT</profile>
 
     <build>
         <plugins>
@@ -76,22 +76,22 @@
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:9.0.2.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:10.0.0.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.1.Final</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
-            <jar>com.google.guava:guava:28.0-jre</jar>
+            <jar>com.google.guava:guava:28.1-jre</jar>
         </compile>
 
         <test>
-            <jar>org.eclipse:yasson:1.0.4</jar>
+            <jar>org.eclipse:yasson:1.0.5</jar>
             <jar>org.glassfish:javax.json:1.1.4</jar>
             <jar>org.jdom:jdom2:2.0.6</jar>
             <jar>com.github.t1:xml:0.0.5</jar>
             <jar>ch.qos.logback:logback-classic:1.2.3</jar>
-            <jar>io.dropwizard:dropwizard-testing:1.3.14</jar>
+            <jar>io.dropwizard:dropwizard-testing:1.3.15</jar>
             <jar>org.jboss.aesh:aesh:0.66.19</jar>
             <jar>com.beust:jcommander:1.74</jar>
             <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-spi:3.1.3</jar>

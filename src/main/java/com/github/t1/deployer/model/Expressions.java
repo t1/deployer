@@ -15,7 +15,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +46,7 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Slf4j
 @RequiredArgsConstructor
-@Wither
+@With
 public class Expressions {
     private static final Pattern NAME_TOKEN = Pattern.compile("[-._a-zA-Z0-9]{1,256}");
 

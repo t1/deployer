@@ -165,5 +165,4 @@ public class MavenCentralRepository extends Repository {
                     + "body: " + response.readEntity(String.class)).build();
         return response;
     }
-
 }

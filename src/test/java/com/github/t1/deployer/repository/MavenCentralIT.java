@@ -6,7 +6,6 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assume.assumeNoException;
 
 public class MavenCentralIT extends MavenCentralTestParent {
@@ -16,9 +15,11 @@ public class MavenCentralIT extends MavenCentralTestParent {
 
     @BeforeClass
     public static void setUp() {
-        @SuppressWarnings("ResultOfMethodCallIgnored")
-        Throwable e = catchThrowable(() -> InetAddress.getByName(MAVEN_CENTRAL.getHost()));
-        if (e instanceof UnknownHostException)
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            InetAddress.getByName(MAVEN_CENTRAL.getHost());
+        } catch (UnknownHostException e) {
             assumeNoException(e);
+        }
     }
 }

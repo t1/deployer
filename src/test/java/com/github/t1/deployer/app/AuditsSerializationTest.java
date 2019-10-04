@@ -21,9 +21,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AuditsSerializationTest {
     private static final ObjectMapper JSON = new ObjectMapper()
-            .setSerializationInclusion(NON_EMPTY) //
-            .configure(FAIL_ON_UNKNOWN_PROPERTIES, false) //
-            .setPropertyNamingStrategy(KEBAB_CASE);
+        .setSerializationInclusion(NON_EMPTY) //
+        .configure(FAIL_ON_UNKNOWN_PROPERTIES, false) //
+        .setPropertyNamingStrategy(KEBAB_CASE);
 
     private Audit deserialize(String json) throws IOException {
         return JSON.readValue(json.replace('\'', '\"'), Audit.class);
@@ -40,58 +40,58 @@ public class AuditsSerializationTest {
 
 
     private static final Audits TWO_AUDITS = new Audits()
-            .add(deployerLog().change("level", INFO, DEBUG).added())
-            .add(MOCKSERVER.removed())
-            .setProcessState(reloadRequired);
+        .add(deployerLog().change("level", INFO, DEBUG).added())
+        .add(MOCKSERVER.removed())
+        .setProcessState(reloadRequired);
 
     private static final String TWO_AUDITS_JSON =
-            ("{'audits':"
-                     + "[{"
-                     + "'type':'logger',"
-                     + "'operation':'add',"
-                     + "'changes':["
-                     + "{'name':'level','old-value':'INFO','new-value':'DEBUG'}"
-                     + "],"
-                     + "'category':'com.github.t1.deployer'"
-                     + "},{"
-                     + "'type':'deployable',"
-                     + "'operation':'remove',"
-                     + "'name':'mockserver'"
-                     + "}],"
-                     + "'process-state':'reloadRequired'}"
-            ).replace('\'', '\"');
+        ("{'audits':"
+            + "[{"
+            + "'type':'logger',"
+            + "'operation':'add',"
+            + "'changes':["
+            + "{'name':'level','old-value':'INFO','new-value':'DEBUG'}"
+            + "],"
+            + "'category':'com.github.t1.deployer'"
+            + "},{"
+            + "'type':'deployable',"
+            + "'operation':'remove',"
+            + "'name':'mockserver'"
+            + "}],"
+            + "'process-state':'reloadRequired'}"
+        ).replace('\'', '\"');
 
 
     private static final String TWO_AUDITS_YAML = ""
-            + "audits:\n"
-            + "- !<logger>\n"
-            + "  operation: add\n"
-            + "  changes:\n"
-            + "  - name: level\n"
-            + "    old-value: INFO\n"
-            + "    new-value: DEBUG\n"
-            + "  category: com.github.t1.deployer\n"
-            + "- !<deployable>\n"
-            + "  operation: remove\n"
-            + "  name: mockserver\n"
-            + "processState: reloadRequired\n";
+        + "audits:\n"
+        + "- !<logger>\n"
+        + "  operation: add\n"
+        + "  changes:\n"
+        + "  - name: level\n"
+        + "    old-value: INFO\n"
+        + "    new-value: DEBUG\n"
+        + "  category: com.github.t1.deployer\n"
+        + "- !<deployable>\n"
+        + "  operation: remove\n"
+        + "  name: mockserver\n"
+        + "processState: reloadRequired\n";
 
 
     @Test public void shouldFailToDeserializeUnknownDeployableType() {
         String json = "{'type':'xxx','operation':'add'}";
 
         assertThatThrownBy(() -> deserialize(json))
-                .isInstanceOf(InvalidTypeIdException.class)
-                .hasMessageContaining("Could not resolve type id 'xxx'");
+            .isInstanceOf(InvalidTypeIdException.class)
+            .hasMessageContaining("Could not resolve type id 'xxx'");
     }
 
 
     @Test public void shouldDeserializeDeployedDeployableAudit() throws Exception {
         String json = "{"
-                + "'type':'deployable',"
-                + "'operation':'add',"
-                + "'name':'jolokia'"
-                + "}";
+            + "'type':'deployable',"
+            + "'operation':'add',"
+            + "'name':'jolokia'"
+            + "}";
 
         Audit audit = deserialize(json);
 
@@ -101,41 +101,41 @@ public class AuditsSerializationTest {
 
     @Test public void shouldDeserializeChangeAudit() throws Exception {
         String json = "{'audits':["
-                + "{"
-                + "'type':'deployable',"
-                + "'operation':'add',"
-                + "'changes':["
-                + "{'name':'group-id','old-value':null,'new-value':'org.jolokia'},"
-                + "{'name':'artifact-id','old-value':null,'new-value':'jolokia-war'},"
-                + "{'name':'version','old-value':null,'new-value':'1.3.2'},"
-                + "{'name':'type','old-value':null,'new-value':'war'}"
-                + "],'name':'jolokia'}"
-                + "]}";
+            + "{"
+            + "'type':'deployable',"
+            + "'operation':'add',"
+            + "'changes':["
+            + "{'name':'group-id','old-value':null,'new-value':'org.jolokia'},"
+            + "{'name':'artifact-id','old-value':null,'new-value':'jolokia-war'},"
+            + "{'name':'version','old-value':null,'new-value':'1.3.2'},"
+            + "{'name':'type','old-value':null,'new-value':'war'}"
+            + "],'name':'jolokia'}"
+            + "]}";
 
         Audits audits = JSON.readValue(json.replace('\'', '\"'), Audits.class);
 
         assertThat(audits.toYaml()).isEqualTo("audits:\n"
-                + "- !<deployable>\n"
-                + "  operation: add\n"
-                + "  changes:\n"
-                + "  - name: group-id\n"
-                + "    new-value: org.jolokia\n"
-                + "  - name: artifact-id\n"
-                + "    new-value: jolokia-war\n"
-                + "  - name: version\n"
-                + "    new-value: 1.3.2\n"
-                + "  - name: type\n"
-                + "    new-value: war\n"
-                + "  name: jolokia\n");
+            + "- !<deployable>\n"
+            + "  operation: add\n"
+            + "  changes:\n"
+            + "  - name: group-id\n"
+            + "    new-value: org.jolokia\n"
+            + "  - name: artifact-id\n"
+            + "    new-value: jolokia-war\n"
+            + "  - name: version\n"
+            + "    new-value: 1.3.2\n"
+            + "  - name: type\n"
+            + "    new-value: war\n"
+            + "  name: jolokia\n");
     }
 
 
     @Test public void shouldDeserializeUndeployedDeployableAudit() throws Exception {
         String json = "{"
-                + "'type':'deployable',"
-                + "'operation':'remove',"
-                + "'name':'mockserver'"
-                + "}";
+            + "'type':'deployable',"
+            + "'operation':'remove',"
+            + "'name':'mockserver'"
+            + "}";
 
         Audit audit = deserialize(json);
 
@@ -145,30 +145,29 @@ public class AuditsSerializationTest {
 
     @Test public void shouldFailToDeserializeDeployableAuditWithUnknownState() {
         String json = "{"
-                + "'type':'deployable',"
-                + "'operation':'xxx',"
-                + "'name':'mockserver',"
-                + "'group-id':'org.mock-server',"
-                + "'artifact-id':'mockserver-war',"
-                + "'version':'3.10.4'"
-                + "}";
+            + "'type':'deployable',"
+            + "'operation':'xxx',"
+            + "'name':'mockserver',"
+            + "'group-id':'org.mock-server',"
+            + "'artifact-id':'mockserver-war',"
+            + "'version':'3.10.4'"
+            + "}";
 
         assertThatThrownBy(() -> deserialize(json))
-                .hasMessageContaining("value not one of declared Enum instance names")
-                .hasMessageContaining("xxx");
+            .hasMessageContaining("from String \"xxx\": not one of the values accepted for Enum class: [change, add, remove]");
     }
 
 
     @Test public void shouldDeserializeDeployedLoggerAudit() throws Exception {
         String json = "{"
-                + "'type':'logger',"
-                + "'operation':'add',"
-                + "'category':'com.github.t1.deployer',"
-                + "'changes':[{"
-                + "'name':'level',"
-                + "'old-value':null,"
-                + "'new-value':'INFO'"
-                + "}]}";
+            + "'type':'logger',"
+            + "'operation':'add',"
+            + "'category':'com.github.t1.deployer',"
+            + "'changes':[{"
+            + "'name':'level',"
+            + "'old-value':null,"
+            + "'new-value':'INFO'"
+            + "}]}";
 
         Audit audit = deserialize(json);
 
