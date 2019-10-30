@@ -13,17 +13,19 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Scanner;
 
 import static com.github.t1.problem.WebException.builderFor;
 import static com.github.t1.problem.WebException.notFound;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
 
 @Slf4j
 public class MavenCentralRepository extends Repository {
@@ -46,8 +48,7 @@ public class MavenCentralRepository extends Repository {
             .queryParam("rows", "10000")
             .queryParam("wt", "json");
         this.downloadUri = baseTarget
-            .path("remotecontent")
-            .queryParam("filepath", "{filepath}");
+            .path("remotecontent");
     }
 
     @Data
@@ -138,31 +139,46 @@ public class MavenCentralRepository extends Repository {
     }
 
     private Checksum downloadChecksum(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        Response response = download(groupId, artifactId, version, type, ".sha1");
-        return Checksum.fromString(response.readEntity(String.class));
+        InputStream response = download(groupId, artifactId, version, type, ".sha1");
+        return Checksum.fromString(read(response));
     }
 
     private InputStream downloadArtifact(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type) {
-        Response response = download(groupId, artifactId, version, type, "");
-        return response.readEntity(InputStream.class);
+        return download(groupId, artifactId, version, type, "");
     }
 
-    private Response download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, String suffix) {
+    private InputStream download(GroupId groupId, ArtifactId artifactId, Version version, ArtifactType type, String suffix) {
         Path downloadPath = groupId.asPath()
             .resolve(artifactId.getValue())
             .resolve(version.getValue())
             .resolve(artifactId + "-" + version + "." + type.extension() + suffix);
-        WebTarget resource = downloadUri.resolveTemplate("filepath", downloadPath);
-        log.debug("download from {}", resource);
-        Response response = resource.request().get();
-        if (response.getStatusInfo().equals(NOT_FOUND))
-            throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
-        if (!response.getStatusInfo().equals(OK))
-            throw builderFor(BAD_GATEWAY)
-                .title("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type)
-                .detail("received " + response.getStatusInfo().getStatusCode() + " " + response.getStatusInfo().getReasonPhrase()
-                    + " from " + resource.getUri() + "\n"
-                    + "body: " + response.readEntity(String.class)).build();
-        return response;
+        // Don't use JAX-RS here, because Maven Central requires (theoretically invalid) unencoded slashes in the query param
+        URI uri = URI.create(downloadUri.getUri() + "?filepath=" + downloadPath);
+        log.debug("download from {}", uri);
+        try {
+            HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            switch (connection.getResponseCode()) {
+                case 404:
+                    throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
+                case 200:
+                    return connection.getInputStream();
+                default:
+                    throw builderFor(BAD_GATEWAY)
+                        .title("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type)
+                        .detail("received " + connection.getResponseCode() + " " + connection.getResponseMessage()
+                            + " from " + uri + "\n"
+                            + "body: " + read(connection.getErrorStream())).build();
+            }
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("can't construct URL from " + uri);
+        } catch (IOException e) {
+            throw new RuntimeException("can't connect to / read from " + uri);
+        }
+    }
+
+    private String read(InputStream stream) {
+        try (Scanner scanner = new Scanner(stream).useDelimiter("\\Z")) {
+            return scanner.next();
+        }
     }
 }
