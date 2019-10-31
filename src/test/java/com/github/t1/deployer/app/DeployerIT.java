@@ -131,7 +131,7 @@ public class DeployerIT {
     private static void startArtifactoryMock() {
         if (USE_ARTIFACTORY_MOCK)
             try {
-                // TODO can we instead deploy this? or use DropwizardClientRule?
+                // TODO can we instead deploy this? or use JaxRsTestExtension?
                 ArtifactoryMockLauncher.main();
             } catch (Exception e) {
                 throw new RuntimeException(e);

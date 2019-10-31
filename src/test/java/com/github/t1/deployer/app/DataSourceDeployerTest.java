@@ -2,21 +2,24 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.model.Age;
 import com.github.t1.problem.WebApplicationApplicationException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 import static com.github.t1.deployer.app.Audit.DataSourceAudit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED;
 import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RESTART_REQUIRED;
+import static org.mockito.quality.Strictness.LENIENT;
 
-public class DataSourceDeployerTest extends AbstractDeployerTests {
-    @Test public void shouldAddEmptyDataSources() {
+@MockitoSettings(strictness = LENIENT)
+class DataSourceDeployerTest extends AbstractDeployerTests {
+    @Test void shouldAddEmptyDataSources() {
         deployWithRootBundle(""
             + "data-sources:\n");
     }
 
-    @Test public void shouldFailToAddDataSourcesWithoutItem() {
+    @Test void shouldFailToAddDataSourcesWithoutItem() {
         givenDataSource("foo");
 
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
@@ -26,7 +29,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         assertThat(thrown).hasStackTraceContaining("incomplete data-sources plan 'foo'");
     }
 
-    @Test public void shouldFailToAddDataSourcesWithoutUri() {
+    @Test void shouldFailToAddDataSourcesWithoutUri() {
         givenDataSource("foo");
 
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
@@ -38,7 +41,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
             .hasStackTraceContaining("field 'uri' for data-source 'foo' can only be null when undeploying");
     }
 
-    @Test public void shouldAddDataSource() {
+    @Test void shouldAddDataSource() {
         DataSourceFixture foo = givenDataSource("foo").uri("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
 
         deployWithRootBundle(""
@@ -50,7 +53,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.verifyAdded();
     }
 
-    @Test public void shouldAddDataSourcesWithDriverFromJdbcUri() {
+    @Test void shouldAddDataSourcesWithDriverFromJdbcUri() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -62,7 +65,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldFallBackToDefaultDriverWhenNotJdbcUrn() {
+    @Test void shouldFallBackToDefaultDriverWhenNotJdbcUrn() {
         givenConfiguredVariable("default.data-source-driver", "bar");
         DataSourceFixture foo = givenDataSource("foo").uri("http://example.org");
 
@@ -75,7 +78,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddXaDataSource() {
+    @Test void shouldAddXaDataSource() {
         DataSourceFixture foo = givenDataSource("foo")
             .xa(true)
             .uri("jdbc:postgresql://my-db.server.lan:5432/foo")
@@ -90,7 +93,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.verifyAdded();
     }
 
-    @Test public void shouldAddDataSourceWithJndiName() {
+    @Test void shouldAddDataSourceWithJndiName() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -103,7 +106,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.jndiName("java:datasources/barDS").verifyAdded();
     }
 
-    @Test public void shouldAddDataSourceWithUserNamePassword() {
+    @Test void shouldAddDataSourceWithUserNamePassword() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -116,7 +119,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.userName("foo").password("bar").verifyAdded();
     }
 
-    @Test public void shouldAddDataSourceWithMinPoolSize() {
+    @Test void shouldAddDataSourceWithMinPoolSize() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -130,7 +133,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.userName("foo").minPoolSize(3).verifyAdded();
     }
 
-    @Test public void shouldAddDataSourceWithInitialPoolSize() {
+    @Test void shouldAddDataSourceWithInitialPoolSize() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -144,7 +147,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.userName("foo").initialPoolSize(5).verifyAdded();
     }
 
-    @Test public void shouldAddDataSourceWithMaxPoolSize() {
+    @Test void shouldAddDataSourceWithMaxPoolSize() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -158,7 +161,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.userName("foo").maxPoolSize(10).verifyAdded();
     }
 
-    @Test public void shouldAddDataSourceWithMaxAge() {
+    @Test void shouldAddDataSourceWithMaxAge() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -173,7 +176,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldNotAddExistingDataSource() {
+    @Test void shouldNotAddExistingDataSource() {
         DataSourceFixture foo = givenDataSource("foo").deployed();
 
         deployWithRootBundle(""
@@ -185,7 +188,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateUri() {
+    @Test void shouldUpdateUri() {
         DataSourceFixture fixture = givenDataSource("foo").uri("jdbc:h2:mem:test-old").deployed();
 
         deployWithRootBundle(""
@@ -196,7 +199,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.uri("jdbc:h2:mem:test-new").verifyUpdatedUriFrom("jdbc:h2:mem:test-old");
     }
 
-    @Test public void shouldUpdateJndiName() {
+    @Test void shouldUpdateJndiName() {
         DataSourceFixture fixture = givenDataSource("foo").deployed();
 
         deployWithRootBundle(""
@@ -208,7 +211,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.jndiName("java:/datasources/bar").verifyUpdatedJndiNameFrom("java:/datasources/foo");
     }
 
-    @Test public void shouldUpdateDriver() {
+    @Test void shouldUpdateDriver() {
         DataSourceFixture fixture = givenDataSource("foo").deployed();
 
         deployWithRootBundle(""
@@ -220,7 +223,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.driver("bar").verifyUpdatedDriverNameFrom("h2");
     }
 
-    @Test public void shouldUpdateUserName() {
+    @Test void shouldUpdateUserName() {
         DataSourceFixture fixture = givenDataSource("foo").userName("bar").deployed();
 
         deployWithRootBundle(""
@@ -232,7 +235,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.userName("baz").verifyUpdatedUserNameFrom("bar");
     }
 
-    @Test public void shouldUpdatePassword() {
+    @Test void shouldUpdatePassword() {
         DataSourceFixture fixture = givenDataSource("foo").password("bar").deployed();
 
         deployWithRootBundle(""
@@ -244,7 +247,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.password("baz").verifyUpdatedPasswordFrom("bar");
     }
 
-    @Test public void shouldUpdateMinPoolSize() {
+    @Test void shouldUpdateMinPoolSize() {
         DataSourceFixture fixture = givenDataSource("foo").minPoolSize(1).deployed();
 
         deployWithRootBundle(""
@@ -257,7 +260,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.minPoolSize(2).verifyUpdatedMinPoolSizeFrom(1);
     }
 
-    @Test public void shouldUpdateInitialPoolSize() {
+    @Test void shouldUpdateInitialPoolSize() {
         DataSourceFixture fixture = givenDataSource("foo").initialPoolSize(1).deployed();
 
         deployWithRootBundle(""
@@ -270,7 +273,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.initialPoolSize(2).verifyUpdatedInitialPoolSizeFrom(1);
     }
 
-    @Test public void shouldUpdateMaxPoolSize() {
+    @Test void shouldUpdateMaxPoolSize() {
         DataSourceFixture fixture = givenDataSource("foo").maxPoolSize(1).deployed();
 
         deployWithRootBundle(""
@@ -283,7 +286,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.maxPoolSize(2).verifyUpdatedMaxPoolSizeFrom(1);
     }
 
-    @Test public void shouldUpdateMaxAge() {
+    @Test void shouldUpdateMaxAge() {
         DataSourceFixture fixture = givenDataSource("foo").maxAge(Age.ofMinutes(2)).deployed();
 
         deployWithRootBundle(""
@@ -296,7 +299,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.maxAge(Age.ofMinutes(3)).verifyUpdatedMaxAgeFrom(Age.ofMinutes(2));
     }
 
-    @Test public void shouldFailWhenReloadIsRequired() {
+    @Test void shouldFailWhenReloadIsRequired() {
         DataSourceFixture fixture = givenDataSource("foo")
             .maxAge(Age.ofMinutes(2))
             .deployed()
@@ -313,7 +316,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.verifyReloadRequired();
     }
 
-    @Test public void shouldFailWhenRestartIsRequired() {
+    @Test void shouldFailWhenRestartIsRequired() {
         DataSourceFixture fixture = givenDataSource("foo")
             .maxAge(Age.ofMinutes(2))
             .deployed()
@@ -330,7 +333,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.verifyRestartRequired();
     }
 
-    @Test public void shouldUpdateXaToTrue() {
+    @Test void shouldUpdateXaToTrue() {
         DataSourceFixture fixture = givenDataSource("foo")
             .uri("jdbc:postgresql://my-db.server.lan:5432/foo")
             .driver("postgresql")
@@ -351,7 +354,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateXaToFalse() {
+    @Test void shouldUpdateXaToFalse() {
         DataSourceFixture fixture = givenDataSource("foo")
             .xa(true)
             .uri("jdbc:postgresql://my-db.server.lan/foo")
@@ -373,7 +376,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldRemoveExistingDataSourceWhenStateIsUndeployed() {
+    @Test void shouldRemoveExistingDataSourceWhenStateIsUndeployed() {
         DataSourceFixture fixture = givenDataSource("foo").deployed();
 
         deployWithRootBundle(""
@@ -384,7 +387,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.verifyRemoved();
     }
 
-    @Test public void shouldRemoveNonExistingDataSourceWhenStateIsUndeployed() {
+    @Test void shouldRemoveNonExistingDataSourceWhenStateIsUndeployed() {
         DataSourceFixture foo = givenDataSource("foo");
 
         deployWithRootBundle(""
@@ -396,7 +399,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo.verifyUnchanged();
     }
 
-    @Test public void shouldRemoveDataSourceWhenManaged() {
+    @Test void shouldRemoveDataSourceWhenManaged() {
         DataSourceFixture foo1 = givenDataSource("foo1").deployed();
         DataSourceFixture foo2 = givenDataSource("foo2").deployed();
         givenManaged("data-sources");
@@ -410,7 +413,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         foo2.verifyRemoved();
     }
 
-    @Test public void shouldRemoveDataSourceWhenAllManaged() {
+    @Test void shouldRemoveDataSourceWhenAllManaged() {
         DataSourceFixture foo1 = givenDataSource("foo1").deployed();
         DataSourceFixture foo2 = givenDataSource("foo2").deployed();
         givenManaged("all");
@@ -425,7 +428,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldIgnorePinnedDataSourceWhenManaged() {
+    @Test void shouldIgnorePinnedDataSourceWhenManaged() {
         givenManaged("all");
         DataSourceFixture foo = givenDataSource("FOO").deployed();
         DataSourceFixture bar = givenDataSource("BAR").deployed().pinned();
@@ -441,7 +444,7 @@ public class DataSourceDeployerTest extends AbstractDeployerTests {
         baz.verifyRemoved();
     }
 
-    @Test public void shouldFailToDeployPinnedDataSource() {
+    @Test void shouldFailToDeployPinnedDataSource() {
         givenDataSource("FOO").deployed().pinned();
 
         Throwable thrown = catchThrowable(() ->

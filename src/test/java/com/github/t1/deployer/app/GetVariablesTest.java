@@ -9,10 +9,11 @@ import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.ArtifactoryMock.StringInputStream;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.testtools.FileMemento;
-import com.github.t1.testtools.SystemPropertiesRule;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.t1.testtools.SystemPropertiesMemento;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -31,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GetVariablesTest {
+class GetVariablesTest {
     private static final ObjectMapper JSON = new ObjectMapper()
         .setSerializationInclusion(NON_EMPTY) //
         .configure(FAIL_ON_UNKNOWN_PROPERTIES, false) //
@@ -40,19 +41,20 @@ public class GetVariablesTest {
     private static final ArtifactId DUMMY_ARTIFACT_ID = new ArtifactId("dummy-artifact");
     private static final Version DUMMY_VERSION = new Version("dummy-version");
 
-    private final Path tempDir = AbstractDeployerTests.tempDir();
+    @TempDir Path tempDir;
 
-    @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
-        .given("jboss.server.config.dir", tempDir)
-        .given(CLI_DEBUG, "true");
-
-    @Rule public FileMemento rootBundleConfigFile = new FileMemento(tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE));
+    @RegisterExtension SystemPropertiesMemento systemProperties = new SystemPropertiesMemento();
 
     private DeployerBoundary boundary = new DeployerBoundary();
+
     private Repository repository = mock(Repository.class);
 
-    @Before
-    public void setUp() { boundary.repository = repository; }
+    @BeforeEach void init() {
+        systemProperties
+            .given("jboss.server.config.dir", tempDir)
+            .given(CLI_DEBUG, "true");
+        boundary.repository = repository;
+    }
 
     private static String toJson(Object object) throws IOException {
         StringWriter out = new StringWriter();
@@ -61,7 +63,7 @@ public class GetVariablesTest {
     }
 
 
-    @Test public void shouldGetDefaultRootBundleWhenUnresolvedVersion() {
+    @Test void shouldGetDefaultRootBundleWhenUnresolvedVersion() {
         Set<VariableName> variables = boundary.getVariables();
 
         assertThat(variables).containsExactly(
@@ -69,7 +71,7 @@ public class GetVariablesTest {
             new VariableName("version"));
     }
 
-    @Test public void shouldGetConfiguredRootBundle() {
+    @Test void shouldGetConfiguredRootBundle() {
         boundary.rootBundleConfig = new RootBundleConfig()
             .setGroupId(DUMMY_GROUP_ID)
             .setArtifactId(DUMMY_ARTIFACT_ID)
@@ -108,30 +110,32 @@ public class GetVariablesTest {
             new VariableName("mockserver.version"));
     }
 
-    @Test public void shouldGetVariablesFromRootBundleFile() {
-        rootBundleConfigFile.write(""
-            + "bundles:\n"
-            + "  app:\n"
-            + "    group-id: com.github.t1\n"
-            + "    version: UNSTABLE\n"
-            + "    instances:\n"
-            + "      jolokia:\n"
-            + "        group-id: org.jolokia\n"
-            + "        artifact-id: jolokia-war\n"
-            + "        version: ${jolokia.version}\n"
-            + "        state: ${jolokia.state or «deployed»}\n"
-            + "loggers:\n"
-            + "  com.github.t1.deployer:\n"
-            + "    level: DEBUG\n");
+    @Test void shouldGetVariablesFromRootBundleFile() {
+        try (FileMemento rootBundleConfigFile = new FileMemento(tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE))) {
+            rootBundleConfigFile.write(""
+                + "bundles:\n"
+                + "  app:\n"
+                + "    group-id: com.github.t1\n"
+                + "    version: UNSTABLE\n"
+                + "    instances:\n"
+                + "      jolokia:\n"
+                + "        group-id: org.jolokia\n"
+                + "        artifact-id: jolokia-war\n"
+                + "        version: ${jolokia.version}\n"
+                + "        state: ${jolokia.state or «deployed»}\n"
+                + "loggers:\n"
+                + "  com.github.t1.deployer:\n"
+                + "    level: DEBUG\n");
 
-        Set<VariableName> variables = boundary.getVariables();
+            Set<VariableName> variables = boundary.getVariables();
 
-        assertThat(variables).containsExactly(
-            new VariableName("jolokia.state"),
-            new VariableName("jolokia.version"));
+            assertThat(variables).containsExactly(
+                new VariableName("jolokia.state"),
+                new VariableName("jolokia.version"));
+        }
     }
 
-    @Test public void shouldSerializeBundleTreeAsJson() throws Exception {
+    @Test void shouldSerializeBundleTreeAsJson() throws Exception {
         assertThat(toJson(asList(new VariableName("jolokia.state"), new VariableName("jolokia.version"))))
             .isEqualTo("[\"jolokia.state\",\"jolokia.version\"]");
     }

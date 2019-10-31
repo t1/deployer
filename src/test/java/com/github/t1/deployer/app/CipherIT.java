@@ -18,11 +18,11 @@ import java.nio.file.Paths;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CipherIT {
+class CipherIT {
     private static final Path KEYSTORE = Paths.get("/tmp/cipher-it.keystore");
 
     @RegisterExtension
-    public static JaxRsTestExtension dropwizard = new JaxRsTestExtension(
+    static JaxRsTestExtension dropwizard = new JaxRsTestExtension(
         new CipherBoundary(
             new CipherService(),
             new KeyStoreConfig()
@@ -37,11 +37,11 @@ public class CipherIT {
             .readEntity(String.class);
     }
 
-    @BeforeEach public void setUp() throws Exception { Files.copy(Paths.get("src/test/resources/jks.keystore"), KEYSTORE); }
+    @BeforeEach void setUp() throws Exception { Files.copy(Paths.get("src/test/resources/jks.keystore"), KEYSTORE); }
 
-    @AfterEach public void tearDown() throws Exception { Files.deleteIfExists(KEYSTORE); }
+    @AfterEach void tearDown() throws Exception { Files.deleteIfExists(KEYSTORE); }
 
-    @Test public void shouldEncrypt() {
+    @Test void shouldEncrypt() {
         String response = read(URI.create(dropwizard.baseUri() + "/ciphers/encrypt"));
 
         assertThat(response).matches("\\p{XDigit}{512}");

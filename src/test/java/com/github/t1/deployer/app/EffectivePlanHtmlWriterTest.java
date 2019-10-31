@@ -12,7 +12,7 @@ import com.github.t1.deployer.model.LoggerCategory;
 import com.github.t1.deployer.model.LoggerPlan;
 import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Version;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
@@ -30,7 +30,7 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 
-public class EffectivePlanHtmlWriterTest {
+class EffectivePlanHtmlWriterTest {
     private static final Plan PLAN = new Plan()
         .addLogHandler(new LogHandlerPlan(new LogHandlerName("FOO"))
             .setLevel(DEBUG)
@@ -62,7 +62,7 @@ public class EffectivePlanHtmlWriterTest {
         return contentOf(expected.toURL()).replaceAll("###hostname###", hostName());
     }
 
-    @Test public void shouldWrite() throws Exception {
+    @Test void shouldWrite() throws Exception {
         EffectivePlanHtmlWriter writer = new EffectivePlanHtmlWriter();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 

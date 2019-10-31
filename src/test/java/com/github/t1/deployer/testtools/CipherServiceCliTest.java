@@ -1,8 +1,8 @@
 package com.github.t1.deployer.testtools;
 
-import com.github.t1.testtools.SystemOutCaptorRule;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.t1.testtools.SystemOutCaptorExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.net.UnknownHostException;
 
@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assume.assumeNoException;
 
-public class CipherServiceCliTest {
+class CipherServiceCliTest {
     private static final String PLAIN_TEXT = "foo";
     @SuppressWarnings("SpellCheckingInspection") private static final String PUBLIC_CIPHER_TEXT
             = "7780CE2D448C1631BECC020B72E6022BFA38E37D4EEB6FAB3891949C0FF591BE2C64761AE03ED294D1E0D"
@@ -22,9 +22,9 @@ public class CipherServiceCliTest {
             + "27247ED0F0DE7B95D3BE0A21004670A6083437F28A2199B773FA030AE0976F888D6E4AE656FF6B6AC81BB5E";
     private static final String PRIVATE_CIPHER_TEXT = "85F84F3EB7246FBC1F73AB282979F690";
 
-    @Rule public final SystemOutCaptorRule out = new SystemOutCaptorRule();
+    @RegisterExtension final SystemOutCaptorExtension out = new SystemOutCaptorExtension();
 
-    @Test public void shouldEncryptPublic() {
+    @Test void shouldEncryptPublic() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
@@ -34,7 +34,7 @@ public class CipherServiceCliTest {
         assertThat(out.out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());
     }
 
-    @Test public void shouldEncryptCert() {
+    @Test void shouldEncryptCert() {
         main("--keystore", "src/test/resources/cert.keystore",
                 "--storetype", "jceks",
                 "--alias", "cert",
@@ -44,7 +44,7 @@ public class CipherServiceCliTest {
         assertThat(out.out().length()).isEqualTo(PUBLIC_CIPHER_TEXT.length());
     }
 
-    @Test public void shouldDecryptPublic() {
+    @Test void shouldDecryptPublic() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "keypair",
@@ -53,7 +53,7 @@ public class CipherServiceCliTest {
         assertThat(out.out()).isEqualTo(PLAIN_TEXT);
     }
 
-    @Test public void shouldEncryptPrivate() {
+    @Test void shouldEncryptPrivate() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
@@ -62,7 +62,7 @@ public class CipherServiceCliTest {
         assertThat(out.out()).isEqualTo(PRIVATE_CIPHER_TEXT);
     }
 
-    @Test public void shouldDecryptPrivate() {
+    @Test void shouldDecryptPrivate() {
         main("--keystore", "src/test/resources/test.keystore",
                 "--storetype", "jceks",
                 "--alias", "secretkey",
@@ -71,7 +71,7 @@ public class CipherServiceCliTest {
         assertThat(out.out()).isEqualTo(PLAIN_TEXT);
     }
 
-    @Test public void shouldEncryptPublicToUri() {
+    @Test void shouldEncryptPublicToUri() {
         Throwable e = catchThrowable(() -> {
             main("--uri", "https://www.github.com", PLAIN_TEXT);
 

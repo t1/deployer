@@ -2,7 +2,8 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.problem.WebApplicationApplicationException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
 import static com.github.t1.deployer.model.LoggerCategory.ROOT;
@@ -13,14 +14,16 @@ import static com.github.t1.log.LogLevel.INFO;
 import static com.github.t1.log.LogLevel.WARN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.quality.Strictness.LENIENT;
 
-public class LoggerDeployerTest extends AbstractDeployerTests {
-    @Test public void shouldAddEmptyLoggers() {
+@MockitoSettings(strictness = LENIENT)
+class LoggerDeployerTest extends AbstractDeployerTests {
+    @Test void shouldAddEmptyLoggers() {
         deployWithRootBundle(""
             + "loggers:\n");
     }
 
-    @Test public void shouldFailToAddLoggerWithoutItem() {
+    @Test void shouldFailToAddLoggerWithoutItem() {
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "loggers:\n"
             + "  foo:\n"));
@@ -28,7 +31,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         assertThat(thrown).hasStackTraceContaining("incomplete loggers plan 'foo'");
     }
 
-    @Test public void shouldAddLogger() {
+    @Test void shouldAddLogger() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployWithRootBundle(""
@@ -40,7 +43,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldNotAddExistingLogger() {
+    @Test void shouldNotAddExistingLogger() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
         deployWithRootBundle(""
@@ -52,7 +55,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateLogLevel() {
+    @Test void shouldUpdateLogLevel() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG).deployed();
 
         deployWithRootBundle(""
@@ -64,7 +67,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldFailToAddPluralHandlersAndSingularHandler() {
+    @Test void shouldFailToAddPluralHandlersAndSingularHandler() {
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "loggers:\n"
             + "  foo:\n"
@@ -74,7 +77,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         assertThat(thrown).hasStackTraceContaining("Can't have 'handler' _and_ 'handlers'");
     }
 
-    @Test public void shouldFailToExplicitlySetUseParentHandlersOfRootLoggerToTrue() {
+    @Test void shouldFailToExplicitlySetUseParentHandlersOfRootLoggerToTrue() {
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "loggers:\n"
             + "  ROOT:\n"
@@ -85,7 +88,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         assertThat(thrown).hasStackTraceContaining("Can't set use-parent-handlers of ROOT");
     }
 
-    @Test public void shouldFailToExplicitlySetUseParentHandlersOfRootLoggerToFalse() {
+    @Test void shouldFailToExplicitlySetUseParentHandlersOfRootLoggerToFalse() {
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "loggers:\n"
             + "  ROOT:\n"
@@ -96,7 +99,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         assertThat(thrown).hasStackTraceContaining("Can't set use-parent-handlers of ROOT");
     }
 
-    @Test public void shouldNotImplicitlySetUseParentHandlersOfRootLogger() {
+    @Test void shouldNotImplicitlySetUseParentHandlersOfRootLogger() {
         deployWithRootBundle(""
             + "loggers:\n"
             + "  ROOT:\n"
@@ -107,7 +110,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         assertThat(boundary.audits.getAudits()).containsExactly(new LoggerAudit().setCategory(ROOT).change("level", "INFO", "DEBUG").changed());
     }
 
-    @Test public void shouldFailToUndeployRootLogger() {
+    @Test void shouldFailToUndeployRootLogger() {
         Throwable throwable = catchThrowable(() -> deployWithRootBundle(""
             + "loggers:\n"
             + "  ROOT:\n"
@@ -118,7 +121,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
             .hasMessageContaining("can't remove root logger");
     }
 
-    @Test public void shouldAddLoggerWithExplicitState() {
+    @Test void shouldAddLoggerWithExplicitState() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployWithRootBundle(""
@@ -131,7 +134,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLoggerWithDefaultLevel() {
+    @Test void shouldAddLoggerWithDefaultLevel() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployWithRootBundle(""
@@ -143,7 +146,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLoggerWithDefaultVariableLevel() {
+    @Test void shouldAddLoggerWithDefaultVariableLevel() {
         givenConfiguredVariable("default.log-level", "WARN");
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(WARN);
 
@@ -156,7 +159,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLoggerWithOneHandler() {
+    @Test void shouldAddLoggerWithOneHandler() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
@@ -173,7 +176,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLoggerWithTwoHandlers() {
+    @Test void shouldAddLoggerWithTwoHandlers() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
         givenLogHandler(periodicRotatingFile, "BAR").level(DEBUG).deployed();
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
@@ -192,7 +195,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLoggerWithExplicitUseParentHandlersTrue() {
+    @Test void shouldAddLoggerWithExplicitUseParentHandlersTrue() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
@@ -210,7 +213,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLoggerWithExplicitUseParentHandlersFalse() {
+    @Test void shouldAddLoggerWithExplicitUseParentHandlersFalse() {
         givenLogHandler(periodicRotatingFile, "FOO").level(DEBUG).deployed();
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
@@ -228,7 +231,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLoggerWithoutLogHandlersButExplicitUseParentHandlersTrue() {
+    @Test void shouldAddLoggerWithoutLogHandlersButExplicitUseParentHandlersTrue() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .useParentHandlers(true);
@@ -243,7 +246,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldFailToAddLoggerWithoutLogHandlersButExplicitUseParentHandlersFalse() {
+    @Test void shouldFailToAddLoggerWithoutLogHandlersButExplicitUseParentHandlersFalse() {
         givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .useParentHandlers(false)
@@ -260,7 +263,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldNotUpdateLoggerWithHandlerAndUseParentHandlersFalseToFalse() {
+    @Test void shouldNotUpdateLoggerWithHandlerAndUseParentHandlersFalseToFalse() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .handler("FOO")
@@ -278,7 +281,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateLoggerWithHandlerAndUseParentHandlersFalseToTrue() {
+    @Test void shouldUpdateLoggerWithHandlerAndUseParentHandlersFalseToTrue() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .handler("FOO")
@@ -296,7 +299,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateLoggerWithHandlerAndUseParentHandlersTrueToFalse() {
+    @Test void shouldUpdateLoggerWithHandlerAndUseParentHandlersTrueToFalse() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .handler("FOO")
@@ -314,7 +317,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateLoggerWithoutHandlerAndWithUseParentHandlersFalseToTrue() {
+    @Test void shouldUpdateLoggerWithoutHandlerAndWithUseParentHandlersFalseToTrue() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .useParentHandlers(false)
@@ -330,7 +333,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldFailToUpdateLoggerWithoutHandlerAndWithUseParentHandlersTrueToFalse() {
+    @Test void shouldFailToUpdateLoggerWithoutHandlerAndWithUseParentHandlersTrueToFalse() {
         givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .useParentHandlers(true)
@@ -347,7 +350,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddHandler() {
+    @Test void shouldAddHandler() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .handler("FOO")
@@ -382,7 +385,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldRemoveHandler() {
+    @Test void shouldRemoveHandler() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .handler("FOO")
@@ -417,7 +420,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldRemoveExistingLoggerWhenStateIsUndeployed() {
+    @Test void shouldRemoveExistingLoggerWhenStateIsUndeployed() {
         LoggerFixture fixture = givenLogger("com.github.t1.deployer.app")
             .level(DEBUG)
             .useParentHandlers(true)
@@ -434,7 +437,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldRemoveNonExistingLoggerWhenStateIsUndeployed() {
+    @Test void shouldRemoveNonExistingLoggerWhenStateIsUndeployed() {
         LoggerFixture logger = givenLogger("com.github.t1.deployer.app").level(DEBUG);
 
         deployWithRootBundle(""
@@ -446,7 +449,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         logger.verifyUnchanged();
     }
 
-    @Test public void shouldRemoveLoggerWhenManaged() {
+    @Test void shouldRemoveLoggerWhenManaged() {
         LoggerFixture app1 = givenLogger("com.github.t1.deployer.app1").level(DEBUG).deployed();
         LoggerFixture app2 = givenLogger("com.github.t1.deployer.app2").level(DEBUG).handler("FOO").deployed();
         givenManaged("loggers");
@@ -460,7 +463,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         app2.verifyRemoved();
     }
 
-    @Test public void shouldRemoveLoggerWhenAllManaged() {
+    @Test void shouldRemoveLoggerWhenAllManaged() {
         LoggerFixture app1 = givenLogger("com.github.t1.deployer.app1").level(DEBUG).deployed();
         LoggerFixture app2 = givenLogger("com.github.t1.deployer.app2").level(DEBUG).deployed();
         givenManaged("all");
@@ -474,7 +477,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         app2.verifyRemoved();
     }
 
-    @Test public void shouldIgnorePinnedLoggerWhenManaged() {
+    @Test void shouldIgnorePinnedLoggerWhenManaged() {
         givenManaged("all");
         LoggerFixture foo = givenLogger("FOO").level(DEBUG).deployed();
         LoggerFixture bar = givenLogger("BAR").deployed().pinned();
@@ -490,7 +493,7 @@ public class LoggerDeployerTest extends AbstractDeployerTests {
         baz.verifyRemoved();
     }
 
-    @Test public void shouldFailToDeployPinnedLogger() {
+    @Test void shouldFailToDeployPinnedLogger() {
         givenLogger("FOO").deployed().pinned();
 
         Throwable thrown = catchThrowable(() ->

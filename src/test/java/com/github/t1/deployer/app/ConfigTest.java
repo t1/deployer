@@ -11,10 +11,10 @@ import com.github.t1.deployer.repository.RepositoryType;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.deployer.tools.Password;
 import com.github.t1.testtools.FileMemento;
-import com.github.t1.testtools.SystemPropertiesRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import com.github.t1.testtools.SystemPropertiesMemento;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -31,16 +31,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
-public class ConfigTest {
+class ConfigTest {
     private static final URI DUMMY_URI = URI.create("https://my-artifactory.example.org:9000/artifactory");
     private static final Password SECRET = new Password(UUID.randomUUID().toString());
 
-    @Rule public TemporaryFolder tmp = new TemporaryFolder();
-    @Rule public final SystemPropertiesRule systemProperties = new SystemPropertiesRule();
-    @SuppressWarnings("resource") @Rule public final FileMemento configFile = new FileMemento(() -> {
-        systemProperties.given("jboss.server.config.dir", tmp.getRoot());
-        return Paths.get(tmp.getRoot().getPath(), DEPLOYER_CONFIG_YAML);
+    @TempDir public Path tmp;
+    @RegisterExtension final SystemPropertiesMemento systemProperties = new SystemPropertiesMemento();
+    @SuppressWarnings("resource")
+    @RegisterExtension final FileMemento configFile = new FileMemento(() -> {
+        systemProperties.given("jboss.server.config.dir", tmp);
+        return Paths.get(tmp.toString(), DEPLOYER_CONFIG_YAML);
     });
 
     private ConfigProducer loadConfig() {
@@ -51,7 +53,7 @@ public class ConfigTest {
     }
 
 
-    @Test public void shouldConfigureDefaultRepositoryWithoutConfigFile() {
+    @Test void shouldConfigureDefaultRepositoryWithoutConfigFile() {
         // given no file
 
         ConfigProducer producer = loadConfig();
@@ -65,7 +67,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldConfigureDefaultRepositoryWithEmptyConfigFile() {
+    @Test void shouldConfigureDefaultRepositoryWithEmptyConfigFile() {
         configFile.write("---\n");
 
         ConfigProducer producer = loadConfig();
@@ -78,7 +80,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldConfigureDefaultRepositoryWithConfigFileWithoutRepositoryEntry() {
+    @Test void shouldConfigureDefaultRepositoryWithConfigFileWithoutRepositoryEntry() {
         configFile.write(""
             + "#comment\n"
             + "other: true\n");
@@ -93,7 +95,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldConfigureDefaultRepositoryWithConfigFileWithEmptyRepositoryEntry() {
+    @Test void shouldConfigureDefaultRepositoryWithConfigFileWithEmptyRepositoryEntry() {
         configFile.write(""
             + "repository:\n");
 
@@ -107,7 +109,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithTypeArtifactory() {
+    @Test void shouldLoadConfigFileWithTypeArtifactory() {
         configFile.write(""
             + "repository:\n"
             + "  type: artifactory\n");
@@ -123,7 +125,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithUri() {
+    @Test void shouldLoadConfigFileWithUri() {
         configFile.write(""
             + "repository:\n"
             + "  uri: " + DUMMY_URI + "\n");
@@ -138,7 +140,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithTypeAndUri() {
+    @Test void shouldLoadConfigFileWithTypeAndUri() {
         configFile.write(""
             + "repository:\n"
             + "  type: artifactory\n"
@@ -154,7 +156,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithTypeAndUriAndCredentials() {
+    @Test void shouldLoadConfigFileWithTypeAndUriAndCredentials() {
         configFile.write(""
             + "repository:\n"
             + "  type: artifactory\n"
@@ -172,7 +174,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithSnapshots() {
+    @Test void shouldLoadConfigFileWithSnapshots() {
         configFile.write(""
             + "repository:\n"
             + "  snapshots: snap\n");
@@ -187,7 +189,7 @@ public class ConfigTest {
         assertThat(producer.repositoryReleases()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithReleases() {
+    @Test void shouldLoadConfigFileWithReleases() {
         configFile.write(""
             + "repository:\n"
             + "  releases: release\n");
@@ -203,7 +205,7 @@ public class ConfigTest {
     }
 
 
-    @Test public void shouldLoadConfigFileWithVariable() {
+    @Test void shouldLoadConfigFileWithVariable() {
         configFile.write(""
             + "vars:\n"
             + "  foo: bar\n");
@@ -213,11 +215,11 @@ public class ConfigTest {
         assertThat(producer.variables().get(new VariableName("foo"))).isEqualTo("bar");
     }
 
-    @Test public void shouldFailToLoadConfigFileWithVariableNameContainingColon() {
+    @Test void shouldFailToLoadConfigFileWithVariableNameContainingColon() {
         shouldFailToLoadConfigFileWithVariableName("foo:bar");
     }
 
-    @Test public void shouldFailToLoadConfigFileWithVariableNameContainingSpace() {
+    @Test void shouldFailToLoadConfigFileWithVariableNameContainingSpace() {
         shouldFailToLoadConfigFileWithVariableName("foo bar");
     }
 
@@ -233,7 +235,7 @@ public class ConfigTest {
     }
 
 
-    @Test public void shouldLoadConfigFileWithDefaultGroupId() {
+    @Test void shouldLoadConfigFileWithDefaultGroupId() {
         configFile.write(""
             + "vars:\n"
             + "  default.group-id: foo\n");
@@ -244,7 +246,7 @@ public class ConfigTest {
     }
 
 
-    @Test public void shouldLoadConfigFileWithManagedDeployables() {
+    @Test void shouldLoadConfigFileWithManagedDeployables() {
         configFile.write(""
             + "manage:\n"
             + "- deployables\n");
@@ -255,7 +257,7 @@ public class ConfigTest {
     }
 
 
-    @Test public void shouldLoadConfigFileWithRootBundleGroupId() {
+    @Test void shouldLoadConfigFileWithRootBundleGroupId() {
         configFile.write(""
             + "root-bundle:\n"
             + "  group-id: foo\n");
@@ -265,7 +267,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getGroupId()).isEqualTo(GroupId.of("foo"));
     }
 
-    @Test public void shouldLoadConfigFileWithRootBundleArtifactId() {
+    @Test void shouldLoadConfigFileWithRootBundleArtifactId() {
         configFile.write(""
             + "root-bundle:\n"
             + "  artifact-id: foo\n");
@@ -275,7 +277,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getArtifactId()).isEqualTo(new ArtifactId("foo"));
     }
 
-    @Test public void shouldLoadConfigFileWithRootBundleClassifier() {
+    @Test void shouldLoadConfigFileWithRootBundleClassifier() {
         configFile.write(""
             + "root-bundle:\n"
             + "  classifier: raw\n");
@@ -285,7 +287,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getClassifier()).isEqualTo(new Classifier("raw"));
     }
 
-    @Test public void shouldLoadConfigFileWithRootBundleVersion() {
+    @Test void shouldLoadConfigFileWithRootBundleVersion() {
         configFile.write(""
             + "root-bundle:\n"
             + "  version: 1.0\n");
@@ -295,7 +297,7 @@ public class ConfigTest {
         assertThat(producer.rootBundle().getVersion()).isEqualTo(new Version("1.0"));
     }
 
-    @Test public void shouldLoadConfigFileWithOnePinnedDeployable() {
+    @Test void shouldLoadConfigFileWithOnePinnedDeployable() {
         configFile.write(""
             + "pin:\n"
             + "  deployables: [foo]\n");
@@ -305,7 +307,7 @@ public class ConfigTest {
         assertThat(producer.pinned().get("deployables")).containsExactly("foo");
     }
 
-    @Test public void shouldLoadConfigFileWithTwoPinnedDeployable() {
+    @Test void shouldLoadConfigFileWithTwoPinnedDeployable() {
         configFile.write(""
             + "pin:\n"
             + "  deployables: [foo, bar]\n");
@@ -316,7 +318,7 @@ public class ConfigTest {
     }
 
 
-    @Test public void shouldLoadConfigFileWithKeyStore() {
+    @Test void shouldLoadConfigFileWithKeyStore() {
         configFile.write(""
             + "key-store:\n"
             + "  path: foo\n"
@@ -332,7 +334,7 @@ public class ConfigTest {
         assertThat(config.getAlias()).isEqualTo("bog");
     }
 
-    @Test public void shouldLoadConfigFileWithoutKeyStore() {
+    @Test void shouldLoadConfigFileWithoutKeyStore() {
         configFile.write("");
 
         ConfigProducer producer = loadConfig();
@@ -340,7 +342,7 @@ public class ConfigTest {
         assertThat(producer.keyStore()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithEmptyKeyStore() {
+    @Test void shouldLoadConfigFileWithEmptyKeyStore() {
         configFile.write(""
             + "key-store:");
 
@@ -349,7 +351,7 @@ public class ConfigTest {
         assertThat(producer.keyStore()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithEmptyKeyStorePath() {
+    @Test void shouldLoadConfigFileWithEmptyKeyStorePath() {
         configFile.write(""
             + "key-store:\n"
             + "  path:");
@@ -359,7 +361,7 @@ public class ConfigTest {
         assertThat(producer.keyStore().getPath()).isNull();
     }
 
-    @Test public void shouldLoadConfigFileWithOneTrigger() {
+    @Test void shouldLoadConfigFileWithOneTrigger() {
         configFile.write(""
             + "triggers: [startup]");
 
@@ -368,7 +370,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup);
     }
 
-    @Test public void shouldLoadConfigFileWithTwoTriggers() {
+    @Test void shouldLoadConfigFileWithTwoTriggers() {
         configFile.write(""
             + "triggers: [startup, post]");
 
@@ -377,7 +379,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup, post);
     }
 
-    @Test public void shouldLoadConfigFileWithThreeTriggers() {
+    @Test void shouldLoadConfigFileWithThreeTriggers() {
         configFile.write(""
             + "triggers: [startup, post, fileChange]");
 
@@ -386,7 +388,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup, post, fileChange);
     }
 
-    @Test public void shouldLoadConfigFileWithAllTriggersDefaultToAll() {
+    @Test void shouldLoadConfigFileWithAllTriggersDefaultToAll() {
         configFile.write("");
 
         ConfigProducer producer = loadConfig();
@@ -394,7 +396,7 @@ public class ConfigTest {
         assertThat(producer.triggers()).containsExactly(startup, post, fileChange);
     }
 
-    @Test public void shouldFailToGetConfigDirWithoutConfiguredJbossConfigDir() {
+    @Test void shouldFailToGetConfigDirWithoutConfiguredJbossConfigDir() {
         systemProperties.given("jboss.server.config.dir", null);
 
         Throwable throwable = catchThrowable(Container::getConfigDir);
@@ -402,13 +404,13 @@ public class ConfigTest {
         assertThat(throwable).hasMessage("no config dir configured");
     }
 
-    @Test public void shouldGetConfigDirFromJbossConfigDir() {
+    @Test void shouldGetConfigDirFromJbossConfigDir() {
         Path configDir = Container.getConfigDir();
 
         assertThat(configDir).hasToString(System.getProperty("jboss.server.config.dir"));
     }
 
-    @Test public void shouldGetConfigDirFromSystemProperty() {
+    @Test void shouldGetConfigDirFromSystemProperty() {
         systemProperties.given("deployer.config.dir", "foobar");
 
         Path configDir = Container.getConfigDir();
@@ -416,7 +418,7 @@ public class ConfigTest {
         assertThat(configDir).hasToString("foobar");
     }
 
-    @Test public void shouldGetConfigDirFromEnvironmentVariable() {
+    @Test void shouldGetConfigDirFromEnvironmentVariable() {
         assumeThat(System.getenv("DEPLOYER_CONFIG_DIR"))
             .describedAs("set env var 'DEPLOYER_CONFIG_DIR' to 'foo' in run config for this test, but not for others!")
             .isEqualTo("foo");
@@ -426,7 +428,7 @@ public class ConfigTest {
         assertThat(configDir).hasToString("foo");
     }
 
-    @Test public void shouldLoadConfigFileWithEverything() {
+    @Test void shouldLoadConfigFileWithEverything() {
         String yaml = ""
             + "repository:\n"
             + "  type: artifactory\n"
@@ -460,22 +462,24 @@ public class ConfigTest {
 
         ConfigProducer producer = loadConfig();
 
-        assertThat(producer.repositoryType()).describedAs("repository.type").isEqualTo(artifactory);
-        assertThat(producer.repositoryUri()).describedAs("repository.uri").isEqualTo(DUMMY_URI);
-        assertThat(producer.repositoryUsername()).describedAs("repository.username").isEqualTo("joe");
-        assertThat(producer.repositoryPassword()).describedAs("repository.password").isEqualTo(SECRET);
-        assertThat(producer.repositorySnapshots()).describedAs("repository.snapshots").isEqualTo("snap");
-        assertThat(producer.repositoryReleases()).describedAs("repository.releases").isEqualTo("real");
-        assertThat(producer.variables()).describedAs("vars").containsExactly(entry(new VariableName("foo"), "bar"));
-        assertThat(producer.managedResources()).describedAs("managed resource").containsExactly("deployables");
-        assertThat(producer.rootBundle()).describedAs("root bundle").isEqualTo(new RootBundleConfig()
-            .setGroupId(GroupId.of("foo"))
-            .setArtifactId(ArtifactId.of("bar"))
-            .setClassifier(Classifier.of("raw"))
-            .setVersion(Version.of("1.0")));
-        assertThat(producer.pinned()).describedAs("pinned").containsExactly(entry("deployables", asList("foo", "bar")));
-        assertThat(producer.keyStore()).describedAs("keystore").isEqualTo(new KeyStoreConfig().withPath("foo").withType("bar").withPass("baz").withAlias("bog"));
-        assertThat(producer.triggers()).describedAs("triggers").containsExactly(startup, post);
-        assertThat(producer.toString()).describedAs("toString").isEqualTo(yaml.replace(SECRET.getValue(), "concealed"));
+        assertSoftly(softly -> {
+            softly.assertThat(producer.repositoryType()).describedAs("repository.type").isEqualTo(artifactory);
+            softly.assertThat(producer.repositoryUri()).describedAs("repository.uri").isEqualTo(DUMMY_URI);
+            softly.assertThat(producer.repositoryUsername()).describedAs("repository.username").isEqualTo("joe");
+            softly.assertThat(producer.repositoryPassword()).describedAs("repository.password").isEqualTo(SECRET);
+            softly.assertThat(producer.repositorySnapshots()).describedAs("repository.snapshots").isEqualTo("snap");
+            softly.assertThat(producer.repositoryReleases()).describedAs("repository.releases").isEqualTo("real");
+            softly.assertThat(producer.variables()).describedAs("vars").containsExactly(entry(new VariableName("foo"), "bar"));
+            softly.assertThat(producer.managedResources()).describedAs("managed resource").containsExactly("deployables");
+            softly.assertThat(producer.rootBundle()).describedAs("root bundle").isEqualTo(new RootBundleConfig()
+                .setGroupId(GroupId.of("foo"))
+                .setArtifactId(ArtifactId.of("bar"))
+                .setClassifier(Classifier.of("raw"))
+                .setVersion(Version.of("1.0")));
+            softly.assertThat(producer.pinned()).describedAs("pinned").containsExactly(entry("deployables", asList("foo", "bar")));
+            softly.assertThat(producer.keyStore()).describedAs("keystore").isEqualTo(new KeyStoreConfig().withPath("foo").withType("bar").withPass("baz").withAlias("bog"));
+            softly.assertThat(producer.triggers()).describedAs("triggers").containsExactly(startup, post);
+            softly.assertThat(producer.toString()).describedAs("toString").isEqualTo(yaml.replace(SECRET.getValue(), "concealed"));
+        });
     }
 }

@@ -1,7 +1,8 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.problem.WebApplicationApplicationException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 import static com.github.t1.deployer.model.LogHandlerType.console;
 import static com.github.t1.deployer.model.LogHandlerType.custom;
@@ -11,14 +12,16 @@ import static com.github.t1.log.LogLevel.ALL;
 import static com.github.t1.log.LogLevel.DEBUG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.quality.Strictness.LENIENT;
 
-public class LogHandlerDeployerTest extends AbstractDeployerTests {
-    @Test public void shouldAddEmptyLogHandlers() {
+@MockitoSettings(strictness = LENIENT)
+class LogHandlerDeployerTest extends AbstractDeployerTests {
+    @Test void shouldAddEmptyLogHandlers() {
         deployWithRootBundle(""
             + "log-handlers:\n");
     }
 
-    @Test public void shouldAddLogHandlersWithAllDefaults() {
+    @Test void shouldAddLogHandlersWithAllDefaults() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO");
 
         deployWithRootBundle(""
@@ -28,7 +31,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.verifyAdded();
     }
 
-    @Test public void shouldAddLogHandlerWithEncoding() {
+    @Test void shouldAddLogHandlerWithEncoding() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .encoding("US-ASCII");
@@ -41,7 +44,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.verifyAdded();
     }
 
-    @Test public void shouldAddLogHandlerWithDefaultType() {
+    @Test void shouldAddLogHandlerWithDefaultType() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -60,7 +63,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddConsoleHandler() {
+    @Test void shouldAddConsoleHandler() {
         LogHandlerFixture fixture = givenLogHandler(console, "FOO")
             .level(ALL)
             .format("the-format");
@@ -76,7 +79,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLogHandlerWithConfiguredDefaultType() {
+    @Test void shouldAddLogHandlerWithConfiguredDefaultType() {
         givenConfiguredVariable("default.log-handler-type", "console");
         LogHandlerFixture fixture = givenLogHandler(console, "FOO")
             .level(ALL)
@@ -92,7 +95,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLogHandlerWithDefaultFormat() {
+    @Test void shouldAddLogHandlerWithDefaultFormat() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -109,7 +112,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLogHandlerWithConfiguredDefaultFormat() {
+    @Test void shouldAddLogHandlerWithConfiguredDefaultFormat() {
         givenConfiguredVariable("default.log-format", "the-format");
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
@@ -128,7 +131,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLogHandlerWithFormatter() {
+    @Test void shouldAddLogHandlerWithFormatter() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -147,7 +150,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddLogHandlerWithConfiguredDefaultFormatter() {
+    @Test void shouldAddLogHandlerWithConfiguredDefaultFormatter() {
         givenConfiguredVariable("default.log-formatter", "the-formatter");
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
@@ -165,7 +168,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.verifyAdded();
     }
 
-    @Test public void shouldAddLogHandlerWithConfiguredDefaultFormatAndFormatter() {
+    @Test void shouldAddLogHandlerWithConfiguredDefaultFormatAndFormatter() {
         givenConfiguredVariable("default.log-format", "the-format");
         givenConfiguredVariable("default.log-formatter", "the-formatter");
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
@@ -185,7 +188,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldFailToParsePlanWithLogHandlerWithBothFormatAndFormatter() {
+    @Test void shouldFailToParsePlanWithLogHandlerWithBothFormatAndFormatter() {
         Throwable throwable = catchThrowable(() -> deployWithRootBundle(""
             + "log-handlers:\n"
             + "  FOO:\n"
@@ -199,7 +202,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddPeriodicRotatingFileHandler() {
+    @Test void shouldAddPeriodicRotatingFileHandler() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -219,7 +222,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddPeriodicRotatingFileHandlerWithDefaultLevel() {
+    @Test void shouldAddPeriodicRotatingFileHandlerWithDefaultLevel() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .suffix("the-suffix")
             .format("the-format");
@@ -235,7 +238,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddPeriodicRotatingFileHandlerWithDefaultFile() {
+    @Test void shouldAddPeriodicRotatingFileHandlerWithDefaultFile() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(DEBUG)
             .suffix("the-suffix")
@@ -253,7 +256,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddPeriodicRotatingFileHandlerWithDefaultSuffix() {
+    @Test void shouldAddPeriodicRotatingFileHandlerWithDefaultSuffix() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -271,7 +274,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddPeriodicRotatingFileHandlerWithConfiguredDefaultSuffix() {
+    @Test void shouldAddPeriodicRotatingFileHandlerWithConfiguredDefaultSuffix() {
         givenConfiguredVariable("default.log-file-suffix", "the-default-suffix");
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
@@ -291,7 +294,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddHandlerWithDefaultTypeAndFileAndSuffix() {
+    @Test void shouldAddHandlerWithDefaultTypeAndFileAndSuffix() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .format("the-format");
@@ -306,7 +309,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldNotAddExistingHandler() {
+    @Test void shouldNotAddExistingHandler() {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -327,7 +330,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerLevel() {
+    @Test void shouldUpdateHandlerLevel() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(DEBUG)
             .file("the-file")
@@ -349,7 +352,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerFile() {
+    @Test void shouldUpdateHandlerFile() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-old-file")
@@ -372,7 +375,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerSuffix() {
+    @Test void shouldUpdateHandlerSuffix() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -394,7 +397,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerEncoding() {
+    @Test void shouldUpdateHandlerEncoding() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -414,7 +417,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerFormat() {
+    @Test void shouldUpdateHandlerFormat() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -437,7 +440,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerFormatter() {
+    @Test void shouldUpdateHandlerFormatter() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -460,7 +463,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerFormatToFormatter() {
+    @Test void shouldUpdateHandlerFormatToFormatter() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -485,7 +488,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerFormatterToFormat() {
+    @Test void shouldUpdateHandlerFormatterToFormat() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -510,7 +513,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldUpdateHandlerFileAndSuffix() {
+    @Test void shouldUpdateHandlerFileAndSuffix() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-old-file")
@@ -534,7 +537,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldRemoveHandlerWhenStateIsUndeployed() {
+    @Test void shouldRemoveHandlerWhenStateIsUndeployed() {
         LogHandlerFixture fixture = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -556,7 +559,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldNotRemoveUndeployedHandlerWhenStateIsUndeployed() {
+    @Test void shouldNotRemoveUndeployedHandlerWhenStateIsUndeployed() {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("the-file")
@@ -577,7 +580,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldAddCustomHandlerWithoutProperties() {
+    @Test void shouldAddCustomHandlerWithoutProperties() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler");
@@ -592,7 +595,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.verifyAdded();
     }
 
-    @Test public void shouldFailToAddCustomHandlerWithoutModule() {
+    @Test void shouldFailToAddCustomHandlerWithoutModule() {
         Throwable throwable = catchThrowable(() -> deployWithRootBundle(""
             + "log-handlers:\n"
             + "  FOO:\n"
@@ -603,7 +606,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
             "log-handler [FOO] is of type [custom], so it requires a 'module'");
     }
 
-    @Test public void shouldFailToAddCustomHandlerWithoutClass() {
+    @Test void shouldFailToAddCustomHandlerWithoutClass() {
         Throwable throwable = catchThrowable(() -> deployWithRootBundle(""
             + "log-handlers:\n"
             + "  FOO:\n"
@@ -614,7 +617,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
             "log-handler [FOO] is of type [custom], so it requires a 'class'");
     }
 
-    @Test public void shouldAddCustomHandlerWithProperties() {
+    @Test void shouldAddCustomHandlerWithProperties() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -638,7 +641,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.verifyAdded();
     }
 
-    @Test public void shouldAddCustomLogHandlerWithFile() {
+    @Test void shouldAddCustomLogHandlerWithFile() {
         LogHandlerFixture logHandler = givenLogHandler(custom, "CUSTOM")
             .module("foo")
             .class_("bar")
@@ -656,7 +659,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         logHandler.verifyAdded();
     }
 
-    @Test public void shouldAddCustomLogHandlerWithSuffix() {
+    @Test void shouldAddCustomLogHandlerWithSuffix() {
         LogHandlerFixture logHandler = givenLogHandler(custom, "CUSTOM")
             .module("foo")
             .class_("bar")
@@ -674,7 +677,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         logHandler.verifyAdded();
     }
 
-    @Test public void shouldAddCustomHandlerWithEscapedAndUnescapedVariablesInAttributes() {
+    @Test void shouldAddCustomHandlerWithEscapedAndUnescapedVariablesInAttributes() {
         givenConfiguredVariable("module", "bar");
         LogHandlerFixture logHandler = givenLogHandler(custom, "FOO")
             .module("bar")
@@ -690,7 +693,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         logHandler.verifyAdded();
     }
 
-    @Test public void shouldUpdateCustomHandlerModule() {
+    @Test void shouldUpdateCustomHandlerModule() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -715,7 +718,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.verifyChange("module", "org.foo", "org.foos").verifyChanged();
     }
 
-    @Test public void shouldUpdateCustomHandlerClass() {
+    @Test void shouldUpdateCustomHandlerClass() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -740,7 +743,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.verifyChange("class", "org.foo.MyHandler", "org.foos.MyHandler").verifyChanged();
     }
 
-    @Test public void shouldAddFirstCustomHandlerProperty() {
+    @Test void shouldAddFirstCustomHandlerProperty() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .level(ALL)
             .module("org.foo")
@@ -760,7 +763,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.expectChange("property:foo", null, "bar").verifyChanged();
     }
 
-    @Test public void shouldAddThirdCustomHandlerProperty() {
+    @Test void shouldAddThirdCustomHandlerProperty() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -787,7 +790,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.expectChange("property:bax", null, "bbb").verifyChanged();
     }
 
-    @Test public void shouldAddCustomHandlerPropertyWithExpression() {
+    @Test void shouldAddCustomHandlerPropertyWithExpression() {
         givenConfiguredVariable("bars", "bar");
         givenConfiguredVariable("var", "val");
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
@@ -815,7 +818,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
             .verifyChanged();
     }
 
-    @Test public void shouldChangeCustomHandlerPropertyValue() {
+    @Test void shouldChangeCustomHandlerPropertyValue() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -841,7 +844,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.expectChange("property:foo", "bar", "bax").verifyChanged();
     }
 
-    @Test public void shouldRemoveCustomHandlerProperty() {
+    @Test void shouldRemoveCustomHandlerProperty() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -866,7 +869,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         fixture.expectChange("property:foos", "bars", null).verifyChanged();
     }
 
-    @Test public void shouldChangeCustomHandlerPropertyKey() {
+    @Test void shouldChangeCustomHandlerPropertyKey() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -895,7 +898,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
             .verifyChanged();
     }
 
-    @Test public void shouldRemoveCustomHandler() {
+    @Test void shouldRemoveCustomHandler() {
         LogHandlerFixture fixture = givenLogHandler(custom, "FOO")
             .module("org.foo")
             .class_("org.foo.MyHandler")
@@ -922,7 +925,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test public void shouldRemoveLogHandlerWhenManaged() {
+    @Test void shouldRemoveLogHandlerWhenManaged() {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("foo.log")
@@ -943,7 +946,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         bar.verifyRemoved();
     }
 
-    @Test public void shouldRemoveLogHandlerWhenAllManaged() {
+    @Test void shouldRemoveLogHandlerWhenAllManaged() {
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "FOO")
             .level(ALL)
             .file("foo.log")
@@ -964,7 +967,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         bar.verifyRemoved();
     }
 
-    @Test public void shouldIgnorePinnedLogHandlerWhenManaged() {
+    @Test void shouldIgnorePinnedLogHandlerWhenManaged() {
         givenManaged("all");
         LogHandlerFixture foo = givenLogHandler(periodicRotatingFile, "FOO").level(ALL).formatter("foo").file("foo.log").deployed();
         LogHandlerFixture bar = givenLogHandler(periodicRotatingFile, "BAR").deployed().pinned();
@@ -980,7 +983,7 @@ public class LogHandlerDeployerTest extends AbstractDeployerTests {
         baz.verifyRemoved();
     }
 
-    @Test public void shouldFailToDeployPinnedLogHandler() {
+    @Test void shouldFailToDeployPinnedLogHandler() {
         givenLogHandler(periodicRotatingFile, "FOO").deployed().pinned();
 
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""

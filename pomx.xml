@@ -72,7 +72,7 @@
 
     <dependencies>
         <provided>
-            <jar>com.github.t1:test-tools:1.6.1</jar>
+            <jar>com.github.t1:test-tools:2.0.0-SNAPSHOT</jar>
         </provided>
 
         <compile>

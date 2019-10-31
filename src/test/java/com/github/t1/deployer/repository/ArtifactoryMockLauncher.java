@@ -78,7 +78,7 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
             });
     }
 
-    private void setLogLevel(String loggerName, Level level) {
+    private void setLogLevel(String loggerName, @SuppressWarnings("SameParameterValue") Level level) {
         ((Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
     }
 
@@ -125,7 +125,7 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
     }
 
     @CommandDefinition(name = "help", description = "shows all available commands")
-    public class HelpCommand implements Command<CommandInvocation> {
+    public static class HelpCommand implements Command<CommandInvocation> {
         @Override
         public CommandResult execute(CommandInvocation invocation) {
             CommandRegistry registry = invocation.getCommandRegistry();

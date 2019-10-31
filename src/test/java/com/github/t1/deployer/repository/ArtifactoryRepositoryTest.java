@@ -3,7 +3,7 @@ package com.github.t1.deployer.repository;
 import com.github.t1.deployer.model.Artifact;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.repository.ArtifactoryRepository.MavenMetadata.Versioning.SnapshotVersion;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.xml.bind.JAXB;
 import java.io.StringReader;
@@ -16,12 +16,12 @@ import static com.github.t1.deployer.repository.ArtifactoryRepository.artifactFr
 import static com.github.t1.deployer.repository.RepositoryProducer.DEFAULT_ARTIFACTORY_URI;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ArtifactoryRepositoryTest {
+class ArtifactoryRepositoryTest {
     private static final Path PATH = Paths.get("/artifactory/api/storage/releases-virtual/"
             + "org/jolokia/jolokia-war/1.3.3/jolokia-war-1.3.3.war");
     private static final URI APP_URI = DEFAULT_ARTIFACTORY_URI.resolve(PATH.toString());
 
-    @Test public void shouldDeriveArtifactFromUri() {
+    @Test void shouldDeriveArtifactFromUri() {
         Artifact artifact = artifactFromArtifactoryUri(Checksum.fromString("1234"), APP_URI);
 
         assertThat(artifact.getGroupId()).hasToString("org.jolokia");
@@ -31,7 +31,7 @@ public class ArtifactoryRepositoryTest {
         assertThat(artifact.getChecksum()).hasToString("1234");
     }
 
-    @Test public void shouldUnmarshalMavenMetadata() {
+    @Test void shouldUnmarshalMavenMetadata() {
         MavenMetadata metadata = JAXB.unmarshal(new StringReader(""
                 + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<metadata>\n"

@@ -33,7 +33,7 @@ import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.LogLevel;
 import com.github.t1.testtools.FileMemento;
-import com.github.t1.testtools.SystemPropertiesRule;
+import com.github.t1.testtools.SystemPropertiesMemento;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -44,16 +44,16 @@ import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.dmr.ModelNode;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.VerificationMode;
 
 import javax.enterprise.inject.Instance;
@@ -130,21 +130,21 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("SameParameterValue")
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractDeployerTests {
 
     private static final Version UNKNOWN = new Version("unknown");
 
     @SneakyThrows(IOException.class)
-    public static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
+    private static Path tempDir() { return Files.createTempDirectory("deployer.test"); }
 
     private final Path tempDir = tempDir();
 
-    @Rule public SystemPropertiesRule systemProperties = new SystemPropertiesRule()
+    @RegisterExtension SystemPropertiesMemento systemProperties = new SystemPropertiesMemento()
         .given("jboss.server.config.dir", tempDir)
         .given(CLI_DEBUG, "true");
-    @Rule @SuppressWarnings("resource")
-    public FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE));
+    @SuppressWarnings("resource")
+    @RegisterExtension FileMemento rootBundle = new FileMemento(() -> tempDir.resolve(ROOT_BUNDLE_CONFIG_FILE));
 
     void deployWithRootBundle(String plan) { deployWithRootBundle(plan, emptyMap()); }
 
@@ -186,7 +186,7 @@ public abstract class AbstractDeployerTests {
 
     private String processState;
 
-    @Before
+    @BeforeEach
     public void before() {
         logHandlerDeployer.managedResourceNames
             = loggerDeployer.managedResourceNames
@@ -257,16 +257,16 @@ public abstract class AbstractDeployerTests {
         }
     }
 
-    public OngoingCli whenCli(ModelNode request) {
+    private OngoingCli whenCli(ModelNode request) {
         return new OngoingCli(request);
     }
 
 
     private static String versionsKey(GroupId groupId, ArtifactId artifactId) { return groupId + ":" + artifactId; }
 
-    public static String rootLogger() { return address("logging", "root-logger", "ROOT"); }
+    private static String rootLogger() { return address("logging", "root-logger", "ROOT"); }
 
-    public static ModelNode rootLoggerNode() { return createAddress("subsystem", "logging", "root-logger", "ROOT"); }
+    static ModelNode rootLoggerNode() { return createAddress("subsystem", "logging", "root-logger", "ROOT"); }
 
     private ModelNode rootLoggerResponse() {
         return toModelNode(""
@@ -301,7 +301,7 @@ public abstract class AbstractDeployerTests {
         return toModelNode(list.stream().collect(joining(",", "[", "]")));
     }
 
-    @After
+    @AfterEach
     @SneakyThrows(IOException.class) @SuppressWarnings("resource")
     public void after() {
         verify(cli, atLeast(0)).execute(any(ModelNode.class), any(OperationMessageHandler.class));
@@ -320,19 +320,19 @@ public abstract class AbstractDeployerTests {
         verify(cli, mode).execute(eq(request), any(OperationMessageHandler.class));
     }
 
-    public void verifyWriteAttribute(ModelNode address, String name, String value) {
+    void verifyWriteAttribute(ModelNode address, String name, String value) {
         verifyWriteAttribute(address, name, ModelNode::set, value);
     }
 
-    public void verifyWriteAttribute(ModelNode address, String name, Integer value) {
+    private void verifyWriteAttribute(ModelNode address, String name, Integer value) {
         verifyWriteAttribute(address, name, ModelNode::set, value);
     }
 
-    public void verifyWriteAttribute(ModelNode address, String name, Long value) {
+    private void verifyWriteAttribute(ModelNode address, String name, Long value) {
         verifyWriteAttribute(address, name, ModelNode::set, value);
     }
 
-    public void verifyWriteAttribute(ModelNode address, String name, Boolean value) {
+    private void verifyWriteAttribute(ModelNode address, String name, Boolean value) {
         verifyWriteAttribute(address, name, ModelNode::set, value);
     }
 
@@ -358,14 +358,13 @@ public abstract class AbstractDeployerTests {
     }
 
 
-    @SneakyThrows(IOException.class)
-    public void givenConfiguredRootBundle(String key, String value) {
+    @SneakyThrows(IOException.class) void givenConfiguredRootBundle(String key, String value) {
         boundary.rootBundleConfig = YAML.readValue(key + ": " + value, RootBundleConfig.class);
     }
 
-    public void givenConfiguredKeyStore(KeyStoreConfig keyStoreConfig) { boundary.keyStore = keyStoreConfig; }
+    void givenConfiguredKeyStore(KeyStoreConfig keyStoreConfig) { boundary.keyStore = keyStoreConfig; }
 
-    public void givenConfiguredVariable(String name, String value) {
+    void givenConfiguredVariable(String name, String value) {
         this.configuredVariables.put(new VariableName(name), value);
     }
 
@@ -378,33 +377,33 @@ public abstract class AbstractDeployerTests {
     }
 
 
-    public ArtifactFixtureBuilder.ArtifactFixture givenUnknownArtifact(String name) {
+    ArtifactFixtureBuilder.ArtifactFixture givenUnknownArtifact(String name) {
         return givenArtifact(name, "org." + name, name).version(UNKNOWN);
     }
 
-    public ArtifactFixtureBuilder givenArtifact(String name) { return givenArtifact(name, "org." + name, name); }
+    ArtifactFixtureBuilder givenArtifact(String name) { return givenArtifact(name, "org." + name, name); }
 
-    public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name) {
+    ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name) {
         return givenArtifact(type, name, "org." + name, name);
     }
 
-    public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String groupId, String artifactId) {
+    ArtifactFixtureBuilder givenArtifact(ArtifactType type, String groupId, String artifactId) {
         return givenArtifact(type, artifactId, groupId, artifactId);
     }
 
-    public ArtifactFixtureBuilder givenArtifact(String groupId, String artifactId) {
+    ArtifactFixtureBuilder givenArtifact(String groupId, String artifactId) {
         return givenArtifact(artifactId, groupId, artifactId);
     }
 
-    public ArtifactFixtureBuilder givenArtifact(String name, GroupId groupId, ArtifactId artifactId) {
+    ArtifactFixtureBuilder givenArtifact(String name, GroupId groupId, ArtifactId artifactId) {
         return givenArtifact(name, groupId.getValue(), artifactId.getValue());
     }
 
-    public ArtifactFixtureBuilder givenArtifact(String name, String groupId, String artifactId) {
+    ArtifactFixtureBuilder givenArtifact(String name, String groupId, String artifactId) {
         return givenArtifact(war, name, groupId, artifactId);
     }
 
-    public ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name, String groupId, String artifactId) {
+    ArtifactFixtureBuilder givenArtifact(ArtifactType type, String name, String groupId, String artifactId) {
         return new ArtifactFixtureBuilder(type, name).groupId(groupId).artifactId(artifactId);
     }
 
@@ -668,8 +667,7 @@ public abstract class AbstractDeployerTests {
             .map(ModelNode::toString).collect(joining("\n"));
     }
 
-    @SneakyThrows(IOException.class) @SuppressWarnings("resource")
-    public List<Operation> capturedOperations() {
+    @SneakyThrows(IOException.class) @SuppressWarnings("resource") List<Operation> capturedOperations() {
         if (operations == null) {
             ArgumentCaptor<Operation> captor = ArgumentCaptor.forClass(Operation.class);
             verify(cli, atLeastOnce()).execute(captor.capture(), any(OperationMessageHandler.class));
@@ -678,10 +676,10 @@ public abstract class AbstractDeployerTests {
         return operations;
     }
 
-    public List<ModelNode> steps() { return capturedOperations().get(0).getOperation().get(STEPS).asList(); }
+    List<ModelNode> steps() { return capturedOperations().get(0).getOperation().get(STEPS).asList(); }
 
 
-    public LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
+    LoggerFixture givenLogger(String name) { return new LoggerFixture(name); }
 
     @Getter
     public class LoggerFixture extends AbstractFixture {
@@ -851,7 +849,7 @@ public abstract class AbstractDeployerTests {
         }
     }
 
-    public LogHandlerFixture givenLogHandler(LogHandlerType type, String name) {
+    LogHandlerFixture givenLogHandler(LogHandlerType type, String name) {
         return new LogHandlerFixture(type, name);
     }
 
@@ -1120,7 +1118,7 @@ public abstract class AbstractDeployerTests {
     }
 
 
-    public DataSourceFixture givenDataSource(String name) { return new DataSourceFixture(name); }
+    DataSourceFixture givenDataSource(String name) { return new DataSourceFixture(name); }
 
     @Getter
     public class DataSourceFixture extends AbstractFixture {

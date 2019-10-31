@@ -25,8 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
-public class MavenCentralTest extends MavenCentralTestParent {
-    @RegisterExtension public static JaxRsTestExtension MOCK = new JaxRsTestExtension(new MavenCentralMock());
+class MavenCentralTest extends MavenCentralTestParent {
+    @RegisterExtension static JaxRsTestExtension MOCK = new JaxRsTestExtension(new MavenCentralMock());
 
     @Override protected URI baseUri() { return MOCK.baseUri(); }
 
@@ -189,14 +189,14 @@ public class MavenCentralTest extends MavenCentralTestParent {
     }
 
     /** we'd need an ambiguous checksum in maven central to test this in MavenCentralIT */
-    @Test public void shouldFailToGetByAmbiguousChecksum() {
+    @Test void shouldFailToGetByAmbiguousChecksum() {
         Throwable thrown = catchThrowable(() -> repository.searchByChecksum(AMBIGUOUS_CHECKSUM));
 
         assertThat(thrown).isInstanceOf(RuntimeException.class).hasMessage("checksum not unique in repository: '" + AMBIGUOUS_CHECKSUM + "'");
     }
 
     /** Doesn't exist on Maven Central */
-    @Test public void shouldFailToResolveLatestArtifactWithoutVersions() {
+    @Test void shouldFailToResolveLatestArtifactWithoutVersions() {
         WebApplicationApplicationException thrown = catchThrowableOfType(() ->
                 repository.resolveArtifact(GroupId.of("no-versions"), ArtifactId.of("no-versions-war"), Version.of("LATEST"), war, null),
             WebApplicationApplicationException.class);

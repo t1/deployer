@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.github.t1.deployer.app.Audit.DeployableAudit;
 import com.github.t1.deployer.app.Audit.LoggerAudit;
 import com.github.t1.deployer.model.LoggerCategory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -19,7 +19,7 @@ import static com.github.t1.log.LogLevel.INFO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class AuditsSerializationTest {
+class AuditsSerializationTest {
     private static final ObjectMapper JSON = new ObjectMapper()
         .setSerializationInclusion(NON_EMPTY) //
         .configure(FAIL_ON_UNKNOWN_PROPERTIES, false) //
@@ -77,7 +77,7 @@ public class AuditsSerializationTest {
         + "processState: reloadRequired\n";
 
 
-    @Test public void shouldFailToDeserializeUnknownDeployableType() {
+    @Test void shouldFailToDeserializeUnknownDeployableType() {
         String json = "{'type':'xxx','operation':'add'}";
 
         assertThatThrownBy(() -> deserialize(json))
@@ -86,7 +86,7 @@ public class AuditsSerializationTest {
     }
 
 
-    @Test public void shouldDeserializeDeployedDeployableAudit() throws Exception {
+    @Test void shouldDeserializeDeployedDeployableAudit() throws Exception {
         String json = "{"
             + "'type':'deployable',"
             + "'operation':'add',"
@@ -99,7 +99,7 @@ public class AuditsSerializationTest {
     }
 
 
-    @Test public void shouldDeserializeChangeAudit() throws Exception {
+    @Test void shouldDeserializeChangeAudit() throws Exception {
         String json = "{'audits':["
             + "{"
             + "'type':'deployable',"
@@ -130,7 +130,7 @@ public class AuditsSerializationTest {
     }
 
 
-    @Test public void shouldDeserializeUndeployedDeployableAudit() throws Exception {
+    @Test void shouldDeserializeUndeployedDeployableAudit() throws Exception {
         String json = "{"
             + "'type':'deployable',"
             + "'operation':'remove',"
@@ -143,7 +143,7 @@ public class AuditsSerializationTest {
     }
 
 
-    @Test public void shouldFailToDeserializeDeployableAuditWithUnknownState() {
+    @Test void shouldFailToDeserializeDeployableAuditWithUnknownState() {
         String json = "{"
             + "'type':'deployable',"
             + "'operation':'xxx',"
@@ -158,7 +158,7 @@ public class AuditsSerializationTest {
     }
 
 
-    @Test public void shouldDeserializeDeployedLoggerAudit() throws Exception {
+    @Test void shouldDeserializeDeployedLoggerAudit() throws Exception {
         String json = "{"
             + "'type':'logger',"
             + "'operation':'add',"
@@ -175,28 +175,28 @@ public class AuditsSerializationTest {
     }
 
 
-    @Test public void shouldDeserializeTwoAuditsFromJson() throws Exception {
+    @Test void shouldDeserializeTwoAuditsFromJson() throws Exception {
         Audits audits = JSON.readValue(TWO_AUDITS_JSON, Audits.class);
 
         assertThat(audits).isEqualTo(TWO_AUDITS);
     }
 
 
-    @Test public void shouldSerializeTwoAuditsAsJson() throws Exception {
+    @Test void shouldSerializeTwoAuditsAsJson() throws Exception {
         String out = JSON.writeValueAsString(TWO_AUDITS);
 
         assertThat(out).isEqualTo(TWO_AUDITS_JSON);
     }
 
 
-    @Test public void shouldDeserializeTwoAuditsFromYaml() throws Exception {
+    @Test void shouldDeserializeTwoAuditsFromYaml() throws Exception {
         Audits audits = YAML.readValue(TWO_AUDITS_YAML, Audits.class);
 
         assertThat(audits).isEqualTo(TWO_AUDITS);
     }
 
 
-    @Test public void shouldSerializeTwoAuditsToYaml() throws Exception {
+    @Test void shouldSerializeTwoAuditsToYaml() throws Exception {
         String out = YAML.writeValueAsString(TWO_AUDITS);
 
         assertThat(out).isEqualTo(TWO_AUDITS_YAML);
