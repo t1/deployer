@@ -17,7 +17,6 @@ import com.github.t1.testtools.WebArchiveBuilder;
 import com.github.t1.testtools.WildflyContainerTestRule;
 import com.github.t1.xml.Xml;
 import lombok.extern.slf4j.Slf4j;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.jboss.dmr.ModelNode;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.BeforeClass;
@@ -34,6 +33,7 @@ import javax.ws.rs.core.Form;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +65,7 @@ import static com.github.t1.deployer.tools.Password.CONCEALED;
 import static com.github.t1.log.LogLevel.DEBUG;
 import static com.github.t1.log.LogLevel.INFO;
 import static com.github.t1.testtools.FileMemento.writeFile;
+import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD_TYPE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -72,7 +73,6 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.hibernate.validator.internal.util.CollectionHelper.asSet;
 import static org.junit.Assume.assumeTrue;
 
 @Ignore
@@ -165,16 +165,16 @@ public class DeployerIT {
     }
 
 
-    private static final Client HTTP = ClientBuilder.newClient().register(LoggingFeature.class);
+    private static final Client HTTP = ClientBuilder.newClient(); //.register(LoggingFeature.class);
 
     @Rule public TestLoggerRule logger = new TestLoggerRule();
     @Rule public LoggerMemento loggerMemento = new LoggerMemento()
+        // .with(LoggingFeature.DEFAULT_LOGGER_NAME, DEBUG)
         .with("org.apache.http.headers", DEBUG)
         // .with("org.apache.http.wire", DEBUG)
         // .with("com.github.t1.rest", DEBUG)
         // .with("com.github.t1.rest.ResponseConverter", INFO)
-        .with("com.github.t1.deployer", DEBUG)
-        .with(LoggingFeature.DEFAULT_LOGGER_NAME, DEBUG);
+        .with("com.github.t1.deployer", DEBUG);
 
 
     public List<Audit> post(String expectedStatus) {
@@ -195,7 +195,7 @@ public class DeployerIT {
                     .as("failed: %s", new Object() {
                         @Override public String toString() { return response.readEntity(String.class); }
                     })
-                    .isIn(asSet(expectedStatus.getStatusCode(), NOT_FOUND.getStatusCode()));
+                    .isIn(new HashSet<>(asList(expectedStatus.getStatusCode(), NOT_FOUND.getStatusCode())));
                 return response;
             }
         }, response -> response.getStatusInfo().equals(expectedStatus));

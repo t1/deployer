@@ -9,3 +9,4 @@
 /src/main/docker/deployer.war
 /classes/
 src/test/docker/artifactory/target/
+/.links
