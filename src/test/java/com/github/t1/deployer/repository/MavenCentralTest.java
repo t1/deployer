@@ -3,10 +3,10 @@ package com.github.t1.deployer.repository;
 import com.github.t1.deployer.model.ArtifactId;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
+import com.github.t1.jaxrsclienttest.JaxRsTestExtension;
 import com.github.t1.problem.WebApplicationApplicationException;
-import io.dropwizard.testing.junit.DropwizardClientRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -26,8 +26,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 public class MavenCentralTest extends MavenCentralTestParent {
-    @ClassRule
-    public static DropwizardClientRule MOCK = new DropwizardClientRule(MavenCentralMock.class);
+    @RegisterExtension public static JaxRsTestExtension MOCK = new JaxRsTestExtension(new MavenCentralMock());
 
     @Override protected URI baseUri() { return MOCK.baseUri(); }
 

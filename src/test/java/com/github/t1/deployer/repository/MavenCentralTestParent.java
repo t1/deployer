@@ -7,7 +7,7 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
 import com.github.t1.problem.WebApplicationApplicationException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.io.BufferedReader;

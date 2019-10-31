@@ -158,7 +158,7 @@ public class ArtifactoryRepository extends Repository {
         @NonNull ArtifactType type,
         Classifier classifier) {
         String fileName = getFileName(groupId, artifactId, version, type, classifier);
-        FileInfo fileInfo = fetch("api/storage/{repoKey}/{orgPath}/{module}/{baseRev}/" + fileName,
+        FileInfo fileInfo = fetch(API_STORAGE + "{repoKey}/{orgPath}/{module}/{baseRev}/" + fileName,
             FileInfo.class, groupId, artifactId, version, type);
         //noinspection resource
         return new Artifact()
@@ -171,7 +171,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
-        WebTarget resolvedTarget = baseTarget.path("api/storage/{repoKey}/{orgPath}/{module}")
+        WebTarget resolvedTarget = baseTarget.path("api/storage/" + "{repoKey}/{orgPath}/{module}")
             .resolveTemplate("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
             .resolveTemplate("orgPath", groupId.asPath())
             .resolveTemplate("module", artifactId);
@@ -270,7 +270,9 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private static GroupId groupIdFrom(Path path) {
-        String string = path.subpath(4, path.getNameCount() - 3).toString().replace("/", ".");
+        int index = find(API_STORAGE, path);
+        String string = path.subpath(index + API_STORAGE.getNameCount() + 1 // +1 for the repo name
+            , path.getNameCount() - 3).toString().replace("/", ".");
         return new GroupId(string);
     }
 
@@ -290,9 +292,19 @@ public class ArtifactoryRepository extends Repository {
         return ArtifactType.valueOf(typeString);
     }
 
+    private static int find(@SuppressWarnings("SameParameterValue") Path pattern, Path path) {
+        int n = pattern.getNameCount();
+        for (int i = 0; i < path.getNameCount() - n; i++)
+            if (path.subpath(i, i + n).equals(pattern))
+                return i;
+        return -1;
+    }
+
     private static String element(int n, Path path) {
         if (n < 0)
             n += path.getNameCount();
         return path.getName(n).toString();
     }
+
+    private static final Path API_STORAGE = Paths.get("api/storage/");
 }
