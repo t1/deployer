@@ -11,20 +11,14 @@ import com.github.t1.deployer.model.LoggerCategory;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
 import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.LoggerMemento;
-import com.github.t1.testtools.OrderedJUnitRunner;
-import com.github.t1.testtools.TestLoggerRule;
 import com.github.t1.testtools.WebArchiveBuilder;
 import com.github.t1.testtools.WildflyContainerTestRule;
 import com.github.t1.xml.Xml;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.dmr.ModelNode;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -73,11 +67,11 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-@Ignore
+@Disabled
 @Slf4j
-@RunWith(OrderedJUnitRunner.class)
+// @RunWith(OrderedJUnitRunner.class)
 public class DeployerIT {
     private static final boolean USE_ARTIFACTORY_MOCK = true;
 
@@ -108,7 +102,8 @@ public class DeployerIT {
         + "      initial: 1\n"
         + "      max: 10\n";
 
-    @ClassRule public static WildflyContainerTestRule container =
+    // @ClassRule
+    private static WildflyContainerTestRule container =
         new WildflyContainerTestRule("17.0.0.Final")
             .withLogger("org.apache.http.headers", DEBUG)
             // .withLogger("org.apache.http.wire", DEBUG)
@@ -118,7 +113,7 @@ public class DeployerIT {
             // .withSystemProperty(IGNORE_SERVER_RELOAD, "true")
             .withSystemProperty(CLI_DEBUG, "true");
 
-    @BeforeClass
+    // @BeforeClass
     public static void startup() {
         startArtifactoryMock();
         writeDeployerConfig();
@@ -167,8 +162,10 @@ public class DeployerIT {
 
     private static final Client HTTP = ClientBuilder.newClient(); //.register(LoggingFeature.class);
 
-    @Rule public TestLoggerRule logger = new TestLoggerRule();
-    @Rule public LoggerMemento loggerMemento = new LoggerMemento()
+    // @Rule
+    // public TestLoggerRule logger = new TestLoggerRule();
+    // @Rule
+    public LoggerMemento loggerMemento = new LoggerMemento()
         // .with(LoggingFeature.DEFAULT_LOGGER_NAME, DEBUG)
         .with("org.apache.http.headers", DEBUG)
         // .with("org.apache.http.wire", DEBUG)
@@ -177,11 +174,11 @@ public class DeployerIT {
         .with("com.github.t1.deployer", DEBUG);
 
 
-    public List<Audit> post(String expectedStatus) {
+    List<Audit> post(String expectedStatus) {
         return post(expectedStatus, null, OK).readEntity(Audits.class).getAudits();
     }
 
-    public Response post(String plan, Entity<?> entity, Status expectedStatus) {
+    Response post(String plan, Entity<?> entity, Status expectedStatus) {
         return container.retryConnect("post request", () -> {
             try (FileMemento memento = new FileMemento(this::rootBundlePath).setup()) {
                 memento.write(plan);
@@ -215,7 +212,7 @@ public class DeployerIT {
     }
 
 
-    @Test public void shouldFailToDeployWebArchiveWithUnknownVersion() {
+    @Test void shouldFailToDeployWebArchiveWithUnknownVersion() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia-war:\n"
@@ -230,7 +227,7 @@ public class DeployerIT {
             .contains("org.jolokia:jolokia-war:9999:war");
     }
 
-    @Test public void shouldFailToDeployWebArchiveWithIncorrectChecksum() {
+    @Test void shouldFailToDeployWebArchiveWithIncorrectChecksum() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -246,7 +243,7 @@ public class DeployerIT {
             + "does not match planned checksum [" + UNKNOWN_CHECKSUM + "]");
     }
 
-    @Test public void shouldDeployWebArchiveWithCorrectChecksum() {
+    @Test void shouldDeployWebArchiveWithCorrectChecksum() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -269,7 +266,7 @@ public class DeployerIT {
                 .added());
     }
 
-    @Test public void shouldNotUpdateWebArchiveWithSameVersion() {
+    @Test void shouldNotUpdateWebArchiveWithSameVersion() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -283,7 +280,7 @@ public class DeployerIT {
         assertThat(audits).isEmpty();
     }
 
-    @Test public void shouldFailToUpdateWebArchiveWithWrongChecksum() {
+    @Test void shouldFailToUpdateWebArchiveWithWrongChecksum() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -299,7 +296,7 @@ public class DeployerIT {
             + "does not match planned checksum [" + UNKNOWN_CHECKSUM + "]");
     }
 
-    @Test public void shouldUpdateWebArchiveWithConfiguredVariablePlusAddLogger() {
+    @Test void shouldUpdateWebArchiveWithConfiguredVariablePlusAddLogger() {
         String plan = PLAN_JOLOKIA_WITH_VERSION_VAR
             .replace("${jolokia.version}", "${config-var}")
             + "loggers:\n"
@@ -320,7 +317,7 @@ public class DeployerIT {
                 .added());
     }
 
-    @Test public void shouldUpdateWebArchiveWithPostParameterAndRemoveLogger() {
+    @Test void shouldUpdateWebArchiveWithPostParameterAndRemoveLogger() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -343,7 +340,7 @@ public class DeployerIT {
                 .removed());
     }
 
-    @Test public void shouldFailToOverwriteVariableWithPostParameter() {
+    @Test void shouldFailToOverwriteVariableWithPostParameter() {
         String plan = PLAN_JOLOKIA_WITH_VERSION_VAR.replace("${jolokia.version}", "${config-var}");
 
         Entity<String> entity = Entity.json("{\"config-var\":\"1.3.3\"}");
@@ -354,7 +351,7 @@ public class DeployerIT {
     }
 
     // @Test
-    @Ignore("sending */* behaves different from sending no Content-Type header at all... but how should we do that?")
+    @Disabled("sending */* behaves different from sending no Content-Type header at all... but how should we do that?")
     public void shouldNotAcceptPostWildcardWithBody() {
         Entity<String> entity = Entity.entity("non-empty", WILDCARD_TYPE);
         String detail = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, BAD_REQUEST).readEntity(String.class);
@@ -363,7 +360,7 @@ public class DeployerIT {
         assertThat(detail).contains("Please specify a `Content-Type` header when sending a body.");
     }
 
-    @Test public void shouldAcceptJsonBody() {
+    @Test void shouldAcceptJsonBody() {
         Entity<String> entity = Entity.json("{\"jolokia.version\":\"1.3.3\"}");
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
@@ -371,7 +368,7 @@ public class DeployerIT {
         assertThat(audits).isEmpty();
     }
 
-    @Test public void shouldAcceptYamlBody() {
+    @Test void shouldAcceptYamlBody() {
         Entity<String> entity = Entity.entity("jolokia.version: 1.3.3\n", "application/yaml");
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
@@ -379,7 +376,7 @@ public class DeployerIT {
         assertThat(audits).isEmpty();
     }
 
-    @Test public void shouldAcceptFormBody() {
+    @Test void shouldAcceptFormBody() {
         Entity<Form> entity = Entity.form(new Form("jolokia.version", "1.3.3"));
         List<Audit> audits = post(PLAN_JOLOKIA_WITH_VERSION_VAR, entity, OK).readEntity(Audits.class).getAudits();
 
@@ -387,7 +384,7 @@ public class DeployerIT {
         assertThat(audits).isEmpty();
     }
 
-    @Test public void shouldUndeployWebArchive() {
+    @Test void shouldUndeployWebArchive() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -409,7 +406,7 @@ public class DeployerIT {
                 .removed());
     }
 
-    @Test public void shouldDeployTwoWebArchives() {
+    @Test void shouldDeployTwoWebArchives() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -443,7 +440,7 @@ public class DeployerIT {
                 .added());
     }
 
-    @Test public void shouldUpdateTwoWebArchives() {
+    @Test void shouldUpdateTwoWebArchives() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -471,7 +468,7 @@ public class DeployerIT {
                 .changed());
     }
 
-    @Test public void shouldUndeployTwoWebArchives() {
+    @Test void shouldUndeployTwoWebArchives() {
         List<Audit> audits = post("{}");
 
         assertThat(theDeployments()).isEmpty();
@@ -492,7 +489,7 @@ public class DeployerIT {
                 .removed());
     }
 
-    @Test public void shouldDeploySnapshotWebArchive() {
+    @Test void shouldDeploySnapshotWebArchive() {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
         String plan = ""
@@ -515,7 +512,7 @@ public class DeployerIT {
                 .added());
     }
 
-    @Test public void shouldUndeploySnapshotWebArchive() {
+    @Test void shouldUndeploySnapshotWebArchive() {
         assumeTrue(USE_ARTIFACTORY_MOCK);
 
         String plan = ""
@@ -539,7 +536,7 @@ public class DeployerIT {
                 .removed());
     }
 
-    @Test public void shouldDeployJdbcDriver() {
+    @Test void shouldDeployJdbcDriver() {
         List<Audit> audits = post(POSTGRESQL);
 
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
@@ -553,7 +550,7 @@ public class DeployerIT {
                 .added());
     }
 
-    @Test public void shouldDeployDataSource() {
+    @Test void shouldDeployDataSource() {
         String plan = ""
             + POSTGRESQL
             + "data-sources:\n"
@@ -588,7 +585,7 @@ public class DeployerIT {
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
-    @Test public void shouldChangeDataSourceMaxAgeTo10() {
+    @Test void shouldChangeDataSourceMaxAgeTo10() {
         String plan = ""
             + POSTGRESQL
             + "data-sources:\n"
@@ -618,7 +615,7 @@ public class DeployerIT {
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
-    @Test public void shouldDeployXaDataSource() {
+    @Test void shouldDeployXaDataSource() {
         String plan = ""
             + POSTGRESQL
             + "data-sources:\n"
@@ -669,7 +666,7 @@ public class DeployerIT {
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
-    @Test public void shouldUndeployAllDataSources() {
+    @Test void shouldUndeployAllDataSources() {
         List<Audit> audits = post(POSTGRESQL);
 
         assertThat(audits).containsOnly(
@@ -700,7 +697,7 @@ public class DeployerIT {
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
-    @Test public void shouldDeployLogHandlerAndLogger() {
+    @Test void shouldDeployLogHandlerAndLogger() {
         String plan = ""
             + POSTGRESQL
             + "log-handlers:\n"
@@ -744,7 +741,7 @@ public class DeployerIT {
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
-    @Test public void shouldUndeployLogHandler() {
+    @Test void shouldUndeployLogHandler() {
         String plan = ""
             + POSTGRESQL;
 
@@ -766,7 +763,7 @@ public class DeployerIT {
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
-    @Test public void shouldDeploySecondDeployableWithOnlyOnePostParameter() {
+    @Test void shouldDeploySecondDeployableWithOnlyOnePostParameter() {
         String plan = ""
             + "deployables:\n"
             + "  jolokia:\n"
@@ -794,7 +791,7 @@ public class DeployerIT {
                 .added());
     }
 
-    @Test public void shouldCleanUp() {
+    @Test void shouldCleanUp() {
         String plan = "---\n";
 
         List<Audit> audits = post(plan);

@@ -463,7 +463,8 @@ public class ArtifactoryMock {
             + "   \"remoteUrl\": \"http://jcenter.bintray.com/" + path + "\",\n"
             + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n"
             + "}\n";
-        return Response.ok(info, info.contains("\"children\"") ? FOLDER_INFO : FILE_INFO).build();
+        MediaType mediaType = info.contains("\"children\"") ? FOLDER_INFO : FILE_INFO;
+        return Response.ok(info, mediaType).build();
     }
 
     private String info(java.nio.file.Path path, boolean snapshot) throws IOException {

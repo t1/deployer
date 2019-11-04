@@ -1,18 +1,22 @@
 package com.github.t1.deployer.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.github.t1.deployer.model.Checksum.ChecksumDeserializer;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
 
+import javax.json.bind.annotation.JsonbTypeDeserializer;
+import javax.json.bind.serializer.DeserializationContext;
+import javax.json.bind.serializer.JsonbDeserializer;
+import javax.json.stream.JsonParser;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlValue;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -26,7 +30,7 @@ import static lombok.AccessLevel.PRIVATE;
 @RequiredArgsConstructor(access = PRIVATE)
 @NoArgsConstructor(access = PRIVATE, force = true)
 @XmlAccessorType(XmlAccessType.NONE)
-@JsonSerialize(using = ToStringSerializer.class)
+@JsonbTypeDeserializer(ChecksumDeserializer.class)
 public class Checksum {
     public static Checksum of(byte[] bytes) { return new Checksum(bytes); }
 
@@ -69,4 +73,10 @@ public class Checksum {
     public boolean isEmpty() { return bytes.length == 0; }
 
     @Override public String toString() { return hexString().toLowerCase(); }
+
+    public static class ChecksumDeserializer implements JsonbDeserializer<Checksum> {
+        @Override public Checksum deserialize(JsonParser parser, DeserializationContext ctx, Type rtType) {
+            return Checksum.ofHexString(parser.getString());
+        }
+    }
 }

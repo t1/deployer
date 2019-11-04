@@ -1,6 +1,5 @@
 package com.github.t1.deployer.repository;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.t1.deployer.model.Artifact;
 import com.github.t1.deployer.model.ArtifactId;
 import com.github.t1.deployer.model.ArtifactType;
@@ -15,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -30,6 +30,8 @@ import java.util.Map;
 import static com.github.t1.problem.WebException.notFound;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static javax.xml.bind.annotation.XmlAccessType.FIELD;
 
 @Slf4j
@@ -88,14 +90,12 @@ public class ArtifactoryRepository extends Repository {
     @lombok.Data
     @lombok.NoArgsConstructor
     // @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChecksumSearchResult {
         List<ChecksumSearchResultItem> results;
     }
 
     @lombok.Data
     @lombok.NoArgsConstructor
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChecksumSearchResultItem {
         URI uri;
         URI downloadUri;
@@ -104,7 +104,6 @@ public class ArtifactoryRepository extends Repository {
     @lombok.Data
     @lombok.NoArgsConstructor
     // @VendorType("org.jfrog.artifactory.storage.FileInfo")
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FileInfo {
         boolean folder;
         URI uri, downloadUri;
@@ -116,7 +115,6 @@ public class ArtifactoryRepository extends Repository {
     @lombok.Data
     @lombok.NoArgsConstructor
     // @VendorType("org.jfrog.artifactory.storage.FolderInfo")
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FolderInfo {
         List<FileInfo> children;
         URI uri;
@@ -128,20 +126,17 @@ public class ArtifactoryRepository extends Repository {
 
     @Data
     @XmlRootElement(name = "metadata")
-    @JsonIgnoreProperties(ignoreUnknown = true)
     static class MavenMetadata {
         private Versioning versioning;
 
         @Data
         @XmlAccessorType(FIELD)
-        @JsonIgnoreProperties(ignoreUnknown = true)
         static class Versioning {
             @XmlElementWrapper
             @XmlElement(name = "snapshotVersion")
             private List<SnapshotVersion> snapshotVersions;
 
             @Data
-            @JsonIgnoreProperties(ignoreUnknown = true)
             static class SnapshotVersion {
                 private String extension;
                 private String value;
@@ -158,8 +153,8 @@ public class ArtifactoryRepository extends Repository {
         @NonNull ArtifactType type,
         Classifier classifier) {
         String fileName = getFileName(groupId, artifactId, version, type, classifier);
-        FileInfo fileInfo = fetch(API_STORAGE + "{repoKey}/{orgPath}/{module}/{baseRev}/" + fileName,
-            FileInfo.class, groupId, artifactId, version, type);
+        FileInfo fileInfo = fetch(API_STORAGE + "/{repoKey}/{orgPath}/{module}/{baseRev}/" + fileName,
+            APPLICATION_JSON_TYPE, FileInfo.class, groupId, artifactId, version, type);
         //noinspection resource
         return new Artifact()
             .setGroupId(groupId)
@@ -175,8 +170,8 @@ public class ArtifactoryRepository extends Repository {
             .resolveTemplate("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
             .resolveTemplate("orgPath", groupId.asPath())
             .resolveTemplate("module", artifactId);
-        log.debug("fetch folder from {}", resolvedTarget);
-        Response response = resolvedTarget.request().get();
+        log.debug("fetch folder from {}", resolvedTarget.getUri());
+        Response response = resolvedTarget.request(APPLICATION_JSON_TYPE).get();
         checkStatus(response, "folder for " + groupId + ":" + artifactId);
         FolderInfo fileInfo = response.readEntity(FolderInfo.class);
         log.debug("found folder: {}", fileInfo);
@@ -203,7 +198,7 @@ public class ArtifactoryRepository extends Repository {
         String classifierSuffix = (classifier == null) ? "" : "-" + classifier;
         if (version.isSnapshot()) {
             MavenMetadata metadata = fetch("{repoKey}/{orgPath}/{module}/{baseRev}/maven-metadata.xml",
-                MavenMetadata.class, groupId, artifactId, version, type);
+                APPLICATION_XML_TYPE, MavenMetadata.class, groupId, artifactId, version, type);
             String snapshot = metadata
                 .getVersioning().getSnapshotVersions().stream()
                 .filter(snapshotVersion -> type.extension().equals(snapshotVersion.getExtension()))
@@ -216,7 +211,7 @@ public class ArtifactoryRepository extends Repository {
         }
     }
 
-    private <T> T fetch(String path, Class<T> type,
+    private <T> T fetch(String path, MediaType mediaType, Class<T> type,
                         GroupId groupId, ArtifactId artifactId, Version version, ArtifactType artifactType) {
         WebTarget target = baseTarget.path(path)
             .resolveTemplate("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
@@ -230,7 +225,7 @@ public class ArtifactoryRepository extends Repository {
             .resolveTemplate("ext", artifactType)
             .resolveTemplate("type", artifactType);
         log.debug("fetch {} from {}", type.getSimpleName(), target.getUri());
-        Response response = target.request().get();
+        Response response = target.request(mediaType).get();
         checkStatus(response, type.getSimpleName()
             + " for " + groupId + ":" + artifactId + ":" + version + ":" + artifactType);
         T result = response.readEntity(type);
@@ -306,5 +301,5 @@ public class ArtifactoryRepository extends Repository {
         return path.getName(n).toString();
     }
 
-    private static final Path API_STORAGE = Paths.get("api/storage/");
+    private static final Path API_STORAGE = Paths.get("api/storage");
 }
