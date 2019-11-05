@@ -1,14 +1,8 @@
 package com.github.t1.deployer.repository;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import com.codahale.metrics.health.HealthCheck;
-import io.dropwizard.Application;
-import io.dropwizard.Configuration;
-import io.dropwizard.jetty.HttpConnectorFactory;
-import io.dropwizard.server.SimpleServerFactory;
-import io.dropwizard.setup.Environment;
-import org.eclipse.jetty.server.Server;
+import com.github.t1.jaxrsclienttest.JaxRsTestExtension;
+import com.github.t1.jaxrsclienttest.JaxRsTestExtension.DummyApp;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.console.AeshConsoleBuilder;
 import org.jboss.aesh.console.Prompt;
@@ -18,11 +12,10 @@ import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.SettingsBuilder;
-import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.ApplicationPath;
 import java.util.List;
 
-import static ch.qos.logback.classic.Level.DEBUG;
 import static java.util.Arrays.asList;
 
 /**
@@ -30,56 +23,34 @@ import static java.util.Arrays.asList;
  * artifactory based on the local Maven repository in <code>~/.m2</code>. The checksums are read from an index file that
  * can be created with the {@link ArtifactoryMockIndexBuilder}.
  */
-public class ArtifactoryMockLauncher extends Application<Configuration> {
-    public static void main(String... args) throws Exception {
-        ArtifactoryMockLauncher launcher = new ArtifactoryMockLauncher(args);
-        launcher.run("server");
-    }
+@Slf4j
+public class ArtifactoryMockLauncher {
 
-    private static class DummyHealthCheck extends HealthCheck {
-        @Override
-        protected Result check() {
-            return Result.healthy();
-        }
+    public static void main(String... args) {
+        ArtifactoryMockLauncher launcher = new ArtifactoryMockLauncher(args);
+        launcher.run();
     }
 
     private final List<String> commands;
 
-    private Server jettyServer;
+    private JaxRsTestExtension container = new JaxRsTestExtension(
+        new ArtifactoryMock(),
+        new ProblemDetailMessageBodyWriter()
+    )
+        .contextPath("/artifactory")
+        .port(8081);
 
     public ArtifactoryMockLauncher(String... args) { this.commands = asList(args); }
 
-    @Override
-    public void run(Configuration configuration, Environment environment) {
-        SimpleServerFactory serverConfig = new SimpleServerFactory();
-        serverConfig.setApplicationContextPath("/artifactory");
-        configuration.setServerFactory(serverConfig);
+    private void run() {
+        container.start();
 
-        final HttpConnectorFactory connectorConfig = (HttpConnectorFactory) serverConfig.getConnector();
-        connectorConfig.setPort(8081);
-
-        environment.healthChecks().register("dummy", new DummyHealthCheck());
-
-        environment.jersey().register(new ArtifactoryMock());
-
-        setLogLevel("org.apache.http.wire", DEBUG);
-        setLogLevel("com.github.t1.rest", DEBUG);
-        setLogLevel("com.github.t1.deployer", DEBUG);
+        log.debug("started at {}", container.baseUri());
 
         if (commands.contains("cli"))
-            environment.lifecycle().addServerLifecycleListener(server -> {
-                jettyServer = server;
-                startConsole();
-            });
+            startConsole();
         if (commands.contains("index"))
-            environment.lifecycle().addServerLifecycleListener(server -> {
-                jettyServer = server;
-                rebuildIndex();
-            });
-    }
-
-    private void setLogLevel(String loggerName, @SuppressWarnings("SameParameterValue") Level level) {
-        ((Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
+            rebuildIndex();
     }
 
     private void rebuildIndex() {
@@ -89,23 +60,25 @@ public class ArtifactoryMockLauncher extends Application<Configuration> {
     private void startConsole() {
         // TODO report broken example to aesh
         new AeshConsoleBuilder()
-                .settings(new SettingsBuilder().ansi(false).create())
-                .prompt(new Prompt("> "))
-                .commandRegistry(new AeshCommandRegistryBuilder()
-                        .command(new ExitCommand())
-                        .command(new IndexCommand())
-                        .command(new HelpCommand())
-                        .create())
-                .create()
-                .start();
+            .settings(new SettingsBuilder().ansi(false).create())
+            .prompt(new Prompt("> "))
+            .commandRegistry(new AeshCommandRegistryBuilder()
+                .command(new ExitCommand())
+                .command(new IndexCommand())
+                .command(new HelpCommand())
+                .create())
+            .create()
+            .start();
     }
+
+    @ApplicationPath("/artifactory") public static class ArtifactoryApp extends DummyApp {}
 
     @CommandDefinition(name = "exit", description = "quits the service and the console")
     public class ExitCommand implements Command<CommandInvocation> {
         @Override
         public CommandResult execute(CommandInvocation invocation) {
             try {
-                jettyServer.stop();
+                container.stop();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
