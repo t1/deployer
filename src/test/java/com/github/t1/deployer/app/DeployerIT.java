@@ -9,13 +9,10 @@ import com.github.t1.deployer.model.DataSourceName;
 import com.github.t1.deployer.model.LogHandlerName;
 import com.github.t1.deployer.model.LoggerCategory;
 import com.github.t1.deployer.repository.ArtifactoryMockLauncher;
-import com.github.t1.testtools.FileMemento;
 import com.github.t1.testtools.LoggerMemento;
 import com.github.t1.testtools.WebArchiveBuilder;
-import com.github.t1.testtools.WildflyContainerTestRule;
 import com.github.t1.xml.Xml;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.dmr.ModelNode;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -27,26 +24,14 @@ import javax.ws.rs.core.Form;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.t1.deployer.app.ConfigProducer.DEPLOYER_CONFIG_YAML;
-import static com.github.t1.deployer.app.DeployerBoundary.ROOT_BUNDLE_CONFIG_FILE;
-import static com.github.t1.deployer.container.Container.CLI_DEBUG;
-import static com.github.t1.deployer.container.DeploymentResource.hash;
-import static com.github.t1.deployer.container.LogHandlerResource.DEFAULT_LOG_FORMAT;
 import static com.github.t1.deployer.model.LogHandlerPlan.DEFAULT_SUFFIX;
 import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
 import static com.github.t1.deployer.model.ProcessState.reloadRequired;
 import static com.github.t1.deployer.model.ProcessState.running;
-import static com.github.t1.deployer.testtools.ModelNodeTestTools.definedPropertiesOf;
-import static com.github.t1.deployer.testtools.ModelNodeTestTools.property;
-import static com.github.t1.deployer.testtools.ModelNodeTestTools.readAllDeploymentsRequest;
-import static com.github.t1.deployer.testtools.ModelNodeTestTools.readDatasourceRequest;
-import static com.github.t1.deployer.testtools.ModelNodeTestTools.readLogHandlerRequest;
-import static com.github.t1.deployer.testtools.ModelNodeTestTools.readLoggerRequest;
 import static com.github.t1.deployer.testtools.TestData.JOLOKIA_131_CHECKSUM;
 import static com.github.t1.deployer.testtools.TestData.JOLOKIA_132_CHECKSUM;
 import static com.github.t1.deployer.testtools.TestData.JOLOKIA_133_CHECKSUM;
@@ -58,9 +43,6 @@ import static com.github.t1.deployer.testtools.TestData.POSTGRESQL_9_4_1207_CHEC
 import static com.github.t1.deployer.tools.Password.CONCEALED;
 import static com.github.t1.log.LogLevel.DEBUG;
 import static com.github.t1.log.LogLevel.INFO;
-import static com.github.t1.testtools.FileMemento.writeFile;
-import static java.util.Arrays.asList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD_TYPE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -102,23 +84,23 @@ public class DeployerIT {
         + "      initial: 1\n"
         + "      max: 10\n";
 
-    // @ClassRule
-    private static WildflyContainerTestRule container =
-        new WildflyContainerTestRule("17.0.0.Final")
-            .withLogger("org.apache.http.headers", DEBUG)
-            // .withLogger("org.apache.http.wire", DEBUG)
-            // .withLogger("com.github.t1.rest", DEBUG)
-            // .withLogger("com.github.t1.rest.ResponseConverter", INFO)
-            .withLogger("com.github.t1.deployer", DEBUG)
-            // .withSystemProperty(IGNORE_SERVER_RELOAD, "true")
-            .withSystemProperty(CLI_DEBUG, "true");
+    // // @ClassRule
+    // private static WildflyContainerTestRule container =
+    //     new WildflyContainerTestRule("17.0.0.Final")
+    //         .withLogger("org.apache.http.headers", DEBUG)
+    //         // .withLogger("org.apache.http.wire", DEBUG)
+    //         // .withLogger("com.github.t1.rest", DEBUG)
+    //         // .withLogger("com.github.t1.rest.ResponseConverter", INFO)
+    //         .withLogger("com.github.t1.deployer", DEBUG)
+    //         // .withSystemProperty(IGNORE_SERVER_RELOAD, "true")
+    //         .withSystemProperty(CLI_DEBUG, "true");
 
     // @BeforeClass
     public static void startup() {
         startArtifactoryMock();
         writeDeployerConfig();
-        container.deploy(deployer_war());
-        startConfig = container.readConfig(); // after startup & deploy, so the container did format and order the file
+        // container.deploy(deployer_war());
+        // startConfig = container.readConfig(); // after startup & deploy, so the container did format and order the file
     }
 
     private static Xml startConfig;
@@ -134,19 +116,19 @@ public class DeployerIT {
     }
 
     private static void writeDeployerConfig() {
-        writeFile(container.configDir().resolve(DEPLOYER_CONFIG_YAML), ""
-            + "vars:\n"
-            + "  config-var: 1.3.2\n"
-            + "pin:\n"
-            + "  deployables: [deployer]\n"
-            + "  log-handlers: [CONSOLE, FILE]\n"
-            + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, com.github.t1.deployer, "
-            + "org.apache.http.headers, org.apache.http.wire, "
-            + "com.github.t1.rest, com.github.t1.rest.ResponseConverter]\n"
-            + "  data-sources: [ExampleDS]\n"
-            + "manage: [all]\n"
-            + "triggers: [post]\n"
-        );
+        // writeFile(container.configDir().resolve(DEPLOYER_CONFIG_YAML), ""
+        //     + "vars:\n"
+        //     + "  config-var: 1.3.2\n"
+        //     + "pin:\n"
+        //     + "  deployables: [deployer]\n"
+        //     + "  log-handlers: [CONSOLE, FILE]\n"
+        //     + "  loggers: [org.jboss.as.config, sun.rmi, com.arjuna, com.github.t1.deployer, "
+        //     + "org.apache.http.headers, org.apache.http.wire, "
+        //     + "com.github.t1.rest, com.github.t1.rest.ResponseConverter]\n"
+        //     + "  data-sources: [ExampleDS]\n"
+        //     + "manage: [all]\n"
+        //     + "triggers: [post]\n"
+        // );
     }
 
     private static WebArchive deployer_war() {
@@ -179,35 +161,37 @@ public class DeployerIT {
     }
 
     Response post(String plan, Entity<?> entity, Status expectedStatus) {
-        return container.retryConnect("post request", () -> {
-            try (FileMemento memento = new FileMemento(this::rootBundlePath).setup()) {
-                memento.write(plan);
-
-                Response response = HTTP
-                    .target(container.baseUri().resolve("deployer"))
-                    .request(APPLICATION_JSON_TYPE)
-                    .buildPost(entity)
-                    .invoke();
-                assertThat(response.getStatus())
-                    .as("failed: %s", new Object() {
-                        @Override public String toString() { return response.readEntity(String.class); }
-                    })
-                    .isIn(new HashSet<>(asList(expectedStatus.getStatusCode(), NOT_FOUND.getStatusCode())));
-                return response;
-            }
-        }, response -> response.getStatusInfo().equals(expectedStatus));
+        return null; // container.retryConnect("post request", () -> {
+        //     try (FileMemento memento = new FileMemento(this::rootBundlePath).setup()) {
+        //         memento.write(plan);
+        //
+        //         Response response = HTTP
+        //             .target(container.baseUri().resolve("deployer"))
+        //             .request(APPLICATION_JSON_TYPE)
+        //             .buildPost(entity)
+        //             .invoke();
+        //         assertThat(response.getStatus())
+        //             .as("failed: %s", new Object() {
+        //                 @Override public String toString() { return response.readEntity(String.class); }
+        //             })
+        //             .isIn(new HashSet<>(asList(expectedStatus.getStatusCode(), NOT_FOUND.getStatusCode())));
+        //         return response;
+        //     }
+        // }, response -> response.getStatusInfo().equals(expectedStatus));
     }
 
-    private Path rootBundlePath() { return container.configDir().resolve(ROOT_BUNDLE_CONFIG_FILE); }
+    private Path rootBundlePath() {
+        return null; // container.configDir().resolve(ROOT_BUNDLE_CONFIG_FILE);
+    }
 
     private static Map<String, Checksum> theDeployments() {
-        ModelNode response = container.execute(readAllDeploymentsRequest());
+        // ModelNode response = container.execute(readAllDeploymentsRequest());
         Map<String, Checksum> map = new LinkedHashMap<>();
-        response.asList()
-            .stream()
-            .map(node -> node.get("result"))
-            .filter(node -> !node.get("name").asString().equals("deployer.war"))
-            .forEach(node -> map.put(node.get("name").asString(), Checksum.of(hash(node))));
+        // response.asList()
+        //     .stream()
+        //     .map(node -> node.get("result"))
+        //     .filter(node -> !node.get("name").asString().equals("deployer.war"))
+        //     .forEach(node -> map.put(node.get("name").asString(), Checksum.of(hash(node))));
         return map;
     }
 
@@ -571,17 +555,17 @@ public class DeployerIT {
                 .change("pool:max", null, "10")
                 .change("pool:max-age", null, "5 min")
                 .added());
-        assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("foo", false))))
-            .has(property("connection-url", "jdbc:h2:mem:test"))
-            .has(property("driver-name", "h2"))
-            .has(property("enabled", "true"))
-            .has(property("idle-timeout-minutes", "5"))
-            .has(property("initial-pool-size", "1"))
-            .has(property("jndi-name", "java:/datasources/TestDS"))
-            .has(property("max-pool-size", "10"))
-            .has(property("min-pool-size", "0"))
-            .has(property("password", "secret"))
-            .has(property("user-name", "joe"));
+        // assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("foo", false))))
+        //     .has(property("connection-url", "jdbc:h2:mem:test"))
+        //     .has(property("driver-name", "h2"))
+        //     .has(property("enabled", "true"))
+        //     .has(property("idle-timeout-minutes", "5"))
+        //     .has(property("initial-pool-size", "1"))
+        //     .has(property("jndi-name", "java:/datasources/TestDS"))
+        //     .has(property("max-pool-size", "10"))
+        //     .has(property("min-pool-size", "0"))
+        //     .has(property("password", "secret"))
+        //     .has(property("user-name", "joe"));
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
@@ -601,17 +585,17 @@ public class DeployerIT {
                 // TODO .change("xa", null, true)
                 .change("pool:max-age", "5 min", "10 min")
                 .changed());
-        assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("foo", false))))
-            .has(property("connection-url", "jdbc:h2:mem:test"))
-            .has(property("driver-name", "h2"))
-            .has(property("enabled", "true"))
-            .has(property("idle-timeout-minutes", "10"))
-            .has(property("initial-pool-size", "1"))
-            .has(property("jndi-name", "java:/datasources/TestDS"))
-            .has(property("max-pool-size", "10"))
-            .has(property("min-pool-size", "0"))
-            .has(property("password", "secret"))
-            .has(property("user-name", "joe"));
+        // assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("foo", false))))
+        //     .has(property("connection-url", "jdbc:h2:mem:test"))
+        //     .has(property("driver-name", "h2"))
+        //     .has(property("enabled", "true"))
+        //     .has(property("idle-timeout-minutes", "10"))
+        //     .has(property("initial-pool-size", "1"))
+        //     .has(property("jndi-name", "java:/datasources/TestDS"))
+        //     .has(property("max-pool-size", "10"))
+        //     .has(property("min-pool-size", "0"))
+        //     .has(property("password", "secret"))
+        //     .has(property("user-name", "joe"));
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
@@ -648,21 +632,21 @@ public class DeployerIT {
                 .change("pool:max", null, "10")
                 .change("pool:max-age", null, "5 min")
                 .added());
-        assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("barDS", true))))
-            .has(property("driver-name", "postgresql"))
-            .has(property("enabled", "true"))
-            .has(property("idle-timeout-minutes", "5"))
-            .has(property("initial-pool-size", "0"))
-            .has(property("jndi-name", "java:/datasources/barDS"))
-            .has(property("max-pool-size", "10"))
-            .has(property("min-pool-size", "0"))
-            .has(property("password", "secret"))
-            .has(property("user-name", "joe"))
-            .has(property("xa-datasource-properties", "{"
-                + "\"ServerName\" => {\"value\" => \"my-db.server.lan\"},"
-                + "\"PortNumber\" => {\"value\" => \"5432\"},"
-                + "\"DatabaseName\" => {\"value\" => \"bar\"}"
-                + "}"));
+        // assertThat(definedPropertiesOf(container.execute(readDatasourceRequest("barDS", true))))
+        //     .has(property("driver-name", "postgresql"))
+        //     .has(property("enabled", "true"))
+        //     .has(property("idle-timeout-minutes", "5"))
+        //     .has(property("initial-pool-size", "0"))
+        //     .has(property("jndi-name", "java:/datasources/barDS"))
+        //     .has(property("max-pool-size", "10"))
+        //     .has(property("min-pool-size", "0"))
+        //     .has(property("password", "secret"))
+        //     .has(property("user-name", "joe"))
+        //     .has(property("xa-datasource-properties", "{"
+        //         + "\"ServerName\" => {\"value\" => \"my-db.server.lan\"},"
+        //         + "\"PortNumber\" => {\"value\" => \"5432\"},"
+        //         + "\"DatabaseName\" => {\"value\" => \"bar\"}"
+        //         + "}"));
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
@@ -722,22 +706,22 @@ public class DeployerIT {
                 .change("use-parent-handlers", null, false)
                 .change("handlers", null, "[FOO]")
                 .added());
-        assertThat(definedPropertiesOf(container.execute(readLogHandlerRequest(periodicRotatingFile, "FOO"))))
-            .has(property("append", "true"))
-            .has(property("autoflush", "true"))
-            .has(property("enabled", "true"))
-            .has(property("file", "{"
-                + "\"path\" => \"foo.log\","
-                + "\"relative-to\" => \"jboss.server.log.dir\"}"))
-            .has(property("formatter", DEFAULT_LOG_FORMAT))
-            .has(property("level", "INFO"))
-            .has(property("name", "FOO"))
-            .has(property("suffix", DEFAULT_SUFFIX));
-        assertThat(definedPropertiesOf(container.execute(readLoggerRequest("foo"))))
-            .has(property("category", "foo"))
-            .has(property("handlers", "[\"FOO\"]"))
-            .has(property("level", "DEBUG"))
-            .has(property("use-parent-handlers", "false"));
+        // assertThat(definedPropertiesOf(container.execute(readLogHandlerRequest(periodicRotatingFile, "FOO"))))
+        //     .has(property("append", "true"))
+        //     .has(property("autoflush", "true"))
+        //     .has(property("enabled", "true"))
+        //     .has(property("file", "{"
+        //         + "\"path\" => \"foo.log\","
+        //         + "\"relative-to\" => \"jboss.server.log.dir\"}"))
+        //     .has(property("formatter", DEFAULT_LOG_FORMAT))
+        //     .has(property("level", "INFO"))
+        //     .has(property("name", "FOO"))
+        //     .has(property("suffix", DEFAULT_SUFFIX));
+        // assertThat(definedPropertiesOf(container.execute(readLoggerRequest("foo"))))
+        //     .has(property("category", "foo"))
+        //     .has(property("handlers", "[\"FOO\"]"))
+        //     .has(property("level", "DEBUG"))
+        //     .has(property("use-parent-handlers", "false"));
         assertThat(theDeployments()).containsOnly(entry("postgresql", POSTGRESQL_9_4_1207_CHECKSUM));
     }
 
@@ -812,6 +796,6 @@ public class DeployerIT {
                 .change("type", "jar", null)
                 .change("checksum", POSTGRESQL_9_4_1207_CHECKSUM, null)
                 .removed());
-        assertThat(container.readConfig().toXmlString()).isEqualTo(startConfig.toXmlString());
+        // assertThat(container.readConfig().toXmlString()).isEqualTo(startConfig.toXmlString());
     }
 }
