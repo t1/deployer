@@ -1,0 +1,30 @@
+---
+scenario:
+  name: aws-ec2
+dependency:
+  name: galaxy
+driver:
+  name: ec2
+lint:
+  name: yamllint
+
+platforms:
+  - name: jee-molecule-aws-ec2
+    image: ami-080d06f90eb293a27 # Canonical Ubuntu 18.04 LTS bionic EBS
+    instance_type: t2.micro
+    vpc_subnet_id: subnet-eab308a7 # eu-central-1c. see `aws ec2 describe-subnets`
+
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+  playbooks:
+    converge: ../converge.yaml
+
+verifier:
+  name: testinfra
+  directory: ../tests/
+  lint:
+    name: flake8
+  options:
+    v: 1 # show which tests where executed in test output

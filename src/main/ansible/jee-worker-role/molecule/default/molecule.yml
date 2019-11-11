@@ -1,0 +1,38 @@
+---
+scenario:
+  name: default
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+
+platforms:
+  - name: jee-molecule-centos-7
+    image: centos:7
+    command: /sbin/init # so systemd is available
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+# the above trick for systemd is not available for dockerized ubuntu
+# TODO https://github.com/gdraheim/docker-systemctl-replacement might help
+#  - name: jee-molecule-ubuntu-18.04
+#    image: ubuntu:18.04 # bionic
+
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+  playbooks:
+    converge: ../converge.yaml
+
+verifier:
+  name: testinfra
+  directory: ../tests/
+  lint:
+    name: flake8
+  options:
+    v: 1 # show which tests where executed in test output
