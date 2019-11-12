@@ -539,7 +539,7 @@
                 <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>3.1</version>
+            <version>3.2</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
