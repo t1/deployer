@@ -15,6 +15,10 @@ platforms:
     box: ubuntu/bionic64 # 18.04
     memory: 512
     cpus: 1
+  - name: worker-molecule-centos-7
+    box: centos/7
+    memory: 512
+    cpus: 1
 
 provisioner:
   name: ansible

@@ -1,10 +1,8 @@
-import \
-    os
-
-import \
-    testinfra.utils.ansible_runner
+import os
+import testinfra.utils.ansible_runner
 
 # TODO complete README.md
+# TODO var for the list of deployables in the root bundle
 
 testinfra_hosts = testinfra.utils.ansible_runner.\
     AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).\
@@ -12,9 +10,10 @@ testinfra_hosts = testinfra.utils.ansible_runner.\
 
 
 def test_deployer_is_installed(host):
-    assert host.file('/opt/wildfly/standalone/deploy/deployer.war').is_file
+    deployer_war = '/opt/wildfly/standalone/deployments/deployer.war'
+    assert host.file(deployer_war).is_file
 
 
-# TODO reachable from the outside
+# TODO test reachable
 # def test_deployer_is_reachable(host):
 #     assert http localhost:8080/deployer contains something

@@ -1,0 +1,31 @@
+---
+- name: Copy deployer.config.yaml
+  become: True
+  copy:
+    src: deployer.config.yaml
+    dest: /opt/wildfly/standalone/configuration/
+    owner: wildfly
+    group: wildfly
+  notify:
+  - restart deployer
+
+- name: Copy deployer.root.bundle
+  become: True
+  copy:
+    src: deployer.root.bundle
+    dest: /opt/wildfly/standalone/configuration/
+    owner: wildfly
+    group: wildfly
+
+- name: Copy deployer.war
+  become: True
+  copy:
+    src: '~/.m2/repository/com/github/t1/deployer/{{ deployer_version }}/deployer-{{ deployer_version }}.war'
+    dest: '{{ deployments_dir }}/deployer.war'
+    owner: wildfly
+    group: wildfly
+
+- name: wait for deployer to be started
+  wait_for:
+    path: '{{ application_server_home }}/standalone/log/deployer.log'
+    search_regex: '{{ deployer_started_log_expression }}'

@@ -1,0 +1,12 @@
+---
+# handlers file for jee-ansible-role
+- name: restart wildfly
+  service:
+    name: wildfly
+    state: restarted
+
+- name: restart deployer
+  become: True
+  file:
+    path: '{{ deployments_dir }}/deployer.war'
+    state: touch

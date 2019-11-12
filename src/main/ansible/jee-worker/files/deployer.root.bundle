@@ -1,0 +1,25 @@
+log-handlers:
+  CONSOLE:
+    type: console
+    level: ALL
+    formatter: COLOR-PATTERN
+  FILE:
+    type: periodic-rotating-file
+    level: ALL
+    formatter: PATTERN
+    file: server.log
+    suffix: .yyyy-MM-dd
+  DEPLOYER:
+    formatter: COLOR-PATTERN
+loggers:
+  com.github.t1.deployer:
+    handlers: [DEPLOYER,CONSOLE]
+deployables:
+  jolokia:
+    group-id: org.jolokia
+    artifact-id: jolokia-war
+    version: ${jolokia.version}
+    state: ${jolokia.state or «deployed»}
+#  ping:
+#    version: ${ping.version}
+#    state: ${ping.state or «deployed»}

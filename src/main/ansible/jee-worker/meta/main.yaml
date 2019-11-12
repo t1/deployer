@@ -1,8 +1,9 @@
 ---
-#dependencies:
-#  - src: t1.jee_app_server
+dependencies:
+- t1.jee_app_server
 
 galaxy_info:
+  role_name: jee_worker
   author: t1
   description: Wildfly container running the Deployer, ready to act as a worker in a cluster
   license: Apache
@@ -11,12 +12,16 @@ galaxy_info:
   platforms:
     - name: Ubuntu
       versions: [ all ]
-    - name: CentOS
-      versions: [ 7 ]
+    - name: EL
+      versions: [ all ]
+    - name: GenericLinux
+      versions: [ all ]
 
   galaxy_tags:
     - jee
-    - java-ee
-    - jakarta-ee
+    - javaee
+    - jakartaee
+    - appserver
+    - java
     - deployer
-    - kub-ee
+    - kubee

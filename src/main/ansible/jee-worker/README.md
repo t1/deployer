@@ -6,9 +6,7 @@ A [Jakarta-EE](https://jakarta.ee) container (namely [Wildfly](https://wildfly.o
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should
-be mentioned here. For instance, if the role uses the EC2 module, it may be a
-good idea to mention in this section that the boto package is required.
+I had difficulties with Molecule and the ANSIBLE_ROLES_PATH. The path didn't include `~/.ansible/roles`. So I did `ln -s ~/.ansible/roles/ molecule/roles`, but I had to git-ignore it, as it's relative to _my_ home.
 
 Role Variables
 --------------
