@@ -1,7 +1,7 @@
 ---
 - name: Copy deployer.config.yaml
   become: True
-  copy:
+  template:
     src: deployer.config.yaml
     dest: /opt/wildfly/standalone/configuration/
     owner: wildfly
@@ -11,7 +11,7 @@
 
 - name: Copy deployer.root.bundle
   become: True
-  copy:
+  template:
     src: deployer.root.bundle
     dest: /opt/wildfly/standalone/configuration/
     owner: wildfly
