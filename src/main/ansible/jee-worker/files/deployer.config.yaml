@@ -5,6 +5,6 @@
 #  repository-releases: releases-virtual
 vars:
   default.log-encoding: UTF-8
-  default.group-id: com.github.t1
+  default.group-id: {{ deployer_default_group_id }}
 pin:
   loggers: [com.arjuna, org.jboss.as.config, sun.rmi, jacorb, jacorb.config, org.apache.tomcat.util.modeler]
