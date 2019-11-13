@@ -3,8 +3,6 @@ jee-worker-role
 
 A [Jakarta-EE](https://jakarta.ee) container (namely [Wildfly](https://wildfly.org)) running the [Deployer](https://github.com/t1/deployer), ready to act as a worker in a [kub-ee](https://github.com/t1/kub-ee) cluster (although it doesn't know about kub-ee).
 
-Note that it installs a `deployer.root.bundle` with currently only one deployable: `jolokia`.
-
 Requirements
 ------------
 
@@ -17,6 +15,20 @@ Role Variables
 | ------------------------- | -------------------------------------- | -------------- |
 | deployer_version          | Version of the Deployer maven artifact | 3.0.0-SNAPSHOT |
 | deployer_default_group_id | Deployer `default.group-id` config     | com.github.t1  |
+| deployables               | Deployables like in the root bundle    | jolokia        |
+
+The `deployables` look exactly like in the root bundle. E.g.:
+
+```yaml
+deployables:
+  jolokia:                   # this is the deployable name
+    group-id: org.jolokia    # defaults to the `default.group-id`
+    artifact-id: jolokia-war # defaults to the deployable name
+    version: 1.3.1           # defaults to `CURRENT` 
+    state: deployed          # defaults to 'deployed'
+  ping:                      # a second deployable with everything default
+    dummy                    # a dummy value is needed if there is no other key in the map
+```
 
 Dependencies
 ------------

@@ -15,11 +15,18 @@ loggers:
   com.github.t1.deployer:
     handlers: [DEPLOYER,CONSOLE]
 deployables:
-  jolokia:
-    group-id: org.jolokia
-    artifact-id: jolokia-war
-    version: ${jolokia.version}
-    state: ${jolokia.state or «deployed»}
-#  ping:
-#    version: ${ping.version}
-#    state: ${ping.state or «deployed»}
+{% for key, value in (deployables | default({})).items() %}
+  {{ key }}:
+{% if 'group-id' in value %}
+    group-id: {{ value['group-id'] }}
+{% endif %}
+{% if 'artifact-id' in value %}
+    artifact-id: {{ value['artifact-id'] }}
+{% endif %}
+{% if 'version' in value %}
+    version: {{ value['version'] }}
+{% endif %}
+{% if 'state' in value %}
+    state: {{ value['state'] }}
+{% endif %}
+{% endfor %}
