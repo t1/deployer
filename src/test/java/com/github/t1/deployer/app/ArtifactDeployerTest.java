@@ -348,6 +348,24 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
         baz.verifyRemoved();
     }
 
+
+    @Test void shouldIgnoreDeployerWhenManaged() {
+        givenManaged("all");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture bar = givenArtifact("bar").version("2").deployed();
+        ArtifactFixture deployer = givenArtifact("deployer").version("3").deployed();
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n");
+
+        foo.verifyUnchanged();
+        bar.verifyRemoved();
+        deployer.verifyUnchanged();
+    }
+
     @Test void shouldFailToDeployPinnedWebArchive() {
         givenArtifact("foo").version("1.3.2").deployed().pinned();
 

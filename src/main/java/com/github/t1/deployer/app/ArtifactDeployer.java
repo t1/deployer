@@ -29,6 +29,9 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     @Inject Container container;
     @Inject Repository repository;
 
+    @Override protected boolean isPinned(String name) {
+        return "deployer".equals(name) || super.isPinned(name);
+    }
 
     @Override protected Stream<DeploymentResource> existingResources() { return container.allDeployments(); }
 

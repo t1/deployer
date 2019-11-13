@@ -7,12 +7,11 @@ Bundles – including the `deployer.root.bundle` – are yaml files with the fol
 
 ### `deployables`
 
-The key is the `name` of the deployment, i.e. a `war` named `foo` will be deployed as `foo.war`,
-so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
+The key is the `name` of the deployable, i.e. a `war` named `foo` will be deployed as `foo.war`, so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
 
 - `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [`manage`](#manage).
 - `group-id`: Defaults to the variable [`default.group-id`](#vars).
-- `artifact-id`: Defaults to the name of the deployment.
+- `artifact-id`: Defaults to the name of the deployable.
 - `classifier`: Defaults to none.
 - `version`: Defaults to `CURRENT` (see below), even for an unresolvable variable.
 - `type`: `war` or `jar`. Defaults to [`default.deployable-type`](#vars) or `war`.
@@ -32,7 +31,7 @@ Special `version` values:
 The key is the `name` of the bundle. 
 
 - `group-id`: Defaults to the variable [`default.group-id`](#vars).
-- `artifact-id`: Defaults to the name of the deployment.
+- `artifact-id`: Defaults to the name of the deployable.
 - `classifier`: Defaults to none.
 - `version`: Mandatory.
 - `instances`: The map of instance names to a map of variables passed into a `bundle`.
@@ -179,8 +178,7 @@ These values can be used in expressions as `root-bundle:name`, etc.
 
 ### `manage`
 
-This is a list of resource type names or `all` to be managed,
-i.e. resources of this kind that are deployed in the container, but are not in the plan, are removed.
+This is a list of resource type names to be managed or `[all]`, i.e. resources of this kind that are deployed in the container, but are not in the plan, are removed (only exception: the Deployer itself).
 Defaults to an empty list, i.e. things are left alone.
 
 
