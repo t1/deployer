@@ -257,23 +257,24 @@ public class DeployerBoundary {
         }
 
         private void apply(Reader reader, String sourceMessage) {
-            StringBuilder failureMessage = new StringBuilder("can't apply plan [" + sourceMessage + "]");
             try {
                 this.apply(Plan.load(expressions, reader, sourceMessage));
             } catch (WebApplicationApplicationException e) {
-                log.info(failureMessage.toString());
+                log.info(buildFailureMessage(sourceMessage, e));
                 throw e;
             } catch (RuntimeException e) {
-                log.debug(failureMessage.toString(), e);
-                for (Throwable cause = e; cause != null; cause = cause.getCause())
-                    if (cause.getMessage() != null && !cause.getMessage().isEmpty())
-                        failureMessage.append(": ").append(cause.getMessage());
-                throw WebException
-                    .builderFor(BAD_REQUEST)
-                    .causedBy(e)
-                    .detail(failureMessage.toString())
-                    .build();
+                String message = buildFailureMessage(sourceMessage, e);
+                log.info(message, e);
+                throw WebException.builderFor(BAD_REQUEST).causedBy(e).detail(message).build();
             }
+        }
+
+        private String buildFailureMessage(String sourceMessage, RuntimeException e) {
+            StringBuilder failureMessage = new StringBuilder("can't apply plan [" + sourceMessage + "]");
+            for (Throwable cause = e; cause != null; cause = cause.getCause())
+                if (cause.getMessage() != null && !cause.getMessage().isEmpty())
+                    failureMessage.append(": ").append(cause.getMessage());
+            return failureMessage.toString();
         }
 
         private void apply(Plan plan) {

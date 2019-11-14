@@ -9,11 +9,12 @@ Bundles – including the `deployer.root.bundle` – are yaml files with the fol
 
 The key is the `name` of the deployable, i.e. a `war` named `foo` will be deployed as `foo.war`, so the base uri for a REST service is `https://<hostname>:<port>/<name>`. 
 
-- `state`: Either `deployed` or `undeployed`. Defaults to `deployed`. See [`manage`](#manage).
+- `state`: Either `deployed` or `undeployed`. Defaults to 
+the variable [`${name}.state`](#vars) or `deployed`.
 - `group-id`: Defaults to the variable [`default.group-id`](#vars).
 - `artifact-id`: Defaults to the name of the deployable.
 - `classifier`: Defaults to none.
-- `version`: Defaults to `CURRENT` (see below), even for an unresolvable variable.
+- `version`: Defaults to the variable [`${name}.version}`](#vars) or `CURRENT` (see below).
 - `type`: `war` or `jar`. Defaults to [`default.deployable-type`](#vars) or `war`.
 - `checksum`: The SHA-1 checksum of the artifact file. Optional to check for integrity.
 
@@ -21,7 +22,7 @@ Special `version` values:
 
 | name | usage |
 | --- | --- |
-| `CURRENT` | The currently deployed version. Only for `deployables`; not for `bundles`. |
+| `CURRENT` | The currently deployed version. Only for `deployables`, not for `bundles`. |
 | `LATEST` | The numerically largest version in the repository that is not a `-SNAPSHOT`. |
 | `UNSTABLE` | The numerically largest version in the repository, `-SNAPSHOT` or not. |
 

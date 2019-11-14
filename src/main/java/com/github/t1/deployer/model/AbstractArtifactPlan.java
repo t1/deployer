@@ -23,8 +23,8 @@ public abstract class AbstractArtifactPlan implements Plan.AbstractPlan {
     private Classifier classifier;
     private Checksum checksum;
 
-    static void fromJson(JsonNode node, AbstractArtifactPlan builder, String defaultArtifactId, String defaultVersion) {
-        apply(node, "state", builder::setState, DeploymentState::valueOf);
+    static void fromJson(JsonNode node, AbstractArtifactPlan builder, String defaultStateExpression, String defaultArtifactId, String defaultVersion) {
+        apply(node, "state", builder::setState, DeploymentState::valueOf, defaultStateExpression);
         apply(node, "group-id", builder::setGroupId, GroupId::of, "default.group-id");
         apply(node, "artifact-id", builder::setArtifactId, ArtifactId::new, "«" + defaultArtifactId + "»");
         apply(node, "version", builder::setVersion, Version::new, defaultVersion);

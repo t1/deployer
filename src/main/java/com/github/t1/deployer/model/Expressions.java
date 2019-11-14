@@ -356,7 +356,7 @@ public class Expressions {
             return new FunctionMatch(matcher.group("name"), params(matcher.group("body"))).match();
         }
 
-        @Value
+        @RequiredArgsConstructor
         private class FunctionMatch {
             private final String functionName;
             private final List<Supplier<String>> params;

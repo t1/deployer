@@ -1,8 +1,6 @@
 import os
 import testinfra.utils.ansible_runner
 
-# TODO var for the list of deployables in the root bundle
-# TODO var for the default.group-id in the deployer.config
 
 testinfra_hosts = testinfra.utils.ansible_runner.\
     AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).\

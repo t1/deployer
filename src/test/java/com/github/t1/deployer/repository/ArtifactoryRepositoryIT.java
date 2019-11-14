@@ -57,7 +57,7 @@ class ArtifactoryRepositoryIT {
     private final RepositoryAuthenticator authenticator = new RepositoryAuthenticator();
     private final Client client = ClientBuilder.newClient().register(authenticator).register(XmlMessageBodyReader.class);
 
-    private final ArtifactoryRepository repository = new ArtifactoryRepository(client.target(baseUri), SNAPSHOTS, RELEASES);
+    private final ArtifactoryRepository repository = new ArtifactoryRepository(client, baseUri, SNAPSHOTS, RELEASES);
 
     @BeforeAll static void before() { ArtifactoryMock.FAKES = true; }
 

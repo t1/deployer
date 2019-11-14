@@ -40,7 +40,7 @@ public class DeployablePlan extends AbstractArtifactPlan {
         if (node.isNull())
             throw new Plan.PlanLoadingException("incomplete deployables plan '" + name + "'");
         DeployablePlan plan = new DeployablePlan(name);
-        AbstractArtifactPlan.fromJson(node, plan, name.getValue(), "«CURRENT»");
+        AbstractArtifactPlan.fromJson(node, plan, name + ".state or «deployed»", name.getValue(), name + ".version or «CURRENT»");
         apply(node, "type", plan::setType, ArtifactType::valueOf, "default.deployable-type or «war»");
         return plan.verify();
     }

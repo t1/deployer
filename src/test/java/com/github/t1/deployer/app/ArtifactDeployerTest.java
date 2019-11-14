@@ -29,6 +29,116 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
         foo.verifyDeployed();
     }
 
+    @Test void shouldDeployWebArchiveWithExplicitStateVariable() {
+        givenConfiguredVariable("foo.state", "deployed");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+            + "    state: ${foo.state}\n"
+        );
+
+        foo.verifyDeployed();
+    }
+
+    @Test void shouldNotDeployWebArchiveWithExplicitStateVariable() {
+        givenConfiguredVariable("foo.state", "undeployed");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+            + "    state: ${foo.state}\n"
+        );
+
+        foo.verifyUnchanged();
+    }
+
+    @Test void shouldDeployWebArchiveWithImplicitStateVariable() {
+        givenConfiguredVariable("foo.state", "deployed");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+        );
+
+        foo.verifyDeployed();
+    }
+
+    @Test void shouldNotDeployWebArchiveWithImplicitStateVariable() {
+        givenConfiguredVariable("foo.state", "undeployed");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: 1.3.2\n"
+        );
+
+        foo.verifyUnchanged();
+    }
+
+    @Test void shouldDeployWebArchiveWithExplicitVersionVariable() {
+        givenConfiguredVariable("foo.version", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: ${foo.version}\n"
+        );
+
+        foo.verifyDeployed();
+    }
+
+    @Test void shouldNotDeployWebArchiveWithUnsetExplicitVersionVariable() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    version: ${foo.version}\n"
+        );
+
+        foo.verifyUnchanged();
+    }
+
+    @Test void shouldDeployWebArchiveWithImplicitVersionVariable() {
+        givenConfiguredVariable("foo.version", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+        );
+
+        foo.verifyDeployed();
+    }
+
+    @Test void shouldNotDeployWebArchiveWithImplicitVersionVariable() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+        );
+
+        foo.verifyUnchanged();
+    }
+
     @Test void shouldDeployWebArchiveEvenWithInvalidSystemProperty() {
         systemProperties.given("foo:bar", "foobar");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
@@ -175,6 +285,31 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: ${foo.version}\n"
+        );
+
+        foo.verifySkipped();
+    }
+
+    @Test void shouldSkipUndeployedWebArchiveWithDefaultVersion() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
+            + "    state: ${foo.state or «deployed»}\n"
+        );
+
+        foo.verifySkipped();
+    }
+
+    @Test void shouldDeployWebArchiveWithDefaultVersion() {
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n"
+            + "    group-id: org.foo\n"
             + "    state: ${foo.state or «deployed»}\n"
         );
 
@@ -218,7 +353,6 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
-            + "    version: ${foo.version}\n"
             + "    state: ${foo.state or «deployed»}\n"
         );
 

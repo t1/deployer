@@ -24,8 +24,8 @@ deployables:
   jolokia:                   # this is the deployable name
     group-id: org.jolokia    # defaults to the `default.group-id`
     artifact-id: jolokia-war # defaults to the deployable name
-    version: 1.3.1           # defaults to `CURRENT` 
-    state: deployed          # defaults to 'deployed'
+    version: 1.3.1           # defaults to `${jolokia.version or CURRENT}`
+    state: deployed          # defaults to '${jolokia.state or «deployed»}'
   ping:                      # a second deployable with everything default
     dummy                    # a dummy value is needed if there is no other key in the map
 ```

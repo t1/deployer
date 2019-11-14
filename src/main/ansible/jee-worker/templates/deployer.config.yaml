@@ -1,4 +1,4 @@
-#repository:
+#repository: # TODO configure from ansible
 #  type: artifactory
 #  uri: http://artifactory:8081/artifactory
 #  repository-snapshots: libs-snapshot-local
@@ -8,3 +8,4 @@ vars:
   default.group-id: {{ deployer_default_group_id }}
 pin:
   loggers: [com.arjuna, org.jboss.as.config, sun.rmi, jacorb, jacorb.config, org.apache.tomcat.util.modeler]
+manage: [deployables] # TODO manage all

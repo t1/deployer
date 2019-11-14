@@ -7,11 +7,13 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
+import com.github.t1.deployer.tools.VendorType;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -37,7 +39,8 @@ import static javax.xml.bind.annotation.XmlAccessType.FIELD;
 @Slf4j
 @RequiredArgsConstructor
 public class ArtifactoryRepository extends Repository {
-    @NonNull private final WebTarget baseTarget;
+    @NonNull private final Client client;
+    @NonNull private final URI artifactoryUri;
     @NonNull private final String repositorySnapshots;
     @NonNull private final String repositoryReleases;
 
@@ -74,7 +77,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     private List<ChecksumSearchResultItem> searchByChecksumResults(Checksum checksum) {
-        Invocation.Builder request = baseTarget
+        Invocation.Builder request = client.target(artifactoryUri)
             .path("api/search/checksum")
             .queryParam("sha1", checksum.hexString())
             .request()
@@ -89,7 +92,7 @@ public class ArtifactoryRepository extends Repository {
 
     @lombok.Data
     @lombok.NoArgsConstructor
-    // @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
+    @VendorType("org.jfrog.artifactory.search.ChecksumSearchResult")
     public static class ChecksumSearchResult {
         List<ChecksumSearchResultItem> results;
     }
@@ -103,18 +106,18 @@ public class ArtifactoryRepository extends Repository {
 
     @lombok.Data
     @lombok.NoArgsConstructor
-    // @VendorType("org.jfrog.artifactory.storage.FileInfo")
+    @VendorType("org.jfrog.artifactory.storage.FileInfo")
     public static class FileInfo {
         boolean folder;
         URI uri, downloadUri;
-        Map<String, Checksum> checksums;
+        Map<String, String> checksums;
 
-        public Checksum getSha1() { return checksums.get("sha1"); }
+        public Checksum getSha1() { return Checksum.ofHexString(checksums.get("sha1")); }
     }
 
     @lombok.Data
     @lombok.NoArgsConstructor
-    // @VendorType("org.jfrog.artifactory.storage.FolderInfo")
+    @VendorType("org.jfrog.artifactory.storage.FolderInfo")
     public static class FolderInfo {
         List<FileInfo> children;
         URI uri;
@@ -154,7 +157,7 @@ public class ArtifactoryRepository extends Repository {
         Classifier classifier) {
         String fileName = getFileName(groupId, artifactId, version, type, classifier);
         FileInfo fileInfo = fetch(API_STORAGE + "/{repoKey}/{orgPath}/{module}/{baseRev}/" + fileName,
-            APPLICATION_JSON_TYPE, FileInfo.class, groupId, artifactId, version, type);
+            FileInfo.class, groupId, artifactId, version, type);
         //noinspection resource
         return new Artifact()
             .setGroupId(groupId)
@@ -166,7 +169,7 @@ public class ArtifactoryRepository extends Repository {
     }
 
     @Override public List<Version> listVersions(GroupId groupId, ArtifactId artifactId, boolean snapshot) {
-        WebTarget resolvedTarget = baseTarget.path("api/storage/" + "{repoKey}/{orgPath}/{module}")
+        WebTarget resolvedTarget = client.target(artifactoryUri).path("api/storage/" + "{repoKey}/{orgPath}/{module}")
             .resolveTemplate("repoKey", snapshot ? repositorySnapshots : repositoryReleases)
             .resolveTemplate("orgPath", groupId.asPath())
             .resolveTemplate("module", artifactId);
@@ -198,7 +201,7 @@ public class ArtifactoryRepository extends Repository {
         String classifierSuffix = (classifier == null) ? "" : "-" + classifier;
         if (version.isSnapshot()) {
             MavenMetadata metadata = fetch("{repoKey}/{orgPath}/{module}/{baseRev}/maven-metadata.xml",
-                APPLICATION_XML_TYPE, MavenMetadata.class, groupId, artifactId, version, type);
+                MavenMetadata.class, groupId, artifactId, version, type);
             String snapshot = metadata
                 .getVersioning().getSnapshotVersions().stream()
                 .filter(snapshotVersion -> type.extension().equals(snapshotVersion.getExtension()))
@@ -211,9 +214,13 @@ public class ArtifactoryRepository extends Repository {
         }
     }
 
-    private <T> T fetch(String path, MediaType mediaType, Class<T> type,
-                        GroupId groupId, ArtifactId artifactId, Version version, ArtifactType artifactType) {
-        WebTarget target = baseTarget.path(path)
+    private <T> T fetch(String path,
+                        Class<T> type,
+                        GroupId groupId,
+                        ArtifactId artifactId,
+                        Version version,
+                        ArtifactType artifactType) {
+        WebTarget target = client.target(artifactoryUri).path(path)
             .resolveTemplate("repoKey", version.isSnapshot() ? repositorySnapshots : repositoryReleases)
             .resolveTemplate("org", groupId)
             .resolveTemplate("orgPath", groupId.asPath())
@@ -224,13 +231,21 @@ public class ArtifactoryRepository extends Repository {
             // (-{classifier})
             .resolveTemplate("ext", artifactType)
             .resolveTemplate("type", artifactType);
-        log.debug("fetch {} from {}", type.getSimpleName(), target.getUri());
+        MediaType mediaType = vendorTypeOf(type);
+        log.debug("fetch {} {} from {}", mediaType, type.getSimpleName(), target.getUri());
         Response response = target.request(mediaType).get();
         checkStatus(response, type.getSimpleName()
             + " for " + groupId + ":" + artifactId + ":" + version + ":" + artifactType);
         T result = response.readEntity(type);
         log.debug("found {}: {}", type.getSimpleName(), result);
         return result;
+    }
+
+    private static <T> MediaType vendorTypeOf(Class<T> type) {
+        VendorType vendorType = type.getAnnotation(VendorType.class);
+        if (vendorType != null)
+            return new MediaType("application", "vnd." + vendorType.value() + "+json");
+        return type.isAnnotationPresent(XmlRootElement.class) ? APPLICATION_XML_TYPE : APPLICATION_JSON_TYPE;
     }
 
     private void checkStatus(Response response, String what) {
@@ -248,7 +263,11 @@ public class ArtifactoryRepository extends Repository {
         URI uri = fileInfo.getDownloadUri();
         if (uri == null)
             throw new RuntimeException("no download uri from repository for " + fileInfo.getUri());
-        return baseTarget.property("jersey.config.client.followRedirects", Boolean.TRUE).request().get(InputStream.class);
+        log.debug("download {}", uri);
+        return client.target(uri)
+            .property("jersey.config.client.followRedirects", Boolean.TRUE)
+            .request("application/java-archive")
+            .get(InputStream.class);
     }
 
     static Artifact artifactFromArtifactoryUri(Checksum checksum, URI uri) {

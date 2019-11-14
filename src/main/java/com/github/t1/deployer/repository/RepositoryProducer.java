@@ -37,7 +37,7 @@ class RepositoryProducer {
             case mavenCentral:
                 return new MavenCentralRepository(client.target(DEFAULT_MAVEN_CENTRAL_URI));
             case artifactory:
-                return new ArtifactoryRepository(client.target(artifactoryUri()),
+                return new ArtifactoryRepository(client, artifactoryUri(),
                     nvl(repositorySnapshots, "snapshots-virtual"),
                     nvl(repositoryReleases, "releases-virtual"));
         }

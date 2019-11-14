@@ -52,7 +52,7 @@ public class BundlePlan extends AbstractArtifactPlan {
         if (node.isNull())
             throw new Plan.PlanLoadingException("incomplete bundles plan '" + name + "'");
         BundlePlan plan = new BundlePlan(name);
-        AbstractArtifactPlan.fromJson(node, plan, name.getValue(), null);
+        AbstractArtifactPlan.fromJson(node, plan, null, name.getValue(), null);
         if (node.has("instances") && !node.get("instances").isNull()) {
             Iterator<Map.Entry<String, JsonNode>> instances = node.get("instances").fields();
             while (instances.hasNext()) {
