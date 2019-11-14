@@ -59,7 +59,7 @@
       when: keypair.changed
 
     - name: Get the ec2 ami(s) by owner and name, if image not set
-      ec2_ami_facts:
+      ec2_ami_info:
         owners: "{{ item.image_owner }}"
         filters:
           name: "{{ item.image_name }}"
