@@ -110,7 +110,20 @@ class BundleDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test void shouldDeployWebArchiveWithFirstOfThreeOrFunctionVariables() {
+    @Test void shouldDeployWebArchiveWithEverythingDefault() {
+        givenConfiguredVariable("default.group-id", "org.foo");
+        givenConfiguredVariable("foo.version", "1.3.2");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n");
+
+        foo.verifyDeployed();
+    }
+
+
+    @Test void shouldDeployWebArchiveWithFirstOfThreeAlternativeVariables() {
         givenConfiguredVariable("fooName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -124,7 +137,7 @@ class BundleDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test void shouldDeployWebArchiveWithSecondOfThreeOrFunctionVariables() {
+    @Test void shouldDeployWebArchiveWithSecondOfThreeAlternativeVariables() {
         givenConfiguredVariable("barName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 
@@ -137,7 +150,7 @@ class BundleDeployerTest extends AbstractDeployerTests {
         foo.verifyDeployed();
     }
 
-    @Test void shouldDeployWebArchiveWithThirdOfThreeOrFunctionVariables() {
+    @Test void shouldDeployWebArchiveWithThirdOfThreeAlternativeVariables() {
         givenConfiguredVariable("bazName", "FOO");
         ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
 

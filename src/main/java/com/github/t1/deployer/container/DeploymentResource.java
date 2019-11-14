@@ -34,7 +34,7 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
     private Checksum checksum;
     private InputStream inputStream;
 
-    public DeploymentResource(DeploymentName name, Batch batch) {
+    public DeploymentResource(@NonNull DeploymentName name, Batch batch) {
         super(batch);
         this.name = name;
     }
@@ -71,7 +71,7 @@ public class DeploymentResource extends AbstractResource<DeploymentResource> {
         DeploymentName name = readName(node);
         Checksum checksum = readHash(node);
         log.debug("read deployment {}: {}", name, checksum);
-        assert this.name.equals(name);
+        assert this.name.equals(name) : "expected name '" + this.name + "' but got '" + name + "'";
         this.checksum = checksum;
     }
 

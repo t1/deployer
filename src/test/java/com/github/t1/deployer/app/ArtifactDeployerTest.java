@@ -253,12 +253,24 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
     }
 
 
-    @Test void shouldFailToDeployWebArchiveWithEmptyItem() {
+    @Test void shouldFailToDeployWebArchiveWithAllDefaultsWithoutDefaultGroupId() {
         Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo-war:\n"));
 
-        assertThat(thrown).hasStackTraceContaining("incomplete deployables plan 'foo-war'");
+        assertThat(thrown).hasStackTraceContaining("the `group-id` can only be null when undeploying");
+    }
+
+
+    @Test void shouldFailToDeployWebArchiveWithAllDefaultsWithDefaultGroupId() {
+        givenConfiguredVariable("default.group-id", "org.foo");
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2");
+
+        deployWithRootBundle(""
+            + "deployables:\n"
+            + "  foo:\n");
+
+        foo.verifySkipped();
     }
 
 

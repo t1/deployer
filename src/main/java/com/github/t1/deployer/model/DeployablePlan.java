@@ -37,8 +37,6 @@ public class DeployablePlan extends AbstractArtifactPlan {
     @Override public DeployablePlan setChecksum(Checksum checksum) { super.setChecksum(checksum); return this; }
 
     static DeployablePlan fromJson(DeploymentName name, JsonNode node) {
-        if (node.isNull())
-            throw new Plan.PlanLoadingException("incomplete deployables plan '" + name + "'");
         DeployablePlan plan = new DeployablePlan(name);
         AbstractArtifactPlan.fromJson(node, plan, name + ".state or «deployed»", name.getValue(), name + ".version or «CURRENT»");
         apply(node, "type", plan::setType, ArtifactType::valueOf, "default.deployable-type or «war»");
