@@ -27,7 +27,6 @@ deployables:
     version: 1.3.1           # defaults to `${jolokia.version or CURRENT}`
     state: deployed          # defaults to '${jolokia.state or «deployed»}'
   ping:                      # a second deployable with everything default
-    dummy                    # a dummy value is needed if there is no other key in the map
 ```
 
 Dependencies
