@@ -1,5 +1,0 @@
----
-# vars file for jee-ansible-role
-# these are not designed to be replaceable
-
-deployments_dir: '{{ application_server_home }}/standalone/deployments'
