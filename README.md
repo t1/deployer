@@ -1,12 +1,12 @@
-# The Deployer [![Join the chat at https://gitter.im/t1/deployer](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/t1/deployer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Download](https://api.bintray.com/packages/t1/javaee-helpers/deployer/images/download.svg)](https://bintray.com/t1/javaee-helpers/deployer/_latestVersion) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.github.t1%3Adeployer)](https://sonarqube.com/dashboard/index/com.github.t1%3Adeployer)
+# The Deployer [![Join the chat at https://gitter.im/t1/deployer](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/t1/deployer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Download](https://api.bintray.com/packages/t1/javaee-helpers/deployer/images/download.svg)](https://bintray.com/t1/javaee-helpers/deployer/_latestVersion)
 
-Simple [Infrastructure as Code](http://martinfowler.com/bliki/InfrastructureAsCode.html) solution for Java EE containers (currently only Wildfly) pulling from a maven repository (currently full support only for Maven Central and Artifactory Pro, as we need to be able to search by checksum).
+[Infrastructure as Code](http://martinfowler.com/bliki/InfrastructureAsCode.html) solution for Java EE containers (currently only Wildfly) pulling from a maven repository (currently full support only for Maven Central and Artifactory Pro, as we need to be able to search by checksum).
 
 
 ## Motivation
 
 There are very good IaC solutions capable of deploying applications to and configuring resources in JEE containers. There's good support for Wildfly in [Ansible](http://docs.ansible.com/ansible/jboss_module.html),
-[Salt](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.jboss7.html), and [Puppet](https://forge.puppet.com/biemond/wildfly) (to name just a few). They are very powerful and can do much more than just this; e.g., they can install packages and the application server itself. And that's exactly the problem that I had: Great power comes with great responsibility... too much responsibility for me as a simple developer and operator of JEE applications, working in an environment where the infrastructure and platform is managed by dedicated operations teams, using those other IaC tools.
+[Salt](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.jboss7.html), and [Puppet](https://forge.puppet.com/biemond/wildfly), to name just a few. They are very powerful and can do much more than just this; e.g., they can install packages and the application server itself. And that's exactly the problem that I had: Great power comes with great responsibility... too much responsibility for me as a simple developer and operator of JEE applications, working in an environment where the infrastructure and platform is managed by dedicated operations teams, using those other IaC tools.
 
 As a JEE developer, it also takes some time and dedication to learn those tools... and even more so to add to them. I'd rather have a very limited tool, that's easy to understand and does only what I want it to do... and living in the environment I know best: JEE.
 
@@ -40,22 +40,6 @@ You can find an introduction to the concepts and best practices in the [tutorial
 For a comprehensive list of all details, see the [reference](docs/reference.md).
 
 Questions about the design decisions? Take a look at the [FAQ](docs/faq.md).
-
-## Docker
-
-At first sight, it may look like The Deployer would not have any role to play when you use [Docker](https://www.docker.com), as in a fully containerized approach, there's no need to change a running system: changes in the configuration should result in a rebuild and restart of the whole stack and it's sufficiently easy to use the normal CLI for that.
-
-But you may find the abstraction layer that The Deployer provides to be useful nonetheless: A bundle file may be more readable than a long list of CLI statements, as it is more concise and clear (e.g., xa and non-xa data sources both use the same connection uri syntax), and it provides mechanics to reuse common configuration schemes, further DRYing your infrastructure code.
-
-You won't want to download and apply everything at boot time, as this happens very often in a dynamic cloud setup, so it has to be as fast as possible. To apply The Deployer root bundle at Docker build time, you can start the container from your `Dockerfile` with the `shutdown-after-boot` option in your `deployer.config.yaml`. For an example, see `src/main/docker/Dockerfile`; to run it do:
-
-    cp ../../../target/deployer.war .
-    docker build --tag=wildfly .
-    docker run -it --rm -p 8080:8080 --name wildfly wildfly
-
-To use it for your own applications, you'd only need to change the `deployer.root.bundle`, and maybe configure your `repository` in the `deployer.config.yaml`.
-
-Starting up a container when building an image is not very fast, so to speed things up, we'd like to implement an [offline mode](https://github.com/t1/deployer/issues/59).
 
 
 ## Building
