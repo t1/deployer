@@ -7,7 +7,7 @@ testinfra_hosts = testinfra.utils.ansible_runner.\
     get_hosts('all')
 
 
-# This test is quite unnecessary, as the role does the most important checks already
+# This test is quite unnecessary, as the role does the most important checks
 def test_deployer_is_installed(host):
     marker = '/opt/wildfly/standalone/deployments/deployer.war.deployed'
     assert host.file(marker).is_file
