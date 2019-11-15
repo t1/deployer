@@ -26,6 +26,7 @@
     group: wildfly
 
 - name: wait for deployer to be alive
-  health_check:
-    url: http://localhost:8080/deployer/check/liveness
+  wait_for:
+    path: '{{ application_server_home }}/standalone/log/deployer.log'
+    search_regex: 'applied startup anonymous'
     timeout: 30
