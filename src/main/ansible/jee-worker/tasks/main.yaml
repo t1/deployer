@@ -25,8 +25,7 @@
     owner: wildfly
     group: wildfly
 
-- name: wait for deployer to be started
-  wait_for:
-    path: '{{ application_server_home }}/standalone/log/deployer.log'
-    search_regex: '{{ deployer_started_log_expression }}'
+- name: wait for deployer to be alive
+  health_check:
+    url: http://localhost:8080/deployer/check/liveness
     timeout: 30
