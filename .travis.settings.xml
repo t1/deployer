@@ -14,16 +14,6 @@
                     </snapshots>
                 </repository>
             </repositories>
-            <pluginRepositories>
-                <pluginRepository>
-                    <id>bintray</id>
-                    <name>bintray-plugins</name>
-                    <url>https://jcenter.bintray.com</url>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                </pluginRepository>
-            </pluginRepositories>
         </profile>
     </profiles>
     <activeProfiles>
