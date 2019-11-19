@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.t1</groupId>
     <artifactId>deployer</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.1</version>
     <packaging>war</packaging>
     <name>Deployer</name>
     <description>Deploys web archives to a JBoss web container</description>
@@ -231,7 +231,7 @@
     </repositories>
     <scm>
         <developerConnection>scm:git:https://github.com/t1/${project.artifactId}</developerConnection>
-        <tag>HEAD</tag>
+        <tag>3.0.1</tag>
     </scm>
     <profiles>
         <profile>
