@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.t1</groupId>
     <artifactId>deployer</artifactId>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>Deployer</name>
     <description>Deploys web archives to a JBoss web container</description>
@@ -210,9 +210,9 @@
 
     <distributionManagement>
         <repository>
-            <id>github-t1</id>
-            <name>github-packages-t1</name>
-            <url>https://maven.pkg.github.com/t1/deployer</url>
+            <id>bintray-t1-javaee-helpers</id>
+            <name>t1-javaee-helpers</name>
+            <url>https://api.bintray.com/maven/t1/javaee-helpers/${project.artifactId}/;publish=1</url>
         </repository>
     </distributionManagement>
     <licenses>
