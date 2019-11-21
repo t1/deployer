@@ -8,7 +8,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.10.0</jackson.version>
+        <jackson.version>2.10.1</jackson.version>
         <jqassistant.version>1.6.0</jqassistant.version>
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.java.pmd.reportPaths>./target/pmd.xml</sonar.java.pmd.reportPaths>
@@ -72,11 +72,11 @@
 
     <dependencies>
         <provided>
-            <jar>com.github.t1:test-tools:2.0.0M1</jar>
+            <jar>com.github.t1:test-tools:2.0.0M2</jar>
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:10.0.0.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:10.0.3.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.1.Final</jar>
             <jar>com.github.t1:problem-detail:1.0.2</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
