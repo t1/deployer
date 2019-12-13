@@ -4,10 +4,10 @@ import com.github.t1.deployer.model.ArtifactId;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
 import com.github.t1.jaxrsclienttest.JaxRsTestExtension;
-import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -20,7 +20,6 @@ import static com.github.t1.deployer.repository.ArtifactoryMock.AMBIGUOUS_CHECKS
 import static com.github.t1.deployer.testtools.TestData.JDEPEND_291_CHECKSUM;
 import static com.github.t1.deployer.testtools.TestData.JOLOKIA_133_CHECKSUM;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
@@ -197,11 +196,10 @@ class MavenCentralTest extends MavenCentralTestParent {
 
     /** Doesn't exist on Maven Central */
     @Test void shouldFailToResolveLatestArtifactWithoutVersions() {
-        WebApplicationApplicationException thrown = catchThrowableOfType(() ->
+        BadRequestException thrown = catchThrowableOfType(() ->
                 repository.resolveArtifact(GroupId.of("no-versions"), ArtifactId.of("no-versions-war"), Version.of("LATEST"), war, null),
-            WebApplicationApplicationException.class);
+            BadRequestException.class);
 
-        assertThat(thrown.getResponse().getStatusInfo()).isEqualTo(BAD_REQUEST);
-        assertThat(thrown).hasMessageContaining("detail: no versions found for no-versions:no-versions-war\n");
+        assertThat(thrown).hasMessageContaining("no versions found for no-versions:no-versions-war");
     }
 }

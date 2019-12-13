@@ -5,11 +5,16 @@ import com.github.t1.deployer.app.Audits.Warning;
 import com.github.t1.deployer.container.Container;
 import com.github.t1.deployer.container.DeploymentResource;
 import com.github.t1.deployer.model.Artifact;
+import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.DeployablePlan;
 import com.github.t1.deployer.model.DeploymentName;
 import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -20,7 +25,7 @@ import java.util.stream.Stream;
 import static com.github.t1.deployer.container.DeploymentResource.WAR_SUFFIX;
 import static com.github.t1.deployer.model.ArtifactType.war;
 import static com.github.t1.deployer.model.DeploymentState.deployed;
-import static com.github.t1.problem.WebException.badRequest;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 @Slf4j
 class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAudit> {
@@ -86,7 +91,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
 
     private void checkChecksums(DeployablePlan plan, Artifact artifact) {
         if (plan.getChecksum() != null && !plan.getChecksum().equals(artifact.getChecksum()))
-            throw badRequest("Repository checksum ["
+            throw new RepositoryChecksumMismatchException("Repository checksum ["
                 + artifact.getChecksum()
                 + "] does not match planned checksum ["
                 + plan.getChecksum()
@@ -101,7 +106,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
         }
         Artifact artifact = lookupArtifact(plan, plan.getVersion());
         if (artifact == null)
-            throw badRequest("artifact not found: " + plan);
+            throw new ArtifactNotFoundException(plan);
         checkChecksums(plan, artifact);
         audit.setName(plan.getName())
             .change("group-id", null, artifact.getGroupId())
@@ -118,7 +123,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
             version = old.getVersion();
         Artifact artifact = lookupArtifact(plan, version);
         if (artifact == null)
-            throw badRequest("artifact not found: " + plan + " @ " + version);
+            throw new ArtifactNotFoundException(plan, version);
         return artifact;
     }
 
@@ -130,8 +135,7 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
     @Override
     protected void auditRegularRemove(DeploymentResource resource, DeployablePlan plan, DeployableAudit audit) {
         if (plan.getChecksum() != null && !plan.getChecksum().equals(resource.checksum()))
-            throw badRequest("Planned to undeploy artifact with checksum [" + plan.getChecksum() + "] "
-                + "but deployed is [" + resource.checksum() + "]");
+            throw new PlannedUndeployChecksumMismatchException(plan.getChecksum(), resource.checksum());
 
         Artifact artifact = repository.lookupByChecksum(resource.checksum());
         auditRemove(audit, artifact);
@@ -166,5 +170,22 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
                 .setArtifactId(artifact.getArtifactId())
                 .setVersion(artifact.getVersion())
                 .setChecksum(artifact.getChecksum()));
+    }
+
+    @Status(BAD_REQUEST)
+    private static class RepositoryChecksumMismatchException extends RuntimeException {
+        public RepositoryChecksumMismatchException(String message) { super(message); }
+    }
+
+    @Status(BAD_REQUEST)
+    private static class ArtifactNotFoundException extends RuntimeException {
+        public ArtifactNotFoundException(DeployablePlan plan) { super("artifact not found: " + plan); }
+
+        public ArtifactNotFoundException(DeployablePlan plan, Version version) { super("artifact not found: " + plan + " @ " + version); }
+    }
+
+    @Status(BAD_REQUEST) @AllArgsConstructor
+    public static class PlannedUndeployChecksumMismatchException extends RuntimeException {
+        @Extension @Getter private Checksum planned, actual;
     }
 }

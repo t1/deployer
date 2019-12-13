@@ -6,9 +6,9 @@ import com.github.t1.deployer.model.ArtifactType;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
-import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.jupiter.api.Test;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.ClientBuilder;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,9 +25,7 @@ import static com.github.t1.deployer.testtools.TestData.JOLOKIA_133_POM_CHECKSUM
 import static com.github.t1.deployer.testtools.TestData.JOLOKIA_WAR;
 import static com.github.t1.deployer.testtools.TestData.ORG_JOLOKIA;
 import static com.github.t1.deployer.testtools.TestData.VERSION_1_3_3;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 abstract class MavenCentralTestParent {
@@ -49,9 +47,10 @@ abstract class MavenCentralTestParent {
     }
 
     @Test void shouldFailToGetByUnknownChecksum() {
-        Throwable thrown = catchThrowable(() -> repository.searchByChecksum(UNKNOWN_CHECKSUM));
+        UnknownChecksumException thrown = catchThrowableOfType(() -> repository.searchByChecksum(UNKNOWN_CHECKSUM),
+            UnknownChecksumException.class);
 
-        assertThat(thrown).isInstanceOf(UnknownChecksumException.class).hasMessageContaining(UNKNOWN_CHECKSUM.hexString());
+        assertThat(thrown.checksum).isEqualTo(UNKNOWN_CHECKSUM);
     }
 
     @Test void shouldGetByPomChecksum() {
@@ -77,20 +76,18 @@ abstract class MavenCentralTestParent {
     }
 
     @Test void shouldFailToResolveUnknownArtifactChecksum() {
-        WebApplicationApplicationException thrown = catchThrowableOfType(() ->
+        NotFoundException thrown = catchThrowableOfType(() ->
                 repository.resolveArtifact(GroupId.of("unknown"), ArtifactId.of("unknown-war"), VERSION_1_3_3, war, null).getChecksum(),
-            WebApplicationApplicationException.class);
+            NotFoundException.class);
 
-        assertThat(thrown.getResponse().getStatusInfo()).isEqualTo(NOT_FOUND);
         assertThat(thrown).hasMessageContaining("artifact not in repository: unknown:unknown-war:1.3.3:war");
     }
 
     @Test void shouldFailToResolveFailingArtifactChecksum() {
-        WebApplicationApplicationException thrown = catchThrowableOfType(() ->
+        NotFoundException thrown = catchThrowableOfType(() ->
                 repository.resolveArtifact(GroupId.of("unknown"), ArtifactId.of("unknown-war"), VERSION_1_3_3, war, null).getChecksum(),
-            WebApplicationApplicationException.class);
+            NotFoundException.class);
 
-        assertThat(thrown.getResponse().getStatusInfo()).isEqualTo(NOT_FOUND);
         assertThat(thrown).hasMessageContaining("artifact not in repository: unknown:unknown-war:1.3.3:war");
     }
 
@@ -117,11 +114,10 @@ abstract class MavenCentralTestParent {
     }
 
     @Test void shouldFailToDownloadUnknownPom() {
-        WebApplicationApplicationException thrown = catchThrowableOfType(() ->
+        NotFoundException thrown = catchThrowableOfType(() ->
                 repository.resolveArtifact(GroupId.of("unknown"), ArtifactId.of("unknown-war"), VERSION_1_3_3, pom, null).getInputStream(),
-            WebApplicationApplicationException.class);
+            NotFoundException.class);
 
-        assertThat(thrown.getResponse().getStatusInfo()).isEqualTo(NOT_FOUND);
         assertThat(thrown).hasMessageContaining("artifact not in repository: unknown:unknown-war:1.3.3:pom");
     }
 

@@ -1,10 +1,13 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.Checksum;
-import com.github.t1.problem.WebApplicationApplicationException;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
+import lombok.AllArgsConstructor;
 
-class ErrorWhileFetchingChecksumException extends WebApplicationApplicationException {
-    protected ErrorWhileFetchingChecksumException(Checksum checksum) {
-        super("error while searching for checksum: '" + checksum + "'");
-    }
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+
+@Status(BAD_REQUEST) @AllArgsConstructor
+public class ErrorWhileFetchingChecksumException extends RuntimeException {
+    @Extension Checksum checksum;
 }

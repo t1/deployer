@@ -8,10 +8,12 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
+import com.github.t1.problemdetail.Status;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.WebTarget;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +24,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Scanner;
 
-import static com.github.t1.problem.WebException.builderFor;
-import static com.github.t1.problem.WebException.notFound;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
@@ -159,15 +159,13 @@ public class MavenCentralRepository extends Repository {
             HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
             switch (connection.getResponseCode()) {
                 case 404:
-                    throw notFound("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
+                    throw new NotFoundException("artifact not in repository: " + groupId + ":" + artifactId + ":" + version + ":" + type);
                 case 200:
                     return connection.getInputStream();
                 default:
-                    throw builderFor(BAD_GATEWAY)
-                        .title("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type)
-                        .detail("received " + connection.getResponseCode() + " " + connection.getResponseMessage()
-                            + " from " + uri + "\n"
-                            + "body: " + read(connection.getErrorStream())).build();
+                    throw new DownloadFailedException("can't download " + groupId + ":" + artifactId + ":" + version + ":" + type + "\n"
+                        + "received " + connection.getResponseCode() + " " + connection.getResponseMessage() + " from " + uri + "\n"
+                        + "body: " + read(connection.getErrorStream()));
             }
         } catch (MalformedURLException e) {
             throw new RuntimeException("can't construct URL from " + uri);
@@ -180,5 +178,10 @@ public class MavenCentralRepository extends Repository {
         try (Scanner scanner = new Scanner(stream).useDelimiter("\\Z")) {
             return scanner.next();
         }
+    }
+
+    @Status(BAD_GATEWAY)
+    private static class DownloadFailedException extends RuntimeException {
+        public DownloadFailedException(String message) { super(message); }
     }
 }

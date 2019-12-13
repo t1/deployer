@@ -19,8 +19,9 @@ import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.Logged;
-import com.github.t1.problem.WebApplicationApplicationException;
-import com.github.t1.problem.WebException;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ejb.Asynchronous;
@@ -28,6 +29,7 @@ import javax.ejb.Stateless;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.QueryParam;
@@ -49,7 +51,6 @@ import java.util.stream.Stream;
 import static com.github.t1.deployer.app.Trigger.post;
 import static com.github.t1.deployer.model.ProcessState.running;
 import static com.github.t1.log.LogLevel.INFO;
-import static com.github.t1.problem.WebException.badRequest;
 import static java.lang.Boolean.TRUE;
 import static java.nio.file.Files.isRegularFile;
 import static java.util.Collections.emptyMap;
@@ -147,7 +148,7 @@ public class DeployerBoundary {
         Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
             bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
         if (artifact == null)
-            throw badRequest("root bundle not found: " + bundle);
+            throw new BundleNotFoundException(bundle);
         return artifact.getReader();
     }
 
@@ -259,13 +260,10 @@ public class DeployerBoundary {
         private void apply(Reader reader, String sourceMessage) {
             try {
                 this.apply(Plan.load(expressions, reader, sourceMessage));
-            } catch (WebApplicationApplicationException e) {
-                log.info(buildFailureMessage(sourceMessage, e));
-                throw e;
             } catch (RuntimeException e) {
                 String message = buildFailureMessage(sourceMessage, e);
                 log.info(message, e);
-                throw WebException.builderFor(BAD_REQUEST).causedBy(e).detail(message).build();
+                throw new BadRequestException(message, e);
             }
         }
 
@@ -293,12 +291,17 @@ public class DeployerBoundary {
                     Artifact artifact = repository.resolveArtifact(bundle.getGroupId(), bundle.getArtifactId(),
                         bundle.getVersion(), ArtifactType.bundle, bundle.getClassifier());
                     if (artifact == null)
-                        throw badRequest("bundle not found: " + bundle);
+                        throw new BundleNotFoundException(bundle);
                     apply(artifact.getReader(), artifact.toString());
                 } finally {
                     this.expressions = pop;
                 }
             });
         }
+    }
+
+    @Status(BAD_REQUEST) @AllArgsConstructor
+    private static class BundleNotFoundException extends RuntimeException {
+        @Extension private BundlePlan bundle;
     }
 }

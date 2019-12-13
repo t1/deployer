@@ -2,11 +2,11 @@ package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
 import com.github.t1.deployer.model.Expressions.VariableName;
-import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoSettings;
 
+import javax.ws.rs.BadRequestException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -192,7 +192,7 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
             + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f]"
                 + " does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
@@ -224,7 +224,7 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
             + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("Repository checksum [face000097269fd347ce0e93059890430c01f17f] "
                 + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
@@ -240,7 +240,7 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
             + "    checksum: 2ea859259d7a9e270b4484facdcba5fe3f1f7578\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("Repository checksum [face000094d353f082e6939015af81d263ba0f8f] "
                 + "does not match planned checksum [2ea859259d7a9e270b4484facdcba5fe3f1f7578]");
     }
@@ -284,7 +284,7 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("the `group-id` can only be null when undeploying");
     }
 
@@ -522,7 +522,7 @@ class ArtifactDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("resource is pinned: deployment:foo:deployed:org.foo:foo:1.3.2:war");
     }
 }

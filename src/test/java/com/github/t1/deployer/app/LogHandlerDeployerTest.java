@@ -1,8 +1,9 @@
 package com.github.t1.deployer.app;
 
-import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoSettings;
+
+import javax.ws.rs.BadRequestException;
 
 import static com.github.t1.deployer.model.LogHandlerType.console;
 import static com.github.t1.deployer.model.LogHandlerType.custom;
@@ -992,7 +993,7 @@ class LogHandlerDeployerTest extends AbstractDeployerTests {
             + "    formatter: foo"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("resource is pinned: log-handler:deployed:periodic-rotating-file:FOO:");
     }
 }

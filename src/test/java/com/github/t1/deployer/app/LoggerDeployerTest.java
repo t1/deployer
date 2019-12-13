@@ -1,9 +1,10 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.Audit.LoggerAudit;
-import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoSettings;
+
+import javax.ws.rs.BadRequestException;
 
 import static com.github.t1.deployer.model.LogHandlerType.periodicRotatingFile;
 import static com.github.t1.deployer.model.LoggerCategory.ROOT;
@@ -117,7 +118,7 @@ class LoggerDeployerTest extends AbstractDeployerTests {
             + "    state: undeployed\n"));
 
         assertThat(throwable)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("can't remove root logger");
     }
 
@@ -503,7 +504,7 @@ class LoggerDeployerTest extends AbstractDeployerTests {
                 + "    level: DEBUG\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("resource is pinned: logger:deployed:FOO:");
     }
 }

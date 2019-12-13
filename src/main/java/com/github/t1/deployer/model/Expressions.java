@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.github.t1.deployer.tools.CipherService;
 import com.github.t1.deployer.tools.KeyStoreConfig;
-import com.github.t1.problem.ReturnStatus;
-import com.github.t1.problem.WebApplicationApplicationException;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
@@ -19,6 +19,7 @@ import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import javax.ws.rs.BadRequestException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -36,7 +37,6 @@ import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
 import static com.github.t1.deployer.model.Expressions.Match.Mode.matches;
 import static com.github.t1.deployer.model.Expressions.Match.Mode.proceed;
 import static com.github.t1.deployer.model.Expressions.Match.Mode.stop;
-import static com.github.t1.problem.WebException.badRequest;
 import static java.util.Collections.singletonMap;
 import static java.util.Locale.US;
 import static java.util.stream.Collectors.toList;
@@ -117,7 +117,7 @@ public class Expressions {
 
     private void checkNotDefined(VariableName name) {
         if (this.variables.containsKey(name))
-            throw badRequest("Variable named [" + name + "] already set. It's not allowed to overwrite.");
+            throw new BadRequestException("Variable named [" + name + "] already set. It's not allowed to overwrite.");
     }
 
 
@@ -310,7 +310,7 @@ public class Expressions {
             if (variables.containsKey(variableName)) {
                 String value = resolve(variables.get(variableName), "null");
                 if (value != null && !VARIABLE_VALUE.matcher(value).matches())
-                    throw badRequest("invalid character in variable value for [" + variableName + "]");
+                    throw new BadRequestException("invalid character in variable value for [" + variableName + "]");
                 return Match.of(value);
             } else {
                 log.trace("undefined variable [{}]", expression);
@@ -381,7 +381,7 @@ public class Expressions {
                     case "regex#2":
                         return applyRegex();
                     default:
-                        throw badRequest("undefined function [" + functionName + "] with " + params.size() + " params");
+                        throw new BadRequestException("undefined function [" + functionName + "] with " + params.size() + " params");
                 }
             }
 
@@ -455,11 +455,9 @@ public class Expressions {
         return n;
     }
 
-    @ReturnStatus(BAD_REQUEST)
-    public static class UnresolvedVariableException extends WebApplicationApplicationException {
-        private static final long serialVersionUID = -1L;
-
-        @Getter private final String expression;
+    @Status(BAD_REQUEST)
+    public static class UnresolvedVariableException extends RuntimeException {
+        @Extension @Getter private final String expression;
 
         private UnresolvedVariableException(String expression) {
             super("unresolved variable expression: " + expression);

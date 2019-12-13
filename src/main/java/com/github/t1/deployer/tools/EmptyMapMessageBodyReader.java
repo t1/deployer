@@ -2,6 +2,7 @@ package com.github.t1.deployer.tools;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -14,7 +15,6 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 import static com.github.t1.deployer.tools.StringUtils.typeString;
-import static com.github.t1.problem.WebException.badRequest;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
@@ -37,7 +37,7 @@ public class EmptyMapMessageBodyReader implements MessageBodyReader<Map<String, 
             throws IOException {
         log.debug("readFrom: {}: {}: {}: {}", typeString(genericType), annotations, mediaType, httpHeaders);
         if (entityStream.read() >= 0)
-            throw badRequest("Please specify a `Content-Type` header when sending a body. "
+            throw new BadRequestException("Please specify a `Content-Type` header when sending a body. "
                     + "This MessageBodyReader can only \"read\" an empty map.");
         return emptyMap();
     }

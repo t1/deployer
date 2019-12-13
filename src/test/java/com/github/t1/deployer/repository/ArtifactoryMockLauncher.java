@@ -33,10 +33,7 @@ public class ArtifactoryMockLauncher {
 
     private final List<String> commands;
 
-    private JaxRsTestExtension container = new JaxRsTestExtension(
-        new ArtifactoryMock(),
-        new ProblemDetailMessageBodyWriter()
-    )
+    private JaxRsTestExtension container = new JaxRsTestExtension(new ArtifactoryMock())
         .contextPath("/artifactory")
         .port(8081);
 

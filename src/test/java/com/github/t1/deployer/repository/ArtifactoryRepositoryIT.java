@@ -33,6 +33,7 @@ import static com.github.t1.deployer.testtools.TestData.JOLOKIA_134_SNAPSHOT_CHE
 import static com.github.t1.log.LogLevel.DEBUG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 class ArtifactoryRepositoryIT {
@@ -48,7 +49,7 @@ class ArtifactoryRepositoryIT {
 
     @RegisterExtension static Extension ARTIFACTORY = TEST_WITH_REAL_ARTIFACTORY
         ? new Extension() {} // do nothing
-        : new JaxRsTestExtension(ARTIFACTORY_MOCK, new ProblemDetailMessageBodyWriter());
+        : new JaxRsTestExtension(ARTIFACTORY_MOCK);
 
     private URI baseUri = TEST_WITH_REAL_ARTIFACTORY
         ? DEFAULT_ARTIFACTORY_URI
@@ -65,9 +66,10 @@ class ArtifactoryRepositoryIT {
 
 
     @Test void shouldFailToSearchByChecksumWhenUnavailable() {
-        Throwable throwable = catchThrowable(() -> repository.searchByChecksum(FAILING_CHECKSUM));
+        ErrorWhileFetchingChecksumException throwable = catchThrowableOfType(() -> repository.searchByChecksum(FAILING_CHECKSUM),
+            ErrorWhileFetchingChecksumException.class);
 
-        assertThat(throwable).hasMessageContaining("error while searching for checksum: '" + FAILING_CHECKSUM + "'");
+        assertThat(throwable.checksum).isEqualTo(FAILING_CHECKSUM);
     }
 
     @Test void shouldFailToSearchByChecksumWhenAmbiguous() {
@@ -77,11 +79,10 @@ class ArtifactoryRepositoryIT {
     }
 
     @Test void shouldFailToSearchByChecksumWhenUnknown() {
-        Throwable throwable = catchThrowable(() -> repository.searchByChecksum(UNKNOWN_CHECKSUM));
+        UnknownChecksumException throwable = catchThrowableOfType(() -> repository.searchByChecksum(UNKNOWN_CHECKSUM),
+            UnknownChecksumException.class);
 
-        assertThat(throwable)
-            .isInstanceOf(UnknownChecksumException.class)
-            .hasMessageContaining("unknown checksum: '" + UNKNOWN_CHECKSUM + "'");
+        assertThat(throwable.checksum).isEqualTo(UNKNOWN_CHECKSUM);
     }
 
     @Test void shouldSearchByChecksum() {

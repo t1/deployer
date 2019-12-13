@@ -1,15 +1,16 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.app.AbstractDeployerTests.ArtifactFixtureBuilder.ArtifactFixture;
+import com.github.t1.deployer.app.ArtifactDeployer.PlannedUndeployChecksumMismatchException;
 import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Expressions.UnresolvedVariableException;
 import com.github.t1.deployer.tools.CipherService;
 import com.github.t1.deployer.tools.KeyStoreConfig;
-import com.github.t1.problem.WebApplicationApplicationException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoSettings;
 
+import javax.ws.rs.BadRequestException;
 import java.net.InetAddress;
 
 import static com.github.t1.deployer.model.ArtifactType.bundle;
@@ -22,6 +23,7 @@ import static com.github.t1.deployer.testtools.TestData.VERSION;
 import static com.github.t1.log.LogLevel.DEBUG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.quality.Strictness.LENIENT;
 
 @MockitoSettings(strictness = LENIENT)
@@ -186,7 +188,7 @@ class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("undefined function [hostName] with 1 params");
     }
 
@@ -212,7 +214,7 @@ class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("undefined function [domainName] with 1 params");
     }
 
@@ -559,7 +561,7 @@ class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("invalid character in variable value for [foo]");
     }
 
@@ -672,7 +674,7 @@ class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("undefined function [bar] with 1 params");
     }
 
@@ -685,7 +687,7 @@ class BundleDeployerTest extends AbstractDeployerTests {
             + "    version: 1.3.2\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("undefined function [toLowerCase] with 0 params");
     }
 
@@ -859,21 +861,22 @@ class BundleDeployerTest extends AbstractDeployerTests {
     }
 
     @Test void shouldFailToUndeployWebArchiveWithWrongChecksum() {
-        givenArtifact("foo").version("1.3.2").deployed();
+        ArtifactFixture foo = givenArtifact("foo").version("1.3.2").deployed();
 
-        Throwable thrown = catchThrowable(() -> deployWithRootBundle(""
+        BadRequestException thrown = catchThrowableOfType(() -> deployWithRootBundle(""
             + "deployables:\n"
             + "  foo:\n"
             + "    group-id: org.foo\n"
             + "    version: 1.3.2\n"
             + "    checksum: " + UNKNOWN_CHECKSUM + "\n"
             + "    state: undeployed\n"
-        ));
+        ), BadRequestException.class);
 
-        assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
-            .hasMessageContaining("Planned to undeploy artifact with checksum [" + UNKNOWN_CHECKSUM + "] "
-                + "but deployed is [face000097269fd347ce0e93059890430c01f17f]");
+        assertThat(thrown).hasMessageStartingWith("can't apply plan [").hasMessageEndingWith("/deployer.root.bundle]");
+        assertThat(thrown.getCause()).isInstanceOf(PlannedUndeployChecksumMismatchException.class);
+        PlannedUndeployChecksumMismatchException cause = (PlannedUndeployChecksumMismatchException) thrown.getCause();
+        assertThat(cause.getPlanned()).isEqualTo(UNKNOWN_CHECKSUM);
+        assertThat(cause.getActual()).isEqualTo(foo.getChecksum());
     }
 
 

@@ -1,6 +1,9 @@
 package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.ProcessState;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -14,6 +17,7 @@ import org.jboss.dmr.ModelNode;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -32,8 +36,8 @@ import static com.github.t1.deployer.container.Container.CLI_DEBUG;
 import static com.github.t1.deployer.model.ProcessState.reloadRequired;
 import static com.github.t1.deployer.model.ProcessState.restartRequired;
 import static com.github.t1.deployer.model.ProcessState.running;
-import static com.github.t1.problem.WebException.badRequest;
 import static java.util.Locale.US;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.jboss.as.controller.client.helpers.ClientConstants.ADDRESS;
 import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED;
 import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RESTART_REQUIRED;
@@ -65,15 +69,15 @@ class Batch {
 
     private static final OperationMessageHandler LOGGING = (severity, message) -> {
         switch (severity) {
-        case ERROR:
-            log.error(message);
-            break;
-        case WARN:
-            log.warn(message);
-            break;
-        case INFO:
-            log.info(message);
-            break;
+            case ERROR:
+                log.error(message);
+                break;
+            case WARN:
+                log.warn(message);
+                break;
+            case INFO:
+                log.info(message);
+                break;
         }
     };
 
@@ -82,7 +86,7 @@ class Batch {
     private CompositeOperationBuilder batch;
 
 
-    @SneakyThrows({ InterruptedException.class, TimeoutException.class })
+    @SneakyThrows({InterruptedException.class, TimeoutException.class})
     public void waitForBoot() {
         log.info("wait for boot");
         waitForStandalone(client, STARTUP_TIMEOUT);
@@ -171,24 +175,24 @@ class Batch {
         if (processState == null)
             return running;
         switch (processState) {
-        case CONTROLLER_PROCESS_STATE_RUNNING:
-            return running;
-        case CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED:
-            return reloadRequired;
-        case CONTROLLER_PROCESS_STATE_RESTART_REQUIRED:
-            return restartRequired;
-        case CONTROLLER_PROCESS_STATE_STARTING:
-            throw badRequest("unexpectedly still starting");
-        case CONTROLLER_PROCESS_STATE_STOPPING:
-            throw badRequest("unexpectedly already stopping");
+            case CONTROLLER_PROCESS_STATE_RUNNING:
+                return running;
+            case CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED:
+                return reloadRequired;
+            case CONTROLLER_PROCESS_STATE_RESTART_REQUIRED:
+                return restartRequired;
+            case CONTROLLER_PROCESS_STATE_STARTING:
+                throw new UnexpectedlyStillStartingException();
+            case CONTROLLER_PROCESS_STATE_STOPPING:
+                throw new UnexpectedlyAlreadyStoppingException();
         }
-        throw badRequest("unexpected process-state: " + processState);
+        throw new UnexpectedProcessStateException(processState);
     }
 
     public void fail(ModelNode result) {
         String detail = "outcome " + result.get(OUTCOME)
-                + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : "");
-        throw badRequest(detail);
+            + (result.hasDefined(FAILURE_DESCRIPTION) ? ": " + result.get(FAILURE_DESCRIPTION) : "");
+        throw new BadRequestException(detail);
     }
 
     private String processState(ModelNode result) {
@@ -209,7 +213,7 @@ class Batch {
         boolean notFoundEnd = message.endsWith(" not found\"");
         boolean isNotFound = (jboss7start || jboss8start) && notFoundEnd;
         log.trace("is not found message: jboss7start:{} jboss8start:{} notFoundEnd:{} -> {}: [{}]",
-                jboss7start, jboss8start, notFoundEnd, isNotFound, message);
+            jboss7start, jboss8start, notFoundEnd, isNotFound, message);
         return isNotFound;
     }
 
@@ -259,7 +263,7 @@ class Batch {
     /**
      * We sort the steps to prevent dependency problems like loggers depending on log-handlers and so that deployables
      * can use their loggers when they are deployed.
-     *
+     * <p>
      * - add log-handlers
      * - add loggers
      * - add data-sources
@@ -269,13 +273,13 @@ class Batch {
      * - remove data-sources
      * - remove loggers
      * - remove log-handlers
-     *
+     * <p>
      * We can't reasonably do this ordering from within the deployers, as they do the adding _and_ the removing.
      */
     private void sortSteps(ModelNode steps) {
         List<ModelNode> list = new ArrayList<>(steps.asList());
         list.sort(Comparator.comparing(Batch::operation)
-                            .thenComparing(node -> operation(node).factor() * type(node).ordinal()));
+            .thenComparing(node -> operation(node).factor() * type(node).ordinal()));
         steps.set(list);
     }
 
@@ -307,27 +311,38 @@ class Batch {
         if (address.asPropertyList().isEmpty())
             return UNKNOWN;
         switch (address.asPropertyList().get(0).getName()) {
-        case "deployment":
-            return DEPLOYABLE;
-        case "subsystem":
-            switch (address.asPropertyList().get(0).getValue().asString()) {
-            case "logging":
-                switch (address.asPropertyList().get(1).getName()) {
-                case "logger":
-                    return LOGGER;
-                case "console-handler":
-                case "custom-handler":
-                case "periodic-rotating-file-handler":
-                    return LOG_HANDLER;
+            case "deployment":
+                return DEPLOYABLE;
+            case "subsystem":
+                switch (address.asPropertyList().get(0).getValue().asString()) {
+                    case "logging":
+                        switch (address.asPropertyList().get(1).getName()) {
+                            case "logger":
+                                return LOGGER;
+                            case "console-handler":
+                            case "custom-handler":
+                            case "periodic-rotating-file-handler":
+                                return LOG_HANDLER;
+                        }
+                    case "datasources":
+                        switch (address.asPropertyList().get(1).getName()) {
+                            case "data-source":
+                            case "xa-data-source":
+                                return DATA_SOURCE;
+                        }
                 }
-            case "datasources":
-                switch (address.asPropertyList().get(1).getName()) {
-                case "data-source":
-                case "xa-data-source":
-                    return DATA_SOURCE;
-                }
-            }
         }
         throw new IllegalArgumentException("unsupported node type: " + address);
+    }
+
+    @Status(BAD_REQUEST)
+    private static class UnexpectedlyStillStartingException extends RuntimeException {}
+
+    @Status(BAD_REQUEST)
+    private static class UnexpectedlyAlreadyStoppingException extends RuntimeException {}
+
+    @Status(BAD_REQUEST) @AllArgsConstructor
+    private static class UnexpectedProcessStateException extends RuntimeException {
+        @Extension String processState;
     }
 }

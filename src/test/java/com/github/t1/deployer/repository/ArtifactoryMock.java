@@ -17,6 +17,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -42,7 +43,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -50,11 +50,11 @@ import java.util.Objects;
 
 import static com.github.t1.deployer.model.ArtifactType.war;
 import static com.github.t1.deployer.repository.ArtifactoryRepository.versionFrom;
-import static com.github.t1.problem.WebException.notFound;
 import static java.lang.ProcessBuilder.Redirect.appendTo;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
+import static java.util.Map.Entry.comparingByValue;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -217,7 +217,7 @@ public class ArtifactoryMock {
     static void writeIndex() {
         try (BufferedWriter writer = Files.newBufferedWriter(MAVEN_INDEX_FILE, UTF_8)) {
             INDEX.entrySet().stream()
-                .sorted(Comparator.comparing(Map.Entry::getValue))
+                .sorted(comparingByValue())
                 .forEach(entry -> write(writer, entry));
         }
     }
@@ -627,7 +627,7 @@ public class ArtifactoryMock {
         throws IOException {
         checkAuthorization(authorization);
         if (!pathString.endsWith(MAVEN_METADATA_XML))
-            throw notFound("mock can only serve xml for " + MAVEN_METADATA_XML);
+            throw new NotFoundException("mock can only serve xml for " + MAVEN_METADATA_XML);
         pathString = pathString.substring(0, pathString.length() - MAVEN_METADATA_XML.length())
             + "maven-metadata-local.xml";
         java.nio.file.Path path = Paths.get(pathString);
@@ -635,7 +635,7 @@ public class ArtifactoryMock {
         if (!Files.isRegularFile(repoPath)) {
             repoPath = repoPath.getParent().resolve("maven-metadata-snapshots.xml");
             if (!Files.isRegularFile(repoPath))
-                throw notFound("not found " + repoPath);
+                throw new NotFoundException("not found " + repoPath);
         }
         log.debug("return repository file stream: {}", repoPath);
         return Files.newInputStream(repoPath);

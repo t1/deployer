@@ -1,9 +1,10 @@
 package com.github.t1.deployer.app;
 
 import com.github.t1.deployer.model.Age;
-import com.github.t1.problem.WebApplicationApplicationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoSettings;
+
+import javax.ws.rs.BadRequestException;
 
 import static com.github.t1.deployer.app.Audit.DataSourceAudit;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -454,7 +455,7 @@ class DataSourceDeployerTest extends AbstractDeployerTests {
                 + "    uri: jdbc:h2:mem:FOO\n"));
 
         assertThat(thrown)
-            .isInstanceOf(WebApplicationApplicationException.class)
+            .isInstanceOf(BadRequestException.class)
             .hasMessageContaining("resource is pinned: data-source:deployed:FOO");
     }
 }

@@ -1,8 +1,13 @@
 package com.github.t1.deployer.repository;
 
 import com.github.t1.deployer.model.Checksum;
-import com.github.t1.problem.WebApplicationApplicationException;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
+import lombok.AllArgsConstructor;
 
-class UnknownChecksumException extends WebApplicationApplicationException {
-    protected UnknownChecksumException(Checksum checksum) { super("unknown checksum: '" + checksum + "'"); }
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+
+@Status(BAD_REQUEST) @AllArgsConstructor
+public class UnknownChecksumException extends RuntimeException {
+    @Extension Checksum checksum;
 }

@@ -10,11 +10,11 @@ import com.github.t1.deployer.model.Version;
 import com.github.t1.log.Logged;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.BadRequestException;
 import java.util.Comparator;
 import java.util.List;
 
 import static com.github.t1.deployer.model.ArtifactType.unknown;
-import static com.github.t1.problem.WebException.badRequest;
 
 /** Stores artifacts, e.g. Maven Central or Artifactory */
 @Slf4j
@@ -67,7 +67,7 @@ public abstract class Repository {
         if (snapshots)
             versions.addAll(listVersions(groupId, artifactId, true));
         Version max = versions.stream().max(Comparator.naturalOrder())
-            .orElseThrow(() -> badRequest("no versions found for " + groupId + ":" + artifactId));
+            .orElseThrow(() -> new BadRequestException("no versions found for " + groupId + ":" + artifactId));
         log.debug("resolved {}:{} {} to {}", groupId, artifactId, versionExpression, max);
         return max;
     }

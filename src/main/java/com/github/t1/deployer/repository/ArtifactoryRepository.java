@@ -13,6 +13,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -29,7 +30,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.t1.problem.WebException.notFound;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
@@ -207,7 +207,7 @@ public class ArtifactoryRepository extends Repository {
                 .filter(snapshotVersion -> type.extension().equals(snapshotVersion.getExtension()))
                 .map(MavenMetadata.Versioning.SnapshotVersion::getValue)
                 .findAny()
-                .orElseThrow(() -> notFound("no metadata for extension [" + type.extension() + "]"));
+                .orElseThrow(() -> new NotFoundException("no metadata for extension [" + type.extension() + "]"));
             return artifactId + "-" + snapshot + classifierSuffix + "." + type.extension();
         } else {
             return "{module}-{baseRev}" + classifierSuffix + ".{ext}";
@@ -253,7 +253,7 @@ public class ArtifactoryRepository extends Repository {
             case 200:
                 return;
             case 404:
-                throw notFound("not in repository: " + what);
+                throw new NotFoundException("not in repository: " + what);
             default:
                 throw new RuntimeException("unexpected http status " + response.getStatusInfo());
         }

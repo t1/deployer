@@ -78,12 +78,16 @@
         <compile>
             <jar>org.wildfly.core:wildfly-controller-client:10.0.3.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.1.Final</jar>
-            <jar>com.github.t1:problem-detail:1.0.2</jar>
+            <jar>com.github.t1:problem-detail-api:1.0.0-SNAPSHOT</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
             <jar>com.google.guava:guava:28.1-jre</jar>
         </compile>
+
+        <runtime>
+            <jar>com.github.t1:problem-detail-ri:1.0.0-SNAPSHOT</jar>
+        </runtime>
 
         <test>
             <jar>org.eclipse:yasson:1.0.5</jar>
