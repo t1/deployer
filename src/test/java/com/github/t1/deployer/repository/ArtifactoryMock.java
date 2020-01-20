@@ -460,7 +460,7 @@ public class ArtifactoryMock {
             + "   \"lastUpdated\" : \"2014-04-02T16:21:31.385+02:00\",\n"
             + info(Paths.get(path), repoKey.toLowerCase().contains("snapshot"))
             + "   \"downloadUri\": \"" + base(repoKey + "/" + path) + "\",\n"
-            + "   \"remoteUrl\": \"http://jcenter.bintray.com/" + path + "\",\n"
+            + "   \"remoteUrl\": \"https://jcenter.bintray.com/" + path + "\",\n"
             + "   \"uri\" : \"" + base("api/storage/" + repoKey + "/" + path) + "\"\n"
             + "}\n";
         MediaType mediaType = info.contains("\"children\"") ? FOLDER_INFO : FILE_INFO;
