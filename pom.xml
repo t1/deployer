@@ -11,8 +11,10 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.10.1</jackson.version>
+        <jackson.version>2.10.2</jackson.version>
         <jqassistant.version>1.6.0</jqassistant.version>
+        <shrinkwrap.version>3.1.4</shrinkwrap.version>
+
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.java.pmd.reportPaths>./target/pmd.xml</sonar.java.pmd.reportPaths>
         <sonar.java.checkstyle.reportPaths>./target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
@@ -100,12 +102,12 @@
         <dependency>
             <groupId>org.wildfly.plugins</groupId>
             <artifactId>wildfly-plugin-core</artifactId>
-            <version>2.0.1.Final</version>
+            <version>2.0.2.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.github.t1</groupId>
-            <artifactId>problem-detail-api</artifactId>
+            <artifactId>problem-details-api</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
@@ -130,13 +132,13 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>28.1-jre</version>
+            <version>28.2-jre</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>com.github.t1</groupId>
-            <artifactId>problem-detail-ri</artifactId>
+            <artifactId>problem-details-ri</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <scope>runtime</scope>
         </dependency>
@@ -144,7 +146,7 @@
         <dependency>
             <groupId>org.eclipse</groupId>
             <artifactId>yasson</artifactId>
-            <version>1.0.5</version>
+            <version>1.0.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -192,13 +194,13 @@
         <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-spi</artifactId>
-            <version>3.1.3</version>
+            <version>${shrinkwrap.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-            <version>3.1.3</version>
+            <version>${shrinkwrap.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -343,7 +345,7 @@
                 <maven.compiler.source>1.8</maven.compiler.source>
                 <maven.compiler.target>1.8</maven.compiler.target>
                 <junit.version>5.5.2</junit.version>
-                <mockito.version>3.1.0</mockito.version>
+                <mockito.version>3.2.4</mockito.version>
             </properties>
             <build>
                 <defaultGoal>verify</defaultGoal>
@@ -568,7 +570,7 @@
                 <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.29</version>
+            <version>1.7.30</version>
             <scope>provided</scope>
         </dependency>
                 <dependency>
