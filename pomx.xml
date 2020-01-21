@@ -9,7 +9,7 @@
 
     <properties>
         <jackson.version>2.10.2</jackson.version>
-        <jqassistant.version>1.6.0</jqassistant.version>
+        <jqassistant.version>1.7.0</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
@@ -80,7 +80,7 @@
         <compile>
             <jar>org.wildfly.core:wildfly-controller-client:10.0.3.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.2.Final</jar>
-            <jar>com.github.t1:problem-details-api:1.0.0-SNAPSHOT</jar>
+            <jar>com.github.t1:problem-details-api:1.1.0-SNAPSHOT</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
@@ -88,7 +88,7 @@
         </compile>
 
         <runtime>
-            <jar>com.github.t1:problem-details-ri:1.0.0-SNAPSHOT</jar>
+            <jar>com.github.t1:problem-details-ri:1.1.0-SNAPSHOT</jar>
         </runtime>
 
         <test>

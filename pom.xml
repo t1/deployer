@@ -12,7 +12,7 @@
 
     <properties>
         <jackson.version>2.10.2</jackson.version>
-        <jqassistant.version>1.6.0</jqassistant.version>
+        <jqassistant.version>1.7.0</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
@@ -108,7 +108,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>problem-details-api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -139,7 +139,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>problem-details-ri</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.1.0-SNAPSHOT</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -397,7 +397,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M2</version>
+                <version>3.0.0-M3</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.sonatype.ossindex.maven</groupId>
