@@ -12,7 +12,7 @@
 
     <properties>
         <jackson.version>2.10.2</jackson.version>
-        <jqassistant.version>1.7.0</jqassistant.version>
+        <jqassistant.version>1.8.0-MS1</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
