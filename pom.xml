@@ -11,7 +11,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.10.2</jackson.version>
+        <jackson.version>2.10.3</jackson.version>
         <jqassistant.version>1.7.0</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
@@ -25,7 +25,7 @@
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
-                <version>1.4.11</version>
+                <version>1.5.1</version>
                 <configuration>
                     <withHistory>true</withHistory>
                     <timestampedReports>false</timestampedReports>
@@ -35,12 +35,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.12.0</version>
+                <version>3.13.0</version>
             </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>3.1.12.2</version>
+                <version>4.0.0</version>
                 <executions>
                     <execution>
                         <id>default</id>
@@ -96,7 +96,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
-            <version>10.0.3.Final</version>
+            <version>11.0.0.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -212,7 +212,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.12.1</version>
+            <version>1.13.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -344,8 +344,8 @@
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
                 <maven.compiler.source>1.8</maven.compiler.source>
                 <maven.compiler.target>1.8</maven.compiler.target>
-                <junit.version>5.6.0</junit.version>
-                <mockito.version>3.2.4</mockito.version>
+                <junit.version>5.6.2</junit.version>
+                <mockito.version>3.3.3</mockito.version>
             </properties>
             <build>
                 <defaultGoal>verify</defaultGoal>
@@ -483,13 +483,13 @@
                 <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.10</version>
+            <version>1.18.12</version>
             <scope>provided</scope>
         </dependency>
                 <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>18.0.0</version>
+            <version>19.0.0</version>
             <scope>provided</scope>
         </dependency>
                 <dependency>

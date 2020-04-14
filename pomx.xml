@@ -8,7 +8,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.10.2</jackson.version>
+        <jackson.version>2.10.3</jackson.version>
         <jqassistant.version>1.7.0</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
@@ -22,15 +22,15 @@
 
     <build>
         <plugins>
-            <plugin id="org.pitest:pitest-maven:1.4.11">
+            <plugin id="org.pitest:pitest-maven:1.5.1">
                 <configuration>
                     <withHistory>true</withHistory>
                     <timestampedReports>false</timestampedReports>
                     <excludedTestClasses>*IT</excludedTestClasses>
                 </configuration>
             </plugin>
-            <plugin id="org.apache.maven.plugins:maven-pmd-plugin:3.12.0"/>
-            <plugin id="com.github.spotbugs:spotbugs-maven-plugin:3.1.12.2">
+            <plugin id="org.apache.maven.plugins:maven-pmd-plugin:3.13.0"/>
+            <plugin id="com.github.spotbugs:spotbugs-maven-plugin:4.0.0">
                 <executions>
                     <execution>
                         <id>default</id>
@@ -78,7 +78,7 @@
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:10.0.3.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:11.0.0.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.2.Final</jar>
             <jar>io.microprofile.sandbox:problem-details-api:1.0.0-SNAPSHOT</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
@@ -103,7 +103,7 @@
             <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-spi:${shrinkwrap.version}</jar>
             <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-impl-maven:${shrinkwrap.version}</jar>
             <jar>org.jboss.shrinkwrap:shrinkwrap-impl-base:1.2.6</jar>
-            <jar>org.jsoup:jsoup:1.12.1</jar>
+            <jar>org.jsoup:jsoup:1.13.1</jar>
         </test>
     </dependencies>
 
