@@ -115,7 +115,7 @@ ${m2}/org/glassfish/jersey/core/jersey-client/2.23.2/jersey-client-2.23.2.jar:\
 ${m2}/org/ow2/asm/asm-debug-all/5.0.4/asm-debug-all-5.0.4.jar:\
 ${m2}/org/jboss/aesh/aesh/0.66.14/aesh-0.66.14.jar:\
 ${m2}/org/fusesource/jansi/jansi/1.11/jansi-1.11.jar:\
-${m2}/com/beust/jcommander/1.65/jcommander-1.65.jar:\
+${m2}/info/picocli/picocli/4.2.0/picocli-4.2.0.jar:\
 ${m2}/org/apache/httpcomponents/fluent-hc/4.5.2/fluent-hc-4.5.2.jar:\
 ${m2}/commons-logging/commons-logging/1.2/commons-logging-1.2.jar:\
 ${m2}/org/slf4j/slf4j-api/1.7.23/slf4j-api-1.7.23.jar:\

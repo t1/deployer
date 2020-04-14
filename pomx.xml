@@ -80,7 +80,7 @@
         <compile>
             <jar>org.wildfly.core:wildfly-controller-client:10.0.3.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.2.Final</jar>
-            <jar>com.github.t1:problem-details-api:1.1.0-SNAPSHOT</jar>
+            <jar>io.microprofile.sandbox:problem-details-api:1.0.0-SNAPSHOT</jar>
             <jar>com.github.t1:logging-interceptor:3.2.3</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
@@ -88,7 +88,7 @@
         </compile>
 
         <runtime>
-            <jar>com.github.t1:problem-details-ri:1.1.0-SNAPSHOT</jar>
+            <jar>com.github.t1:problem-details-jaxrs:2.0.0-SNAPSHOT</jar>
         </runtime>
 
         <test>
@@ -99,7 +99,7 @@
             <jar>ch.qos.logback:logback-classic:1.2.3</jar>
             <jar>com.github.t1:jax-rs-test-extension:1.0.0</jar>
             <jar>org.jboss.aesh:aesh:0.66.19</jar>
-            <jar>com.beust:jcommander:1.78</jar>
+            <jar>info.picocli:picocli:4.2.0</jar>
             <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-spi:${shrinkwrap.version}</jar>
             <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-impl-maven:${shrinkwrap.version}</jar>
             <jar>org.jboss.shrinkwrap:shrinkwrap-impl-base:1.2.6</jar>

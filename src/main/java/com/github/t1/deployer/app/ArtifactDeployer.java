@@ -11,11 +11,11 @@ import com.github.t1.deployer.model.DeploymentName;
 import com.github.t1.deployer.model.Plan;
 import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
-import com.github.t1.problemdetail.Extension;
-import com.github.t1.problemdetail.Status;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.problemdetails.Extension;
+import org.eclipse.microprofile.problemdetails.Status;
 
 import javax.inject.Inject;
 import java.util.Objects;
@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 import static com.github.t1.deployer.container.DeploymentResource.WAR_SUFFIX;
 import static com.github.t1.deployer.model.ArtifactType.war;
 import static com.github.t1.deployer.model.DeploymentState.deployed;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.eclipse.microprofile.problemdetails.ResponseStatus.BAD_REQUEST;
 
 @Slf4j
 class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResource, DeployableAudit> {
@@ -186,6 +186,6 @@ class ArtifactDeployer extends AbstractDeployer<DeployablePlan, DeploymentResour
 
     @Status(BAD_REQUEST) @AllArgsConstructor
     public static class PlannedUndeployChecksumMismatchException extends RuntimeException {
-        @Extension @Getter private Checksum planned, actual;
+        @Extension @Getter private final Checksum planned, actual;
     }
 }

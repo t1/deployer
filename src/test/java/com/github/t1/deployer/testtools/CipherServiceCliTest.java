@@ -69,7 +69,7 @@ class CipherServiceCliTest {
     }
 
     @Test void shouldEncryptPublicToUri() {
-        String github = "https://www.github.com";
+        String github = "https://api.github.com";
         assumeKnownHost(github);
 
         main("--uri", github, PLAIN_TEXT);

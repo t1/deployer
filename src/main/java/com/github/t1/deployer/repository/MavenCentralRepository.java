@@ -8,10 +8,10 @@ import com.github.t1.deployer.model.Checksum;
 import com.github.t1.deployer.model.Classifier;
 import com.github.t1.deployer.model.GroupId;
 import com.github.t1.deployer.model.Version;
-import com.github.t1.problemdetail.Status;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.problemdetails.Status;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.WebTarget;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
+import static org.eclipse.microprofile.problemdetails.ResponseStatus.BAD_GATEWAY;
 
 @Slf4j
 public class MavenCentralRepository extends Repository {

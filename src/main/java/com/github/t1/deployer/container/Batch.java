@@ -1,14 +1,14 @@
 package com.github.t1.deployer.container;
 
 import com.github.t1.deployer.model.ProcessState;
-import com.github.t1.problemdetail.Extension;
-import com.github.t1.problemdetail.Status;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.problemdetails.Extension;
+import org.eclipse.microprofile.problemdetails.Status;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationMessageHandler;
@@ -37,7 +37,7 @@ import static com.github.t1.deployer.model.ProcessState.reloadRequired;
 import static com.github.t1.deployer.model.ProcessState.restartRequired;
 import static com.github.t1.deployer.model.ProcessState.running;
 import static java.util.Locale.US;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.eclipse.microprofile.problemdetails.ResponseStatus.BAD_REQUEST;
 import static org.jboss.as.controller.client.helpers.ClientConstants.ADDRESS;
 import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RELOAD_REQUIRED;
 import static org.jboss.as.controller.client.helpers.ClientConstants.CONTROLLER_PROCESS_STATE_RESTART_REQUIRED;

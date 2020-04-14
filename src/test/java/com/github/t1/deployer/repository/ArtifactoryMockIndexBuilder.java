@@ -14,7 +14,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
 
-import static com.github.t1.deployer.repository.ArtifactoryMock.*;
+import static com.github.t1.deployer.repository.ArtifactoryMock.INDEX;
+import static com.github.t1.deployer.repository.ArtifactoryMock.MAVEN_REPOSITORY;
+import static com.github.t1.deployer.repository.ArtifactoryMock.writeIndex;
 
 public class ArtifactoryMockIndexBuilder {
     public static void main(String[] args) {

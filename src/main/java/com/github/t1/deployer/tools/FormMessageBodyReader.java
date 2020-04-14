@@ -7,7 +7,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -33,8 +32,7 @@ public class FormMessageBodyReader implements MessageBodyReader<Map<String, Stri
 
     @Override
     public Map<String, String> readFrom(Class<Map<String, String>> type, Type genericType, Annotation[] annotations,
-            MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
-            throws IOException {
+            MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) {
         log.debug("readFrom: {}: {}: {}: {}", typeString(genericType), annotations, mediaType, httpHeaders);
         Map<String, String> map = new LinkedHashMap<>();
         String string = read(entityStream);

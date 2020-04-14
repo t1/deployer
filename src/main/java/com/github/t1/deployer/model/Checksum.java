@@ -56,7 +56,7 @@ public class Checksum {
     @NonNull
     @XmlValue
     @XmlSchemaType(name = "hexBinary")
-    private final byte[] bytes;
+    byte[] bytes;
 
     public String hexString() { return printHexBinary(bytes); }
 

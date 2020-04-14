@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING;
-import static lombok.AccessLevel.*;
+import static lombok.AccessLevel.PRIVATE;
 
 @Value
 @NoArgsConstructor(access = PRIVATE, force = true)
