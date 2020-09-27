@@ -206,9 +206,7 @@ class Batch {
 
     public static boolean isNotFoundMessage(ModelNode result) {
         String message = result.get("failure-description").toString();
-        @SuppressWarnings("SpellCheckingInspection")
         boolean jboss7start = message.startsWith("\"JBAS014807: Management resource");
-        @SuppressWarnings("SpellCheckingInspection")
         boolean jboss8start = message.startsWith("\"WFLYCTL0216: Management resource");
         boolean notFoundEnd = message.endsWith(" not found\"");
         boolean isNotFound = (jboss7start || jboss8start) && notFoundEnd;
