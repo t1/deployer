@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project>
     <!-- WARNING: Do Not Modify This File! -->
     <!-- Generated from pomx.xml -->
     <modelVersion>4.0.0</modelVersion>
@@ -11,7 +11,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.10.3</jackson.version>
+        <jackson.version>2.12.2</jackson.version>
         <jqassistant.version>1.7.0</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
@@ -96,7 +96,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
-            <version>11.0.0.Final</version>
+            <version>11.1.1.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -106,9 +106,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.microprofile.sandbox</groupId>
+            <groupId>com.github.t1</groupId>
             <artifactId>problem-details-api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.9</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -138,8 +138,8 @@
 
         <dependency>
             <groupId>com.github.t1</groupId>
-            <artifactId>problem-details-jaxrs</artifactId>
-            <version>2.0.0-SNAPSHOT</version>
+            <artifactId>problem-details-ri</artifactId>
+            <version>1.0.9</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -188,7 +188,7 @@
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
-            <version>4.2.0</version>
+            <version>4.6.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -219,15 +219,19 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray-t1-javaee-helpers</id>
+            <id>ossrh</id>
             <name>t1-javaee-helpers</name>
-            <url>https://api.bintray.com/maven/t1/javaee-helpers/${project.artifactId}/;publish=1</url>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
     </distributionManagement>
     <licenses>
         <license>
             <name>Apache License 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <url>http://choosealicense.com/licenses/apache-2.0/</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -344,8 +348,8 @@
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
                 <maven.compiler.source>1.8</maven.compiler.source>
                 <maven.compiler.target>1.8</maven.compiler.target>
-                <junit.version>5.6.2</junit.version>
-                <mockito.version>3.3.3</mockito.version>
+                <junit.version>5.7.1</junit.version>
+                <mockito.version>3.8.0</mockito.version>
             </properties>
             <build>
                 <defaultGoal>verify</defaultGoal>
@@ -494,20 +498,8 @@
         </dependency>
                 <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-                <dependency>
-            <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-                <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
                 <dependency>
@@ -519,7 +511,7 @@
                 <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.15.0</version>
+            <version>3.19.0</version>
             <scope>test</scope>
         </dependency>
             </dependencies>
@@ -563,7 +555,7 @@
                 <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>3.2</version>
+            <version>3.3</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
