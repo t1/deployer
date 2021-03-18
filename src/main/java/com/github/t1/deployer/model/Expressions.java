@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.github.t1.deployer.tools.CipherService;
 import com.github.t1.deployer.tools.KeyStoreConfig;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
@@ -15,8 +17,6 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.problemdetails.Extension;
-import org.eclipse.microprofile.problemdetails.Status;
 import org.jetbrains.annotations.NotNull;
 
 import javax.ws.rs.BadRequestException;
@@ -41,8 +41,8 @@ import static java.util.Collections.singletonMap;
 import static java.util.Locale.US;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static lombok.AccessLevel.PRIVATE;
-import static org.eclipse.microprofile.problemdetails.ResponseStatus.BAD_REQUEST;
 
 @Slf4j
 @RequiredArgsConstructor

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <!-- WARNING: Do Not Modify This File! -->
     <!-- Generated from pomx.xml -->
     <modelVersion>4.0.0</modelVersion>
@@ -12,7 +12,7 @@
 
     <properties>
         <jackson.version>2.12.2</jackson.version>
-        <jqassistant.version>1.7.0</jqassistant.version>
+        <jqassistant.version>1.9.1</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
@@ -35,12 +35,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
             </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.0.0</version>
+                <version>4.2.0</version>
                 <executions>
                     <execution>
                         <id>default</id>
@@ -59,7 +59,7 @@
                         <plugin>
                             <groupId>com.h3xstream.findsecbugs</groupId>
                             <artifactId>findsecbugs-plugin</artifactId>
-                            <version>1.10.1</version>
+                            <version>1.11.0</version>
                         </plugin>
                     </plugins>
                 </configuration>
@@ -96,7 +96,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
-            <version>11.1.1.Final</version>
+            <version>15.0.0.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -114,7 +114,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>logging-interceptor</artifactId>
-            <version>3.2.3</version>
+            <version>3.2.6</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -132,7 +132,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>28.2-jre</version>
+            <version>30.1-jre</version>
             <scope>compile</scope>
         </dependency>
 
@@ -146,7 +146,7 @@
         <dependency>
             <groupId>org.eclipse</groupId>
             <artifactId>yasson</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -176,7 +176,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>jax-rs-test-extension</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -308,7 +308,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.1.1</version>
+                        <version>3.2.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>

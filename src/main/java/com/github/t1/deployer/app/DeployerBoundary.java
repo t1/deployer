@@ -19,10 +19,10 @@ import com.github.t1.deployer.model.Version;
 import com.github.t1.deployer.repository.Repository;
 import com.github.t1.deployer.tools.KeyStoreConfig;
 import com.github.t1.log.Logged;
+import com.github.t1.problemdetail.Extension;
+import com.github.t1.problemdetail.Status;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.problemdetails.Extension;
-import org.eclipse.microprofile.problemdetails.Status;
 
 import javax.ejb.Asynchronous;
 import javax.ejb.Stateless;
@@ -55,7 +55,7 @@ import static java.lang.Boolean.TRUE;
 import static java.nio.file.Files.isRegularFile;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toMap;
-import static org.eclipse.microprofile.problemdetails.ResponseStatus.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 @javax.ws.rs.Path("/")
 @Stateless

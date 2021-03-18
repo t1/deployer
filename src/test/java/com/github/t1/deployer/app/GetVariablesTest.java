@@ -22,7 +22,7 @@ import java.util.Set;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.KEBAB_CASE;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategies.KEBAB_CASE;
 import static com.github.t1.deployer.app.DeployerBoundary.ROOT_BUNDLE_CONFIG_FILE;
 import static com.github.t1.deployer.container.Container.CLI_DEBUG;
 import static com.github.t1.deployer.model.ArtifactType.bundle;

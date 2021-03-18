@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies.KebabCaseStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.github.t1.deployer.model.DataSourceName;
 import com.github.t1.deployer.model.DeploymentName;
@@ -60,9 +60,9 @@ public abstract class Audit {
             return new Change(getText(node, "name"), getText(node, "old-value"), getText(node, "new-value"));
         }
 
-        @JsonProperty private String name;
-        @JsonProperty private String oldValue;
-        @JsonProperty private String newValue;
+        @JsonProperty String name;
+        @JsonProperty String oldValue;
+        @JsonProperty String newValue;
 
         @Override public String toString() { return name + ":" + oldValue + "->" + newValue; }
     }

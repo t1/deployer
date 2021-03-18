@@ -11,7 +11,7 @@ import java.io.IOException;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.KEBAB_CASE;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategies.KEBAB_CASE;
 import static com.github.t1.deployer.model.Plan.YAML;
 import static com.github.t1.deployer.model.ProcessState.reloadRequired;
 import static com.github.t1.log.LogLevel.DEBUG;
