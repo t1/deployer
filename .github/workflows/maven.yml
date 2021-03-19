@@ -1,6 +1,8 @@
 name: Java CI
 
-on: [push]
+on:
+  push
+  schedule: [ cron: '42 2 * * 5' ] # weekly: At 02:42 on Friday
 
 jobs:
   build:
