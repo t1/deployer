@@ -22,7 +22,7 @@
 
     <build>
         <plugins>
-            <plugin id="org.pitest:pitest-maven:1.5.1">
+            <plugin id="org.pitest:pitest-maven:1.6.4">
                 <configuration>
                     <withHistory>true</withHistory>
                     <timestampedReports>false</timestampedReports>
