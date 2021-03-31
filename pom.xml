@@ -96,7 +96,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
-            <version>15.0.0.Final</version>
+            <version>15.0.1.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
