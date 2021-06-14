@@ -8,7 +8,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.12.2</jackson.version>
+        <jackson.version>2.12.3</jackson.version>
         <jqassistant.version>1.9.1</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
@@ -78,13 +78,13 @@
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:15.0.0.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:16.0.0.Final</jar>
             <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.2.Final</jar>
             <jar>com.github.t1:problem-details-api:1.0.9</jar>
             <jar>com.github.t1:logging-interceptor:3.2.6</jar>
             <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
-            <jar>com.google.guava:guava:30.1-jre</jar>
+            <jar>com.google.guava:guava:30.1.1-jre</jar>
         </compile>
 
         <runtime>
@@ -92,7 +92,7 @@
         </runtime>
 
         <test>
-            <jar>org.eclipse:yasson:1.0.8</jar>
+            <jar>org.eclipse:yasson:1.0.9</jar>
             <jar>org.glassfish:javax.json:1.1.4</jar>
             <jar>org.jdom:jdom2:2.0.6</jar>
             <jar>com.github.t1:xml:0.0.5</jar>
@@ -147,54 +147,6 @@
                     </plugin>
                 </plugins>
             </reporting>
-        </profile>
-
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 </project>
