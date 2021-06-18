@@ -74,7 +74,7 @@
 
     <dependencies>
         <provided>
-            <jar>com.github.t1:test-tools:2.0.0M2</jar>
+            <jar>com.github.t1:test-tools:2.0.0M5</jar>
         </provided>
 
         <compile>
@@ -95,7 +95,7 @@
             <jar>org.eclipse:yasson:1.0.9</jar>
             <jar>org.glassfish:javax.json:1.1.4</jar>
             <jar>org.jdom:jdom2:2.0.6</jar>
-            <jar>com.github.t1:xml:0.0.5</jar>
+            <jar>com.github.t1:xml:0.0.10</jar>
             <jar>ch.qos.logback:logback-classic:1.2.3</jar>
             <jar>com.github.t1:jax-rs-test-extension:1.0.1</jar>
             <jar>org.jboss.aesh:aesh:0.66.19</jar>
