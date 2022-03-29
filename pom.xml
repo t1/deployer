@@ -35,7 +35,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.16.0</version>
             </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
@@ -164,7 +164,7 @@
         <dependency>
             <groupId>com.github.t1</groupId>
             <artifactId>xml</artifactId>
-            <version>0.0.10</version>
+            <version>0.0.15</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -353,7 +353,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>3.0.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.sonatype.ossindex.maven</groupId>
