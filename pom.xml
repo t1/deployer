@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <!-- WARNING: Do Not Modify This File! -->
     <!-- Generated from pomx.xml -->
     <modelVersion>4.0.0</modelVersion>
@@ -11,7 +11,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.13.2.1</jackson.version>
+        <jackson.version>2.13.2</jackson.version>
         <jqassistant.version>1.11.1</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
@@ -120,7 +120,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson.version}.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -298,10 +298,11 @@
                 <com.github.t1.profile-t1.version>1.0.0-SNAPSHOT</com.github.t1.profile-t1.version>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-                <maven.compiler.source>1.8</maven.compiler.source>
-                <maven.compiler.target>1.8</maven.compiler.target>
+                <maven.compiler.source>11</maven.compiler.source>
+                <maven.compiler.target>11</maven.compiler.target>
+                <maven.compiler.parameters>true</maven.compiler.parameters>
                 <junit.version>5.8.2</junit.version>
-                <mockito.version>3.8.0</mockito.version>
+                <mockito.version>4.2.0</mockito.version>
             </properties>
             <build>
                 <defaultGoal>verify</defaultGoal>
@@ -478,7 +479,7 @@
                 <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>20.1.0</version>
+            <version>23.0.0</version>
             <scope>provided</scope>
         </dependency>
                 <dependency>
@@ -505,9 +506,9 @@
             <id>release</id>
             <build>
                 <plugins>
-                    <!-- always run source+javadoc => see problems early & source available in local repo -->
+                    <!-- always run source+javadoc (above) => see problems early & source available in local repo -->
+                    <!-- but don't run gpg everywhere, esp. not in GitHub Actions -->
                     <plugin>
-                        <!-- but don't run gpg everywhere, esp. not in github actions -->
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>3.0.1</version>
@@ -520,6 +521,13 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <!-- This is necessary for gpg to not try to use the pinentry programs in a GitHub Action -->
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

@@ -8,8 +8,8 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.12.3</jackson.version>
-        <jqassistant.version>1.9.1</jqassistant.version>
+        <jackson.version>2.13.2</jackson.version>
+        <jqassistant.version>1.11.1</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
@@ -22,15 +22,15 @@
 
     <build>
         <plugins>
-            <plugin id="org.pitest:pitest-maven:1.6.4">
+            <plugin id="org.pitest:pitest-maven:1.7.5">
                 <configuration>
                     <withHistory>true</withHistory>
                     <timestampedReports>false</timestampedReports>
                     <excludedTestClasses>*IT</excludedTestClasses>
                 </configuration>
             </plugin>
-            <plugin id="org.apache.maven.plugins:maven-pmd-plugin:3.14.0"/>
-            <plugin id="com.github.spotbugs:spotbugs-maven-plugin:4.2.0">
+            <plugin id="org.apache.maven.plugins:maven-pmd-plugin:3.16.0"/>
+            <plugin id="com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0">
                 <executions>
                     <execution>
                         <id>default</id>
@@ -78,13 +78,13 @@
         </provided>
 
         <compile>
-            <jar>org.wildfly.core:wildfly-controller-client:16.0.0.Final</jar>
-            <jar>org.wildfly.plugins:wildfly-plugin-core:2.0.2.Final</jar>
+            <jar>org.wildfly.core:wildfly-controller-client:18.0.4.Final</jar>
+            <jar>org.wildfly.plugins:wildfly-plugin-core:2.1.0.Final</jar>
             <jar>com.github.t1:problem-details-api:1.0.9</jar>
             <jar>com.github.t1:logging-interceptor:3.2.6</jar>
-            <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}</jar>
+            <jar>com.fasterxml.jackson.core:jackson-databind:${jackson.version}.2</jar>
             <jar>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson.version}</jar>
-            <jar>com.google.guava:guava:30.1.1-jre</jar>
+            <jar>com.google.guava:guava:31.1-jre</jar>
         </compile>
 
         <runtime>
@@ -92,18 +92,18 @@
         </runtime>
 
         <test>
-            <jar>org.eclipse:yasson:1.0.9</jar>
+            <jar>org.eclipse:yasson:1.0.11</jar>
             <jar>org.glassfish:javax.json:1.1.4</jar>
-            <jar>org.jdom:jdom2:2.0.6</jar>
-            <jar>com.github.t1:xml:0.0.10</jar>
-            <jar>ch.qos.logback:logback-classic:1.2.3</jar>
+            <jar>org.jdom:jdom2:2.0.6.1</jar>
+            <jar>com.github.t1:xml:0.0.15</jar>
+            <jar>ch.qos.logback:logback-classic:1.2.11</jar>
             <jar>com.github.t1:jax-rs-test-extension:1.0.1</jar>
             <jar>org.jboss.aesh:aesh:0.66.19</jar>
-            <jar>info.picocli:picocli:4.6.1</jar>
+            <jar>info.picocli:picocli:4.6.3</jar>
             <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-spi:${shrinkwrap.version}</jar>
             <jar>org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-impl-maven:${shrinkwrap.version}</jar>
             <jar>org.jboss.shrinkwrap:shrinkwrap-impl-base:1.2.6</jar>
-            <jar>org.jsoup:jsoup:1.13.1</jar>
+            <jar>org.jsoup:jsoup:1.14.3</jar>
         </test>
     </dependencies>
 
