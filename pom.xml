@@ -12,7 +12,7 @@
 
     <properties>
         <jackson.version>2.13.2.1</jackson.version>
-        <jqassistant.version>1.9.1</jqassistant.version>
+        <jqassistant.version>1.11.1</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
         <sonar.java.spotbugs.reportPaths>./target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
@@ -35,7 +35,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.16.0</version>
             </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
@@ -102,7 +102,7 @@
         <dependency>
             <groupId>org.wildfly.plugins</groupId>
             <artifactId>wildfly-plugin-core</artifactId>
-            <version>2.0.2.Final</version>
+            <version>2.1.0.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -339,7 +339,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.10.1</version>
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
@@ -358,7 +358,7 @@
                     <dependency>
                         <groupId>org.sonatype.ossindex.maven</groupId>
                         <artifactId>ossindex-maven-enforcer-rules</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.0</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -431,7 +431,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.2</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -496,7 +496,7 @@
                 <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.19.0</version>
+            <version>3.22.0</version>
             <scope>test</scope>
         </dependency>
             </dependencies>
@@ -510,7 +510,7 @@
                         <!-- but don't run gpg everywhere, esp. not in github actions -->
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -541,7 +541,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.3.2</version>
                 <configuration>
                     <archive>
                         <addMavenDescriptor>false</addMavenDescriptor>
