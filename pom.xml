@@ -102,7 +102,7 @@
         <dependency>
             <groupId>org.wildfly.plugins</groupId>
             <artifactId>wildfly-plugin-core</artifactId>
-            <version>3.0.0.Final</version>
+            <version>3.0.1.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
