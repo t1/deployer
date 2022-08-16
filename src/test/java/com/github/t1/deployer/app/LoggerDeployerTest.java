@@ -108,7 +108,7 @@ class LoggerDeployerTest extends AbstractDeployerTests {
             + "    handlers: [CONSOLE, FILE]\n");
 
         verifyWriteAttribute(rootLoggerNode(), "level", "DEBUG");
-        assertThat(boundary.audits.getAudits()).containsExactly(new LoggerAudit().setCategory(ROOT).change("level", "INFO", "DEBUG").changed());
+        assertThat(boundary.audits.getAudits()).containsExactly(new LoggerAudit().category(ROOT).change("level", "INFO", "DEBUG").changed());
     }
 
     @Test void shouldFailToUndeployRootLogger() {
@@ -379,7 +379,7 @@ class LoggerDeployerTest extends AbstractDeployerTests {
                 + "    'name' => 'BAR'\n"
                 + "}")));
         assertThat(boundary.audits.getAudits()).contains(
-            new LoggerAudit().setCategory(logger.getCategory())
+            new LoggerAudit().category(logger.getCategory())
                 .change("use-parent-handlers", true, false)
                 .change("handlers", null, "[BAR]")
                 .changed());
@@ -414,7 +414,7 @@ class LoggerDeployerTest extends AbstractDeployerTests {
                 + "    'name' => 'BAR'\n"
                 + "}")));
         assertThat(boundary.audits.getAudits()).contains(
-            new LoggerAudit().setCategory(logger.getCategory())
+            new LoggerAudit().category(logger.getCategory())
                 .change("use-parent-handlers", true, false)
                 .change("handlers", "[BAR]", null)
                 .changed());

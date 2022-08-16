@@ -50,7 +50,7 @@ class LogHandlerDeployer extends
     @Override protected Stream<LogHandlerPlan> resourcesIn(Plan plan) { return plan.logHandlers(); }
 
     @Override protected LogHandlerAudit audit(LogHandlerResource resource) {
-        return new LogHandlerAudit().setType(resource.type()).setName(resource.name());
+        return new LogHandlerAudit().type(resource.type()).name(resource.name());
     }
 
     @Override protected Supplier<LogHandlerResource> resourceBuilder(LogHandlerPlan plan) {

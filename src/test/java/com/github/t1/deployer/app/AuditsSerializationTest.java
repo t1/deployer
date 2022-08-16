@@ -35,7 +35,7 @@ class AuditsSerializationTest {
     private static final DeployableAudit MOCKSERVER = new DeployableAudit().setName("mockserver");
 
     private static LoggerAudit deployerLog() {
-        return new LoggerAudit().setCategory(LoggerCategory.of("com.github.t1.deployer"));
+        return new LoggerAudit().category(LoggerCategory.of("com.github.t1.deployer"));
     }
 
 

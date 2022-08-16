@@ -77,7 +77,7 @@ public abstract class Audit {
 
     int changeCount() { return (changes == null) ? 0 : changes.size(); }
 
-    @Data @Accessors(chain = true)
+    @Data @Accessors(chain = true, fluent = true)
     @EqualsAndHashCode(callSuper = true)
     @JsonTypeName("deployable")
     public static class DeployableAudit extends Audit {
@@ -92,7 +92,7 @@ public abstract class Audit {
         }
     }
 
-    @Data @Accessors(chain = true)
+    @Data @Accessors(chain = true, fluent = true)
     @EqualsAndHashCode(callSuper = true)
     @JsonTypeName("logger")
     public static class LoggerAudit extends Audit {
@@ -101,7 +101,7 @@ public abstract class Audit {
         @Override public String toString() { return super.toString() + ":" + category + ":" + super.changes; }
     }
 
-    @Data @Accessors(chain = true)
+    @Data @Accessors(chain = true, fluent = true)
     @EqualsAndHashCode(callSuper = true)
     @JsonTypeName("log-handler")
     public static class LogHandlerAudit extends Audit {
@@ -111,7 +111,7 @@ public abstract class Audit {
         @Override public String toString() { return super.toString() + ":" + type + ":" + name + ":" + super.changes; }
     }
 
-    @Data @Accessors(chain = true)
+    @Data @Accessors(chain = true, fluent = true)
     @EqualsAndHashCode(callSuper = true)
     @JsonTypeName("data-source")
     public static class DataSourceAudit extends Audit {

@@ -295,7 +295,7 @@ public class DeployerIT {
                 .change("checksum", JOLOKIA_131_CHECKSUM, JOLOKIA_132_CHECKSUM)
                 .change("version", "1.3.1", "1.3.2")
                 .changed(),
-            new LoggerAudit().setCategory(LoggerCategory.of("foo"))
+            new LoggerAudit().category(LoggerCategory.of("foo"))
                 .change("level", null, DEBUG)
                 .change("use-parent-handlers", null, true)
                 .added());
@@ -318,7 +318,7 @@ public class DeployerIT {
                 .change("checksum", JOLOKIA_132_CHECKSUM, JOLOKIA_133_CHECKSUM)
                 .change("version", "1.3.2", "1.3.3")
                 .changed(),
-            new LoggerAudit().setCategory(LoggerCategory.of("foo"))
+            new LoggerAudit().category(LoggerCategory.of("foo"))
                 .change("level", DEBUG, null)
                 .change("use-parent-handlers", true, null)
                 .removed());
@@ -544,7 +544,7 @@ public class DeployerIT {
         List<Audit> audits = post(plan);
 
         assertThat(audits).containsOnly(
-            new DataSourceAudit().setName(new DataSourceName("foo"))
+            new DataSourceAudit().name(new DataSourceName("foo"))
                 .change("uri", null, "jdbc:h2:mem:test")
                 .change("jndi-name", null, "java:/datasources/TestDS")
                 .change("driver", null, "h2")
@@ -581,7 +581,7 @@ public class DeployerIT {
 
         assertThat(audits.getProcessState()).isEqualTo(reloadRequired);
         assertThat(audits.getAudits()).containsOnly(
-            new DataSourceAudit().setName(new DataSourceName("foo"))
+            new DataSourceAudit().name(new DataSourceName("foo"))
                 // TODO .change("xa", null, true)
                 .change("pool:max-age", "5 min", "10 min")
                 .changed());
@@ -620,7 +620,7 @@ public class DeployerIT {
         List<Audit> audits = post(plan);
 
         assertThat(audits).containsOnly(
-            new DataSourceAudit().setName(new DataSourceName("barDS"))
+            new DataSourceAudit().name(new DataSourceName("barDS"))
                 .change("uri", null, "jdbc:postgresql://my-db.server.lan:5432/bar")
                 .change("jndi-name", null, "java:/datasources/barDS")
                 .change("driver", null, "postgresql")
@@ -654,7 +654,7 @@ public class DeployerIT {
         List<Audit> audits = post(POSTGRESQL);
 
         assertThat(audits).containsOnly(
-            new DataSourceAudit().setName(new DataSourceName("barDS")) // sorted!
+            new DataSourceAudit().name(new DataSourceName("barDS")) // sorted!
                 .change("uri", "jdbc:postgresql://my-db.server.lan:5432/bar", null)
                 .change("jndi-name", "java:/datasources/barDS", null)
                 .change("driver", "postgresql", null)
@@ -666,7 +666,7 @@ public class DeployerIT {
                 .change("pool:max", "10", null)
                 .change("pool:max-age", "5 min", null)
                 .removed(),
-            new DataSourceAudit().setName(new DataSourceName("foo"))
+            new DataSourceAudit().name(new DataSourceName("foo"))
                 .change("uri", "jdbc:h2:mem:test", null)
                 .change("jndi-name", "java:/datasources/TestDS", null)
                 .change("driver", "h2", null)
@@ -695,13 +695,13 @@ public class DeployerIT {
 
         assertThat(audits).containsOnly(
             new LogHandlerAudit()
-                .setType(periodicRotatingFile)
-                .setName(new LogHandlerName("FOO"))
+                .type(periodicRotatingFile)
+                .name(new LogHandlerName("FOO"))
                 .change("level", null, INFO)
                 .change("file", null, "foo.log")
                 .change("suffix", null, DEFAULT_SUFFIX)
                 .added(),
-            new LoggerAudit().setCategory(LoggerCategory.of("foo"))
+            new LoggerAudit().category(LoggerCategory.of("foo"))
                 .change("level", null, DEBUG)
                 .change("use-parent-handlers", null, false)
                 .change("handlers", null, "[FOO]")
@@ -733,13 +733,13 @@ public class DeployerIT {
 
         assertThat(audits).containsOnly(
             new LogHandlerAudit()
-                .setType(periodicRotatingFile)
-                .setName(new LogHandlerName("FOO"))
+                .type(periodicRotatingFile)
+                .name(new LogHandlerName("FOO"))
                 .change("level", INFO, null)
                 .change("file", "foo.log", null)
                 .change("suffix", DEFAULT_SUFFIX, null)
                 .removed(),
-            new LoggerAudit().setCategory(LoggerCategory.of("foo"))
+            new LoggerAudit().category(LoggerCategory.of("foo"))
                 .change("level", DEBUG, null)
                 .change("use-parent-handlers", false, null)
                 .change("handlers", "[FOO]", null)

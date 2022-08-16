@@ -351,7 +351,7 @@ class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.verifyAddCli();
 
         assertThat(boundary.audits.getAudits()).containsExactly(
-            new DataSourceAudit().setName(fixture.getName()).change("xa", null, true).changed());
+            new DataSourceAudit().name(fixture.getName()).change("xa", null, true).changed());
     }
 
 
@@ -373,7 +373,7 @@ class DataSourceDeployerTest extends AbstractDeployerTests {
         fixture.verifyAddCli();
 
         assertThat(boundary.audits.getAudits()).containsExactly(
-            new DataSourceAudit().setName(fixture.getName()).change("xa", true, null).changed());
+            new DataSourceAudit().name(fixture.getName()).change("xa", true, null).changed());
     }
 
 

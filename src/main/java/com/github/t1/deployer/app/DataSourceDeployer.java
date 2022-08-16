@@ -70,7 +70,7 @@ class DataSourceDeployer extends
     @Override protected Stream<DataSourcePlan> resourcesIn(Plan plan) { return plan.dataSources(); }
 
     @Override protected DataSourceAudit audit(DataSourceResource resource) {
-        return new DataSourceAudit().setName(resource.name());
+        return new DataSourceAudit().name(resource.name());
     }
 
     @Override protected Supplier<DataSourceResource> resourceBuilder(DataSourcePlan plan) {

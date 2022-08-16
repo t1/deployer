@@ -35,7 +35,7 @@ class LoggerDeployer extends ResourceDeployer<LoggerPlan, Supplier<LoggerResourc
     @Override protected Stream<LoggerPlan> resourcesIn(Plan plan) { return plan.loggers(); }
 
     @Override protected LoggerAudit audit(LoggerResource logger) {
-        return new LoggerAudit().setCategory(logger.category());
+        return new LoggerAudit().category(logger.category());
     }
 
     @Override protected Supplier<LoggerResource> resourceBuilder(LoggerPlan plan) {
