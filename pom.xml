@@ -301,7 +301,7 @@
                 <maven.compiler.target>11</maven.compiler.target>
                 <maven.compiler.parameters>true</maven.compiler.parameters>
                 <junit.version>5.9.0</junit.version>
-                <mockito.version>4.7.0</mockito.version>
+                <mockito.version>4.8.0</mockito.version>
             </properties>
             <build>
                 <defaultGoal>verify</defaultGoal>
