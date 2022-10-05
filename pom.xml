@@ -10,7 +10,7 @@
     <description>Deploys web archives to a JBoss web container</description>
 
     <properties>
-        <jackson.version>2.13.2</jackson.version>
+        <jackson.version>2.14.0-rc1</jackson.version>
         <jqassistant.version>1.12.0</jqassistant.version>
         <shrinkwrap.version>3.1.4</shrinkwrap.version>
 
@@ -119,7 +119,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}.2</version>
+            <version>${jackson.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -230,7 +230,7 @@
     <licenses>
         <license>
             <name>Apache License 2.0</name>
-            <url>http://choosealicense.com/licenses/apache-2.0/</url>
+            <url>https://choosealicense.com/licenses/apache-2.0/</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
